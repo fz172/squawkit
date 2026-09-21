@@ -1,5 +1,10 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -88,38 +93,39 @@ internal fun TrackingModeChoice(
 ) {
   val capabilities = LocalThingCapabilities.current
   val offered = scheduleTypesOffered(capabilities.schedule_types)
-  Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+  val options = buildList {
     if (ScheduleType.SCHEDULE_TYPE_CALENDAR in offered || selected == ScheduleMode.TIME) {
-      TrackingModeButton(
-        icon = Icons.Default.CalendarToday,
-        label = stringResource(Res.string.schedule_track_calendar_time),
-        selected = selected == ScheduleMode.TIME,
-        onClick = { onSelect(ScheduleMode.TIME) },
-        modifier = Modifier.weight(1f),
+      add(
+        SegmentOption(
+          ScheduleMode.TIME,
+          stringResource(Res.string.schedule_track_calendar_time),
+          Icons.Default.CalendarToday,
+        )
       )
     }
     if (ScheduleType.SCHEDULE_TYPE_METER in offered || selected == ScheduleMode.HOURS) {
-      TrackingModeButton(
-        icon = Icons.Default.Schedule,
-        // The meter's own name — "Odometer" on a car, "Engine Time" for an engine task on an
-        // aeroplane. A fixed "Tach Hours", and then a fixed first meter, both named the wrong one.
-        label = meter?.label?.takeIf { it.isNotEmpty() }
-          ?: stringResource(Res.string.schedule_track_tach_hours),
-        selected = selected == ScheduleMode.HOURS,
-        onClick = { onSelect(ScheduleMode.HOURS) },
-        modifier = Modifier.weight(1f),
+      add(
+        SegmentOption(
+          ScheduleMode.HOURS,
+          // The meter's own name — "Odometer" on a car, "Engine Time" for an engine task on an
+          // aeroplane. A fixed "Tach Hours", and then a fixed first meter, both named the wrong one.
+          meter?.label?.takeIf { it.isNotEmpty() }
+            ?: stringResource(Res.string.schedule_track_tach_hours),
+          Icons.Default.Schedule,
+        )
       )
     }
     if (ScheduleType.SCHEDULE_TYPE_SEASONAL in offered || selected == ScheduleMode.SEASONAL) {
-      TrackingModeButton(
-        icon = Icons.Default.EventRepeat,
-        label = stringResource(Res.string.schedule_track_seasonal),
-        selected = selected == ScheduleMode.SEASONAL,
-        onClick = { onSelect(ScheduleMode.SEASONAL) },
-        modifier = Modifier.weight(1f),
+      add(
+        SegmentOption(
+          ScheduleMode.SEASONAL,
+          stringResource(Res.string.schedule_track_seasonal),
+          Icons.Default.EventRepeat,
+        )
       )
     }
   }
+  SegmentedChoice(options = options, selected = selected, onSelect = onSelect)
 }
 
 /** Twelve toggles, three rows of four, for a SEASONAL schedule's months. */
@@ -190,112 +196,37 @@ internal fun formatMonthList(months: Collection<Int>): String {
   }
 }
 
-@Composable
-private fun TrackingModeButton(
-  icon: ImageVector,
-  label: String,
-  selected: Boolean,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  val border = if (selected) MaterialTheme.colorScheme.primary
-  else MaterialTheme.colorScheme.outlineVariant
-  val bg = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-  else MaterialTheme.colorScheme.surfaceContainer
-  val content =
-    if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+/** One way a task can come due, with the line that explains it once it is picked. */
+internal data class RecurrenceOption(
+  val recurrence: ScheduleRecurrence,
+  val label: StringResource,
+  val explanation: StringResource,
+)
 
-  Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(
-      Spacing.extraSmall,
-      Alignment.CenterVertically
-    ),
-    modifier = modifier
-      .heightIn(min = 80.dp)
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .background(bg)
-      .border(
-        Spacing.hairline,
-        border,
-        RoundedCornerShape(Spacing.cardCornerRadius)
-      )
-      .clickable { onClick() }
-      .padding(
-        horizontal = Spacing.medium,
-        vertical = Spacing.medium
-      ),
-  ) {
-    Icon(
-      icon,
-      contentDescription = null,
-      tint = content,
-      modifier = Modifier.size(Spacing.xLarge)
-    )
-    Text(
-      label,
-      style = MaterialTheme.typography.bodyMedium,
-      fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-      color = content,
-    )
-  }
-}
-
+/**
+ * Repeating / one-time / ASAP as one segmented control. The explanation each choice used to carry
+ * on its own card sits under the control instead, for the choice that is made.
+ */
 @Composable
 internal fun RecurrenceChoice(
   selected: ScheduleRecurrence?,
-  options: List<Pair<ScheduleRecurrence, Pair<StringResource, StringResource>>>,
+  options: List<RecurrenceOption>,
   onSelect: (ScheduleRecurrence) -> Unit,
 ) {
-  Row(horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
-    options.forEach { (rec, labels) ->
-      val isSelected = selected == rec
-      val border = if (isSelected) MaterialTheme.colorScheme.primary
-      else MaterialTheme.colorScheme.outlineVariant
-      val bg =
-        if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-        else MaterialTheme.colorScheme.surfaceContainer
-      val labelColor = if (isSelected) MaterialTheme.colorScheme.primary
-      else MaterialTheme.colorScheme.onSurface
-
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(
-          Spacing.extraSmall,
-          Alignment.CenterVertically
-        ),
-        modifier = Modifier
-          .weight(1f)
-          .heightIn(min = 64.dp)
-          .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-          .background(bg)
-          .border(
-            Spacing.hairline,
-            border,
-            RoundedCornerShape(Spacing.cardCornerRadius)
-          )
-          .clickable { onSelect(rec) }
-          .padding(
-            horizontal = Spacing.small,
-            vertical = Spacing.medium
-          ),
-      ) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+    SegmentedChoice(
+      options = options.map { SegmentOption(it.recurrence, stringResource(it.label)) },
+      selected = selected,
+      onSelect = onSelect,
+    )
+    options.firstOrNull { it.recurrence == selected }
+      ?.let {
         Text(
-          stringResource(labels.first),
-          style = MaterialTheme.typography.bodyMedium,
-          fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-          color = labelColor,
-          textAlign = TextAlign.Center,
-        )
-        Text(
-          stringResource(labels.second),
-          fontSize = 10.5.sp,
-          lineHeight = 14.sp,
+          stringResource(it.explanation),
+          style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
-          textAlign = TextAlign.Center,
         )
       }
-    }
   }
 }
 
@@ -304,43 +235,77 @@ internal fun UnitPillSelect(
   selected: ScheduleTimeUnit,
   onSelect: (ScheduleTimeUnit) -> Unit,
 ) {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(Spacing.smallCornerRadius))
-      .background(MaterialTheme.colorScheme.surfaceContainer)
-      .border(
-        Spacing.hairline,
-        MaterialTheme.colorScheme.outlineVariant,
-        RoundedCornerShape(Spacing.smallCornerRadius)
-      )
-      .padding(Spacing.extraSmall),
-    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-  ) {
-    listOf(
+  SegmentedChoice(
+    options = listOf(
       ScheduleTimeUnit.DAYS to Res.string.schedule_unit_days,
       ScheduleTimeUnit.MONTHS to Res.string.schedule_unit_months,
       ScheduleTimeUnit.YEARS to Res.string.schedule_unit_years,
-    ).forEach { (unit, res) ->
-      val active = unit == selected
-      Box(
+    ).map { (unit, res) ->
+      SegmentOption(unit, stringResource(res).replaceFirstChar { it.titlecase() })
+    },
+    selected = selected,
+    onSelect = onSelect,
+  )
+}
+
+/** One segment: what picking it means, its words, and an optional glyph ahead of them. */
+internal data class SegmentOption<T>(
+  val value: T,
+  val label: String,
+  val icon: ImageVector? = null,
+)
+
+/**
+ * A single-choice row in one container: every option on screen at once, a touch target tall, the
+ * picked one filled. What the schedule's choices are — labelled choices, not steps and not cards.
+ */
+@Composable
+internal fun <T> SegmentedChoice(
+  options: List<SegmentOption<T>>,
+  selected: T?,
+  onSelect: (T) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val shape = RoundedCornerShape(Spacing.smallCornerRadius)
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .clip(shape)
+      .background(MaterialTheme.colorScheme.surfaceContainer)
+      .border(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant, shape)
+      .padding(Spacing.extraSmall)
+      .selectableGroup(),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+  ) {
+    options.forEach { option ->
+      val active = option.value == selected
+      val content = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+      Row(
         modifier = Modifier
           .weight(1f)
-          .clip(RoundedCornerShape(Spacing.smallCornerRadius))
-          .background(
-            if (active) MaterialTheme.colorScheme.primary
-            else Color.Transparent
-          )
-          .clickable { onSelect(unit) }
-          .padding(vertical = Spacing.small),
-        contentAlignment = Alignment.Center,
+          .heightIn(min = LocalMinimumInteractiveComponentSize.current - Spacing.small)
+          .clip(shape)
+          .background(if (active) MaterialTheme.colorScheme.primary else Color.Transparent)
+          .selectable(selected = active, role = Role.RadioButton) { onSelect(option.value) }
+          .padding(horizontal = Spacing.small),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
       ) {
+        if (option.icon != null) {
+          Icon(
+            option.icon,
+            contentDescription = null,
+            tint = content,
+            modifier = Modifier.size(Spacing.large),
+          )
+        }
         Text(
-          stringResource(res).replaceFirstChar { it.titlecase() },
+          option.label,
           style = MaterialTheme.typography.labelLarge,
           fontWeight = FontWeight.SemiBold,
-          color = if (active) MaterialTheme.colorScheme.onPrimary
-          else MaterialTheme.colorScheme.onSurface,
+          color = content,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
         )
       }
     }

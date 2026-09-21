@@ -14,16 +14,16 @@
   <string name="schedule_with_another_work_description">This task becomes due whenever the linked task is next due. Choosing a linked task replaces interval-based scheduling above.</string>
 
   <!-- New Schedule Tab (redesigned) -->
-  <string name="schedule_step_track_label">Step 1 · How is this tracked?</string>
-  <string name="schedule_step_recurrence_label">Step 2 · When is it due?</string>
-  <string name="schedule_step_interval_how_often">Step 3 · How often?</string>
-  <string name="schedule_step_interval_in_how_long">Step 3 · In how long?</string>
-  <string name="schedule_step_recurrence_linked_label">Step 2 · Recurrence</string>
+  <string name="schedule_step_track_label">How is this tracked?</string>
+  <string name="schedule_step_recurrence_label">When is it due?</string>
+  <string name="schedule_step_interval_how_often">How often?</string>
+  <string name="schedule_step_interval_in_how_long">In how long?</string>
+  <string name="schedule_step_recurrence_linked_label">Recurrence</string>
 
   <string name="schedule_track_calendar_time">Calendar time</string>
   <string name="schedule_track_tach_hours">Tach hours</string>
   <string name="schedule_track_seasonal">Seasonal</string>
-  <string name="schedule_step_months_label">Step 3 · Which months?</string>
+  <string name="schedule_step_months_label">Which months?</string>
   <string name="schedule_recurrence_seasonal_repeating_sub">Every listed month</string>
   <string name="schedule_recurrence_seasonal_one_time_sub">Next listed month, then history</string>
   <string name="schedule_preview_set_months_primary">Pick the months</string>

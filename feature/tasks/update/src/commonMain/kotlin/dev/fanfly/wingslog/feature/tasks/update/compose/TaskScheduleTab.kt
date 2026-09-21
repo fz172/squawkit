@@ -113,7 +113,8 @@ fun TaskScheduleTab(
 
   Column(
     modifier = modifier.fillMaxWidth(),
-    verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
+    // Tight enough that the banner and all three choices sit above the fold on a phone.
+    verticalArrangement = Arrangement.spacedBy(Spacing.large),
   ) {
     DueSummaryBanner(
       schedule = state,
@@ -125,7 +126,7 @@ fun TaskScheduleTab(
       currentReading = currentReading,
     )
 
-    // Step 1 — How is this tracked?
+    // How is this tracked?
     ScheduleSection(
       labelRes = Res.string.schedule_step_track_label,
       complete = state.mode != null,
@@ -146,7 +147,7 @@ fun TaskScheduleTab(
       )
     }
 
-    // Step 2 — Recurrence (with ASAP) for time/hours; without ASAP for linked
+    // Recurrence (with ASAP) for time/hours; without ASAP for linked
     if (state.mode == ScheduleMode.TIME || state.mode == ScheduleMode.HOURS) {
       ScheduleSection(
         labelRes = Res.string.schedule_step_recurrence_label,
@@ -155,9 +156,9 @@ fun TaskScheduleTab(
         RecurrenceChoice(
           selected = state.recurrence,
           options = listOf(
-            ScheduleRecurrence.REPEATING to (Res.string.schedule_recurrence_repeating to Res.string.schedule_recurrence_repeating_sub),
-            ScheduleRecurrence.ONE_TIME to (Res.string.schedule_recurrence_one_time to Res.string.schedule_recurrence_one_time_sub),
-            ScheduleRecurrence.ASAP to (Res.string.schedule_recurrence_asap to Res.string.schedule_recurrence_asap_sub),
+            RecurrenceOption(ScheduleRecurrence.REPEATING, Res.string.schedule_recurrence_repeating, Res.string.schedule_recurrence_repeating_sub),
+            RecurrenceOption(ScheduleRecurrence.ONE_TIME, Res.string.schedule_recurrence_one_time, Res.string.schedule_recurrence_one_time_sub),
+            RecurrenceOption(ScheduleRecurrence.ASAP, Res.string.schedule_recurrence_asap, Res.string.schedule_recurrence_asap_sub),
           ),
           onSelect = { onChange(state.copy(recurrence = it)) },
         )
@@ -171,8 +172,8 @@ fun TaskScheduleTab(
         RecurrenceChoice(
           selected = state.recurrence,
           options = listOf(
-            ScheduleRecurrence.REPEATING to (Res.string.schedule_recurrence_repeating to Res.string.schedule_recurrence_seasonal_repeating_sub),
-            ScheduleRecurrence.ONE_TIME to (Res.string.schedule_recurrence_one_time to Res.string.schedule_recurrence_seasonal_one_time_sub),
+            RecurrenceOption(ScheduleRecurrence.REPEATING, Res.string.schedule_recurrence_repeating, Res.string.schedule_recurrence_seasonal_repeating_sub),
+            RecurrenceOption(ScheduleRecurrence.ONE_TIME, Res.string.schedule_recurrence_one_time, Res.string.schedule_recurrence_seasonal_one_time_sub),
           ),
           onSelect = { onChange(state.copy(recurrence = it)) },
         )
@@ -185,15 +186,15 @@ fun TaskScheduleTab(
         RecurrenceChoice(
           selected = state.recurrence,
           options = listOf(
-            ScheduleRecurrence.REPEATING to (Res.string.schedule_recurrence_repeating to Res.string.schedule_recurrence_linked_repeating_sub),
-            ScheduleRecurrence.ONE_TIME to (Res.string.schedule_recurrence_one_time to Res.string.schedule_recurrence_linked_one_time_sub),
+            RecurrenceOption(ScheduleRecurrence.REPEATING, Res.string.schedule_recurrence_repeating, Res.string.schedule_recurrence_linked_repeating_sub),
+            RecurrenceOption(ScheduleRecurrence.ONE_TIME, Res.string.schedule_recurrence_one_time, Res.string.schedule_recurrence_linked_one_time_sub),
           ),
           onSelect = { onChange(state.copy(recurrence = it)) },
         )
       }
     }
 
-    // Step 3 — Interval (hidden if ASAP or no recurrence picked)
+    // Interval (hidden if ASAP or no recurrence picked)
     val showInterval =
       (state.mode == ScheduleMode.TIME || state.mode == ScheduleMode.HOURS) &&
         state.recurrence != null && state.recurrence != ScheduleRecurrence.ASAP
@@ -268,7 +269,7 @@ fun TaskScheduleTab(
       }
     }
 
-    // Step 3 for a seasonal schedule — which months.
+    // A seasonal schedule's months.
     if (state.mode == ScheduleMode.SEASONAL && state.recurrence != null) {
       ScheduleSection(
         labelRes = Res.string.schedule_step_months_label,
