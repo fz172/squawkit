@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -86,10 +87,12 @@ object FormKeyboard {
 }
 
 /**
- * Text-entry field that switches to a non-input presentation when [editable] is false.
+ * Text-entry field that locks when [editable] is false.
  *
  * Use this when the same form value may be editable during creation but fixed once a record has
- * been saved. A locked value should read as documented information, not as a disabled control.
+ * been saved. A locked value keeps the field's box and label, so a form of mixed fields reads as
+ * one form rather than as inputs scattered among captions; it simply takes no focus and no typing.
+ * Its border never lights, which is what tells it from the field beside it that does.
  */
 @Composable
 fun FormTextField(
@@ -121,22 +124,6 @@ fun FormTextField(
 ) {
   val errorText =
     supportingText ?: if (isError) stringResource(Res.string.required) else null
-  if (!editable) {
-    FormValueField(
-      label = label,
-      value = value,
-      modifier = modifier,
-      placeholder = placeholder,
-      supportingText = errorText,
-      isError = isError,
-      valueStyle = textStyle,
-      leadingIcon = leadingIcon,
-      trailingIcon = trailingIcon,
-      maxLines = maxLines,
-    )
-    return
-  }
-
   val fieldColors = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = MaterialTheme.colorScheme.primary,
     unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
@@ -152,6 +139,9 @@ fun FormTextField(
   val fieldModifier = modifier
     .fillMaxWidth()
     .then(field.modifier)
+    .then(if (editable) Modifier else Modifier.focusProperties {
+      canFocus = false
+    })
 
   if (dense) {
     // M3 OutlinedTextField has no contentPadding knob, so build it from the decoration box to
@@ -170,6 +160,7 @@ fun FormTextField(
       value = field.value,
       onValueChange = field.onValueChange,
       modifier = fieldModifier.padding(vertical = labelMargin),
+      readOnly = !editable,
       singleLine = singleLine,
       minLines = minLines,
       maxLines = maxLines,
@@ -216,6 +207,7 @@ fun FormTextField(
     onValueChange = field.onValueChange,
     label = { Text(label) },
     modifier = fieldModifier,
+    readOnly = !editable,
     placeholder = placeholder?.let { { Text(it) } },
     singleLine = singleLine,
     minLines = minLines,

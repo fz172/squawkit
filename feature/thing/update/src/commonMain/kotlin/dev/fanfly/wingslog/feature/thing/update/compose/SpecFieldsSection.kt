@@ -1,14 +1,10 @@
 package dev.fanfly.wingslog.feature.thing.update.compose
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -40,57 +36,47 @@ fun SpecFieldsSection(
 
   val askForSerials = LocalThingCapabilities.current.component_serial_prompt
 
-  Card(
+  // No card: the fields are already boxes, and a box of boxes is what the form used to be.
+  Column(
     modifier = Modifier.padding(vertical = Spacing.small),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
-    ),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
+    verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    Column(
-      modifier = Modifier.padding(Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.small),
-    ) {
-      // Consecutive fields the template marks `compact` share a line — serial beside tail number,
-      // where both are short. Everything else takes the full width.
-      val visible =
-        fields.filterNot { it.key == SpecKeys.SERIAL && !askForSerials }
-      var index = 0
-      while (index < visible.size) {
-        val field = visible[index]
-        val partner = visible.getOrNull(index + 1)
-          ?.takeIf { field.compact && it.compact }
-        if (partner == null) {
+    // Consecutive fields the template marks `compact` share a line — serial beside tail number,
+    // where both are short. Everything else takes the full width.
+    val visible =
+      fields.filterNot { it.key == SpecKeys.SERIAL && !askForSerials }
+    var index = 0
+    while (index < visible.size) {
+      val field = visible[index]
+      val partner = visible.getOrNull(index + 1)
+        ?.takeIf { field.compact && it.compact }
+      if (partner == null) {
+        ThingSpecFieldInput(
+          field,
+          thing,
+          viewModel,
+          showValidationErrors,
+          Modifier.fillMaxWidth()
+        )
+        index++
+      } else {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
           ThingSpecFieldInput(
             field,
             thing,
             viewModel,
             showValidationErrors,
-            Modifier.fillMaxWidth()
+            Modifier.weight(1f),
           )
-          index++
-        } else {
-          Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-            ThingSpecFieldInput(
-              field,
-              thing,
-              viewModel,
-              showValidationErrors,
-              Modifier.weight(1f),
-            )
-            ThingSpecFieldInput(
-              partner,
-              thing,
-              viewModel,
-              showValidationErrors,
-              Modifier.weight(1f),
-            )
-          }
-          index += 2
+          ThingSpecFieldInput(
+            partner,
+            thing,
+            viewModel,
+            showValidationErrors,
+            Modifier.weight(1f),
+          )
         }
+        index += 2
       }
     }
   }
