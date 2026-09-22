@@ -10,7 +10,8 @@ compile-template.sh     the compiler
 
 Six presets ship: `airplane`, `automotive`, `bike`, `boat`, `home`, `custom`. `automotive` covers
 cars and motorcycles together — PRD §4.8 lists them as separate rows and is stale on that point.
-Two of the six carry more weight than the rest. **`home` is load-bearing** — no make, no model, no serial, no component
+Two of the six carry more weight than the rest. **`home` is load-bearing** — no make, no model, no
+serial, no component
 slots, an empty meter list — so it is the one that finds screens with an aviation assumption baked
 in. **`custom` is the floor**: it declares almost nothing, so a screen that breaks on it is reading
 something no template promises.
@@ -18,7 +19,8 @@ something no template promises.
 Every preset but `custom` ends with a `starter_tasks` block — the schedule offered when a Thing is
 created and again from an empty Tasks tab (PRD §4.9). `CanonicalTemplatesTest` holds each item to
 what the task form could produce: a title, a description, at least one rule (an interval, a meter
-interval, or calendar `months`), and a meter or slot the preset declares. The airplane pack is pinned by content to universal intervals — no ADs, SBs, or model-specific ones.
+interval, or calendar `months`), and a meter or slot the preset declares. The airplane pack is
+pinned by content to universal intervals — no ADs, SBs, or model-specific ones.
 
 ## Editing a template
 
@@ -47,7 +49,8 @@ Then move the Things already in the field onto it:
 cd backend/firebase/functions && npm run dna-refresh -- --dry-run
 ```
 
-Both steps. `AirplaneTemplateAssetTest` and `CanonicalTemplatesTest` are what tell you a `.pb` is stale or a
+Both steps. `AirplaneTemplateAssetTest` and `CanonicalTemplatesTest` are what tell you a `.pb` is
+stale or a
 preset is invalid, and they are wired into Gradle's inputs so they re-run whenever a `.pb` changes.
 
 > **A published template is never edited.** `(id, version)` has to always name the same bytes
@@ -90,16 +93,16 @@ script:
 
 ## What checks what
 
-| Check | Catches |
-|---|---|
-| `theEmbeddedTemplateMatchesTheCommittedAsset` | the Gradle generator skipped, mis-wired, or stale |
-| `theLexiconStillSaysWhatTheAppSays` | a wrong word at the source — the `.pb` is binary, so review will not |
-| `theEmptyStateCopyStillSaysWhatTheAppSays` | aviation empty-state copy drifting — the only guard on it since it left `strings.xml` |
-| `theStructureTheAirplaneScreensAssumeIsIntact` | a dropped identifier flag, a reordered section, a meter on the wrong slot |
-| `CanonicalTemplatesTest` | the PRD §4.7 rules over every preset — duplicate keys, an empty noun, meters claimed but not declared, a meter scoped to a slot that does not exist |
-| `TemplateKeysResolveTest` | a slot or spec key the app emits that the template does not declare |
-| `StringSnapshotTest` | any rendered string drifting from what the app shipped |
-| `TemplateAssetDirectoryTest` | two versions of one preset left on disk — the generator takes the highest and drops the other silently |
+| Check                                          | Catches                                                                                                                                             |
+|------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `theEmbeddedTemplateMatchesTheCommittedAsset`  | the Gradle generator skipped, mis-wired, or stale                                                                                                   |
+| `theLexiconStillSaysWhatTheAppSays`            | a wrong word at the source — the `.pb` is binary, so review will not                                                                                |
+| `theEmptyStateCopyStillSaysWhatTheAppSays`     | aviation empty-state copy drifting — the only guard on it since it left `strings.xml`                                                               |
+| `theStructureTheAirplaneScreensAssumeIsIntact` | a dropped identifier flag, a reordered section, a meter on the wrong slot                                                                           |
+| `CanonicalTemplatesTest`                       | the PRD §4.7 rules over every preset — duplicate keys, an empty noun, meters claimed but not declared, a meter scoped to a slot that does not exist |
+| `TemplateKeysResolveTest`                      | a slot or spec key the app emits that the template does not declare                                                                                 |
+| `StringSnapshotTest`                           | any rendered string drifting from what the app shipped                                                                                              |
+| `TemplateAssetDirectoryTest`                   | two versions of one preset left on disk — the generator takes the highest and drops the other silently                                              |
 
 The content assertions are deliberate duplication: `.textproto` → `.pb` → embedded constant is
 self-consistent, so every structural check compares one link against another and a wrong value at

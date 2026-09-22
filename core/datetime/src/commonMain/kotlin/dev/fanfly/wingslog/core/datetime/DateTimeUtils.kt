@@ -123,5 +123,11 @@ fun formatDuration(seconds: Int): String {
   val h = s / 3600
   val m = (s % 3600) / 60
   val sec = s % 60
-  return if (h > 0) "${h}h ${m.toString().padStart(2, '0')}m" else "${m}m ${sec.toString().padStart(2, '0')}s"
+  return if (h > 0) "${h}h ${
+    m.toString()
+      .padStart(2, '0')
+  }m" else "${m}m ${
+    sec.toString()
+      .padStart(2, '0')
+  }s"
 }

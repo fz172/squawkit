@@ -30,11 +30,12 @@ import com.google.firebase.auth.OAuthProvider as AndroidOAuthProvider
  * Hand-rolled rather than pulling in `kotlinx-coroutines-play-services` for the two Apple call
  * sites — the rest of this class goes through GitLive, which already returns suspend functions.
  */
-private suspend fun <T> Task<T>.awaitResult(): T = suspendCancellableCoroutine { continuation ->
-  addOnSuccessListener { continuation.resume(it) }
-  addOnFailureListener { continuation.resumeWithException(it) }
-  addOnCanceledListener { continuation.cancel() }
-}
+private suspend fun <T> Task<T>.awaitResult(): T =
+  suspendCancellableCoroutine { continuation ->
+    addOnSuccessListener { continuation.resume(it) }
+    addOnFailureListener { continuation.resumeWithException(it) }
+    addOnCanceledListener { continuation.cancel() }
+  }
 
 class AuthManagerImpl(
   private val context: Context,

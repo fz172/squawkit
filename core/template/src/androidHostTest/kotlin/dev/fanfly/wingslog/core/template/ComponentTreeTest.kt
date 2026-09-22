@@ -43,9 +43,13 @@ class ComponentTreeTest {
   @Test
   fun aBoatOffersOneSteeringAndOneRigging() {
     fun addableWith(vararg slotKeys: String): List<String> {
-      val thing = Thing(id = "t", components = slotKeys.map { Component(slot_key = it) })
+      val thing =
+        Thing(id = "t", components = slotKeys.map { Component(slot_key = it) })
       return CanonicalTemplates.BOAT
-        .addableSlotsUnder(emptyList(), CanonicalTemplates.BOAT.componentRows(thing))
+        .addableSlotsUnder(
+          emptyList(),
+          CanonicalTemplates.BOAT.componentRows(thing)
+        )
         .map { it.slot_key }
     }
 
@@ -118,10 +122,14 @@ class ComponentTreeTest {
   @Test
   fun slotsUnderFollowsDeclarationOrder() {
     // The edit form draws each slot's add button under that slot's components, in this order.
-    assertThat(CanonicalTemplates.BOAT.slotsUnder(emptyList()).map { it.slot_key })
+    assertThat(
+      CanonicalTemplates.BOAT.slotsUnder(emptyList())
+        .map { it.slot_key })
       .containsExactly("propulsion", "electrical_safety", "steering", "rigging")
       .inOrder()
-    assertThat(airplane.slotsUnder(listOf("engine" to 0, "propeller" to 0)).map { it.slot_key })
+    assertThat(
+      airplane.slotsUnder(listOf("engine" to 0, "propeller" to 0))
+        .map { it.slot_key })
       .containsExactly("blade")
     assertThat(airplane.slotsUnder(listOf("nope" to 0))).isEmpty()
   }
@@ -130,8 +138,9 @@ class ComponentTreeTest {
   fun aBikeCannotBeGivenAnEngine() {
     // The reported bug, stated as a rule: what may be added comes from the template's slots, so a
     // preset that never declares an engine can never be offered one.
-    val addable = bike.addableSlotsUnder(emptyList(), bike.componentRows(Thing(id = "t")))
-      .map { it.slot_key }
+    val addable =
+      bike.addableSlotsUnder(emptyList(), bike.componentRows(Thing(id = "t")))
+        .map { it.slot_key }
 
     assertThat(addable).doesNotContain("engine")
     assertThat(addable).containsExactly("wheel")
@@ -143,7 +152,9 @@ class ComponentTreeTest {
     // fifth wheel — a question with no right answer. `repeatable` still makes them optional;
     // `max_instances` makes them finite.
     fun addableWith(wheels: Int): List<String> {
-      val thing = Thing(id = "t", components = List(wheels) { Component(slot_key = "wheel") })
+      val thing = Thing(
+        id = "t",
+        components = List(wheels) { Component(slot_key = "wheel") })
       return bike.addableSlotsUnder(emptyList(), bike.componentRows(thing))
         .map { it.slot_key }
     }
@@ -159,7 +170,10 @@ class ComponentTreeTest {
     // Both presets declared a brakes slot, both sat empty on every Thing, and both are gone.
     assertThat(automotive.component_slots.map { it.slot_key }).doesNotContain("brakes")
     assertThat(bike.component_slots.map { it.slot_key }).doesNotContain("brakes")
-    assertThat(bike.component_slots.map { it.slot_key }).containsExactly("drivetrain", "wheel")
+    assertThat(bike.component_slots.map { it.slot_key }).containsExactly(
+      "drivetrain",
+      "wheel"
+    )
       .inOrder()
   }
 
@@ -170,17 +184,26 @@ class ComponentTreeTest {
     // The make/model/serial triple is a floor, not the whole vocabulary: what tells one tyre from
     // the other three is where it sits and what it runs at, and neither is any of the three.
     val tire = automotive.component_slots.single { it.slot_key == "tire" }
-    assertThat(tire.spec_fields.map { it.key }).containsExactly("position", "psi").inOrder()
+    assertThat(tire.spec_fields.map { it.key }).containsExactly(
+      "position",
+      "psi"
+    )
+      .inOrder()
     assertThat(tire.spec_keys).containsExactly("make", "model")
 
     // The vocabulary is the template's, because it is domain knowledge. A car has four corners
     // and a spare; a bike has a front and a rear and nothing else.
     val position = tire.spec_fields.single { it.key == "position" }
-    assertThat(position.options).containsAtLeast("Front Left", "Rear Right", "Spare")
+    assertThat(position.options).containsAtLeast(
+      "Front Left",
+      "Rear Right",
+      "Spare"
+    )
     assertThat(
       bike.component_slots.single { it.slot_key == "wheel" }
         .spec_fields.single { it.key == "position" }.options,
-    ).containsExactly("Front", "Rear").inOrder()
+    ).containsExactly("Front", "Rear")
+      .inOrder()
 
     // Free text would let the same wheel be "RR", "rear right" and "Rear-Right" across three cars.
     assertThat(position.options).isNotEmpty()
@@ -198,7 +221,10 @@ class ComponentTreeTest {
           slot_key = "tire",
           make = "Michelin",
           model = "Pilot Sport",
-          spec = listOf(Spec(key = "position", value_ = "Front Left"), Spec(key = "psi", value_ = "32")),
+          spec = listOf(
+            Spec(key = "position", value_ = "Front Left"),
+            Spec(key = "psi", value_ = "32")
+          ),
         ),
         // The second records nothing but a make, which is the common case: every declared field
         // is optional, so the ordinal has to still be there to fall back on.
@@ -237,7 +263,10 @@ class ComponentTreeTest {
       components = listOf(Component(slot_key = "engine", make = "Honda")),
     )
     assertThat(
-      automotive.addableSlotsUnder(emptyList(), automotive.componentRows(withEngine))
+      automotive.addableSlotsUnder(
+        emptyList(),
+        automotive.componentRows(withEngine)
+      )
         .map { it.slot_key })
       .containsExactly("tire")
 
@@ -247,7 +276,10 @@ class ComponentTreeTest {
       components = List(4) { Component(slot_key = "tire") },
     )
     assertThat(
-      automotive.addableSlotsUnder(emptyList(), automotive.componentRows(fourTyres))
+      automotive.addableSlotsUnder(
+        emptyList(),
+        automotive.componentRows(fourTyres)
+      )
         .map { it.slot_key })
       .contains("tire")
   }
@@ -319,7 +351,8 @@ class ComponentTreeTest {
         Component(slot_key = "tire", make = "Michelin"),
       ),
     )
-    val byKey = automotive.componentRows(car).associateBy { it.slot.slot_key }
+    val byKey = automotive.componentRows(car)
+      .associateBy { it.slot.slot_key }
     assertThat(byKey.getValue("tire").rendersAsChip).isTrue()
     // The engine is the individual it always was: one part with a history, and the card is where
     // that history hangs. Compacting everything would have been the opposite mistake.
@@ -353,17 +386,35 @@ class ComponentTreeTest {
     val boat = Thing(
       id = "t",
       components = listOf(
-        Component(slot_key = "propulsion", make = "Yamaha", model = "F150", serial = "6CE1001"),
-        Component(slot_key = "propulsion", make = "Yamaha", model = "F150", serial = "6CE1002"),
+        Component(
+          slot_key = "propulsion",
+          make = "Yamaha",
+          model = "F150",
+          serial = "6CE1001"
+        ),
+        Component(
+          slot_key = "propulsion",
+          make = "Yamaha",
+          model = "F150",
+          serial = "6CE1002"
+        ),
       ),
     )
     val chips = CanonicalTemplates.BOAT.componentRows(boat)
       .filter { it.slot.slot_key == "propulsion" }
       .mapNotNull { it.chipLines }
 
-    assertThat(chips.map { it.label }).containsExactly("Propulsion 1", "Propulsion 2").inOrder()
-    assertThat(chips.map { it.headline }).containsExactly("Yamaha F150", "Yamaha F150")
-    assertThat(chips.map { it.serial }).containsExactly("6CE1001", "6CE1002").inOrder()
+    assertThat(chips.map { it.label }).containsExactly(
+      "Propulsion 1",
+      "Propulsion 2"
+    )
+      .inOrder()
+    assertThat(chips.map { it.headline }).containsExactly(
+      "Yamaha F150",
+      "Yamaha F150"
+    )
+    assertThat(chips.map { it.serial }).containsExactly("6CE1001", "6CE1002")
+      .inOrder()
 
     // A blade declares `spec_keys: "serial"`, so it has no make or model to head the chip and its
     // serial takes that line rather than sitting under a blank one.
@@ -377,7 +428,11 @@ class ComponentTreeTest {
               slot_key = SlotKeys.PROPELLER,
               children = listOf(
                 // Make is stored but not declared: the chip must read the SLOT, not the record.
-                Component(slot_key = SlotKeys.BLADE, make = "Hartzell", serial = "J4471"),
+                Component(
+                  slot_key = SlotKeys.BLADE,
+                  make = "Hartzell",
+                  serial = "J4471"
+                ),
               ),
             ),
           ),
@@ -411,7 +466,9 @@ class ComponentTreeTest {
     // Both engines in ONE block, not two rows — the whole point.
     assertThat((groups[0] as ComponentGroup.Chips).nodes).hasSize(2)
     // And steering stays after them, where the template put it.
-    assertThat((groups[1] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo("steering")
+    assertThat((groups[1] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo(
+      "steering"
+    )
   }
 
   @Test
@@ -422,7 +479,8 @@ class ComponentTreeTest {
     fun tire(position: String?, make: String) = Component(
       slot_key = "tire",
       make = make,
-      spec = position?.let { listOf(Spec(key = "position", value_ = it)) }.orEmpty(),
+      spec = position?.let { listOf(Spec(key = "position", value_ = it)) }
+        .orEmpty(),
     )
 
     val car = Thing(
@@ -460,7 +518,9 @@ class ComponentTreeTest {
       .componentGroups()
 
     assertThat(groups).hasSize(2)
-    assertThat((groups[0] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo("engine")
+    assertThat((groups[0] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo(
+      "engine"
+    )
     assertThat((groups[1] as ComponentGroup.Chips).nodes).hasSize(4)
   }
 

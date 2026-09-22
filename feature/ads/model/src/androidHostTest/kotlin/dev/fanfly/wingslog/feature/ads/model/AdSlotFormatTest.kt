@@ -16,11 +16,26 @@ class AdSlotFormatTest {
   fun `a container ceiling holds a wide tier to one unit`() {
     // The data log viewer's sidebar footer is a fixed 328 dp column, so a two-up band would be laid
     // out past its edge no matter how wide the window is.
-    assertThat(AdSlotFormat.desiredUnits(AdLayoutTier.WIDE, maxUnits = 1)).isEqualTo(1)
-    assertThat(AdSlotFormat.desiredUnits(AdLayoutTier.COMPACT, maxUnits = 1)).isEqualTo(1)
+    assertThat(
+      AdSlotFormat.desiredUnits(
+        AdLayoutTier.WIDE,
+        maxUnits = 1
+      )
+    ).isEqualTo(1)
+    assertThat(
+      AdSlotFormat.desiredUnits(
+        AdLayoutTier.COMPACT,
+        maxUnits = 1
+      )
+    ).isEqualTo(1)
     // A ceiling above what the tier wants changes nothing: width buys count, and the tier is still
     // the one that decides how much width there is.
-    assertThat(AdSlotFormat.desiredUnits(AdLayoutTier.MEDIUM, maxUnits = 2)).isEqualTo(1)
+    assertThat(
+      AdSlotFormat.desiredUnits(
+        AdLayoutTier.MEDIUM,
+        maxUnits = 2
+      )
+    ).isEqualTo(1)
   }
 
   @Test

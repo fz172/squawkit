@@ -28,7 +28,8 @@ private val GENERIC: EmptyStates = GenericLexicon.LEXICON.empty_states!!
  * state, so the missing line takes the generic wording and the rest of the template's stands.
  */
 private inline fun Lexicon.copy(pick: (EmptyStates) -> String): String =
-  empty_states?.let(pick)?.ifEmpty { null } ?: pick(GENERIC)
+  empty_states?.let(pick)
+    ?.ifEmpty { null } ?: pick(GENERIC)
 
 /** Squawks tab, Open — under "No open squawks". */
 val Lexicon.squawkEmptyHint: String get() = copy { it.squawk_hint }

@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.core.template
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter.sentenceCase
+import dev.fanfly.wingslog.core.template.LexiconFormatter.titleCase
+import dev.fanfly.wingslog.core.template.LexiconFormatter.withArticle
 import dev.fanfly.wingslog.thing.Noun
 
 /**
@@ -125,7 +128,8 @@ object LexiconFormatter {
         word.lowercase() in TITLE_MINOR_WORDS -> word
         else -> sentenceCase(word)
       }
-    }.joinToString(" ")
+    }
+      .joinToString(" ")
   }
 
   /** `aircraft` → `Aircraft`; `aircraft on ground` → `Aircraft on Ground`. */

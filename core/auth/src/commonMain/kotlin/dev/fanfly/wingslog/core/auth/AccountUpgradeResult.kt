@@ -31,7 +31,8 @@ sealed interface AccountUpgradeResult {
    * exists before a second provider sheet appears, rather than being shown one twice with no
    * explanation.
    */
-  data class ReauthRequiredToMerge(val provider: AuthProvider) : AccountUpgradeResult
+  data class ReauthRequiredToMerge(val provider: AuthProvider) :
+    AccountUpgradeResult
 
   /** The user dismissed the provider sheet. No change. */
   data object Cancelled : AccountUpgradeResult

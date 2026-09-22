@@ -22,7 +22,11 @@ class CrashUserIdBinderTest {
 
   @Test
   fun `the uid follows sign-in and is cleared on sign-out`() = runTest {
-    CrashUserIdBinder(auth, reporter, backgroundScope + UnconfinedTestDispatcher(testScheduler))
+    CrashUserIdBinder(
+      auth,
+      reporter,
+      backgroundScope + UnconfinedTestDispatcher(testScheduler)
+    )
 
     authState.value = mockk<FirebaseUser> { every { uid } returns "uid-1" }
     authState.value = null

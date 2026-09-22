@@ -2,6 +2,8 @@ package dev.fanfly.wingslog
 
 import androidx.compose.ui.window.ComposeUIViewController
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.MainEntry.installAppCheckTokenProvider
+import dev.fanfly.wingslog.MainEntry.installConsentFormPresenter
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.IosAppleSignInBridge
 import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
@@ -250,7 +252,9 @@ object MainEntry {
   fun onPushTokenReceived(token: String) {
     CoroutineScope(Dispatchers.Default).launch {
       try {
-        KoinPlatform.getKoin().get<PushTokenSink>().onTokenRefreshed(token)
+        KoinPlatform.getKoin()
+          .get<PushTokenSink>()
+          .onTokenRefreshed(token)
       } catch (e: CancellationException) {
         throw e
       } catch (e: Throwable) {

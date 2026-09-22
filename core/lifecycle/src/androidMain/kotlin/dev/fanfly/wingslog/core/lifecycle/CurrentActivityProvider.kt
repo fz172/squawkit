@@ -31,7 +31,10 @@ class CurrentActivityProvider(application: Application) {
         // All three of created/started/resumed record, rather than resumed alone: they are
         // idempotent, and only tracking the last of them means a single missed event leaves this
         // reporting "no foreground activity" until the user leaves the app and comes back.
-        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        override fun onActivityCreated(
+          activity: Activity,
+          savedInstanceState: Bundle?
+        ) {
           current = WeakReference(activity)
         }
 
@@ -49,7 +52,10 @@ class CurrentActivityProvider(application: Application) {
 
         override fun onActivityPaused(activity: Activity) = Unit
         override fun onActivityStopped(activity: Activity) = Unit
-        override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+        override fun onActivitySaveInstanceState(
+          activity: Activity,
+          outState: Bundle
+        ) = Unit
       }
     )
   }
@@ -59,5 +65,6 @@ class CurrentActivityProvider(application: Application) {
    * than guessing — launching a sign-in against a finishing activity would drop the result.
    */
   fun current(): Activity? =
-    current?.get()?.takeUnless { it.isFinishing || it.isDestroyed }
+    current?.get()
+      ?.takeUnless { it.isFinishing || it.isDestroyed }
 }

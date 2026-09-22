@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.core.file
 
 import com.google.common.truth.Truth.assertThat
-import java.io.File
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import java.io.File
 import kotlin.random.Random
 
 class GzipCodecTest {
@@ -22,7 +22,9 @@ class GzipCodecTest {
   fun emptyAndRandomInputsRoundTrip() = runTest {
     assertThat(GzipCodec.decompress(GzipCodec.compress(ByteArray(0)))).isEmpty()
     val random = Random(7).nextBytes(1_000_000)
-    assertThat(GzipCodec.decompress(GzipCodec.compress(random))).isEqualTo(random)
+    assertThat(GzipCodec.decompress(GzipCodec.compress(random))).isEqualTo(
+      random
+    )
   }
 
   @Test
@@ -40,7 +42,11 @@ class GzipCodecTest {
   /** A G3X CSV from docs/datalog/samples, the kind of text this codec exists for. */
   private fun sampleLog(): ByteArray {
     var dir = File(System.getProperty("user.dir"))
-    while (!File(dir, "settings.gradle.kts").exists()) dir = requireNotNull(dir.parentFile)
-    return File(dir, "docs/datalog/samples/g3x/log_20260902_144756_XX1.csv").readBytes()
+    while (!File(dir, "settings.gradle.kts").exists()) dir =
+      requireNotNull(dir.parentFile)
+    return File(
+      dir,
+      "docs/datalog/samples/g3x/log_20260902_144756_XX1.csv"
+    ).readBytes()
   }
 }

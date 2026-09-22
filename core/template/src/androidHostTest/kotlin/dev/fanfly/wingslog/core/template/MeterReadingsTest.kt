@@ -248,7 +248,12 @@ class MeterReadingsTest {
     val log = MaintenanceLog(
       id = "l1",
       component_type = ComponentType.COMPONENT_ENGINE,
-      readings = listOf(MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = 1111.0)),
+      readings = listOf(
+        MeterReading(
+          MeterKeys.AIRFRAME_HOURS,
+          value_ = 1111.0
+        )
+      ),
     )
 
     assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
@@ -266,7 +271,9 @@ class MeterReadingsTest {
       ),
     )
 
-    assertThat(AirplaneTemplate.TEMPLATE.timelineReading(log)?.second).isEqualTo(1111.0)
+    assertThat(AirplaneTemplate.TEMPLATE.timelineReading(log)?.second).isEqualTo(
+      1111.0
+    )
   }
 
   @Test

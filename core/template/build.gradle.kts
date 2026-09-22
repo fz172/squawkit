@@ -86,7 +86,9 @@ val generateTemplateAssets by tasks.registering {
     val latest = assets.groupBy { it.name.substringBefore(".v") }
       .mapValues { (id, files) ->
         files.maxBy {
-          it.name.removePrefix("$id.v").removeSuffix(".pb").toIntOrNull()
+          it.name.removePrefix("$id.v")
+            .removeSuffix(".pb")
+            .toIntOrNull()
             ?: error("template asset is not <id>.v<version>.pb: ${it.name}")
         }
       }

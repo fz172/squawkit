@@ -30,7 +30,8 @@ class AnalyticsPreferenceControllerTest {
     assertThat(crash.enabled).isFalse()
   }
 
-  private class InMemoryStore(var enabled: Boolean = true) : AnalyticsPreferenceStore {
+  private class InMemoryStore(var enabled: Boolean = true) :
+    AnalyticsPreferenceStore {
     override fun load(): Boolean = enabled
 
     override fun save(enabled: Boolean) {
@@ -41,7 +42,10 @@ class AnalyticsPreferenceControllerTest {
   private class RecordingAnalytics : AnalyticsManager {
     var enabled: Boolean? = null
 
-    override fun logScreenView(screenName: String, params: Map<String, String>) = Unit
+    override fun logScreenView(
+      screenName: String,
+      params: Map<String, String>
+    ) = Unit
 
     override fun logEvent(name: String, params: Map<String, String>) = Unit
 

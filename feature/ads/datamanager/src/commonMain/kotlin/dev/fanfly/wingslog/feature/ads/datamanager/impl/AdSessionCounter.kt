@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.ads.datamanager.impl
 
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.feature.ads.datamanager.impl.AdSessionCounter.Companion.CAP
 import dev.fanfly.wingslog.feature.ads.model.AdSlotKey
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

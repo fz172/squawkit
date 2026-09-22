@@ -25,8 +25,8 @@ import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
@@ -37,9 +37,9 @@ import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
 import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
 import dev.fanfly.wingslog.feature.shell.PopToShellOnNotificationTap
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
+import dev.fanfly.wingslog.feature.shell.dataLogRoutes
 import dev.fanfly.wingslog.feature.shell.formDialogs
 import dev.fanfly.wingslog.feature.shell.settingsDetailRoutes
-import dev.fanfly.wingslog.feature.shell.dataLogRoutes
 import dev.fanfly.wingslog.feature.shell.sharingRoutes
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject

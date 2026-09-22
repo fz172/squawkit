@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.template.canonical
 
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates.ALL
 import dev.fanfly.wingslog.thing.ThingTemplate
 import okio.ByteString.Companion.decodeBase64
 
@@ -25,6 +26,7 @@ object CanonicalTemplates {
     )
 
   val HOME: ThingTemplate = decode(HOME_BASE64, "home")
+
   /** Cars and motorcycles both — see the text proto for why they are one preset, not two. */
   val AUTOMOTIVE: ThingTemplate = decode(AUTOMOTIVE_BASE64, "automotive")
   val BIKE: ThingTemplate = decode(BIKE_BASE64, "bike")

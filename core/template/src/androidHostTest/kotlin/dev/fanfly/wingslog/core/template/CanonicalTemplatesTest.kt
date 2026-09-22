@@ -352,11 +352,26 @@ class CanonicalTemplatesTest {
   @Test
   fun everyPresetListsItsScheduleTypesExplicitly() {
     val expected = mapOf(
-      "airplane" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
-      "automotive" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
-      "bike" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
-      "boat" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
-      "home" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_SEASONAL),
+      "airplane" to listOf(
+        ScheduleType.SCHEDULE_TYPE_CALENDAR,
+        ScheduleType.SCHEDULE_TYPE_METER
+      ),
+      "automotive" to listOf(
+        ScheduleType.SCHEDULE_TYPE_CALENDAR,
+        ScheduleType.SCHEDULE_TYPE_METER
+      ),
+      "bike" to listOf(
+        ScheduleType.SCHEDULE_TYPE_CALENDAR,
+        ScheduleType.SCHEDULE_TYPE_METER
+      ),
+      "boat" to listOf(
+        ScheduleType.SCHEDULE_TYPE_CALENDAR,
+        ScheduleType.SCHEDULE_TYPE_METER
+      ),
+      "home" to listOf(
+        ScheduleType.SCHEDULE_TYPE_CALENDAR,
+        ScheduleType.SCHEDULE_TYPE_SEASONAL
+      ),
       "custom" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR),
     )
     all.forEach { template ->

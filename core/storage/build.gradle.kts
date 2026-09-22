@@ -48,11 +48,11 @@ kotlin {
     }
     sourceSets.getByName("jsMain")
       .dependencies {
-      api(libs.sqldelight.web.worker.driver)
-      // sql.js worker prebuilt by Cash App + the sql.js WASM engine it loads.
-      implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.3.2"))
-      implementation(npm("sql.js", "1.8.0"))
-    }
+        api(libs.sqldelight.web.worker.driver)
+        // sql.js worker prebuilt by Cash App + the sql.js WASM engine it loads.
+        implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.3.2"))
+        implementation(npm("sql.js", "1.8.0"))
+      }
     sourceSets.getByName("androidHostTest")
       .dependencies {
         implementation(libs.junit)

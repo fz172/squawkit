@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.core.file
 
+import dev.fanfly.wingslog.core.file.GzipCodec.isAvailable
+
+
 /**
  * Gzip for the stored raw file (design §5.2). Suspending because the web implementation is a
  * stream; the others hop to a background dispatcher for the same reason. Where [isAvailable] is
@@ -11,4 +14,5 @@ expect object GzipCodec {
   suspend fun decompress(bytes: ByteArray): ByteArray
 }
 
-class GzipException(message: String, cause: Throwable? = null) : Exception(message, cause)
+class GzipException(message: String, cause: Throwable? = null) :
+  Exception(message, cause)

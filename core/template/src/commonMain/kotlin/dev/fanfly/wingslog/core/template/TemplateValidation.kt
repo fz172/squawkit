@@ -68,8 +68,8 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
   }
   val offered = scheduleTypesOffered(declared)
 
-  // A starter task becomes an ordinary MaintenanceTask the moment it is accepted, so anything the
-  // task form would refuse — no title, no rule, a meter the Thing cannot read — is refused here.
+    // A starter task becomes an ordinary MaintenanceTask the moment it is accepted, so anything the
+    // task form would refuse — no title, no rule, a meter the Thing cannot read — is refused here.
     .toSet()
   starter_tasks.forEach { task ->
     val label = task.title.ifEmpty { "(untitled)" }

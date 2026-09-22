@@ -138,5 +138,6 @@ fun ThingTemplate?.primaryReading(log: MaintenanceLog): Pair<MeterDef, Double>? 
  */
 fun ThingTemplate?.timelineReading(log: MaintenanceLog): Pair<MeterDef, Double>? {
   val meter = this?.meters?.firstOrNull() ?: return null
-  return log.readingFor(meter.key)?.let { meter to it }
+  return log.readingFor(meter.key)
+    ?.let { meter to it }
 }

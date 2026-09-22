@@ -18,7 +18,12 @@ class ThingTextTest {
   fun aPhraseJoinsWithExactlyOneSpaceHoweverItsPartsWereTyped() {
     assertThat(listOf("Volar ", "T2i").joinAsPhrase()).isEqualTo("Volar T2i")
     assertThat(listOf("Volar", " T2i").joinAsPhrase()).isEqualTo("Volar T2i")
-    assertThat(listOf("Rotax", "915  IS3A").joinAsPhrase()).isEqualTo("Rotax 915 IS3A")
+    assertThat(
+      listOf(
+        "Rotax",
+        "915  IS3A"
+      ).joinAsPhrase()
+    ).isEqualTo("Rotax 915 IS3A")
   }
 
   @Test

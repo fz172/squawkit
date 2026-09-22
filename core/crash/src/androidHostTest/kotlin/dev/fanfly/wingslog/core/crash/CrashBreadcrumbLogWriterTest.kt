@@ -36,7 +36,12 @@ class CrashBreadcrumbLogWriterTest {
 
   @Test
   fun `a throwable below error stays a breadcrumb only`() {
-    writer.log(Severity.Warn, "retrying", "Blob", IllegalStateException("transient"))
+    writer.log(
+      Severity.Warn,
+      "retrying",
+      "Blob",
+      IllegalStateException("transient")
+    )
 
     assertThat(reporter.exceptions).isEmpty()
     assertThat(reporter.breadcrumbs).hasSize(1)

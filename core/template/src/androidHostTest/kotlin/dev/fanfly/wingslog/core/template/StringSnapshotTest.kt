@@ -228,7 +228,10 @@ class StringSnapshotTest {
       "feature/tasks/update",
       "no_tasks_configured"
     ) { it.thingNoun.singular },
-    frame("feature/tasks/update", "task_locked_reason") { it.taskNoun.singular },
+    frame(
+      "feature/tasks/update",
+      "task_locked_reason"
+    ) { it.taskNoun.singular },
     frame(
       "feature/tasks/update",
       "task_title"
@@ -239,19 +242,58 @@ class StringSnapshotTest {
     // those positions stay literal placeholders here exactly as record_count_other's do.
     // feature/datalog/sharedassets: the section names the concept through the data-log noun
     // (PRD R45); the airplane preset's singular is "data log".
-    frame("feature/datalog/sharedassets", "data_log_upload") { LexiconFormatter.titleCase(it.dataLogNoun) },
-    frame("feature/datalog/sharedassets", "data_log_delete_title") { LexiconFormatter.titleCase(it.dataLogNoun) },
-    frame("feature/datalog/sharedassets", "data_log_empty_title") { it.dataLogNoun.singular },
-    frame("feature/datalog/sharedassets", "data_log_gate_title") { it.dataLogNoun.singular },
-    frame("feature/datalog/sharedassets", "data_log_gate_sheet_body") { it.dataLogNoun.singular },
-    frame("feature/datalog/sharedassets", "data_log_picker_title") { it.dataLogNoun.singular },
-    frame("feature/datalog/sharedassets", "data_log_deleted") { LexiconFormatter.sentenceCase(it.dataLogNoun) },
-    frame("feature/datalog/sharedassets", "data_log_viewer_missing") { it.dataLogNoun.singular },
-    frame("feature/search/sharedassets", "filter_scope_open") { it.squawkNoun.plural },
-    frame("feature/search/sharedassets", "filter_scope_closed") { it.squawkNoun.plural },
-    frame("feature/search/sharedassets", "filter_scope_due") { it.taskNoun.plural },
-    frame("feature/search/sharedassets", "filter_scope_completed") { it.taskNoun.plural },
-    frame("feature/search/sharedassets", "filter_q_part_of") { it.thingNoun.singular },
+    frame(
+      "feature/datalog/sharedassets",
+      "data_log_upload"
+    ) { LexiconFormatter.titleCase(it.dataLogNoun) },
+    frame(
+      "feature/datalog/sharedassets",
+      "data_log_delete_title"
+    ) { LexiconFormatter.titleCase(it.dataLogNoun) },
+    frame(
+      "feature/datalog/sharedassets",
+      "data_log_empty_title"
+    ) { it.dataLogNoun.singular },
+    frame(
+      "feature/datalog/sharedassets",
+      "data_log_gate_title"
+    ) { it.dataLogNoun.singular },
+    frame(
+      "feature/datalog/sharedassets",
+      "data_log_gate_sheet_body"
+    ) { it.dataLogNoun.singular },
+    frame(
+      "feature/datalog/sharedassets",
+      "data_log_picker_title"
+    ) { it.dataLogNoun.singular },
+    frame(
+      "feature/datalog/sharedassets",
+      "data_log_deleted"
+    ) { LexiconFormatter.sentenceCase(it.dataLogNoun) },
+    frame(
+      "feature/datalog/sharedassets",
+      "data_log_viewer_missing"
+    ) { it.dataLogNoun.singular },
+    frame(
+      "feature/search/sharedassets",
+      "filter_scope_open"
+    ) { it.squawkNoun.plural },
+    frame(
+      "feature/search/sharedassets",
+      "filter_scope_closed"
+    ) { it.squawkNoun.plural },
+    frame(
+      "feature/search/sharedassets",
+      "filter_scope_due"
+    ) { it.taskNoun.plural },
+    frame(
+      "feature/search/sharedassets",
+      "filter_scope_completed"
+    ) { it.taskNoun.plural },
+    frame(
+      "feature/search/sharedassets",
+      "filter_q_part_of"
+    ) { it.thingNoun.singular },
     frame("feature/tasks/sharedassets", "task_deleted") {
       LexiconFormatter.sentenceCase(it.taskNoun)
     },

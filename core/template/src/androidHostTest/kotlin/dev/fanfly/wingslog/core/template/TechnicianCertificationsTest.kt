@@ -32,9 +32,11 @@ import com.squareup.wire.Instant as WireInstant
  */
 class TechnicianCertificationsTest {
 
-  private val registry = BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE)
+  private val registry =
+    BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE)
 
-  private fun thingOf(template: ThingTemplate) = Thing(id = template.id, template = template)
+  private fun thingOf(template: ThingTemplate) =
+    Thing(id = template.id, template = template)
 
   // ---- the transitional read ----
 
@@ -76,9 +78,12 @@ class TechnicianCertificationsTest {
   @Test
   fun theStringFieldTheEnumReplacedStillResolves() {
     // Written before the enum existed, in whatever case the caller happened to use.
-    val technician = Technician(cert_type = "certificate_type_repairman", cert_number = "R-1")
+    val technician =
+      Technician(cert_type = "certificate_type_repairman", cert_number = "R-1")
 
-    assertThat(technician.resolvedCertifications().map { it.type })
+    assertThat(
+      technician.resolvedCertifications()
+        .map { it.type })
       .containsExactly(FAA_REPAIRMAN)
   }
 
@@ -107,7 +112,8 @@ class TechnicianCertificationsTest {
 
   @Test
   fun theOfferedSetComesFromTheAccountsTemplates() {
-    val offered = registry.offeredCertifications(listOf(thingOf(CanonicalTemplates.HOME)))
+    val offered =
+      registry.offeredCertifications(listOf(thingOf(CanonicalTemplates.HOME)))
 
     assertThat(offered.map { it.key }).containsExactly(
       "electrician", "plumber", "hvac_epa608", "general_contractor",
@@ -120,7 +126,10 @@ class TechnicianCertificationsTest {
   @Test
   fun aMixedAccountOffersBothDomains() {
     val offered = registry.offeredCertifications(
-      listOf(thingOf(CanonicalTemplates.HOME), thingOf(registry.canonicalById("airplane")!!)),
+      listOf(
+        thingOf(CanonicalTemplates.HOME),
+        thingOf(registry.canonicalById("airplane")!!)
+      ),
     )
 
     assertThat(offered.map { it.key }).containsAtLeast("electrician", FAA_AMT)
@@ -148,7 +157,12 @@ class TechnicianCertificationsTest {
     // A Thing froze the preset's bytes at creation, so its DNA carries whatever label shipped then.
     // Same rule as the lexicon: the words are app UI, only the key is data.
     val staleDna = CanonicalTemplates.HOME.copy(
-      certifications = listOf(CertificationDef(key = "electrician", label = "Sparky")),
+      certifications = listOf(
+        CertificationDef(
+          key = "electrician",
+          label = "Sparky"
+        )
+      ),
     )
 
     val offered = registry.offeredCertifications(listOf(thingOf(staleDna)))
@@ -161,7 +175,12 @@ class TechnicianCertificationsTest {
     val unknown = ThingTemplate(
       id = "spaceship",
       display_name = "Spaceship",
-      certifications = listOf(CertificationDef(key = "faa_ast", label = "Commercial Astronaut")),
+      certifications = listOf(
+        CertificationDef(
+          key = "faa_ast",
+          label = "Commercial Astronaut"
+        )
+      ),
     )
 
     val offered = registry.offeredCertifications(listOf(thingOf(unknown)))
@@ -175,7 +194,9 @@ class TechnicianCertificationsTest {
   fun aRoleIsTheDomainTheCredentialImplies() {
     val amt = Technician(certifications = listOf(Certification(type = FAA_AMT)))
 
-    assertThat(amt.derivedRoles(registry.knownCertifications())).containsExactly("Airplane")
+    assertThat(amt.derivedRoles(registry.knownCertifications())).containsExactly(
+      "Airplane"
+    )
   }
 
   @Test
@@ -205,7 +226,8 @@ class TechnicianCertificationsTest {
 
   @Test
   fun aCredentialFromAPresetThisBuildLacksIsUntaggedRatherThanAnError() {
-    val shared = Technician(certifications = listOf(Certification(type = "faa_ast")))
+    val shared =
+      Technician(certifications = listOf(Certification(type = "faa_ast")))
 
     assertThat(shared.derivedRoles(registry.knownCertifications())).isEmpty()
   }
@@ -216,17 +238,32 @@ class TechnicianCertificationsTest {
     // shared boat arrives on a household account, and their credential still has a name.
     val abyc = Technician(certifications = listOf(Certification(type = "abyc")))
 
-    assertThat(abyc.derivedRoles(registry.knownCertifications())).containsExactly("Boat")
-    assertThat(abyc.derivedRoles(registry.offeredCertifications(listOf(thingOf(CanonicalTemplates.HOME)))))
+    assertThat(abyc.derivedRoles(registry.knownCertifications())).containsExactly(
+      "Boat"
+    )
+    assertThat(
+      abyc.derivedRoles(
+        registry.offeredCertifications(
+          listOf(
+            thingOf(
+              CanonicalTemplates.HOME
+            )
+          )
+        )
+      )
+    )
       .isEmpty()
   }
 
   @Test
   fun aLegacyRecordIsTaggedWithoutHavingBeenMigrated() {
     // The claim the whole no-migration argument rests on.
-    val legacy = Technician(certificate_type = CertificateType.CERTIFICATE_TYPE_REPAIRMAN)
+    val legacy =
+      Technician(certificate_type = CertificateType.CERTIFICATE_TYPE_REPAIRMAN)
 
-    assertThat(legacy.derivedRoles(registry.knownCertifications())).containsExactly("Airplane")
+    assertThat(legacy.derivedRoles(registry.knownCertifications())).containsExactly(
+      "Airplane"
+    )
   }
 
   // ---- what the presets declare ----

@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import java.io.File
 import org.junit.Test
+import java.io.File
 
 /**
  * That `templates/` holds exactly one version of each preset — the check a **version bump is not**.
@@ -37,7 +37,11 @@ class TemplateAssetDirectoryTest {
     return dir
   }
 
-  private val templateDir: File get() = File(repoRoot(), "core/template/templates")
+  private val templateDir: File
+    get() = File(
+      repoRoot(),
+      "core/template/templates"
+    )
 
   /** `custom.v5.pb` -> "custom", or null for anything not named that way. */
   private fun presetId(name: String): String? =
@@ -57,7 +61,8 @@ class TemplateAssetDirectoryTest {
         "$preset has ${files.size} compiled assets: ${files.sorted()}. Two branches almost " +
           "certainly bumped it in parallel — fold both changes into one new version and delete " +
           "the rest, because the generator takes the highest and drops the other silently.",
-      ).that(files).hasSize(1)
+      ).that(files)
+        .hasSize(1)
     }
   }
 
@@ -73,7 +78,8 @@ class TemplateAssetDirectoryTest {
     assertThat(byPreset).isNotEmpty()
     byPreset.forEach { (preset, files) ->
       assertWithMessage("$preset has ${files.size} text protos: ${files.sorted()}")
-        .that(files).hasSize(1)
+        .that(files)
+        .hasSize(1)
     }
   }
 
@@ -100,10 +106,13 @@ class TemplateAssetDirectoryTest {
       val declared = templateDir.resolve("$stem.textproto")
         .readLines()
         .firstNotNullOfOrNull { line ->
-          Regex("""^version:\s*(\d+)$""").find(line.trim())?.groupValues?.get(1)?.toInt()
+          Regex("""^version:\s*(\d+)$""").find(line.trim())?.groupValues?.get(1)
+            ?.toInt()
         }
-      val named = stem.substringAfterLast(".v").toInt()
-      assertWithMessage("$stem declares version $declared").that(declared).isEqualTo(named)
+      val named = stem.substringAfterLast(".v")
+        .toInt()
+      assertWithMessage("$stem declares version $declared").that(declared)
+        .isEqualTo(named)
     }
   }
 }

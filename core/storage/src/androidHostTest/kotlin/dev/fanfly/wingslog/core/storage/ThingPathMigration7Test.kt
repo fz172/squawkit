@@ -32,7 +32,8 @@ class ThingPathMigration7Test {
   @Before
   fun setUp() {
     driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
   }
 
   private fun exec(sql: String) = driver.execute(null, sql, 0)
@@ -90,7 +91,8 @@ class ThingPathMigration7Test {
     // SQLDelight applies `N.sqm` when migrating FROM version N, so `7.sqm` is the 7 → 8 step.
     // (The header comments on this repo's older .sqm files are off by one against that convention;
     // the empirical check is Schema.version, which is 8 with 7.sqm present.)
-    WingsLogDatabase.Schema.synchronous().migrate(driver, 7, 8)
+    WingsLogDatabase.Schema.synchronous()
+      .migrate(driver, 7, 8)
   }
 
   @Test
@@ -99,7 +101,9 @@ class ThingPathMigration7Test {
 
     migrate()
 
-    assertThat(queryOne("SELECT collection FROM entity WHERE id = 'ac1'")).isEqualTo("thing")
+    assertThat(queryOne("SELECT collection FROM entity WHERE id = 'ac1'")).isEqualTo(
+      "thing"
+    )
     assertThat(queryOne("SELECT payload_schema FROM entity WHERE id = 'ac1'"))
       .isEqualTo("thing.Thing")
   }
@@ -169,8 +173,12 @@ class ThingPathMigration7Test {
 
     migrate()
 
-    assertThat(count("SELECT hydrated FROM sync_cursor WHERE collection = 'thing'")).isEqualTo(1L)
-    assertThat(count("SELECT rank FROM urgency_watermark WHERE id = 't1'")).isEqualTo(2L)
+    assertThat(count("SELECT hydrated FROM sync_cursor WHERE collection = 'thing'")).isEqualTo(
+      1L
+    )
+    assertThat(count("SELECT rank FROM urgency_watermark WHERE id = 't1'")).isEqualTo(
+      2L
+    )
   }
 
   @Test
@@ -180,11 +188,16 @@ class ThingPathMigration7Test {
     seedLegacyRows()
 
     migrate()
-    val afterFirst = queryOne("SELECT scope_path FROM blob_object WHERE id = 'b1'")
+    val afterFirst =
+      queryOne("SELECT scope_path FROM blob_object WHERE id = 'b1'")
     migrate()
 
-    assertThat(queryOne("SELECT scope_path FROM blob_object WHERE id = 'b1'")).isEqualTo(afterFirst)
-    assertThat(queryOne("SELECT collection FROM entity WHERE id = 'ac1'")).isEqualTo("thing")
+    assertThat(queryOne("SELECT scope_path FROM blob_object WHERE id = 'b1'")).isEqualTo(
+      afterFirst
+    )
+    assertThat(queryOne("SELECT collection FROM entity WHERE id = 'ac1'")).isEqualTo(
+      "thing"
+    )
     assertThat(count("SELECT COUNT(*) FROM entity")).isEqualTo(2L)
   }
 

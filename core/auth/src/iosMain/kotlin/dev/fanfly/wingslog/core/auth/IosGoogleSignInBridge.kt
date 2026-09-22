@@ -57,24 +57,25 @@ object IosGoogleSignInBridge {
     )
   }
 
-  internal suspend fun signIn(): GoogleSignInResult = suspendCoroutine { continuation ->
-    val signIn = signInHandler
-    if (signIn == null) {
-      continuation.resume(
-        GoogleSignInResult(errorMessage = "Native Google Sign-In provider is not configured")
-      )
-      return@suspendCoroutine
-    }
-    if (pendingCompletion != null) {
-      continuation.resume(
-        GoogleSignInResult(errorMessage = "A Google Sign-In request is already in progress")
-      )
-      return@suspendCoroutine
-    }
+  internal suspend fun signIn(): GoogleSignInResult =
+    suspendCoroutine { continuation ->
+      val signIn = signInHandler
+      if (signIn == null) {
+        continuation.resume(
+          GoogleSignInResult(errorMessage = "Native Google Sign-In provider is not configured")
+        )
+        return@suspendCoroutine
+      }
+      if (pendingCompletion != null) {
+        continuation.resume(
+          GoogleSignInResult(errorMessage = "A Google Sign-In request is already in progress")
+        )
+        return@suspendCoroutine
+      }
 
-    pendingCompletion = continuation
-    signIn()
-  }
+      pendingCompletion = continuation
+      signIn()
+    }
 }
 
 /**

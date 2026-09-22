@@ -21,7 +21,10 @@ class ZipDeflateCommonTest {
 
     val packed = DeflateCodec.compress(raw)
 
-    assertTrue(packed.size * 5 < raw.size, "expected 5x, got ${raw.size} -> ${packed.size}")
+    assertTrue(
+      packed.size * 5 < raw.size,
+      "expected 5x, got ${raw.size} -> ${packed.size}"
+    )
     assertContentEquals(raw, DeflateCodec.decompress(packed))
   }
 
@@ -54,15 +57,24 @@ class ZipDeflateCommonTest {
     // A zlib header's first byte is CMF — low nibble 8 for deflate — and CMF*256+FLG divides by 31.
     val cmf = packed[0].toInt() and 0xff
     val flg = packed[1].toInt() and 0xff
-    assertTrue(!(cmf and 0x0f == 8 && (cmf * 256 + flg) % 31 == 0), "output is zlib framed")
+    assertTrue(
+      !(cmf and 0x0f == 8 && (cmf * 256 + flg) % 31 == 0),
+      "output is zlib framed"
+    )
   }
 
   @Test
   fun deflateRoundTripsEmptyAndIncompressibleInput() = runTest {
     if (!DeflateCodec.isAvailable()) return@runTest
-    assertEquals(0, DeflateCodec.decompress(DeflateCodec.compress(ByteArray(0))).size)
+    assertEquals(
+      0,
+      DeflateCodec.decompress(DeflateCodec.compress(ByteArray(0))).size
+    )
     val random = Random(7).nextBytes(256 * 1024)
-    assertContentEquals(random, DeflateCodec.decompress(DeflateCodec.compress(random)))
+    assertContentEquals(
+      random,
+      DeflateCodec.decompress(DeflateCodec.compress(random))
+    )
   }
 
   @Test
@@ -77,7 +89,9 @@ class ZipDeflateCommonTest {
     )
 
     val entries = readLocalHeaders(archive)
-    assertEquals(listOf("N12345/airframe.csv", "N12345/cafe.csv"), entries.map { it.path })
+    assertEquals(
+      listOf("N12345/airframe.csv", "N12345/cafe.csv"),
+      entries.map { it.path })
     // Two bytes of payload: no deflate stream of it is shorter, so it has to stay stored.
     assertEquals(STORE_METHOD, entries[1].method)
     assertContentEquals("ok".encodeToByteArray(), entries[1].payload)
@@ -148,8 +162,45 @@ class ZipDeflateCommonTest {
 
     /** `zlib.compressobj(9, DEFLATED, -15)` over the text [deflateReadsAStreamWrittenWithNoFraming] expects. */
     val RAW_DEFLATE_VECTOR = byteArrayOf(
-      75, 73, 44, 73, -43, 41, -49, 47, -54, -26, -27, 50, 50, 48, 50, -45, 53, 48, -43, 53,
-      -76, -44, -15, -49, -52, 81, 72, -50, 72, -52, 75, 79, -27, -27, 74, -95, -117, 10, 0,
+      75,
+      73,
+      44,
+      73,
+      -43,
+      41,
+      -49,
+      47,
+      -54,
+      -26,
+      -27,
+      50,
+      50,
+      48,
+      50,
+      -45,
+      53,
+      48,
+      -43,
+      53,
+      -76,
+      -44,
+      -15,
+      -49,
+      -52,
+      81,
+      72,
+      -50,
+      72,
+      -52,
+      75,
+      79,
+      -27,
+      -27,
+      74,
+      -95,
+      -117,
+      10,
+      0,
     )
   }
 }

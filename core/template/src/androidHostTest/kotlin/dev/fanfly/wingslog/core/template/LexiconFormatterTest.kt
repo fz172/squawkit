@@ -27,14 +27,16 @@ class LexiconFormatterTest {
   @Test
   fun aVowelInitialNounCanStillTakeA() {
     // "a unicycle" — a plausible Phase 3 preset, and a vowel check renders "an unicycle".
-    val unicycle = Noun(singular = "unicycle", plural = "unicycles", article = "a")
+    val unicycle =
+      Noun(singular = "unicycle", plural = "unicycles", article = "a")
     assertThat(LexiconFormatter.withArticle(unicycle)).isEqualTo("a unicycle")
   }
 
   @Test
   fun aConsonantInitialNounCanStillTakeAn() {
     // "an hour" — the mirror case. Both defeat first-letter rules in opposite directions.
-    val hourMeter = Noun(singular = "hour meter", plural = "hour meters", article = "an")
+    val hourMeter =
+      Noun(singular = "hour meter", plural = "hour meters", article = "an")
     assertThat(LexiconFormatter.withArticle(hourMeter)).isEqualTo("an hour meter")
   }
 
@@ -155,7 +157,8 @@ class GenericLexiconTest {
   @Test
   fun everyNounAndStringIsPopulated() {
     val l = GenericLexicon.LEXICON
-    val nouns = listOf(l.thing, l.squawk, l.task, l.log, l.component, l.technician)
+    val nouns =
+      listOf(l.thing, l.squawk, l.task, l.log, l.component, l.technician)
     for (noun in nouns) {
       assertThat(noun).isNotNull()
       assertThat(noun!!.singular).isNotEmpty()
@@ -164,9 +167,15 @@ class GenericLexiconTest {
     }
     assertThat(
       listOf(
-        l.ready_status, l.down_status, l.down_status_long, l.down_alert_hint, l.due_status,
+        l.ready_status,
+        l.down_status,
+        l.down_status_long,
+        l.down_alert_hint,
+        l.due_status,
         l.collection_label,
-        l.compliance_mandatory, l.compliance_advisory, l.authority_label,
+        l.compliance_mandatory,
+        l.compliance_advisory,
+        l.authority_label,
       ),
     ).doesNotContain("")
   }

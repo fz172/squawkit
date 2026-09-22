@@ -103,7 +103,8 @@ class ThingSpecLinesTest {
     )
       .inOrder()
     // Only the VIN is matched exactly, so only the VIN renders in mono.
-    assertThat(spec.lines.filter { it.isIdentifier }.map { it.label }).containsExactly("VIN")
+    assertThat(spec.lines.filter { it.isIdentifier }
+                 .map { it.label }).containsExactly("VIN")
     // No title_candidate, so the hero shows the make and model alone rather than a 17-character
     // VIN set in display type.
     assertThat(spec.title).isEmpty()
@@ -112,7 +113,11 @@ class ThingSpecLinesTest {
   @Test
   fun aBikeAndABoatSayTheirOwnIdentifier() {
     val bike = CanonicalTemplates.BIKE.specLines(
-      thing(SpecKeys.MAKE to "Trek", SpecKeys.MODEL to "Domane", "frame_number" to "WTU123K0001Z"),
+      thing(
+        SpecKeys.MAKE to "Trek",
+        SpecKeys.MODEL to "Domane",
+        "frame_number" to "WTU123K0001Z"
+      ),
     )
     assertThat(bike.rendered()).containsExactly(
       "Trek Domane",
@@ -180,7 +185,14 @@ class ThingSpecLinesTest {
     CanonicalTemplates.ALL.forEach { template ->
       val values = template.spec_fields.associate { it.key to "v-${it.key}" }
       val spec = template.specLines(
-        Thing(id = "t", spec = values.map { (key, value) -> Spec(key = key, value_ = value) }),
+        Thing(
+          id = "t",
+          spec = values.map { (key, value) ->
+            Spec(
+              key = key,
+              value_ = value
+            )
+          }),
       )
       val headline = spec.headline.split(" ")
         .filter { it.isNotBlank() }
@@ -191,7 +203,8 @@ class ThingSpecLinesTest {
       assertThat(headline.intersect(lines.toSet())).isEmpty()
       // `title` may legitimately repeat a line: an airplane shows its tail number in the hero
       // and labels it in the card, because there it sits beside a serial.
-      assertThat((headline + lines + spec.title).filter { it.isNotBlank() }.toSet())
+      assertThat((headline + lines + spec.title).filter { it.isNotBlank() }
+                   .toSet())
         .containsExactlyElementsIn(values.values)
     }
   }
@@ -201,7 +214,8 @@ class ThingSpecLinesTest {
     // custom's only declared field IS the name, and with no make and model the hero renders it —
     // so the card would print the same string two lines below its own heading.
     val custom = CanonicalTemplates.CUSTOM
-    val thing = Thing(spec = listOf(Spec(key = "name", value_ = "Espresso Machine")))
+    val thing =
+      Thing(spec = listOf(Spec(key = "name", value_ = "Espresso Machine")))
 
     val lines = custom.specLines(thing)
 

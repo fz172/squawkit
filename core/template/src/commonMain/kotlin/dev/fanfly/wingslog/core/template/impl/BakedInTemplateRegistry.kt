@@ -56,7 +56,10 @@ class BakedInTemplateRegistry(
       template.min_app_version > appVersionCode -> DegradedReason.APP_TOO_OLD
       // An id this build carries renders from its own canonical ([capabilitiesFor]), so the stored
       // enum values are never read and cannot degrade it. Degradation stays for ids the build lacks.
-      byId.containsKey(template.id) -> return TemplateResolution.Renderable(template)
+      byId.containsKey(template.id) -> return TemplateResolution.Renderable(
+        template
+      )
+
       template.capabilities?.namesUnrecognisedEnumValue() == true ->
         DegradedReason.UNRECOGNISED_CAPABILITY
       // A Thing with no DNA resolves to the baked-in fallback, which this build ships and can
@@ -74,7 +77,8 @@ class BakedInTemplateRegistry(
 
   override fun capabilitiesFor(template: ThingTemplate?): Capabilities {
     val id = template?.id ?: return CurrentThingTemplate.ALL_ENABLED
-    return byId[id]?.capabilities ?: template.capabilities ?: CurrentThingTemplate.ALL_ENABLED
+    return byId[id]?.capabilities ?: template.capabilities
+    ?: CurrentThingTemplate.ALL_ENABLED
   }
 
   override fun canonical(): List<ThingTemplate> =

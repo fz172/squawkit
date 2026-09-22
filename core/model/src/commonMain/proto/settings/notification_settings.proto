@@ -17,8 +17,8 @@ message NotificationSettings {
   bool all_disabled = 1;
 
   reserved 2; // aog_disabled — AOG is no longer its own tier (design decision, 2026-08-26); reserved
-              // rather than reused so an old synced doc's stray `true` byte on this field number can
-              // never be misread as a future field's value.
+  // rather than reused so an old synced doc's stray `true` byte on this field number can
+  // never be misread as a future field's value.
 
   // Settings collapsed from eight fields to two — priority_due_disabled and collaboration_disabled
   // below — down to three toggles total including all_disabled (design decision, 2026-08-26).

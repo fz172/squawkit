@@ -138,9 +138,12 @@ class TemplateResolutionTest {
     // PRD R42: an aeroplane created before SECTION_DATA_LOGS existed carries DNA whose sections an
     // older build could not name — yet on this build it renders from the canonical by id, so a
     // stored value it has no code for is never read. Only a floor can degrade a known preset.
-    val unknownSection = Section.values().maxOf { it.value } + 1
+    val unknownSection = Section.values()
+      .maxOf { it.value } + 1
     val resolution = registry.resolve(
-      thingWith { this.capabilities = capabilitiesWithRawEnum(8, unknownSection) },
+      thingWith {
+        this.capabilities = capabilitiesWithRawEnum(8, unknownSection)
+      },
     )
 
     assertThat(resolution).isInstanceOf(TemplateResolution.Renderable::class.java)

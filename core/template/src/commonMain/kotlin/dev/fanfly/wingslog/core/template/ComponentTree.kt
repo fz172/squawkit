@@ -271,7 +271,8 @@ fun ThingTemplate?.slotsUnder(parentPath: ComponentPath): List<ComponentSlot> {
   if (this == null) return emptyList()
   var slots: List<ComponentSlot> = component_slots
   for ((slotKey, _) in parentPath) {
-    slots = slots.firstOrNull { it.slot_key == slotKey }?.children ?: return emptyList()
+    slots = slots.firstOrNull { it.slot_key == slotKey }?.children
+      ?: return emptyList()
   }
   return slots
 }

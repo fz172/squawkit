@@ -18,6 +18,7 @@ sealed class Screen(val route: String) {
     const val DATA_LOG_ID = "dataLogId"
 
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
+
     /** A Thing the shell should switch to once a dialog closes — set by the create form. */
     const val CROSS_SCREEN_SELECT_THING_ID = "select_thing_id"
   }

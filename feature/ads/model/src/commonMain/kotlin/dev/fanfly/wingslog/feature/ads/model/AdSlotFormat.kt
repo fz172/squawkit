@@ -54,8 +54,12 @@ enum class AdSlotFormat(val unitCount: Int) {
      * the data log viewer's sidebar footer — has room for one unit however wide the window is, and
      * two would be laid out past its edge.
      */
-    fun desiredUnits(tier: AdLayoutTier, maxUnits: Int = TWO_UP.unitCount): Int {
-      val byTier = if (tier == AdLayoutTier.WIDE) TWO_UP.unitCount else SINGLE.unitCount
+    fun desiredUnits(
+      tier: AdLayoutTier,
+      maxUnits: Int = TWO_UP.unitCount
+    ): Int {
+      val byTier =
+        if (tier == AdLayoutTier.WIDE) TWO_UP.unitCount else SINGLE.unitCount
       return minOf(byTier, maxUnits)
     }
 

@@ -147,7 +147,12 @@ class TemplateValidationTest {
   @Test
   fun aMeterFollowingItselfIsAProblem() {
     val broken = valid().copy(
-      meters = listOf(MeterDef(key = "odometer", follows_meter_key = "odometer")),
+      meters = listOf(
+        MeterDef(
+          key = "odometer",
+          follows_meter_key = "odometer"
+        )
+      ),
     )
 
     assertThat(broken.structuralProblems())

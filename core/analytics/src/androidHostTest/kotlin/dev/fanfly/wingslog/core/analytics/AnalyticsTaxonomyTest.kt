@@ -240,7 +240,11 @@ class AnalyticsTaxonomyTest {
         reason = DataLogImportFailureReason.UNRECOGNIZED,
         sizeBytes = 900_000,
       ),
-      DataLogOpened(templateId = "airplane", durationSeconds = 600, seriesCount = 12),
+      DataLogOpened(
+        templateId = "airplane",
+        durationSeconds = 600,
+        seriesCount = 12
+      ),
     )
 
     events.forEach { event ->

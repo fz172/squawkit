@@ -181,7 +181,9 @@ class AuthManagerImpl(
 
     return try {
       val linkResult = current.linkWithCredential(credential)
-      AccountUpgradeResult.Linked(linkResult.user ?: authProvider.currentUser ?: current)
+      AccountUpgradeResult.Linked(
+        linkResult.user ?: authProvider.currentUser ?: current
+      )
     } catch (e: FirebaseAuthUserCollisionException) {
       logger.i { "Google account already in use; offering merge" }
       AccountUpgradeResult.CredentialInUse(credential)
