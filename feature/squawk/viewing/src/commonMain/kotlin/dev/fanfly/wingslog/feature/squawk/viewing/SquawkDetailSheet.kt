@@ -30,6 +30,7 @@ import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
@@ -86,6 +87,17 @@ fun SquawkDetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     bottomBar = commentComposer,
+    headerAction = onEditClick?.let {
+      {
+        DetailSheetEditAction(
+          label = stringResource(
+            Res.string.edit_squawk,
+            LocalThingLexicon.current.squawkNoun.singular,
+          ),
+          onClick = it,
+        )
+      }
+    },
     headerSlot = {
       PriorityBadge(item)
     },
@@ -123,7 +135,12 @@ fun SquawkDetailSheet(
       )
     }
 
-    DetailSheetActionRow(modifier = Modifier.padding(top = Spacing.small)) {
+    val canAct = when (item.status) {
+      SquawkStatus.OPEN -> onFixedClick != null && onDismissNoWorkPlanned != null
+      SquawkStatus.DISMISSED -> onReopenClick != null
+      else -> false
+    }
+    if (canAct) DetailSheetActionRow(modifier = Modifier.padding(top = Spacing.small)) {
       when (item.status) {
         SquawkStatus.OPEN -> if (onFixedClick != null && onDismissNoWorkPlanned != null) {
           DetailSheetAction(
@@ -155,15 +172,6 @@ fun SquawkDetailSheet(
         }
 
         else -> Unit
-      }
-      if (onEditClick != null) {
-        DetailSheetAction(
-          label = stringResource(
-            Res.string.edit_squawk,
-            LocalThingLexicon.current.squawkNoun.singular,
-          ),
-          onClick = onEditClick,
-        )
       }
     }
 

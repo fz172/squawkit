@@ -40,8 +40,7 @@ import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -92,6 +91,17 @@ fun MaintenanceLogDetailSheet(
   DetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
+    headerAction = onEditClick?.let {
+      {
+        DetailSheetEditAction(
+          label = stringResource(
+            MaintenanceRes.string.edit_log,
+            LocalThingLexicon.current.logNoun.singular,
+          ),
+          onClick = it,
+        )
+      }
+    },
     headerSlot = {
       LogComponentBadge(log.component_type)
     },
@@ -106,18 +116,6 @@ fun MaintenanceLogDetailSheet(
         style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 21.sp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-    }
-
-    if (onEditClick != null) {
-      DetailSheetActionRow(modifier = Modifier.padding(top = Spacing.small)) {
-        DetailSheetAction(
-          label = stringResource(
-            MaintenanceRes.string.edit_log,
-            LocalThingLexicon.current.logNoun.singular,
-          ),
-          onClick = onEditClick,
-        )
-      }
     }
 
     Spacer(Modifier.height(Spacing.large))

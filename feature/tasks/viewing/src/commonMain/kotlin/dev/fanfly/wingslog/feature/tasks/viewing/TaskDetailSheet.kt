@@ -28,6 +28,7 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
@@ -102,6 +103,14 @@ fun TaskDetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     bottomBar = commentComposer,
+    headerAction = onEditClick?.let {
+      {
+        DetailSheetEditAction(
+          label = stringResource(SharedRes.string.edit_task),
+          onClick = it,
+        )
+      }
+    },
     headerSlot = {
       if (dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON) {
         StatusBadge(dueStatus)
@@ -187,30 +196,22 @@ fun TaskDetailSheet(
     // Due date hero
     DueDateHero(dueStatus)
 
-    val canAct =
+    if (
       onLogWorkClick != null && onSkipCycleClick != null && dueStatus.status != DueStatus.COMPLIED
-    if (canAct || onEditClick != null) {
+    ) {
       DetailSheetActionRow(modifier = Modifier.padding(top = Spacing.small)) {
-        if (canAct) {
-          DetailSheetAction(
-            label = stringResource(SharedRes.string.skip_this_cycle_option),
-            onClick = onSkipCycleClick,
-          )
-          DetailSheetAction(
-            label = stringResource(
-              SharedRes.string.create_work_log,
-              LocalThingLexicon.current.logNoun.singular,
-            ),
-            onClick = onLogWorkClick,
-            primary = true,
-          )
-        }
-        if (onEditClick != null) {
-          DetailSheetAction(
-            label = stringResource(SharedRes.string.edit_task),
-            onClick = onEditClick,
-          )
-        }
+        DetailSheetAction(
+          label = stringResource(SharedRes.string.skip_this_cycle_option),
+          onClick = onSkipCycleClick,
+        )
+        DetailSheetAction(
+          label = stringResource(
+            SharedRes.string.create_work_log,
+            LocalThingLexicon.current.logNoun.singular,
+          ),
+          onClick = onLogWorkClick,
+          primary = true,
+        )
       }
     }
 

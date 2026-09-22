@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,7 +71,8 @@ import wingslog.core.sharedassets.generated.resources.dismiss
  * Features:
  * - Consistent horizontal padding ([dev.fanfly.wingslog.core.ui.theme.Spacing.extraLarge]).
  * - Built-in vertical scrolling.
- * - Standardized header layout with a title slot; actions go in a [DetailSheetActionRow] in the body.
+ * - Standardized header layout: a title slot with an optional icon-only [headerAction] at its end;
+ *   the record's actions go in a [DetailSheetActionRow] in the body.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +80,8 @@ fun DetailSheet(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+  /** A [DetailSheetEditAction], typically — small enough to share the title row. */
+  headerAction: (@Composable () -> Unit)? = null,
   /** Pinned under the scrolling body — for an input that must stay reachable, such as comments. */
   bottomBar: (@Composable () -> Unit)? = null,
   headerSlot: @Composable ColumnScope.() -> Unit,
@@ -86,6 +90,7 @@ fun DetailSheet(
   if (LocalDetailPresentation.current == DetailPresentation.Pane) {
     DetailBody(
       fillHeight = true,
+      headerAction = headerAction,
       bottomBar = bottomBar,
       headerSlot = headerSlot,
       content = content,
@@ -100,6 +105,7 @@ fun DetailSheet(
       modifier = modifier,
     ) {
       DetailBody(
+        headerAction = headerAction,
         bottomBar = bottomBar,
         headerSlot = headerSlot,
         content = content
@@ -109,6 +115,7 @@ fun DetailSheet(
     DetailEndDrawer(onDismiss = onDismiss, modifier = modifier) {
       DetailBody(
         fillHeight = true,
+        headerAction = headerAction,
         bottomBar = bottomBar,
         headerSlot = headerSlot,
         content = content
@@ -119,6 +126,7 @@ fun DetailSheet(
 
 @Composable
 private fun DetailBody(
+  headerAction: (@Composable () -> Unit)?,
   bottomBar: (@Composable () -> Unit)?,
   headerSlot: @Composable ColumnScope.() -> Unit,
   content: @Composable ColumnScope.() -> Unit,
@@ -156,7 +164,13 @@ private fun DetailBody(
           Spacer(Modifier.height(Spacing.large))
         }
 
-        headerSlot()
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          verticalAlignment = Alignment.Top,
+        ) {
+          Column(modifier = Modifier.weight(1f)) { headerSlot() }
+          headerAction?.invoke()
+        }
 
         // Body Content
         content()
@@ -296,5 +310,20 @@ fun RowScope.DetailSheetAction(
       )
     }
     menu()
+  }
+}
+
+/**
+ * The route to the edit form, on the title row — icon only, because updating a record is the rare
+ * action next to resolving or logging against it, and a labelled button there squeezes the title.
+ */
+@Composable
+fun DetailSheetEditAction(
+  label: String,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  IconButton(onClick = onClick, modifier = modifier) {
+    Icon(Icons.Outlined.Edit, contentDescription = label)
   }
 }
