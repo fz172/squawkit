@@ -140,4 +140,4 @@ val LocalDetailPane = compositionLocalOf { DetailPaneState() }
  * Proportions rather than dp, so the two always sum to the scaffold and nothing is left over for
  * the scaffold to hand to one pane or scale out of the other.
  */
-private const val LIST_PANE_SHARE = 0.32f
+private const val LIST_PANE_SHARE = 0.45f
