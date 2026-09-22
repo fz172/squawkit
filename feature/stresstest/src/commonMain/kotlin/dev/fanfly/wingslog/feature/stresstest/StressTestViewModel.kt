@@ -122,7 +122,8 @@ class StressTestViewModel(
   }
 
   fun templateFor(templateId: String): ThingTemplate =
-    CanonicalTemplates.ALL.firstOrNull { it.id == templateId } ?: AirplaneTemplate.TEMPLATE
+    CanonicalTemplates.ALL.firstOrNull { it.id == templateId }
+      ?: AirplaneTemplate.TEMPLATE
 
   fun setDnaFromANewerBuild(value: Boolean) {
     _config.value = _config.value.copy(dnaFromANewerBuild = value)

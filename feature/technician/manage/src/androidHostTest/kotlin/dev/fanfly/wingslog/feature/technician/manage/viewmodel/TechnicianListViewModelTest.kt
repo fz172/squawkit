@@ -1,10 +1,10 @@
 package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 
-import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Technician
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.Technician
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,9 @@ class TechnicianListViewModelTest {
     every { technicianManager.observeTechnicians() } returns flowOf(emptyList())
     every { technicianManager.observeSelfId() } returns flowOf(null)
     every { sharingManager.observeLinkedTechnicians() } returns flowOf(emptyList())
-    every { sharingManager.observeLinkedTechnicianPhotos() } returns flowOf(emptyMap())
+    every { sharingManager.observeLinkedTechnicianPhotos() } returns flowOf(
+      emptyMap()
+    )
     // A relaxed mock hands back an EMPTY flow, and an empty source in a combine means the state
     // never emits at all — stub it so the combine can produce. Null = never reviewed.
     every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(

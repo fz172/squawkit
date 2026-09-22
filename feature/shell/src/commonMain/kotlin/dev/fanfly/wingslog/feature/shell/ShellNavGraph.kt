@@ -6,10 +6,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.feature.datalog.update.viewer.DataLogViewerScreen
-import dev.fanfly.wingslog.id.DataLogId
-import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
+import dev.fanfly.wingslog.feature.datalog.update.viewer.DataLogViewerScreen
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
@@ -30,6 +28,8 @@ import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScree
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import dev.fanfly.wingslog.feature.thing.update.EditThingScreen
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.mp.KoinPlatform
 
@@ -193,7 +193,13 @@ fun NavGraphBuilder.dataLogRoutes(navController: NavController) {
       // savedStateHandle carries the nav arguments on every target; `arguments` is a
       // platform SavedState with no common getString.
       thingId = ThingId(checkNotNull(entry.savedStateHandle.get<String>(Screen.THING_ID))),
-      dataLogId = DataLogId(checkNotNull(entry.savedStateHandle.get<String>(Screen.DATA_LOG_ID))),
+      dataLogId = DataLogId(
+        checkNotNull(
+          entry.savedStateHandle.get<String>(
+            Screen.DATA_LOG_ID
+          )
+        )
+      ),
       navController = navController,
     )
   }

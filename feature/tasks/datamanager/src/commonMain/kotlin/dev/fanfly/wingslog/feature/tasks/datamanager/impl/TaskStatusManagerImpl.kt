@@ -12,7 +12,6 @@ import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
-import kotlin.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 class TaskStatusManagerImpl(
   private val scopeResolver: ThingScopeResolver,
@@ -33,35 +33,51 @@ class TaskStatusManagerImpl(
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : TaskStatusManager {
 
-  private val taskStore: EntityStore<MaintenanceTask> = storeFactory.create(CollectionKind.MaintenanceTask)
-  private val logStore: EntityStore<MaintenanceLog> = storeFactory.create(CollectionKind.MaintenanceLog)
+  private val taskStore: EntityStore<MaintenanceTask> =
+    storeFactory.create(CollectionKind.MaintenanceTask)
+  private val logStore: EntityStore<MaintenanceLog> =
+    storeFactory.create(CollectionKind.MaintenanceLog)
   private val refreshTick = MutableStateFlow(0)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeTasksWithStatus(thingId: String): Flow<List<MaintenanceTaskWithStatus>> =
-    scopeResolver.resolve(thingId).flatMapLatest { scope ->
-      if (scope == null) return@flatMapLatest flowOf(emptyList())
-      // One table backs every collection, so each store re-emits on any write; distinctUntilChanged
-      // keeps the due computation to real changes.
-      combine(
-        taskStore.observeAll(scope).map { rows -> rows.map { it.value } }.distinctUntilChanged(),
-        logStore.observeAll(scope).map { rows -> rows.map { it.value } }.distinctUntilChanged(),
-        refreshTick,
-      ) { tasks, logs, _ -> withStatus(tasks, logs) }
-        .catch { e ->
-          logger.w(e) { "Error observing task status for thing $thingId" }
-          emit(emptyList())
-        }
-    }
+    scopeResolver.resolve(thingId)
+      .flatMapLatest { scope ->
+        if (scope == null) return@flatMapLatest flowOf(emptyList())
+        // One table backs every collection, so each store re-emits on any write; distinctUntilChanged
+        // keeps the due computation to real changes.
+        combine(
+          taskStore.observeAll(scope)
+            .map { rows -> rows.map { it.value } }
+            .distinctUntilChanged(),
+          logStore.observeAll(scope)
+            .map { rows -> rows.map { it.value } }
+            .distinctUntilChanged(),
+          refreshTick,
+        ) { tasks, logs, _ -> withStatus(tasks, logs) }
+          .catch { e ->
+            logger.w(e) { "Error observing task status for thing $thingId" }
+            emit(emptyList())
+          }
+      }
 
   override fun refreshDueStatus() {
     refreshTick.value++
   }
 
-  private fun withStatus(tasks: List<MaintenanceTask>, logs: List<MaintenanceLog>): List<MaintenanceTaskWithStatus> {
-    val withStatus = tasks.map { MaintenanceTaskWithStatus(it, dueManager.computeNextDue(it, logs, tasks)) }
+  private fun withStatus(
+    tasks: List<MaintenanceTask>,
+    logs: List<MaintenanceLog>
+  ): List<MaintenanceTaskWithStatus> {
+    val withStatus = tasks.map {
+      MaintenanceTaskWithStatus(
+        it,
+        dueManager.computeNextDue(it, logs, tasks)
+      )
+    }
     val readings = currentReadings(logs).associate { it.meter_key to it.value_ }
-    val today = clock.now().toLocalDateTime(timeZone).date
+    val today = clock.now()
+      .toLocalDateTime(timeZone).date
     val active = withStatus
       .filter { it.dueStatus.status != DueStatus.COMPLIED }
       .sortedBy { task ->

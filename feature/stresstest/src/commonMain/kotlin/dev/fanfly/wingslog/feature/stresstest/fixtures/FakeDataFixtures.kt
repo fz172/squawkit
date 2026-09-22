@@ -61,7 +61,13 @@ internal fun routine(
   notes: String = "",
   component: ComponentType = ComponentType.COMPONENT_UNKNOWN,
 ): TaskTemplate =
-  TaskTemplate(title, component, ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION, rule, notes)
+  TaskTemplate(
+    title,
+    component,
+    ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+    rule,
+    notes
+  )
 
 internal object FakeDataPools {
   /** Which pool a preset draws from. Airplane is the fallback because it is the richest. */

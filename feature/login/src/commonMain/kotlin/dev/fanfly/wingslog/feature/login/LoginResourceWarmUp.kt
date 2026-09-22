@@ -6,14 +6,14 @@ import org.jetbrains.compose.resources.getDrawableResourceBytes
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.apple_logo
+import wingslog.feature.login.generated.resources.continue_as_guest
+import wingslog.feature.login.generated.resources.continuing_as_guest
 import wingslog.feature.login.generated.resources.google_logo
 import wingslog.feature.login.generated.resources.ic_apple
 import wingslog.feature.login.generated.resources.ic_google_rd_na
 import wingslog.feature.login.generated.resources.legal_disclaimer
 import wingslog.feature.login.generated.resources.mission_statement
 import wingslog.feature.login.generated.resources.privacy_notice
-import wingslog.feature.login.generated.resources.continue_as_guest
-import wingslog.feature.login.generated.resources.continuing_as_guest
 import wingslog.feature.login.generated.resources.provider_apple
 import wingslog.feature.login.generated.resources.provider_email
 import wingslog.feature.login.generated.resources.provider_google

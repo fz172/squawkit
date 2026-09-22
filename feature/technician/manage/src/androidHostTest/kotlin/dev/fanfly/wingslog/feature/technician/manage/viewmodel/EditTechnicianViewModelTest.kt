@@ -57,7 +57,9 @@ class EditTechnicianViewModelTest {
 
     every { technicianManager.observeSelfId() } returns flowOf(null)
     fleetOf(registry.canonicalById("airplane")!!)
-    coEvery { technicianManager.updateTechnician(any()) } returns Result.success(true)
+    coEvery { technicianManager.updateTechnician(any()) } returns Result.success(
+      true
+    )
   }
 
   @After
@@ -83,10 +85,17 @@ class EditTechnicianViewModelTest {
     fleetManager = fleetManager,
     templateRegistry = registry,
     authManager = mockk(relaxed = true),
-    savedStateHandle = SavedStateHandle(mapOf(Screen.TECHNICIAN_ID to (id ?: "new"))),
+    savedStateHandle = SavedStateHandle(
+      mapOf(
+        Screen.TECHNICIAN_ID to (id ?: "new")
+      )
+    ),
   )
 
-  private fun EditTechnicianViewModel.updateCertificationNumberOn(type: String, number: String) {
+  private fun EditTechnicianViewModel.updateCertificationNumberOn(
+    type: String,
+    number: String
+  ) {
     addCertification(type)
     updateCertificationNumber(0, number)
   }
@@ -96,7 +105,12 @@ class EditTechnicianViewModelTest {
     fleetOf(CanonicalTemplates.HOME)
 
     assertThat(viewModel().uiState.value.offered.map { it.key })
-      .containsExactly("electrician", "plumber", "hvac_epa608", "general_contractor")
+      .containsExactly(
+        "electrician",
+        "plumber",
+        "hvac_epa608",
+        "general_contractor"
+      )
   }
 
   @Test
@@ -108,17 +122,18 @@ class EditTechnicianViewModelTest {
   }
 
   @Test
-  fun anAccountWithNoCredentialedTemplateOffersNothingButCustom() = runTest(testDispatcher) {
-    // Nothing declared, but the form still renders: Custom is always on the menu, so a bike-only
-    // account can still record the licence its mechanic actually holds.
-    fleetOf(CanonicalTemplates.BIKE)
-    val vm = viewModel()
+  fun anAccountWithNoCredentialedTemplateOffersNothingButCustom() =
+    runTest(testDispatcher) {
+      // Nothing declared, but the form still renders: Custom is always on the menu, so a bike-only
+      // account can still record the licence its mechanic actually holds.
+      fleetOf(CanonicalTemplates.BIKE)
+      val vm = viewModel()
 
-    assertThat(vm.uiState.value.offered).isEmpty()
+      assertThat(vm.uiState.value.offered).isEmpty()
 
-    vm.addCustomCertification()
-    assertThat(vm.uiState.value.certifications.single().isCustom).isTrue()
-  }
+      vm.addCustomCertification()
+      assertThat(vm.uiState.value.certifications.single().isCustom).isTrue()
+    }
 
   @Test
   fun aCertificateNumberIsStoredUpperCased() {
@@ -160,7 +175,9 @@ class EditTechnicianViewModelTest {
     vm.updateCertificationLabel(0, "certified welding inspector")
     vm.updateCertificationNumber(0, "cwi-88")
     val written = slot<Technician>()
-    coEvery { technicianManager.updateTechnician(capture(written)) } returns Result.success(true)
+    coEvery { technicianManager.updateTechnician(capture(written)) } returns Result.success(
+      true
+    )
 
     vm.save()
 
@@ -203,13 +220,17 @@ class EditTechnicianViewModelTest {
       )
     )
     val written = slot<Technician>()
-    coEvery { technicianManager.updateTechnician(capture(written)) } returns Result.success(true)
+    coEvery { technicianManager.updateTechnician(capture(written)) } returns Result.success(
+      true
+    )
 
     viewModel(TECH_ID).save()
 
     // One answer, not two: the legacy fields have already been folded into the list above, and
     // leaving them behind would be a second source nothing keeps in step.
-    assertThat(written.captured.certifications.map { it.type }).containsExactly(FAA_AMT)
+    assertThat(written.captured.certifications.map { it.type }).containsExactly(
+      FAA_AMT
+    )
     assertThat(written.captured.certificate_type)
       .isEqualTo(CertificateType.CERTIFICATE_TYPE_NONE)
     assertThat(written.captured.cert_number).isEmpty()
@@ -234,21 +255,27 @@ class EditTechnicianViewModelTest {
   }
 
   @Test
-  fun aNeverExpiringCertificationIsWrittenWithNoDate() = runTest(testDispatcher) {
-    val vm = viewModel()
-    vm.updateName("Avery")
-    vm.addCertification(FAA_AMT)
-    vm.updateCertificationExpireLimit(0, CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES)
-    val written = slot<Technician>()
-    coEvery { technicianManager.updateTechnician(capture(written)) } returns Result.success(true)
-
-    vm.save()
-
-    assertThat(written.captured.certifications).containsExactly(
-      Certification(
-        type = FAA_AMT,
-        expire_limit = CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES,
+  fun aNeverExpiringCertificationIsWrittenWithNoDate() =
+    runTest(testDispatcher) {
+      val vm = viewModel()
+      vm.updateName("Avery")
+      vm.addCertification(FAA_AMT)
+      vm.updateCertificationExpireLimit(
+        0,
+        CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
       )
-    )
-  }
+      val written = slot<Technician>()
+      coEvery { technicianManager.updateTechnician(capture(written)) } returns Result.success(
+        true
+      )
+
+      vm.save()
+
+      assertThat(written.captured.certifications).containsExactly(
+        Certification(
+          type = FAA_AMT,
+          expire_limit = CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES,
+        )
+      )
+    }
 }

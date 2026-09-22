@@ -105,7 +105,10 @@ fun findDuplicates(
   //    A row is filed under EVERY number it carries, because one person can hold several
   //    certifications and two rows sharing any one of them are that person twice (#684).
   manual.filter { it.id !in claimed }
-    .flatMap { row -> row.certKeys().map { it to row } }
+    .flatMap { row ->
+      row.certKeys()
+        .map { it to row }
+    }
     .groupBy({ it.first }, { it.second })
     .forEach { (_, filed) ->
       val rows = filed.filter { it.id !in claimed }
@@ -130,7 +133,9 @@ fun findDuplicates(
       // A certificate number is definitive: two rows carrying *different* ones are two different
       // people, however alike their names read. Only a name match unopposed by conflicting
       // certificates is a candidate.
-      if (rows.map { it.certKeys() }.filter { it.isNotEmpty() }.distinct().size > 1) return@forEach
+      if (rows.map { it.certKeys() }
+          .filter { it.isNotEmpty() }
+          .distinct().size > 1) return@forEach
       val keep = rows.maxWith(RICHEST)
       rows.forEach { claimed += it.id }
       groups += DuplicateGroup(
@@ -142,7 +147,10 @@ fun findDuplicates(
     }
 
   // 5. Mirror ↔ mirror sharing a certificate number. Never merged — two members are two people.
-  mirrors.flatMap { row -> row.certKeys().map { it to row } }
+  mirrors.flatMap { row ->
+    row.certKeys()
+      .map { it to row }
+  }
     .groupBy({ it.first }, { it.second })
     .forEach { (_, rows) ->
       if (rows.size < 2) return@forEach
@@ -195,7 +203,9 @@ fun DuplicateGroup.mergedCertifications(): List<Certification> {
 
 /** Certificate number match, else name. Callers decide how much confirmation each deserves. */
 private fun Technician.matches(other: Technician): Boolean {
-  if (certKeys().isNotEmpty() && other.certKeys().isNotEmpty()) {
+  if (certKeys().isNotEmpty() && other.certKeys()
+      .isNotEmpty()
+  ) {
     return sharesACertNumberWith(other)
   }
   return nameKey().isNotEmpty() && nameKey() == other.nameKey()
@@ -222,7 +232,8 @@ private fun Technician.certKeys(): Set<String> =
 
 /** One shared number is enough: a certificate number identifies a person, not a credential. */
 private fun Technician.sharesACertNumberWith(other: Technician): Boolean =
-  certKeys().intersect(other.certKeys()).isNotEmpty()
+  certKeys().intersect(other.certKeys())
+    .isNotEmpty()
 
 private fun Technician.nameKey(): String =
   name.trim()
@@ -249,7 +260,10 @@ private fun Technician.resolvedCertTypeKey(): String =
 private val RICHEST = compareBy<Technician>(
   { it.certKeys().size },
   { it.name.isNotBlank() },
-  { it.resolvedCertifications().any { certification -> certification.expiration != null } },
+  {
+    it.resolvedCertifications()
+      .any { certification -> certification.expiration != null }
+  },
   { it.name.trim().length },
 )
 

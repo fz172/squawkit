@@ -28,7 +28,11 @@ class UpgradeEmailStore(
 
   suspend fun savePendingEmail(guestUid: String, email: String) {
     writeLock.withLock {
-      db.schemaQueries.upsertConfig(scopeFor(guestUid), KEY_PENDING_EMAIL, email)
+      db.schemaQueries.upsertConfig(
+        scopeFor(guestUid),
+        KEY_PENDING_EMAIL,
+        email
+      )
     }
   }
 

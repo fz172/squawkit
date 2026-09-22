@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import com.squareup.wire.Instant as WireInstant
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
@@ -20,12 +19,13 @@ import dev.fanfly.wingslog.thing.SeasonalRule
 import dev.fanfly.wingslog.thing.TimeRule
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
+import com.squareup.wire.Instant as WireInstant
 
 class TaskDueManagerImplTest {
 
@@ -188,7 +188,13 @@ class TaskDueManagerImplTest {
       forceComplied = ForceCompliedStatus(complied_date = iso("2024-01-01")),
     )
 
-    assertThat(manager.computeNextDue(card, emptyList(), listOf(card)).compliedDate)
+    assertThat(
+      manager.computeNextDue(
+        card,
+        emptyList(),
+        listOf(card)
+      ).compliedDate
+    )
       .isEqualTo(LocalDate(2024, 1, 1))
   }
 

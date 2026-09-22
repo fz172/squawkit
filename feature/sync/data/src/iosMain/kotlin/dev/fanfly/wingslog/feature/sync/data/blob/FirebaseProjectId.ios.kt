@@ -9,8 +9,9 @@ import platform.Foundation.dictionaryWithContentsOfFile
  * `FirebaseApp.configure()` reads — because gitlive's `Firebase.app.options` getter NPEs on iOS.
  */
 internal actual fun firebaseProjectId(): String? {
-  val path = NSBundle.mainBundle.pathForResource("GoogleService-Info", ofType = "plist")
-    ?: return null
+  val path =
+    NSBundle.mainBundle.pathForResource("GoogleService-Info", ofType = "plist")
+      ?: return null
   val dict = NSDictionary.dictionaryWithContentsOfFile(path) ?: return null
   return dict["PROJECT_ID"] as? String
 }

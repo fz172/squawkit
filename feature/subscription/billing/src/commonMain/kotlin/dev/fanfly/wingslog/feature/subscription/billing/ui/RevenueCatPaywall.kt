@@ -59,7 +59,8 @@ fun RevenueCatProPaywall(
           // give back. Signalling completion regardless would leave the page stuck on "activating"
           // forever, waiting for an entitlement no purchase will ever produce. Only a restore that
           // actually returned the Pro entitlement is worth waiting on.
-          val restoredPro = customerInfo.entitlements.active.containsKey(PRO_ENTITLEMENT_ID)
+          val restoredPro =
+            customerInfo.entitlements.active.containsKey(PRO_ENTITLEMENT_ID)
           logger.i { "Paywall restore completed; restored Pro: $restoredPro" }
           if (restoredPro) currentOnPurchaseCompleted()
         }

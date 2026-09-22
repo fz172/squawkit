@@ -12,7 +12,8 @@ import org.w3c.dom.DragEvent
 import org.w3c.dom.events.Event
 
 @Composable
-internal actual fun rememberDroppedFileReader(): DroppedFileReader = WebDroppedFileReader
+internal actual fun rememberDroppedFileReader(): DroppedFileReader =
+  WebDroppedFileReader
 
 // Compose for web handles no dragleave, so a drag carried out of the window or cancelled with Esc
 // never ends the session. Leaving the page is the dragleave with no element to go to.

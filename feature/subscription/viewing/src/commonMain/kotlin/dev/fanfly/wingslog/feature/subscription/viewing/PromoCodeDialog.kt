@@ -184,7 +184,12 @@ private val PromoCodeGroupingTransformation = VisualTransformation { text ->
   val raw = text.text
   val formatted = buildString {
     append(raw.take(4))
-    if (raw.length > 4) append("-").append(raw.substring(4, minOf(8, raw.length)))
+    if (raw.length > 4) append("-").append(
+      raw.substring(
+        4,
+        minOf(8, raw.length)
+      )
+    )
     if (raw.length > 8) append("-").append(raw.drop(8))
   }
   val mapping = object : OffsetMapping {

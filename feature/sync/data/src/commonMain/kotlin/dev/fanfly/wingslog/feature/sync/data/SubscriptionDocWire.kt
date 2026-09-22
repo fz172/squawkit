@@ -31,12 +31,15 @@ internal data class SubscriptionDocWire(
 )
 
 internal fun SubscriptionDocWire.toProto(): Subscription = Subscription(
-  status = Subscription.Status.fromValue(status) ?: Subscription.Status.STATUS_FREE,
-  lifecycle = Subscription.Lifecycle.fromValue(lifecycle) ?: Subscription.Lifecycle.LIFECYCLE_NONE,
+  status = Subscription.Status.fromValue(status)
+    ?: Subscription.Status.STATUS_FREE,
+  lifecycle = Subscription.Lifecycle.fromValue(lifecycle)
+    ?: Subscription.Lifecycle.LIFECYCLE_NONE,
   member_since_millis = memberSinceMillis,
   current_period_end_millis = currentPeriodEndMillis,
   will_renew = willRenew,
-  source = Subscription.Source.fromValue(source) ?: Subscription.Source.SOURCE_UNSPECIFIED,
+  source = Subscription.Source.fromValue(source)
+    ?: Subscription.Source.SOURCE_UNSPECIFIED,
   origin_platform = originPlatform,
   storage_bytes_used = storageBytesUsed,
   storage_quota_bytes = storageQuotaBytes,

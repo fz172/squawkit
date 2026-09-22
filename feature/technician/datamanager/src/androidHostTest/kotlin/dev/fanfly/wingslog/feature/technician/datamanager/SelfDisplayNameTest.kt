@@ -18,20 +18,35 @@ class SelfDisplayNameTest {
   @Test
   fun `in-app technician name wins over the account name`() {
     val self = Technician(id = "t1", name = "Sponge Bob")
-    assertThat(selfDisplayName(self, user("Jordan Reyes", "jordan@example.com")))
+    assertThat(
+      selfDisplayName(
+        self,
+        user("Jordan Reyes", "jordan@example.com")
+      )
+    )
       .isEqualTo("Sponge Bob")
   }
 
   @Test
   fun `blank technician name falls back to the account display name`() {
     val self = Technician(id = "t1", name = "  ")
-    assertThat(selfDisplayName(self, user("Jordan Reyes", "jordan@example.com")))
+    assertThat(
+      selfDisplayName(
+        self,
+        user("Jordan Reyes", "jordan@example.com")
+      )
+    )
       .isEqualTo("Jordan Reyes")
   }
 
   @Test
   fun `missing technician falls back to the account display name`() {
-    assertThat(selfDisplayName(null, user("Jordan Reyes", "jordan@example.com")))
+    assertThat(
+      selfDisplayName(
+        null,
+        user("Jordan Reyes", "jordan@example.com")
+      )
+    )
       .isEqualTo("Jordan Reyes")
   }
 

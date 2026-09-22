@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
-import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
@@ -15,13 +15,13 @@ import dev.fanfly.wingslog.core.ui.adaptive.ShellThing
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
-import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
+import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -99,7 +99,8 @@ class AdaptiveShellViewModel(
         .collect { fleet ->
           // Outside `update`: it may re-run its lambda under contention, and clearing the pending
           // id is a side effect that must happen exactly once.
-          val arrived = pendingNewThingId?.takeIf { id -> fleet.any { it.thing.id == id } }
+          val arrived =
+            pendingNewThingId?.takeIf { id -> fleet.any { it.thing.id == id } }
           if (arrived != null) pendingNewThingId = null
           _uiState.update { state ->
             val mapped = fleet.map { entry ->

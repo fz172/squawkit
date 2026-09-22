@@ -18,13 +18,13 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 
 data class StarterPackItem(
   val task: StarterTask,
@@ -85,7 +85,12 @@ class StarterPackViewModel(
         )
       }
       if (items.isNotEmpty()) {
-        analytics.log(StarterTasksOffered(templateId = template?.id.orEmpty(), taskCount = items.size))
+        analytics.log(
+          StarterTasksOffered(
+            templateId = template?.id.orEmpty(),
+            taskCount = items.size
+          )
+        )
       }
     }
   }
@@ -111,16 +116,31 @@ class StarterPackViewModel(
       // One write per card, and a failure drops only its own card: the pack is a convenience, not
       // a transaction, and a half-written pack is still a better Tasks tab than an empty one.
       val written = chosen.count { item ->
-        taskDataManager.addTask(thingId, item.task.toMaintenanceTask(state.template, createdAt))
+        taskDataManager.addTask(
+          thingId,
+          item.task.toMaintenanceTask(
+            state.template,
+            createdAt
+          )
+        )
           .onFailure { logger.w(it) { "Starter task '${item.task.title}' was not written" } }
           .isSuccess
       }
       if (written > 0) {
         analytics.log(
-          StarterTasksAccepted(templateId = state.template?.id.orEmpty(), taskCount = written)
+          StarterTasksAccepted(
+            templateId = state.template?.id.orEmpty(),
+            taskCount = written
+          )
         )
       }
-      _uiState.update { it.copy(isSaving = false, isDone = true, acceptedCount = written) }
+      _uiState.update {
+        it.copy(
+          isSaving = false,
+          isDone = true,
+          acceptedCount = written
+        )
+      }
     }
   }
 

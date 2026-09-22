@@ -76,8 +76,10 @@ class PickedTemplateSeedsTheFormTest {
   fun eachPresetSeedsItsOwnSpecFields() {
     // A car is not asked for a tail number and an airplane is not asked for a VIN. Comparing the
     // sets rather than naming keys keeps this honest as the presets are edited.
-    val car = viewModel("automotive").uiState.value.template?.spec_fields?.map { it.key }
-    val home = viewModel("home").uiState.value.template?.spec_fields?.map { it.key }
+    val car =
+      viewModel("automotive").uiState.value.template?.spec_fields?.map { it.key }
+    val home =
+      viewModel("home").uiState.value.template?.spec_fields?.map { it.key }
 
     assertThat(car).isNotEmpty()
     assertThat(home).isNotEmpty()

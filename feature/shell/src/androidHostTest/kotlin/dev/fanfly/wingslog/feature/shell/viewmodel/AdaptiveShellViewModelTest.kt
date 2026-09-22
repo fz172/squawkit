@@ -14,17 +14,17 @@ import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
-import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
+import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
@@ -291,7 +291,9 @@ class AdaptiveShellViewModelTest {
     fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
     assertThat(selectedThingStore.saved).isEqualTo("a2")
-    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo("aircraft")
+    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(
+      "aircraft"
+    )
   }
 
   @Test
@@ -302,7 +304,9 @@ class AdaptiveShellViewModelTest {
     vm.selectNewThing("h1")
 
     assertThat(vm.uiState.value.selectedThingId).isEqualTo("h1")
-    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo("home")
+    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(
+      "home"
+    )
   }
 
   @Test

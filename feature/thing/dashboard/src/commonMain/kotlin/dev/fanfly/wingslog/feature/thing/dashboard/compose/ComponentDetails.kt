@@ -75,7 +75,9 @@ private fun SetLines(nodes: List<ComponentNode>) {
   if (chips.all { it.serial.isBlank() && it.specs.isEmpty() }) {
     ComponentLine(
       label = nodes.first().row.slot.label,
-      name = chips.map { it.headline }.filter { it.isNotBlank() }.joinToString(SEPARATOR),
+      name = chips.map { it.headline }
+        .filter { it.isNotBlank() }
+        .joinToString(SEPARATOR),
       serial = "",
       nameIsIdentifier = true,
     )
@@ -85,7 +87,8 @@ private fun SetLines(nodes: List<ComponentNode>) {
     val specs = chip.specs.map { "${it.label} ${it.value}" }
     ComponentLine(
       label = chip.label,
-      name = (listOf(chip.headline) + specs).filter { it.isNotBlank() }.joinToString(SEPARATOR),
+      name = (listOf(chip.headline) + specs).filter { it.isNotBlank() }
+        .joinToString(SEPARATOR),
       serial = chip.serial,
     )
   }

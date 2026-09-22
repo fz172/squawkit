@@ -34,18 +34,19 @@ import dev.fanfly.wingslog.core.model.settings.Subscription
  * `willRenew: false` and an end date, and documents that it "lets it lapse back to Free on its own".
  * Before this, ACTIVE ignored the end date entirely and a comp never expired.
  */
-fun Subscription.effectiveStatusAt(nowMillis: Long): Subscription.Status = when (lifecycle) {
-  Subscription.Lifecycle.LIFECYCLE_TRIALING,
-  Subscription.Lifecycle.LIFECYCLE_ACTIVE,
-  Subscription.Lifecycle.LIFECYCLE_GRACE,
-  -> if (will_renew) status else statusUntilPeriodEnd(nowMillis)
+fun Subscription.effectiveStatusAt(nowMillis: Long): Subscription.Status =
+  when (lifecycle) {
+    Subscription.Lifecycle.LIFECYCLE_TRIALING,
+    Subscription.Lifecycle.LIFECYCLE_ACTIVE,
+    Subscription.Lifecycle.LIFECYCLE_GRACE,
+      -> if (will_renew) status else statusUntilPeriodEnd(nowMillis)
 
-  Subscription.Lifecycle.LIFECYCLE_CANCELED -> statusUntilPeriodEnd(nowMillis)
+    Subscription.Lifecycle.LIFECYCLE_CANCELED -> statusUntilPeriodEnd(nowMillis)
 
-  Subscription.Lifecycle.LIFECYCLE_NONE,
-  Subscription.Lifecycle.LIFECYCLE_EXPIRED,
-  -> Subscription.Status.STATUS_FREE
-}
+    Subscription.Lifecycle.LIFECYCLE_NONE,
+    Subscription.Lifecycle.LIFECYCLE_EXPIRED,
+      -> Subscription.Status.STATUS_FREE
+  }
 
 /**
  * The granted tier while `current_period_end_millis` is still in the future, else FREE.

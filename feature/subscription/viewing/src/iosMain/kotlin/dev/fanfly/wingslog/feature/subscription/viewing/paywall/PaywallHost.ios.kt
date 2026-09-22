@@ -9,7 +9,10 @@ actual fun ProPaywallHost(
   onPurchaseCompleted: () -> Unit,
   onDismiss: () -> Unit,
 ) {
-  RevenueCatProPaywall(onPurchaseCompleted = onPurchaseCompleted, onDismiss = onDismiss)
+  RevenueCatProPaywall(
+    onPurchaseCompleted = onPurchaseCompleted,
+    onDismiss = onDismiss
+  )
 }
 
 @Composable

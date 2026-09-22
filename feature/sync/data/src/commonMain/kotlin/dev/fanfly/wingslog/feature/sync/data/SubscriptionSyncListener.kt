@@ -34,7 +34,8 @@ class SubscriptionSyncListener(
 
   /** Collects the entitlement doc for [uid] until the surrounding scope is cancelled. */
   suspend fun run(uid: String) {
-    firestore.collection(COLLECTION).document(uid).snapshots
+    firestore.collection(COLLECTION)
+      .document(uid).snapshots
       .catch { e -> log.w(e) { "subscription snapshot stream failed; entitlement stays cached" } }
       .collect { snap ->
         runCatching { apply(uid, snap) }
@@ -44,9 +45,12 @@ class SubscriptionSyncListener(
 
   private suspend fun apply(uid: String, snap: DocumentSnapshot) {
     // Decode outside the write lock; only the DB write needs it held.
-    val proto: Subscription? = if (snap.exists) snap.data<SubscriptionDocWire>().toProto() else null
-    val scopePath = EntityScope.userRoot(uid).toPath()
-    val now = Clock.System.now().toEpochMilliseconds()
+    val proto: Subscription? = if (snap.exists) snap.data<SubscriptionDocWire>()
+      .toProto() else null
+    val scopePath = EntityScope.userRoot(uid)
+      .toPath()
+    val now = Clock.System.now()
+      .toEpochMilliseconds()
 
     writeLock.withLock {
       db.transaction {
@@ -56,7 +60,9 @@ class SubscriptionSyncListener(
           id = DOC_ID,
           // Absent doc → tombstone the cache so the manager resolves to FREE. A present doc → the
           // encoded entitlement.
-          payload = proto?.let { Subscription.ADAPTER.encode(it) } ?: ByteArray(0),
+          payload = proto?.let { Subscription.ADAPTER.encode(it) } ?: ByteArray(
+            0
+          ),
           payload_schema = CollectionKind.Subscription.schemaName,
           updated_at = now,
           remote_updated_at = now,

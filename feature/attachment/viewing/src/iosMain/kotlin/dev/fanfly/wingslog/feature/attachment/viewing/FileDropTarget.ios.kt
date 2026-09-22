@@ -13,7 +13,8 @@ import platform.UniformTypeIdentifiers.conformsToType
 import kotlin.coroutines.resume
 
 @Composable
-internal actual fun rememberDroppedFileReader(): DroppedFileReader = IosDroppedFileReader
+internal actual fun rememberDroppedFileReader(): DroppedFileReader =
+  IosDroppedFileReader
 
 // The platform ends the drag session itself when a drag leaves or is cancelled.
 @Composable
@@ -41,7 +42,10 @@ private fun UIDragItem.isExternalData(): Boolean =
 
 private fun NSItemProvider.dataTypeIdentifier(): String? =
   registeredTypeIdentifiers.filterIsInstance<String>()
-    .firstOrNull { UTType.typeWithIdentifier(it)?.conformsToType(UTTypeData) == true }
+    .firstOrNull {
+      UTType.typeWithIdentifier(it)
+        ?.conformsToType(UTTypeData) == true
+    }
 
 private suspend fun NSItemProvider.loadPickedFile(): PickedFile? {
   val typeIdentifier = dataTypeIdentifier() ?: return null
@@ -49,7 +53,13 @@ private suspend fun NSItemProvider.loadPickedFile(): PickedFile? {
     loadFileRepresentationForTypeIdentifier(typeIdentifier) { url, _ ->
       // The system deletes the file when this handler returns, so the copy happens here.
       val picked = url?.path?.let { path ->
-        copyToTempPickedFile(path, name = fileName(typeIdentifier, url.lastPathComponent))
+        copyToTempPickedFile(
+          path,
+          name = fileName(
+            typeIdentifier,
+            url.lastPathComponent
+          )
+        )
       }
       continuation.resume(picked)
     }
@@ -58,9 +68,14 @@ private suspend fun NSItemProvider.loadPickedFile(): PickedFile? {
 
 // suggestedName is the name the source app shows, often without an extension; the extension keeps
 // the MIME lookup and the attachment icon right.
-private fun NSItemProvider.fileName(typeIdentifier: String, fallback: String?): String {
-  val suggested = suggestedName?.takeIf { it.isNotBlank() } ?: return fallback ?: "file"
+private fun NSItemProvider.fileName(
+  typeIdentifier: String,
+  fallback: String?
+): String {
+  val suggested =
+    suggestedName?.takeIf { it.isNotBlank() } ?: return fallback ?: "file"
   if ('.' in suggested) return suggested
-  val extension = UTType.typeWithIdentifier(typeIdentifier)?.preferredFilenameExtension
+  val extension =
+    UTType.typeWithIdentifier(typeIdentifier)?.preferredFilenameExtension
   return if (extension == null) suggested else "$suggested.$extension"
 }

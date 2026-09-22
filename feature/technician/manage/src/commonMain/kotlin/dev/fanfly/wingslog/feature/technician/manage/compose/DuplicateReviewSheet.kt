@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.technician.manage.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -14,11 +15,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -26,12 +24,11 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolution
-import androidx.compose.foundation.layout.Row
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
-import wingslog.feature.technician.sharedassets.generated.resources.duplicates_merge_member
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_apply
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_merge_manual
+import wingslog.feature.technician.sharedassets.generated.resources.duplicates_merge_member
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_needs_confirmation
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_no_selection
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_replaces
@@ -55,8 +52,10 @@ fun DuplicateReviewSheet(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val mergeable = groups.filter { it.resolution != DuplicateResolution.WARN_MIRROR_CONFLICT }
-  val warnings = groups.filter { it.resolution == DuplicateResolution.WARN_MIRROR_CONFLICT }
+  val mergeable =
+    groups.filter { it.resolution != DuplicateResolution.WARN_MIRROR_CONFLICT }
+  val warnings =
+    groups.filter { it.resolution == DuplicateResolution.WARN_MIRROR_CONFLICT }
 
   // Keyed by the kept row's id: pre-checked only where the match key is strong enough to trust.
   val checked = remember(groups) {

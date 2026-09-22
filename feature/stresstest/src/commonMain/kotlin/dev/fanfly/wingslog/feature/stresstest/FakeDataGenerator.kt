@@ -3,6 +3,8 @@ package dev.fanfly.wingslog.feature.stresstest
 import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.technician.FAA_AMT
+import dev.fanfly.wingslog.core.model.technician.FAA_REPAIRMAN
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
@@ -16,14 +18,12 @@ import dev.fanfly.wingslog.feature.stresstest.fixtures.FakeDataPools
 import dev.fanfly.wingslog.feature.stresstest.fixtures.LogTemplate
 import dev.fanfly.wingslog.feature.stresstest.fixtures.SampleNames
 import dev.fanfly.wingslog.thing.CertExpireLimit
-import dev.fanfly.wingslog.core.model.technician.FAA_AMT
-import dev.fanfly.wingslog.core.model.technician.FAA_REPAIRMAN
 import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.InspectionRule
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Spec
@@ -573,7 +573,10 @@ object FakeDataGenerator {
   }
 
   /** [count] logs, cycling the fixtures when asked for more than there are. */
-  private fun buildLogPool(count: Int, fixtures: List<LogTemplate>): List<LogTemplate> {
+  private fun buildLogPool(
+    count: Int,
+    fixtures: List<LogTemplate>
+  ): List<LogTemplate> {
     if (count <= fixtures.size) return fixtures.shuffled()
       .take(count)
     val pool = mutableListOf<LogTemplate>()
@@ -586,7 +589,10 @@ object FakeDataGenerator {
    * or propeller, the thing's own serial for the airframe, and nothing for a preset whose records
    * the type enum does not describe.
    */
-  private fun componentSerialFor(thing: Thing, component: ComponentType): String =
+  private fun componentSerialFor(
+    thing: Thing,
+    component: ComponentType
+  ): String =
     when (component) {
       ComponentType.COMPONENT_ENGINE ->
         thing.allComponentsInSlot(SlotKeys.ENGINE)

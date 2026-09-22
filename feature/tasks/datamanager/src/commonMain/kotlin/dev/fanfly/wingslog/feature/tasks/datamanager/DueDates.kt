@@ -1,12 +1,12 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager
 
-import com.squareup.wire.Instant as WireInstant
 import dev.fanfly.wingslog.core.datetime.toWireInstant
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
+import com.squareup.wire.Instant as WireInstant
 
 /**
  * A forced due is a **date**, not a moment — and the conversions around it disagreed.
@@ -19,10 +19,12 @@ import kotlinx.datetime.toLocalDateTime
  */
 
 /** The picker's convention: a day is its UTC midnight in millis. */
-fun LocalDate.toPickerMillis(): Long = atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+fun LocalDate.toPickerMillis(): Long =
+  atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
 
 fun Long.pickerMillisToDate(): LocalDate =
-  Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.UTC).date
+  Instant.fromEpochMilliseconds(this)
+    .toLocalDateTime(TimeZone.UTC).date
 
 /**
  * Stored as UTC noon of the day, so a reader that (wrongly) took the local date would still get
@@ -37,6 +39,7 @@ fun LocalDate.toDueInstant(): WireInstant =
  * and for the UTC-midnight values every earlier build wrote, in every zone.
  */
 fun WireInstant.toDueDate(): LocalDate =
-  Instant.fromEpochSeconds(getEpochSecond()).toLocalDateTime(TimeZone.UTC).date
+  Instant.fromEpochSeconds(getEpochSecond())
+    .toLocalDateTime(TimeZone.UTC).date
 
 private const val NOON_SECONDS = 12L * 60 * 60

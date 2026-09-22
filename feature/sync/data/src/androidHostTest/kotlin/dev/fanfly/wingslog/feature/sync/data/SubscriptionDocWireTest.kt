@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.sync.data
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.model.settings.Subscription
+import org.junit.Test
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
-import org.junit.Test
 
 class SubscriptionDocWireTest {
 

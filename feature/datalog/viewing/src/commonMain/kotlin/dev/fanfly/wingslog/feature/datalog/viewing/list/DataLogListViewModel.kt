@@ -3,24 +3,23 @@ package dev.fanfly.wingslog.feature.datalog.viewing.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
-import dev.fanfly.wingslog.datalog.DataLogSeries
-import dev.fanfly.wingslog.datalog.DataLogSeriesKind
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.DataLogImportSource
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toInstant
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.datalog.DataLogSeries
+import dev.fanfly.wingslog.datalog.DataLogSeriesKind
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
 import dev.fanfly.wingslog.feature.datalog.viewing.analytics.DataLogImportTelemetry
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +36,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.asTimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration.Companion.milliseconds
 
 /** PRD R40: upload needs a signed-in, non-anonymous account; viewing never does. */
 enum class UploadGate { SignedIn, Guest }
@@ -112,7 +112,8 @@ class DataLogListViewModel(
   private val loaded = MutableStateFlow(false)
   private val deleting = MutableStateFlow<DataLogRow?>(null)
   private val selectedId = MutableStateFlow<DataLogId?>(null)
-  private val sketches = MutableStateFlow<Map<DataLogId, List<SketchSeries>>>(emptyMap())
+  private val sketches =
+    MutableStateFlow<Map<DataLogId, List<SketchSeries>>>(emptyMap())
   private var nextImportKey = 0L
 
   private val _events =
@@ -164,7 +165,8 @@ class DataLogListViewModel(
       if (selectedId.value != id) return@launch
       manager.load(thingId, id)
         .onSuccess { data ->
-          val record = manager.observeOne(thingId, id).first() ?: return@onSuccess
+          val record = manager.observeOne(thingId, id)
+            .first() ?: return@onSuccess
           sketches.update { it + (id to sketchOf(record, data)) }
         }
     }
@@ -314,13 +316,14 @@ fun DataLog.toDataLogRow(): DataLogRow {
   )
 }
 
-private fun DataLog.toPreview(sketch: List<SketchSeries>?): DataLogPreview = DataLogPreview(
-  row = toDataLogRow(),
-  sampleCount = sample_count,
-  sampleRateHz = sample_rate_hz,
-  series = series.map { DataLogSeriesChip(name = it.name, unit = it.unit) },
-  sketch = sketch,
-)
+private fun DataLog.toPreview(sketch: List<SketchSeries>?): DataLogPreview =
+  DataLogPreview(
+    row = toDataLogRow(),
+    sampleCount = sample_count,
+    sampleRateHz = sample_rate_hz,
+    series = series.map { DataLogSeriesChip(name = it.name, unit = it.unit) },
+    sketch = sketch,
+  )
 
 /** How many points a sketch keeps per series: a shape, not a chart. */
 internal const val SKETCH_POINTS = 120
@@ -337,7 +340,10 @@ private val SKETCH_DELAY = 300.milliseconds
  * recognised (a canonical id: RPM, oil pressure, fuel flow…) come first, fullest first; they say
  * what the engine did, where the most-sampled column is as likely a GPS clock as anything.
  */
-internal fun sketchOf(record: DataLog, data: DataLogSeriesData): List<SketchSeries> =
+internal fun sketchOf(
+  record: DataLog,
+  data: DataLogSeriesData
+): List<SketchSeries> =
   record.series
     .filter { it.kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC && it.max > it.min }
     .sortedWith(compareBy<DataLogSeries> { it.canonical_id.isEmpty() }.thenByDescending { it.sample_count })
@@ -348,7 +354,10 @@ internal fun sketchOf(record: DataLog, data: DataLogSeriesData): List<SketchSeri
       if (values.isEmpty()) return@mapNotNull null
       val range = (series.max - series.min).toFloat()
       val points = (0 until minOf(SKETCH_POINTS, values.size)).map { i ->
-        val index = i * (values.size - 1) / maxOf(1, minOf(SKETCH_POINTS, values.size) - 1)
+        val index = i * (values.size - 1) / maxOf(
+          1,
+          minOf(SKETCH_POINTS, values.size) - 1
+        )
         ((values[index] - series.min.toFloat()) / range).coerceIn(0f, 1f)
       }
       SketchSeries(name = series.name, points = points)

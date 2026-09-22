@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -238,42 +238,44 @@ class PromoCodeRedemptionTest {
   }
 
   @Test
-  fun `a promo activation that never lands stops claiming the wait is normal`() = runTest {
-    val vm = viewModel(PromoRedemptionResult.Granted(durationDays = 30))
-    vm.onPromoCodeChanged("PRQK-8H3M-XTVB")
-    vm.onPromoCodeSubmitted()
-    runCurrent()
+  fun `a promo activation that never lands stops claiming the wait is normal`() =
+    runTest {
+      val vm = viewModel(PromoRedemptionResult.Granted(durationDays = 30))
+      vm.onPromoCodeChanged("PRQK-8H3M-XTVB")
+      vm.onPromoCodeSubmitted()
+      runCurrent()
 
-    // Still inside the normal window: the page reports an ordinary wait.
-    advanceTimeBy((STALL - 1).milliseconds)
-    runCurrent()
-    assertThat(stateOf(vm).isActivationStalled).isFalse()
+      // Still inside the normal window: the page reports an ordinary wait.
+      advanceTimeBy((STALL - 1).milliseconds)
+      runCurrent()
+      assertThat(stateOf(vm).isActivationStalled).isFalse()
 
-    advanceTimeBy(2.milliseconds)
-    runCurrent()
-    val state = stateOf(vm)
-    // The failure this exists for: isActivating alone resolves only when the tier flips, so an
-    // entitlement that never arrives left "Activating…" on screen forever.
-    assertThat(state.isActivationStalled).isTrue()
-    assertThat(state.isActivating).isTrue()
-  }
+      advanceTimeBy(2.milliseconds)
+      runCurrent()
+      val state = stateOf(vm)
+      // The failure this exists for: isActivating alone resolves only when the tier flips, so an
+      // entitlement that never arrives left "Activating…" on screen forever.
+      assertThat(state.isActivationStalled).isTrue()
+      assertThat(state.isActivating).isTrue()
+    }
 
   @Test
-  fun `a promo activation asks the server for nothing — the grant is already written`() = runTest {
-    val reconciler = RecordingReconciler()
-    val vm = viewModel(
-      result = PromoRedemptionResult.Granted(durationDays = 30),
-      reconciler = reconciler,
-    )
-    vm.onPromoCodeChanged("PRQK-8H3M-XTVB")
-    vm.onPromoCodeSubmitted()
-    runCurrent()
-    advanceTimeBy((STALL + 1).milliseconds)
-    runCurrent()
+  fun `a promo activation asks the server for nothing — the grant is already written`() =
+    runTest {
+      val reconciler = RecordingReconciler()
+      val vm = viewModel(
+        result = PromoRedemptionResult.Granted(durationDays = 30),
+        reconciler = reconciler,
+      )
+      vm.onPromoCodeChanged("PRQK-8H3M-XTVB")
+      vm.onPromoCodeSubmitted()
+      runCurrent()
+      advanceTimeBy((STALL + 1).milliseconds)
+      runCurrent()
 
-    // Reconciling a comp burns a provider lookup for an account RevenueCat has never heard of.
-    assertThat(reconciler.calls).isEqualTo(0)
-  }
+      // Reconciling a comp burns a provider lookup for an account RevenueCat has never heard of.
+      assertThat(reconciler.calls).isEqualTo(0)
+    }
 
   @Test
   fun `the stall clears once the entitlement lands`() = runTest {
@@ -333,7 +335,8 @@ class PromoCodeRedemptionTest {
       }
     }
 
-  private class RecordingRedeemer(private val result: PromoRedemptionResult) : PromoCodeRedeemer {
+  private class RecordingRedeemer(private val result: PromoRedemptionResult) :
+    PromoCodeRedeemer {
     var calls = 0
       private set
 

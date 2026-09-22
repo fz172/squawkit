@@ -40,11 +40,11 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.apple_logo
+import wingslog.feature.login.generated.resources.continue_as_guest
+import wingslog.feature.login.generated.resources.continuing_as_guest
 import wingslog.feature.login.generated.resources.google_logo
 import wingslog.feature.login.generated.resources.ic_apple
 import wingslog.feature.login.generated.resources.ic_google_rd_na
-import wingslog.feature.login.generated.resources.continue_as_guest
-import wingslog.feature.login.generated.resources.continuing_as_guest
 import wingslog.feature.login.generated.resources.provider_apple
 import wingslog.feature.login.generated.resources.provider_email
 import wingslog.feature.login.generated.resources.provider_google

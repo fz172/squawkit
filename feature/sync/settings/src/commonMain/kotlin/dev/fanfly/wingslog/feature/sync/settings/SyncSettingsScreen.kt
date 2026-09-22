@@ -152,7 +152,8 @@ fun SyncSettingsScreen(
         GroupedSection(stringResource(Res.string.sync_section_options)) {
           GroupedRowGroup(
             rows = listOf {
-              val title = stringResource(Res.string.setting_item_sync_on_cellular)
+              val title =
+                stringResource(Res.string.setting_item_sync_on_cellular)
               GroupedSwitchRow(
                 title = title,
                 subtitle = if (state.allowUploadOnCellular)
@@ -200,7 +201,11 @@ private fun LastSyncedRow(state: SyncSettingsUiState) {
     !state.signedIn -> stringResource(Res.string.sync_subtitle_signin) to null
     !state.cloudSyncEnabled -> stringResource(Res.string.sync_status_off_title) to null
     hydration is HydrationState.InProgress ->
-      stringResource(Res.string.sync_status_restoring, hydration.completed, hydration.total) to
+      stringResource(
+        Res.string.sync_status_restoring,
+        hydration.completed,
+        hydration.total
+      ) to
         colors.caution.accent
 
     state.lastSyncedAt == null -> stringResource(Res.string.sync_last_synced_pending) to null

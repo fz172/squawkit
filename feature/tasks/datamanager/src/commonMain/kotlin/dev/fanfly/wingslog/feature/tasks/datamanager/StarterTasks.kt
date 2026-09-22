@@ -33,7 +33,11 @@ fun StarterTask.toMaintenanceTask(
       // Calendar-anchored, due by the end of each listed month (PRD §4.6).
       add(
         InspectionRule(
-          seasonal_rule = SeasonalRule(months = months.filter { it in 1..12 }.distinct().sorted()),
+          seasonal_rule = SeasonalRule(
+            months = months.filter { it in 1..12 }
+              .distinct()
+              .sorted()
+          ),
         )
       )
     }

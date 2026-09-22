@@ -275,28 +275,29 @@ class SyncEngineTest {
   // --- harness ---------------------------------------------------------------------------------
 
   @Test
-  fun lastSyncedAt_isStampedWhenHydrationLands_andClearedOnSignOut() = runTest(ioContext) {
-    val user = mockk<FirebaseUser> {
-      every { uid } returns MEMBER
-      every { isAnonymous } returns false
+  fun lastSyncedAt_isStampedWhenHydrationLands_andClearedOnSignOut() =
+    runTest(ioContext) {
+      val user = mockk<FirebaseUser> {
+        every { uid } returns MEMBER
+        every { isAnonymous } returns false
+      }
+      val authState = MutableStateFlow<FirebaseUser?>(user)
+      val now = Instant.fromEpochMilliseconds(1_700_000_000_000L)
+      engine = buildEngine(authState = authState, clock = { now })
+      assertThat(engine.lastSyncedAt.value).isNull()
+
+      val job = engine.start()
+      testScheduler.advanceUntilIdle()
+      // Every top-level kind hydrates (the runner is stubbed to succeed), and each landing stamps it.
+      assertThat(engine.lastSyncedAt.value).isEqualTo(now)
+
+      authState.value = null
+      testScheduler.advanceUntilIdle()
+      // A signed-out device has nothing it agrees with the cloud about.
+      assertThat(engine.lastSyncedAt.value).isNull()
+
+      job.cancel()
     }
-    val authState = MutableStateFlow<FirebaseUser?>(user)
-    val now = Instant.fromEpochMilliseconds(1_700_000_000_000L)
-    engine = buildEngine(authState = authState, clock = { now })
-    assertThat(engine.lastSyncedAt.value).isNull()
-
-    val job = engine.start()
-    testScheduler.advanceUntilIdle()
-    // Every top-level kind hydrates (the runner is stubbed to succeed), and each landing stamps it.
-    assertThat(engine.lastSyncedAt.value).isEqualTo(now)
-
-    authState.value = null
-    testScheduler.advanceUntilIdle()
-    // A signed-out device has nothing it agrees with the cloud about.
-    assertThat(engine.lastSyncedAt.value).isNull()
-
-    job.cancel()
-  }
 
   private fun buildEngine(
     scheduler: UploadScheduler? = null,

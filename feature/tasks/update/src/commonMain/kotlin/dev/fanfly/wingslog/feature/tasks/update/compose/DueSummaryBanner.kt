@@ -10,9 +10,6 @@ import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import kotlin.math.abs
-import kotlin.math.roundToInt
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
@@ -57,6 +54,9 @@ import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_se
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_days
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_months
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_years
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import kotlin.time.Clock
 
 /**
  * The one banner the schedule and adjustments tabs both show, so the same task reads the same way
@@ -79,7 +79,11 @@ internal fun DueSummaryBanner(
   naturalDue: DueMetadata?,
   currentReading: (String) -> Float,
 ) {
-  val (scheduleLine, scheduleHint, isEmpty) = scheduleSummary(schedule, linkedTaskName, meterUnit)
+  val (scheduleLine, scheduleHint, isEmpty) = scheduleSummary(
+    schedule,
+    linkedTaskName,
+    meterUnit
+  )
   val today = Clock.System.now()
     .toLocalDateTime(TimeZone.currentSystemDefault()).date
 
@@ -124,12 +128,21 @@ internal fun DueSummaryBanner(
     !overrideOn -> null
     naturalDate != null && naturalDate != dueDate -> {
       val was = naturalDate.toDisplayFormat()
-      monoOn(stringResource(Res.string.due_summary_schedule_alone_date, was), was)
+      monoOn(
+        stringResource(Res.string.due_summary_schedule_alone_date, was),
+        was
+      )
     }
 
     naturalReading != null && naturalReading != dueReading -> {
       val was = formatEngineHours(naturalReading)
-      monoOn(stringResource(Res.string.due_summary_schedule_alone_meter, was, meterUnit), was)
+      monoOn(
+        stringResource(
+          Res.string.due_summary_schedule_alone_meter,
+          was,
+          meterUnit
+        ), was
+      )
     }
 
     else -> null
@@ -175,7 +188,10 @@ internal fun scheduleSummary(
       stringResource(Res.string.schedule_preview_linked_repeating_secondary)
     }
     return Triple(
-      stringResource(Res.string.schedule_preview_linked_primary, linkedTaskName),
+      stringResource(
+        Res.string.schedule_preview_linked_primary,
+        linkedTaskName
+      ),
       secondary,
       false,
     )
@@ -228,7 +244,11 @@ internal fun scheduleSummary(
       Res.string.schedule_preview_due_in else Res.string.schedule_preview_due_every
     val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
       Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-    return Triple(stringResource(primaryRes, n, unitStr), stringResource(secondaryRes), false)
+    return Triple(
+      stringResource(primaryRes, n, unitStr),
+      stringResource(secondaryRes),
+      false
+    )
   }
   // HOURS
   if (state.hourValue.isBlank()) {

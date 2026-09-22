@@ -75,10 +75,12 @@ class SettingsViewModel(
     )
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
 
-  private val _profileRequests = MutableSharedFlow<ProfileTarget>(extraBufferCapacity = 1)
+  private val _profileRequests =
+    MutableSharedFlow<ProfileTarget>(extraBufferCapacity = 1)
 
   /** Where a tap on the profile card should go, once [openProfile] has resolved it. */
-  val profileRequests: SharedFlow<ProfileTarget> = _profileRequests.asSharedFlow()
+  val profileRequests: SharedFlow<ProfileTarget> =
+    _profileRequests.asSharedFlow()
 
   /** Device-local light/dark/system preference, shared with the root theme. */
   val appearanceMode: StateFlow<AppearanceMode> = appearanceController.mode
@@ -106,34 +108,37 @@ class SettingsViewModel(
   /** The profile card's name, email and photo — the same resolution the sidebar account row uses. */
   private fun observeSelf() {
     observeSelfJob = viewModelScope.launch {
-      technicianManager.observeSelf().collect { self ->
-        val current = authManager.getCurrentUser()
-        _user.value = _user.value.copy(
-          displayName = selfDisplayName(self, current),
-          email = current?.email?.takeIf { it.isNotBlank() },
-          photoUrl = current?.photoURL,
-        )
-      }
+      technicianManager.observeSelf()
+        .collect { self ->
+          val current = authManager.getCurrentUser()
+          _user.value = _user.value.copy(
+            displayName = selfDisplayName(self, current),
+            email = current?.email?.takeIf { it.isNotBlank() },
+            photoUrl = current?.photoURL,
+          )
+        }
     }
   }
 
   private fun observePlan() {
     viewModelScope.launch {
-      subscriptionManager.entitlement().collect { subscription ->
-        _user.value = _user.value.copy(plan = subscription.toPlanRow())
-      }
+      subscriptionManager.entitlement()
+        .collect { subscription ->
+          _user.value = _user.value.copy(plan = subscription.toPlanRow())
+        }
     }
   }
 
   private fun Subscription.toPlanRow(): PlanRow =
     if (status != Subscription.Status.STATUS_PRO) PlanRow.Basic
     else PlanRow.Pro(
-      periodEnd = current_period_end_millis.takeIf { it > 0 }?.let { millis ->
-        Instant.fromEpochMilliseconds(millis)
-          .toLocalDateTime(TimeZone.currentSystemDefault())
-          .date
-          .toDisplayFormat(numberOnly = false)
-      },
+      periodEnd = current_period_end_millis.takeIf { it > 0 }
+        ?.let { millis ->
+          Instant.fromEpochMilliseconds(millis)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
+            .toDisplayFormat(numberOnly = false)
+        },
       willRenew = will_renew,
     )
 
@@ -146,9 +151,12 @@ class SettingsViewModel(
   fun openProfile() {
     viewModelScope.launch {
       technicianManager.ensureSelfProfile()
-      val selfId = technicianManager.observeSelfId().first()
+      val selfId = technicianManager.observeSelfId()
+        .first()
       _profileRequests.emit(
-        if (selfId.isNullOrBlank()) ProfileTarget.Roster else ProfileTarget.Self(selfId)
+        if (selfId.isNullOrBlank()) ProfileTarget.Roster else ProfileTarget.Self(
+          selfId
+        )
       )
     }
   }
@@ -169,6 +177,7 @@ class SettingsViewModel(
         when {
           permission == PermissionState.DENIED || permission == PermissionState.UNSUPPORTED ->
             NotificationsRowState.BLOCKED
+
           prefs is PrefsState.Resolved && !prefs.settings.allEnabled -> NotificationsRowState.OFF
           else -> NotificationsRowState.DEFAULT
         }
@@ -262,7 +271,8 @@ class SettingsViewModel(
    * address, or an alias from [APPLE_PRIVATE_RELAY_DOMAIN] that they could not type from memory.
    */
   private fun challengeFor(email: String?): DeletionChallenge {
-    val address = email?.trim().orEmpty()
+    val address = email?.trim()
+      .orEmpty()
     val usable = address.isNotEmpty() &&
       !address.endsWith(APPLE_PRIVATE_RELAY_DOMAIN, ignoreCase = true)
     return if (usable) DeletionChallenge.Email(address) else DeletionChallenge.Phrase
@@ -280,7 +290,8 @@ class SettingsViewModel(
 
   fun cancelDeleteAccount() {
     if (_user.value.deletion == AccountDeletion.Working) return
-    _user.value = _user.value.copy(deletion = AccountDeletion.Idle, deletionInput = "")
+    _user.value =
+      _user.value.copy(deletion = AccountDeletion.Idle, deletionInput = "")
   }
 
   /**

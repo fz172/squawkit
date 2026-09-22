@@ -14,10 +14,10 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkPriority
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.junit.Test
+import kotlin.time.Instant
 
 class RecordAdaptersTest {
 
@@ -53,9 +53,22 @@ class RecordAdaptersTest {
   @Test
   fun squawk_priorityFacet() {
     val adapter = SquawkAdapter(TimeZone.UTC)
-    val high = SquawkWithStatus(squawk.copy(priority = SquawkPriority.SQUAWK_PRIORITY_HIGH), SquawkStatus.OPEN)
-    assertThat(adapter.facetMatches(high, Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH))).isTrue()
-    assertThat(adapter.facetMatches(high, Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_AOG))).isFalse()
+    val high = SquawkWithStatus(
+      squawk.copy(priority = SquawkPriority.SQUAWK_PRIORITY_HIGH),
+      SquawkStatus.OPEN
+    )
+    assertThat(
+      adapter.facetMatches(
+        high,
+        Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH)
+      )
+    ).isTrue()
+    assertThat(
+      adapter.facetMatches(
+        high,
+        Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_AOG)
+      )
+    ).isFalse()
     assertThat(adapter.facetMatches(high, Facet.Technician("x"))).isFalse()
   }
 
@@ -135,9 +148,22 @@ class RecordAdaptersTest {
   @Test
   fun task_complianceFacet() {
     val adapter = TaskAdapter()
-    val ad = MaintenanceTaskWithStatus(card.copy(type = ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE), DueMetadata())
-    assertThat(adapter.facetMatches(ad, Facet.Compliance(ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE))).isTrue()
-    assertThat(adapter.facetMatches(ad, Facet.Compliance(ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN))).isFalse()
+    val ad = MaintenanceTaskWithStatus(
+      card.copy(type = ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE),
+      DueMetadata()
+    )
+    assertThat(
+      adapter.facetMatches(
+        ad,
+        Facet.Compliance(ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE)
+      )
+    ).isTrue()
+    assertThat(
+      adapter.facetMatches(
+        ad,
+        Facet.Compliance(ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN)
+      )
+    ).isFalse()
   }
 
   @Test

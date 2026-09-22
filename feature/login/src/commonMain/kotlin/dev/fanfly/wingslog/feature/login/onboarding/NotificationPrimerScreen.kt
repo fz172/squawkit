@@ -40,6 +40,7 @@ import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.continue_action
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.onboarding_notifications_body
 import wingslog.feature.login.generated.resources.onboarding_notifications_denied_action
@@ -49,7 +50,6 @@ import wingslog.feature.login.generated.resources.onboarding_notifications_denie
 import wingslog.feature.login.generated.resources.onboarding_notifications_eyebrow
 import wingslog.feature.login.generated.resources.onboarding_notifications_headline
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
-import wingslog.core.sharedassets.generated.resources.continue_action
 
 /**
  * Priming explanation shown once per account, before the real OS permission dialog — not instead

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
@@ -43,7 +44,6 @@ import dev.fanfly.wingslog.core.template.componentTree
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.specLines
 import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.thing.dashboard.data.LogStats
@@ -55,11 +55,11 @@ import wingslog.core.sharedassets.generated.resources.manage_access
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
 import wingslog.feature.logs.viewing.generated.resources.expand_details
 import wingslog.feature.logs.viewing.generated.resources.thing_data
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
 import wingslog.feature.thing.dashboard.generated.resources.overview_meters
 import wingslog.feature.thing.dashboard.generated.resources.overview_meters_as_of
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
 
 
 @Composable
@@ -175,12 +175,18 @@ fun ThingDataCard(
               horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
               if (onManageAccessClick != null) {
-                OutlinedButton(onClick = onManageAccessClick, modifier = Modifier.weight(1f)) {
+                OutlinedButton(
+                  onClick = onManageAccessClick,
+                  modifier = Modifier.weight(1f)
+                ) {
                   Text(text = stringResource(CoreRes.string.manage_access))
                 }
               }
               if (onEditClick != null) {
-                OutlinedButton(onClick = onEditClick, modifier = Modifier.weight(1f)) {
+                OutlinedButton(
+                  onClick = onEditClick,
+                  modifier = Modifier.weight(1f)
+                ) {
                   Text(text = stringResource(CoreRes.string.edit))
                 }
               }
@@ -209,7 +215,10 @@ private fun MeterReadings(meters: List<MeterDef>, stats: LogStats) {
       )
       stats.readingsAsOf?.let { asOf ->
         Text(
-          text = stringResource(DashboardRes.string.overview_meters_as_of, asOf.toDisplayFormat()),
+          text = stringResource(
+            DashboardRes.string.overview_meters_as_of,
+            asOf.toDisplayFormat()
+          ),
           style = MaterialTheme.typography.labelMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

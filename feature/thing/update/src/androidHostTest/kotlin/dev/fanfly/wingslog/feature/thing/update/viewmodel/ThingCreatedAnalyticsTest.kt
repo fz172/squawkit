@@ -1,23 +1,19 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
-import dev.fanfly.wingslog.core.template.SlotKeys
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.thing.Component
-import dev.fanfly.wingslog.thing.Spec
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.thing.Engine
-import dev.fanfly.wingslog.thing.Propeller
-import dev.fanfly.wingslog.thing.PropellerBlade
-import dev.fanfly.wingslog.thing.PropellerHub
+import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import io.mockk.coEvery
 import io.mockk.every
@@ -105,7 +101,12 @@ class ThingCreatedAnalyticsTest {
               Component(
                 slot_key = SlotKeys.PROPELLER,
                 children = listOf(
-                  Component(slot_key = SlotKeys.LEGACY_HUB, make = "McCauley", model = "1C160", serial = "H-1"),
+                  Component(
+                    slot_key = SlotKeys.LEGACY_HUB,
+                    make = "McCauley",
+                    model = "1C160",
+                    serial = "H-1"
+                  ),
                   Component(slot_key = SlotKeys.BLADE, serial = "B-1"),
                 ),
               ),
@@ -133,18 +134,19 @@ class ThingCreatedAnalyticsTest {
   }
 
   @Test
-  fun creatingAThingWithAPackHandsOffToTheStarterPackStep() = runTest(dispatcher) {
-    // PRD §8.1 step 4. The hand-off carries the written Thing's id — the form never had one.
-    val vm = viewModel(existingId = null)
-    vm.loadThing(completeThing())
+  fun creatingAThingWithAPackHandsOffToTheStarterPackStep() =
+    runTest(dispatcher) {
+      // PRD §8.1 step 4. The hand-off carries the written Thing's id — the form never had one.
+      val vm = viewModel(existingId = null)
+      vm.loadThing(completeThing())
 
-    vm.saveThing()
-    advanceUntilIdle()
+      vm.saveThing()
+      advanceUntilIdle()
 
-    assertThat(vm.uiState.value.isSaved).isTrue()
-    assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
-    assertThat(vm.uiState.value.starterPackThingId).isEqualTo("thing-new")
-  }
+      assertThat(vm.uiState.value.isSaved).isTrue()
+      assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
+      assertThat(vm.uiState.value.starterPackThingId).isEqualTo("thing-new")
+    }
 
   @Test
   fun creatingAThingWithoutAPackJustCloses() = runTest(dispatcher) {
@@ -152,7 +154,12 @@ class ThingCreatedAnalyticsTest {
     // a pack offered and declined.
     val packless = AirplaneTemplate.TEMPLATE.copy(starter_tasks = emptyList())
     coEvery { fleetManager.updateThing(any()) } answers {
-      Result.success(ThingInflater.inflate(firstArg<Thing>().copy(id = "thing-new"), packless))
+      Result.success(
+        ThingInflater.inflate(
+          firstArg<Thing>().copy(id = "thing-new"),
+          packless
+        )
+      )
     }
     val vm = viewModel(existingId = null)
     vm.loadThing(completeThing())

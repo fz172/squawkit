@@ -63,13 +63,17 @@ fun logListLines(
   showAds: Boolean,
   allLogs: List<MaintenanceLog> = logs,
 ): List<LogListLine> {
-  val months = logs.map { it.timestamp?.toLocalDate()?.let { date -> LocalDate(date.year, date.month, 1) } }
+  val months = logs.map {
+    it.timestamp?.toLocalDate()
+      ?.let { date -> LocalDate(date.year, date.month, 1) }
+  }
   val positions = allLogs.map { it.id }
   val entries = buildList<LogListLine> {
     logs.forEachIndexed { index, log ->
       val month = months[index]
       if (index == 0 || month != months[index - 1]) {
-        val run = months.drop(index).takeWhile { it == month }.size
+        val run = months.drop(index)
+          .takeWhile { it == month }.size
         add(LogListLine.MonthHeader(month, run, firstLogId = log.id))
       }
       // Newest of all the logs, not of the matches: a lit dot on an old entry would date it wrongly.

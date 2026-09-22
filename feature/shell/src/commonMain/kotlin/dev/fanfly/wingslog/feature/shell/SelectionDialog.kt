@@ -18,7 +18,11 @@ fun NavGraphBuilder.selectionDialog(
   dialogProperties: DialogProperties = DialogProperties(),
   content: @Composable (NavBackStackEntry) -> Unit,
 ) {
-  dialog(route = route, arguments = arguments, dialogProperties = dialogProperties) { entry ->
+  dialog(
+    route = route,
+    arguments = arguments,
+    dialogProperties = dialogProperties
+  ) { entry ->
     TextSelectionLayer { content(entry) }
   }
 }

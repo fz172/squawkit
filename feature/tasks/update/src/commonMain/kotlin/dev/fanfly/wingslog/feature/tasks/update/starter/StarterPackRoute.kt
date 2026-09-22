@@ -102,7 +102,8 @@ fun StarterPackRoute(
   CompositionLocalProvider(
     LocalThingLexicon provides uiState.lexicon,
     LocalThingTemplate provides uiState.template,
-    LocalThingCapabilities provides (uiState.template?.capabilities ?: CurrentThingTemplate.ALL_ENABLED),
+    LocalThingCapabilities provides (uiState.template?.capabilities
+      ?: CurrentThingTemplate.ALL_ENABLED),
   ) {
     val taskNoun = LocalThingLexicon.current.taskNoun
     Scaffold(
@@ -134,11 +135,17 @@ fun StarterPackRoute(
             .fillMaxHeight()
             .constrainedContentWidth(ContentWidth.Form)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = Spacing.screenPadding, vertical = Spacing.extraLarge),
+            .padding(
+              horizontal = Spacing.screenPadding,
+              vertical = Spacing.extraLarge
+            ),
           verticalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
           Text(
-            text = stringResource(Res.string.starter_pack_title, taskNoun.plural),
+            text = stringResource(
+              Res.string.starter_pack_title,
+              taskNoun.plural
+            ),
             style = MaterialTheme.typography.headlineSmall,
           )
           Text(
@@ -201,7 +208,11 @@ private fun StarterTask.summary(template: ThingTemplate?): String {
     interval_months == 12 -> stringResource(Res.string.starter_rule_every_year)
     interval_months % 12 == 0 ->
       stringResource(Res.string.starter_rule_every_years, interval_months / 12)
-    else -> stringResource(Res.string.starter_rule_every_months, interval_months)
+
+    else -> stringResource(
+      Res.string.starter_rule_every_months,
+      interval_months
+    )
   }
   val meter = if (meter_key.isNotEmpty() && interval > 0f) {
     stringResource(
@@ -211,10 +222,17 @@ private fun StarterTask.summary(template: ThingTemplate?): String {
     )
   } else null
   val rule = when {
-    meter != null && calendar != null -> stringResource(Res.string.starter_rule_either, meter, calendar)
+    meter != null && calendar != null -> stringResource(
+      Res.string.starter_rule_either,
+      meter,
+      calendar
+    )
+
     else -> meter ?: calendar
   }
-  return listOfNotNull(rule, description.takeIf { it.isNotEmpty() }).joinToString(" · ")
+  return listOfNotNull(
+    rule,
+    description.takeIf { it.isNotEmpty() }).joinToString(" · ")
 }
 
 /** 5000 → "5,000"; 7.5 → "7.5". Grouping by hand because `String.format` is not common code. */

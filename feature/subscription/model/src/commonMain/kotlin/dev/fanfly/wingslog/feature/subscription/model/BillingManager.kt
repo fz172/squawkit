@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.subscription.model
 
+import dev.fanfly.wingslog.feature.subscription.model.UnsupportedBillingManager.isPurchaseSupported
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -120,7 +121,8 @@ sealed interface ProOffering {
   data class Available(val packages: List<ProPackage>) : ProOffering {
     /** Yearly is the promoted default when present. */
     val preferred: ProPackage?
-      get() = packages.firstOrNull { it.period == BillingPeriod.YEARLY } ?: packages.firstOrNull()
+      get() = packages.firstOrNull { it.period == BillingPeriod.YEARLY }
+        ?: packages.firstOrNull()
   }
 
   /** No offering — misconfigured dashboard, offline, or a build without purchasing. */
@@ -185,7 +187,8 @@ object UnsupportedBillingManager : BillingManager {
 
   override val store: PurchasePlatform? = null
 
-  override suspend fun proOffering(): ProOffering = ProOffering.Unavailable(BillingError.UNSUPPORTED)
+  override suspend fun proOffering(): ProOffering =
+    ProOffering.Unavailable(BillingError.UNSUPPORTED)
 
   override suspend fun purchase(pkg: ProPackage): PurchaseOutcome =
     PurchaseOutcome.Failed(BillingError.UNSUPPORTED)

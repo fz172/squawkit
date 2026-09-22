@@ -446,15 +446,16 @@ class SettingsViewModelTest {
     }
 
   @Test
-  fun profileCard_prefersTheSelfTechnicianName_overTheAccount() = runTest(testDispatcher) {
-    every { technicianManager.observeSelf() } returns
-      flowOf(Technician(id = "self-1", name = "Jordan Reyes"))
-    viewModel = buildViewModel()
-    advanceUntilIdle()
+  fun profileCard_prefersTheSelfTechnicianName_overTheAccount() =
+    runTest(testDispatcher) {
+      every { technicianManager.observeSelf() } returns
+        flowOf(Technician(id = "self-1", name = "Jordan Reyes"))
+      viewModel = buildViewModel()
+      advanceUntilIdle()
 
-    assertThat(viewModel.user.value.displayName).isEqualTo("Jordan Reyes")
-    assertThat(viewModel.user.value.email).isEqualTo(TEST_USER_EMAIL)
-  }
+      assertThat(viewModel.user.value.displayName).isEqualTo("Jordan Reyes")
+      assertThat(viewModel.user.value.email).isEqualTo(TEST_USER_EMAIL)
+    }
 
   @Test
   fun profileCard_fallsBackToTheAccountEmail_whenNothingElseNamesTheUser() =
@@ -474,24 +475,25 @@ class SettingsViewModelTest {
   }
 
   @Test
-  fun planRow_carriesTheRenewalDate_forAProSubscription() = runTest(testDispatcher) {
-    every { subscriptionManager.entitlement() } returns flowOf(
-      Subscription(
-        status = Subscription.Status.STATUS_PRO,
-        // 2026-10-02T12:00:00Z — noon, so no zone puts it on a different day.
-        current_period_end_millis = 1_790_942_400_000L,
-        will_renew = true,
+  fun planRow_carriesTheRenewalDate_forAProSubscription() =
+    runTest(testDispatcher) {
+      every { subscriptionManager.entitlement() } returns flowOf(
+        Subscription(
+          status = Subscription.Status.STATUS_PRO,
+          // 2026-10-02T12:00:00Z — noon, so no zone puts it on a different day.
+          current_period_end_millis = 1_790_942_400_000L,
+          will_renew = true,
+        )
       )
-    )
-    viewModel = buildViewModel()
-    advanceUntilIdle()
+      viewModel = buildViewModel()
+      advanceUntilIdle()
 
-    val plan = viewModel.user.value.plan
-    assertThat(plan).isInstanceOf(PlanRow.Pro::class.java)
-    plan as PlanRow.Pro
-    assertThat(plan.willRenew).isTrue()
-    assertThat(plan.periodEnd).isEqualTo("Oct 02, 2026")
-  }
+      val plan = viewModel.user.value.plan
+      assertThat(plan).isInstanceOf(PlanRow.Pro::class.java)
+      plan as PlanRow.Pro
+      assertThat(plan.willRenew).isTrue()
+      assertThat(plan.periodEnd).isEqualTo("Oct 02, 2026")
+    }
 
   @Test
   fun planRow_hasNoDate_whenTheStoreGaveNone() = runTest(testDispatcher) {
@@ -500,16 +502,24 @@ class SettingsViewModelTest {
     viewModel = buildViewModel()
     advanceUntilIdle()
 
-    assertThat(viewModel.user.value.plan).isEqualTo(PlanRow.Pro(periodEnd = null, willRenew = false))
+    assertThat(viewModel.user.value.plan).isEqualTo(
+      PlanRow.Pro(
+        periodEnd = null,
+        willRenew = false
+      )
+    )
   }
 
   @Test
   fun openProfile_seedsTheSelfRecord_thenOpensIt() = runTest(testDispatcher) {
-    coEvery { technicianManager.ensureSelfProfile() } returns Result.success(Unit)
+    coEvery { technicianManager.ensureSelfProfile() } returns Result.success(
+      Unit
+    )
     every { technicianManager.observeSelfId() } returns flowOf("self-1")
     viewModel = buildViewModel()
     val targets = mutableListOf<ProfileTarget>()
-    val collector = launch { viewModel.profileRequests.collect { targets += it } }
+    val collector =
+      launch { viewModel.profileRequests.collect { targets += it } }
 
     viewModel.openProfile()
     advanceUntilIdle()
@@ -520,18 +530,22 @@ class SettingsViewModelTest {
   }
 
   @Test
-  fun openProfile_fallsBackToTheRoster_whenThereIsNoSelfRecord() = runTest(testDispatcher) {
-    coEvery { technicianManager.ensureSelfProfile() } returns Result.success(Unit)
-    viewModel = buildViewModel()
-    val targets = mutableListOf<ProfileTarget>()
-    val collector = launch { viewModel.profileRequests.collect { targets += it } }
+  fun openProfile_fallsBackToTheRoster_whenThereIsNoSelfRecord() =
+    runTest(testDispatcher) {
+      coEvery { technicianManager.ensureSelfProfile() } returns Result.success(
+        Unit
+      )
+      viewModel = buildViewModel()
+      val targets = mutableListOf<ProfileTarget>()
+      val collector =
+        launch { viewModel.profileRequests.collect { targets += it } }
 
-    viewModel.openProfile()
-    advanceUntilIdle()
-    collector.cancel()
+      viewModel.openProfile()
+      advanceUntilIdle()
+      collector.cancel()
 
-    assertThat(targets).containsExactly(ProfileTarget.Roster)
-  }
+      assertThat(targets).containsExactly(ProfileTarget.Roster)
+    }
 
   private fun userWithEmail(email: String?) = mockk<FirebaseUser> {
     every { uid } returns TEST_USER_ID

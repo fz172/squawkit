@@ -85,13 +85,13 @@ import wingslog.feature.stresstest.generated.resources.stress_test_progress_dism
 import wingslog.feature.stresstest.generated.resources.stress_test_progress_marking_squawk_addressed
 import wingslog.feature.stresstest.generated.resources.stress_test_regenerate
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_addressed_squawks
-import wingslog.feature.stresstest.generated.resources.stress_test_summary_dismissed_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_components
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_dismissed_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_log_entries
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_log_entry_one
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_open_squawks
-import wingslog.feature.stresstest.generated.resources.stress_test_summary_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_spec
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_tasks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_technicians
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_thing
@@ -401,11 +401,13 @@ private fun TemplatePreview(template: ThingTemplate) {
   val meters = template.meters.map { it.label }
   ReadOnlyRow(
     label = stringResource(Res.string.stress_test_config_components),
-    value = components.ifEmpty { listOf(none) }.joinToString(" · "),
+    value = components.ifEmpty { listOf(none) }
+      .joinToString(" · "),
   )
   ReadOnlyRow(
     label = stringResource(Res.string.stress_test_config_meters),
-    value = meters.ifEmpty { listOf(none) }.joinToString(" · "),
+    value = meters.ifEmpty { listOf(none) }
+      .joinToString(" · "),
   )
 }
 
@@ -600,7 +602,13 @@ private fun StressTestState.Running.displayText(): String = when (step) {
 
 @Composable
 private fun StressTestSummary.displayText(): String = buildList {
-  add(stringResource(Res.string.stress_test_summary_thing, thingName, templateName))
+  add(
+    stringResource(
+      Res.string.stress_test_summary_thing,
+      thingName,
+      templateName
+    )
+  )
   specs.forEach { (label, value) ->
     add(stringResource(Res.string.stress_test_summary_spec, label, value))
   }
@@ -616,7 +624,12 @@ private fun StressTestSummary.displayText(): String = buildList {
     )
   )
   add("")
-  add(stringResource(Res.string.stress_test_summary_technicians, technicianCount))
+  add(
+    stringResource(
+      Res.string.stress_test_summary_technicians,
+      technicianCount
+    )
+  )
   add(stringResource(Res.string.stress_test_summary_tasks, taskCount))
   add(
     stringResource(
@@ -626,7 +639,22 @@ private fun StressTestSummary.displayText(): String = buildList {
     )
   )
   add(stringResource(Res.string.stress_test_summary_squawks, squawkCount))
-  add(stringResource(Res.string.stress_test_summary_open_squawks, openSquawkCount))
-  add(stringResource(Res.string.stress_test_summary_addressed_squawks, addressedSquawkCount))
-  add(stringResource(Res.string.stress_test_summary_dismissed_squawks, dismissedSquawkCount))
+  add(
+    stringResource(
+      Res.string.stress_test_summary_open_squawks,
+      openSquawkCount
+    )
+  )
+  add(
+    stringResource(
+      Res.string.stress_test_summary_addressed_squawks,
+      addressedSquawkCount
+    )
+  )
+  add(
+    stringResource(
+      Res.string.stress_test_summary_dismissed_squawks,
+      dismissedSquawkCount
+    )
+  )
 }.joinToString("\n")

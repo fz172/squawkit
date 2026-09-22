@@ -11,12 +11,14 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val subscriptionViewingModule = module {
-  viewModel { SubscriptionViewModel(
+  viewModel {
+    SubscriptionViewModel(
       subscriptionManager = get<SubscriptionManager>(),
       billingManager = get<BillingManager>(),
       entitlementReconciler = get<EntitlementReconciler>(),
       promoCodeRedeemer = get<PromoCodeRedeemer>(),
       authManager = get<AuthManager>(),
       appCapability = get<AppCapability>(),
-    ) }
+    )
+  }
 }

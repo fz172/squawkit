@@ -18,8 +18,11 @@ class SquawkListLinesTest {
   private val medium3 = squawk("m3", SquawkPriority.SQUAWK_PRIORITY_MEDIUM)
   private val unset = squawk("u", SquawkPriority.SQUAWK_PRIORITY_UNKNOWN)
 
-  private fun header(tier: SquawkPriority, count: Int) = SquawkListLine.TierHeader(tier, count)
-  private fun records(vararg items: SquawkWithStatus) = SquawkListLine.Records(items.toList())
+  private fun header(tier: SquawkPriority, count: Int) =
+    SquawkListLine.TierHeader(tier, count)
+
+  private fun records(vararg items: SquawkWithStatus) =
+    SquawkListLine.Records(items.toList())
 
   @Test
   fun grouped_headsEachTierAndSkipsEmptyOnes() {
@@ -36,14 +39,25 @@ class SquawkListLinesTest {
       header(SquawkPriority.SQUAWK_PRIORITY_MEDIUM, 2),
       records(medium1),
       records(medium2),
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
   fun grouped_unsetPriorityFallsUnderLow() {
-    val lines = squawkListLines(listOf(unset), grouped = true, columns = 1, showAds = false)
+    val lines = squawkListLines(
+      listOf(unset),
+      grouped = true,
+      columns = 1,
+      showAds = false
+    )
 
-    assertThat(lines.first()).isEqualTo(header(SquawkPriority.SQUAWK_PRIORITY_LOW, 1))
+    assertThat(lines.first()).isEqualTo(
+      header(
+        SquawkPriority.SQUAWK_PRIORITY_LOW,
+        1
+      )
+    )
   }
 
   @Test
@@ -61,7 +75,8 @@ class SquawkListLinesTest {
       header(SquawkPriority.SQUAWK_PRIORITY_MEDIUM, 3),
       records(medium1, medium2),
       records(medium3),
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
@@ -73,12 +88,18 @@ class SquawkListLinesTest {
       showAds = false,
     )
 
-    assertThat(lines).containsExactly(records(medium1), records(aog)).inOrder()
+    assertThat(lines).containsExactly(records(medium1), records(aog))
+      .inOrder()
   }
 
   @Test
   fun ads_shortListGetsOneSlotAfterTheLastRecord() {
-    val lines = squawkListLines(listOf(aog, medium1), grouped = true, columns = 1, showAds = true)
+    val lines = squawkListLines(
+      listOf(aog, medium1),
+      grouped = true,
+      columns = 1,
+      showAds = true
+    )
 
     assertThat(lines.last()).isEqualTo(SquawkListLine.Ad(slotIndex = 0))
     assertThat(lines.filterIsInstance<SquawkListLine.Ad>()).hasSize(1)

@@ -47,7 +47,14 @@ class MeterRulesTest {
     // The backfill converted every stored EngineHourRule into one of these, so an aviation task
     // schedules exactly as it did — the meter is simply named now rather than implied.
     val card = task(
-      rules = arrayOf(InspectionRule(meter_rule = MeterRule(MeterKeys.ENGINE_HOURS, 100f)))
+      rules = arrayOf(
+        InspectionRule(
+          meter_rule = MeterRule(
+            MeterKeys.ENGINE_HOURS,
+            100f
+          )
+        )
+      )
     )
 
     assertThat(card.meterIntervalFor(card.rules.single()))

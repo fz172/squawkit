@@ -14,11 +14,8 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkPriority
-import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -33,6 +30,8 @@ import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 private const val THING_ID = "thing-1"
 
@@ -46,17 +45,45 @@ class SquawkTabViewModelTest {
     override fun now() = Instant.parse("2026-09-06T12:00:00Z")
   }
 
-  private fun at(date: String) = toWireInstant(Instant.parse("${date}T12:00:00Z").epochSeconds)
+  private fun at(date: String) =
+    toWireInstant(Instant.parse("${date}T12:00:00Z").epochSeconds)
 
-  private val openXpdr = Squawk(id = "s1", title = "Transponder intermittent", component_type = ComponentType.COMPONENT_AIRFRAME, created_at = at("2026-08-22"), priority = SquawkPriority.SQUAWK_PRIORITY_HIGH)
-  private val openOil = Squawk(id = "s2", title = "Oil seep at magneto", component_type = ComponentType.COMPONENT_ENGINE, created_at = at("2026-08-30"))
-  private val addressedElt = Squawk(id = "s3", title = "ELT self-test fails", component_type = ComponentType.COMPONENT_AIRFRAME, created_at = at("2025-04-02"), addressed_by_log_id = "l5")
-  private val eltLog = MaintenanceLog(id = "l5", timestamp = at("2026-04-05"), work_description = "Replaced ELT battery")
+  private val openXpdr = Squawk(
+    id = "s1",
+    title = "Transponder intermittent",
+    component_type = ComponentType.COMPONENT_AIRFRAME,
+    created_at = at("2026-08-22"),
+    priority = SquawkPriority.SQUAWK_PRIORITY_HIGH
+  )
+  private val openOil = Squawk(
+    id = "s2",
+    title = "Oil seep at magneto",
+    component_type = ComponentType.COMPONENT_ENGINE,
+    created_at = at("2026-08-30")
+  )
+  private val addressedElt = Squawk(
+    id = "s3",
+    title = "ELT self-test fails",
+    component_type = ComponentType.COMPONENT_AIRFRAME,
+    created_at = at("2025-04-02"),
+    addressed_by_log_id = "l5"
+  )
+  private val eltLog = MaintenanceLog(
+    id = "l5",
+    timestamp = at("2026-04-05"),
+    work_description = "Replaced ELT battery"
+  )
 
   @Before
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
-    every { squawkManager.observeSquawks(THING_ID) } returns flowOf(listOf(openXpdr, openOil, addressedElt))
+    every { squawkManager.observeSquawks(THING_ID) } returns flowOf(
+      listOf(
+        openXpdr,
+        openOil,
+        addressedElt
+      )
+    )
     every { logManager.observeLogs(THING_ID) } returns flowOf(listOf(eltLog))
   }
 
@@ -64,16 +91,31 @@ class SquawkTabViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   private fun viewModel() = SquawkTabViewModel(
-    squawkManager, logManager, SearchEngineImpl(), SearchTuning(0, Dispatchers.Unconfined), analytics,
-    THING_ID, "airplane", fixedClock, TimeZone.UTC,
+    squawkManager,
+    logManager,
+    SearchEngineImpl(),
+    SearchTuning(0, Dispatchers.Unconfined),
+    analytics,
+    THING_ID,
+    "airplane",
+    fixedClock,
+    TimeZone.UTC,
   )
-  private fun SquawkTabViewModel.ids() = uiState.value.squawks.map { it.squawk.id }
+
+  private fun SquawkTabViewModel.ids() =
+    uiState.value.squawks.map { it.squawk.id }
 
   @Test
   fun noFilter_listsEverySquawkWithStatus() {
     val vm = viewModel()
-    assertThat(vm.ids()).containsExactly("s1", "s2", "s3").inOrder()
-    assertThat(vm.uiState.value.squawks.map { it.status.name }).containsExactly("OPEN", "OPEN", "ADDRESSED").inOrder()
+    assertThat(vm.ids()).containsExactly("s1", "s2", "s3")
+      .inOrder()
+    assertThat(vm.uiState.value.squawks.map { it.status.name }).containsExactly(
+      "OPEN",
+      "OPEN",
+      "ADDRESSED"
+    )
+      .inOrder()
   }
 
   @Test
@@ -99,8 +141,15 @@ class SquawkTabViewModelTest {
   fun typedQueryShowsAtOnce_resultsFollowAfterTheDebounce() = runTest {
     Dispatchers.setMain(StandardTestDispatcher(testScheduler))
     val vm = SquawkTabViewModel(
-      squawkManager, logManager, SearchEngineImpl(), SearchTuning(150, StandardTestDispatcher(testScheduler)), analytics,
-      THING_ID, "airplane", fixedClock, TimeZone.UTC,
+      squawkManager,
+      logManager,
+      SearchEngineImpl(),
+      SearchTuning(150, StandardTestDispatcher(testScheduler)),
+      analytics,
+      THING_ID,
+      "airplane",
+      fixedClock,
+      TimeZone.UTC,
     )
     runCurrent()
     vm.onFilterChange(RecordFilter(query = "transponder"))
@@ -118,7 +167,12 @@ class SquawkTabViewModelTest {
     vm.onFilterChange(RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH))))
     assertThat(vm.ids()).containsExactly("s1")
     vm.onFilterChange(
-      RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH), Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_UNKNOWN))),
+      RecordFilter(
+        facets = setOf(
+          Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH),
+          Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_UNKNOWN)
+        )
+      ),
     )
     assertThat(vm.ids()).containsExactly("s1", "s2", "s3")
   }
@@ -127,8 +181,17 @@ class SquawkTabViewModelTest {
   fun analytics_facetAndSearch() {
     val vm = viewModel()
     vm.onFilterChange(RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH))))
-    vm.onFilterChange(RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH)), query = "xpdr"))
-    assertThat(analytics.events.map { it.first }).containsExactly("record_filter_applied", "record_search").inOrder()
+    vm.onFilterChange(
+      RecordFilter(
+        facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH)),
+        query = "xpdr"
+      )
+    )
+    assertThat(analytics.events.map { it.first }).containsExactly(
+      "record_filter_applied",
+      "record_search"
+    )
+      .inOrder()
     assertThat(analytics.events[0].second["value"]).isEqualTo("priority:high")
     assertThat(analytics.events[1].second["explained"]).isEqualTo("true")
     assertThat(analytics.events[1].second["results"]).isEqualTo("1-5")

@@ -29,7 +29,14 @@ fun DeleteSquawkConfirmDialog(
   val lexicon = LocalThingLexicon.current
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text(stringResource(Res.string.delete_squawk_title, lexicon.squawkNoun.singular)) },
+    title = {
+      Text(
+        stringResource(
+          Res.string.delete_squawk_title,
+          lexicon.squawkNoun.singular
+        )
+      )
+    },
     text = {
       Text(
         stringResource(

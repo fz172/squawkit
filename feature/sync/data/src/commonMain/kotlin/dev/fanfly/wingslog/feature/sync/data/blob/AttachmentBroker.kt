@@ -51,7 +51,8 @@ interface AttachmentBroker {
  */
 data class BlobLocation(val ownerUid: String, val thingId: String) {
   /** A blob is foreign — and must go through the broker — when its owning tree isn't the caller's. */
-  fun isForeign(currentUid: String?): Boolean = currentUid != null && ownerUid != currentUid
+  fun isForeign(currentUid: String?): Boolean =
+    currentUid != null && ownerUid != currentUid
 
   companion object {
     fun of(ref: BlobRef): BlobLocation? {

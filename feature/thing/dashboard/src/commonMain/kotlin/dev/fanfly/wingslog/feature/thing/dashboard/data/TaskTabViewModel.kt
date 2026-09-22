@@ -17,7 +17,6 @@ import dev.fanfly.wingslog.feature.search.model.matchesById
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +27,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 data class TaskTabUiState(
   val filter: RecordFilter = RecordFilter(),
@@ -57,11 +57,13 @@ class TaskTabViewModel(
   private val adapter = TaskAdapter()
 
   val uiState: StateFlow<TaskTabUiState> = combine(
-    taskStatusManager.observeTasksWithStatus(thingId).catch { emit(emptyList()) },
+    taskStatusManager.observeTasksWithStatus(thingId)
+      .catch { emit(emptyList()) },
     _filter,
     _filter.debouncedQuery(tuning.queryDebounceMillis),
   ) { tasks, typed, applied ->
-    val today = clock.now().toLocalDateTime(timeZone).date
+    val today = clock.now()
+      .toLocalDateTime(timeZone).date
     val (complied, active) = tasks.partition { it.dueStatus.status == DueStatus.COMPLIED }
     // The state carries what was typed; the search runs on the debounced copy.
     val activeHits = searchEngine.search(active, adapter, applied, today)
@@ -73,14 +75,16 @@ class TaskTabViewModel(
       completedTasks = compliedHits.map { it.item },
       matches = (activeHits + compliedHits).matchesById { it.card.id },
     )
-  }.flowOn(tuning.dispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, TaskTabUiState())
+  }.flowOn(tuning.dispatcher)
+    .stateIn(viewModelScope, SharingStarted.Eagerly, TaskTabUiState())
 
   fun onFilterChange(filter: RecordFilter) {
     val previous = _filter.value
     _filter.value = filter
-    filter.changesFrom(previous).forEach {
-      analytics.log(RecordFilterApplied(templateId, TAB, it.kind, it.value))
-    }
+    filter.changesFrom(previous)
+      .forEach {
+        analytics.log(RecordFilterApplied(templateId, TAB, it.kind, it.value))
+      }
   }
 
   fun clearFilter() = onFilterChange(RecordFilter())
@@ -88,7 +92,15 @@ class TaskTabViewModel(
   private fun <T> trackSearch(query: String, hits: List<SearchHit<T>>) {
     if (query.isBlank() || query == lastLoggedQuery) return
     lastLoggedQuery = query
-    analytics.log(RecordSearch(templateId, TAB, query.length, hits.size, hits.firstOrNull()?.explanations?.isNotEmpty() == true))
+    analytics.log(
+      RecordSearch(
+        templateId,
+        TAB,
+        query.length,
+        hits.size,
+        hits.firstOrNull()?.explanations?.isNotEmpty() == true
+      )
+    )
   }
 
   private companion object {

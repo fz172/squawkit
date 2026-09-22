@@ -16,8 +16,6 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -29,6 +27,8 @@ import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 private const val THING_ID = "thing-1"
 
@@ -41,42 +41,76 @@ class TaskTabViewModelTest {
   }
 
   private val dueSoon = MaintenanceTaskWithStatus(
-    MaintenanceTask(id = "t1", title = "ELT battery replacement", component = ComponentType.COMPONENT_AIRFRAME),
+    MaintenanceTask(
+      id = "t1",
+      title = "ELT battery replacement",
+      component = ComponentType.COMPONENT_AIRFRAME
+    ),
     DueMetadata(nextDueDate = LocalDate(2026, 10, 1)),
   )
   private val dueLater = MaintenanceTaskWithStatus(
-    MaintenanceTask(id = "t2", title = "Annual inspection", component = ComponentType.COMPONENT_AIRFRAME),
+    MaintenanceTask(
+      id = "t2",
+      title = "Annual inspection",
+      component = ComponentType.COMPONENT_AIRFRAME
+    ),
     DueMetadata(nextDueDate = LocalDate(2027, 3, 14)),
   )
   private val meterOnly = MaintenanceTaskWithStatus(
-    MaintenanceTask(id = "t3", title = "Oil and filter change", component = ComponentType.COMPONENT_ENGINE),
+    MaintenanceTask(
+      id = "t3",
+      title = "Oil and filter change",
+      component = ComponentType.COMPONENT_ENGINE
+    ),
     DueMetadata(nextDueEngine = 2889f),
   )
   private val complied = MaintenanceTaskWithStatus(
-    MaintenanceTask(id = "t4", title = "Fuel selector AD", reference_number = "AD 2011-10-09", component = ComponentType.COMPONENT_AIRFRAME, type = ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE),
-    DueMetadata(status = DueStatus.COMPLIED, compliedDate = LocalDate(2026, 3, 14)),
+    MaintenanceTask(
+      id = "t4",
+      title = "Fuel selector AD",
+      reference_number = "AD 2011-10-09",
+      component = ComponentType.COMPONENT_AIRFRAME,
+      type = ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE
+    ),
+    DueMetadata(
+      status = DueStatus.COMPLIED,
+      compliedDate = LocalDate(2026, 3, 14)
+    ),
   )
 
   @Before
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
-    every { statusManager.observeTasksWithStatus(THING_ID) } returns flowOf(listOf(dueSoon, dueLater, meterOnly, complied))
+    every { statusManager.observeTasksWithStatus(THING_ID) } returns flowOf(
+      listOf(dueSoon, dueLater, meterOnly, complied)
+    )
   }
 
   @After
   fun tearDown() = Dispatchers.resetMain()
 
   private fun viewModel() = TaskTabViewModel(
-    statusManager, SearchEngineImpl(), SearchTuning(0, Dispatchers.Unconfined), RecordingAnalyticsManager(),
-    THING_ID, "airplane", fixedClock, TimeZone.UTC,
+    statusManager,
+    SearchEngineImpl(),
+    SearchTuning(0, Dispatchers.Unconfined),
+    RecordingAnalyticsManager(),
+    THING_ID,
+    "airplane",
+    fixedClock,
+    TimeZone.UTC,
   )
-  private fun TaskTabViewModel.active() = uiState.value.activeTasks.map { it.card.id }
-  private fun TaskTabViewModel.complied() = uiState.value.completedTasks.map { it.card.id }
+
+  private fun TaskTabViewModel.active() =
+    uiState.value.activeTasks.map { it.card.id }
+
+  private fun TaskTabViewModel.complied() =
+    uiState.value.completedTasks.map { it.card.id }
 
   @Test
   fun noFilter_splitsActiveFromComplied_keepingOrder() {
     val vm = viewModel()
-    assertThat(vm.active()).containsExactly("t1", "t2", "t3").inOrder()
+    assertThat(vm.active()).containsExactly("t1", "t2", "t3")
+      .inOrder()
     assertThat(vm.complied()).containsExactly("t4")
   }
 
@@ -84,17 +118,27 @@ class TaskTabViewModelTest {
   fun window_isDueWithinForActive_andPastForComplied() {
     val vm = viewModel()
     vm.onFilterChange(RecordFilter(time = TimeWindow.LastMonths(3)))
-    assertThat(vm.active()).containsExactly("t1", "t3").inOrder()
+    assertThat(vm.active()).containsExactly("t1", "t3")
+      .inOrder()
     assertThat(vm.complied()).isEmpty()
     vm.onFilterChange(RecordFilter(time = TimeWindow.LastMonths(12)))
-    assertThat(vm.active()).containsExactly("t1", "t2", "t3").inOrder()
+    assertThat(vm.active()).containsExactly("t1", "t2", "t3")
+      .inOrder()
     assertThat(vm.complied()).containsExactly("t4")
   }
 
   @Test
   fun complianceFacet_narrowsBothSubViews() {
     val vm = viewModel()
-    vm.onFilterChange(RecordFilter(facets = setOf(Facet.Compliance(ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE))))
+    vm.onFilterChange(
+      RecordFilter(
+        facets = setOf(
+          Facet.Compliance(
+            ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE
+          )
+        )
+      )
+    )
     assertThat(vm.active()).isEmpty()
     assertThat(vm.complied()).containsExactly("t4")
   }

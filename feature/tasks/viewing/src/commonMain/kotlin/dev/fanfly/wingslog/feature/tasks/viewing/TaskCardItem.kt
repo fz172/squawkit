@@ -20,15 +20,15 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.dash
-import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.badge_due
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
 import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.label_deadline
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
 @Composable
 fun TaskCardItem(

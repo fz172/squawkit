@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -183,7 +182,9 @@ fun EditTechnicianScreen(
               displayName = uiState.name.takeIf { it.isNotBlank() },
               photoUri = if (uiState.isSelf) uiState.photoUrl else null,
               size = ProfileAvatarSize,
-              textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+              textStyle = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold
+              ),
             )
           }
 
@@ -228,7 +229,10 @@ fun EditTechnicianScreen(
                 showHeader = false,
                 modifier = Modifier
                   .fillMaxWidth()
-                  .padding(horizontal = Spacing.xLarge, vertical = Spacing.large),
+                  .padding(
+                    horizontal = Spacing.xLarge,
+                    vertical = Spacing.large
+                  ),
               )
             }
           }

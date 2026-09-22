@@ -176,7 +176,8 @@ fun SquawkTab(
   // One column beside an open detail pane: the list is then a third of the width. Decided here,
   // where the lines are built, rather than by the tier the pane provides to its list.
   val tier = LocalLayoutTier.current
-  val columns = if (tier.hasSideNav && state.selectedSquawk != null) 1 else tier.cardColumns
+  val columns =
+    if (tier.hasSideNav && state.selectedSquawk != null) 1 else tier.cardColumns
   // Only the open list is in priority order, so only it is grouped; closed is newest first.
   val lines = remember(displayList, showClosed, columns, showAds) {
     squawkListLines(

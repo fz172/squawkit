@@ -18,6 +18,10 @@ val tasksDataManagerModule = module {
   }
   single<TaskDueManager> { TaskDueManagerImpl() }
   single<TaskStatusManager> {
-    TaskStatusManagerImpl(get<ThingScopeResolver>(), get<EntityStoreFactory>(), get<TaskDueManager>())
+    TaskStatusManagerImpl(
+      get<ThingScopeResolver>(),
+      get<EntityStoreFactory>(),
+      get<TaskDueManager>()
+    )
   }
 }

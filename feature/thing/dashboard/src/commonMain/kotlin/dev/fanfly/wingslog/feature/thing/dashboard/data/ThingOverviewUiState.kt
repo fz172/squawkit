@@ -3,10 +3,10 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 import dev.fanfly.wingslog.core.template.DegradedReason
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Thing

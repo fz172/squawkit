@@ -84,7 +84,12 @@ fun TechnicianListScreen(
     AlertDialog(
       onDismissRequest = { infoFor = null },
       title = {
-        Text(stringResource(TechnicianRes.string.linked_technician_info_title, linked.name))
+        Text(
+          stringResource(
+            TechnicianRes.string.linked_technician_info_title,
+            linked.name
+          )
+        )
       },
       text = { Text(stringResource(TechnicianRes.string.linked_technician_info_body)) },
       confirmButton = {

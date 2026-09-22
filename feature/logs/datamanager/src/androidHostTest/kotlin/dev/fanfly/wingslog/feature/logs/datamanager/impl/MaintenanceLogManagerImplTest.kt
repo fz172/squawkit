@@ -114,7 +114,11 @@ class MaintenanceLogManagerImplTest {
     manager.deleteLog(TEST_THING_ID, "log-1")
 
     coVerify(exactly = 1) {
-      squawkStore.put("squawk-1", Squawk(id = "squawk-1", addressed_by_log_id = ""), scope)
+      squawkStore.put(
+        "squawk-1",
+        Squawk(id = "squawk-1", addressed_by_log_id = ""),
+        scope
+      )
     }
     coVerify(exactly = 0) { squawkStore.put("squawk-2", any(), any()) }
     coVerify(exactly = 0) { squawkStore.put("squawk-3", any(), any()) }
@@ -127,7 +131,10 @@ class MaintenanceLogManagerImplTest {
     coVerify(exactly = 0) { squawkStore.put(any(), any(), any()) }
   }
 
-  private fun squawkRow(id: String, addressedBy: String): StorageEntity<Squawk> =
+  private fun squawkRow(
+    id: String,
+    addressedBy: String
+  ): StorageEntity<Squawk> =
     StorageEntity(
       id = id,
       value = Squawk(id = id, addressed_by_log_id = addressedBy),

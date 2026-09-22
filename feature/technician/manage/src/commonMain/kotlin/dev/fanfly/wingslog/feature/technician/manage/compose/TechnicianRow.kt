@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -82,7 +81,10 @@ fun TechnicianRow(
           }
 
           isLinked -> {
-            StatusChip(label = stringResource(Res.string.linked_badge), tier = StatusTier.NEUTRAL)
+            StatusChip(
+              label = stringResource(Res.string.linked_badge),
+              tier = StatusTier.NEUTRAL
+            )
             Spacer(Modifier.width(Spacing.small))
           }
         }

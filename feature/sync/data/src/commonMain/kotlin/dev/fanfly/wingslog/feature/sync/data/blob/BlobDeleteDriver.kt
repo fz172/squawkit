@@ -48,7 +48,8 @@ class BlobDeleteDriver(
     // easy one to miss: it's a blob known from a synced record whose bytes were never downloaded to
     // this device (e.g. after a reinstall), so it very much exists in gs:// and must be removed.
     // Only LocalOnly carries a null path, and it has nothing in Storage to delete.
-    val foreign = BlobLocation.of(ref)?.isForeign(auth.currentUser?.uid) == true
+    val foreign = BlobLocation.of(ref)
+      ?.isForeign(auth.currentUser?.uid) == true
 
     val remotePath = ref.remotePath
     if (remotePath != null && !foreign) {

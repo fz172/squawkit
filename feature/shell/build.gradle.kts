@@ -98,12 +98,14 @@ dependencies {
  * exactly the commit that adds a self-logging screen in `feature/squawk`. The guard would be
  * skipped on the change it exists to catch, and a skipped task reports success.
  */
-tasks.withType<Test>().configureEach {
-  inputs.files(
-    rootProject.fileTree(rootProject.projectDir) {
-      include("**/src/**/*.kt")
-      exclude("**/build/**")
-    },
-  ).withPropertyName("repoKotlinSourcesForScreenViewGuard")
-    .withPathSensitivity(PathSensitivity.RELATIVE)
-}
+tasks.withType<Test>()
+  .configureEach {
+    inputs.files(
+      rootProject.fileTree(rootProject.projectDir) {
+        include("**/src/**/*.kt")
+        exclude("**/build/**")
+      },
+    )
+      .withPropertyName("repoKotlinSourcesForScreenViewGuard")
+      .withPathSensitivity(PathSensitivity.RELATIVE)
+  }

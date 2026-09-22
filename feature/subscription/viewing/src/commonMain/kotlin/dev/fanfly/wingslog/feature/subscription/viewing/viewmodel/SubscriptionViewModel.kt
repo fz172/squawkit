@@ -191,11 +191,14 @@ enum class PromoCodeError {
   /** Unknown, already spent, or past its redemption window — the server does not say which. */
   NOT_VALID,
   TOO_MANY_ATTEMPTS,
+
   /** Already on a paid store subscription. The code was left unspent. */
   ALREADY_SUBSCRIBED,
   SIGN_IN_REQUIRED,
+
   /** App Check could not attest this build, so the server refused it. Nothing was spent. */
   APP_UNVERIFIED,
+
   /** Offline or a failed call. Nothing was spent. */
   UNAVAILABLE,
 }
@@ -319,7 +322,8 @@ class SubscriptionViewModel(
   private val promoPending = MutableStateFlow<PromoTerm?>(null)
 
   private val _promoCodeState = MutableStateFlow(PromoCodeUiState())
-  val promoCodeState: StateFlow<PromoCodeUiState> = _promoCodeState.asStateFlow()
+  val promoCodeState: StateFlow<PromoCodeUiState> =
+    _promoCodeState.asStateFlow()
 
   init {
     requestManagementUrlIfMissing()
@@ -354,7 +358,10 @@ class SubscriptionViewModel(
       // an account RevenueCat may never have heard of. The server-side backfill skips them for the
       // same reason.
       val needsLink = !isCompedEntitlement(subscription) &&
-        !canManageHere(purchasePlatformOf(subscription.origin_platform), billingManager.store)
+        !canManageHere(
+          purchasePlatformOf(subscription.origin_platform),
+          billingManager.store
+        )
       if (needsLink && manageableUrlOrNull(subscription.management_url) == null) {
         entitlementReconciler.reconcileNow()
       }
@@ -455,7 +462,8 @@ class SubscriptionViewModel(
   }
 
   private suspend fun isStillFree(): Boolean =
-    subscriptionManager.status().first() != Subscription.Status.STATUS_PRO
+    subscriptionManager.status()
+      .first() != Subscription.Status.STATUS_PRO
 
   fun onPromoEntryOpened() {
     _promoCodeState.value = PromoCodeUiState(isOpen = true)
@@ -557,8 +565,10 @@ internal fun toSubscriptionUiState(
   // The provider's deep link first; our per-store page only as a downgrade. A comp gets neither.
   // A simulated Test Store purchase is filtered upstream: the server never persists a URL for one,
   // so `management_url` is empty by the time it reaches here.
-  val providerUrl = if (isComped) null else manageableUrlOrNull(subscription.management_url)
-  val derivedUrl = if (isComped) null else derivedManagementUrlFor(purchasePlatform)
+  val providerUrl =
+    if (isComped) null else manageableUrlOrNull(subscription.management_url)
+  val derivedUrl =
+    if (isComped) null else derivedManagementUrlFor(purchasePlatform)
   return SubscriptionUiState(
     isLoading = false,
     isPro = status == Subscription.Status.STATUS_PRO,
@@ -594,7 +604,8 @@ internal fun toSubscriptionUiState(
  * and because a doc written by an older server predates that check. Cheap enough to be worth it.
  */
 internal fun manageableUrlOrNull(url: String): String? =
-  url.trim().takeIf { it.startsWith("https://", ignoreCase = true) }
+  url.trim()
+    .takeIf { it.startsWith("https://", ignoreCase = true) }
 
 /**
  * The store's own subscriptions page, used only when the provider reports no `management_url`.
@@ -615,14 +626,16 @@ internal fun manageableUrlOrNull(url: String): String? =
  * See the PR — adding it server-side to sharpen a fallback that real purchases never reach was not
  * judged worth the wire change.
  */
-internal fun derivedManagementUrlFor(platform: PurchasePlatform?): String? = when (platform) {
-  PurchasePlatform.PLAY_STORE -> "https://play.google.com/store/account/subscriptions"
-  // One Apple account page serves both storefronts, exactly as canManageHere assumes.
-  PurchasePlatform.APP_STORE, PurchasePlatform.MAC_APP_STORE ->
-    "https://apps.apple.com/account/subscriptions"
-  PurchasePlatform.AMAZON -> "https://www.amazon.com/gp/mas/your-account/myapps/yoursubscriptions"
-  PurchasePlatform.WEB, PurchasePlatform.TEST_STORE, null -> null
-}
+internal fun derivedManagementUrlFor(platform: PurchasePlatform?): String? =
+  when (platform) {
+    PurchasePlatform.PLAY_STORE -> "https://play.google.com/store/account/subscriptions"
+    // One Apple account page serves both storefronts, exactly as canManageHere assumes.
+    PurchasePlatform.APP_STORE, PurchasePlatform.MAC_APP_STORE ->
+      "https://apps.apple.com/account/subscriptions"
+
+    PurchasePlatform.AMAZON -> "https://www.amazon.com/gp/mas/your-account/myapps/yoursubscriptions"
+    PurchasePlatform.WEB, PurchasePlatform.TEST_STORE, null -> null
+  }
 
 private fun Long.toDisplayDateOrNull(timeZone: TimeZone): String? =
   if (this <= 0L) {

@@ -4,4 +4,5 @@ import org.jetbrains.compose.resources.StringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.choose_file_description
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
-internal actual val chooseFileDescription: StringResource = AttachRes.string.choose_file_description
+internal actual val chooseFileDescription: StringResource =
+  AttachRes.string.choose_file_description

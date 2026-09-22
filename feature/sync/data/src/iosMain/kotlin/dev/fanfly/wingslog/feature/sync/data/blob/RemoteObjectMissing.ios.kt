@@ -13,5 +13,8 @@ internal actual fun Throwable.isRemoteObjectMissing(): Boolean =
   generateSequence(this) { it.cause }
     .mapNotNull { it.message }
     .any { message ->
-      message.contains("-13010") || message.contains("does not exist", ignoreCase = true)
+      message.contains("-13010") || message.contains(
+        "does not exist",
+        ignoreCase = true
+      )
     }

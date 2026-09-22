@@ -9,4 +9,5 @@ package dev.fanfly.wingslog.feature.subscription.billing
  * Only a *release* build ever configures with this — developer and dogfood builds keep using the
  * Test Store key. See [RevenueCatApiKey] for why the two are not interchangeable.
  */
-internal actual val platformProductionApiKey: String? = "goog_yzPMCqJgkvCMWogDsSDrgLwSBak"
+internal actual val platformProductionApiKey: String? =
+  "goog_yzPMCqJgkvCMWogDsSDrgLwSBak"

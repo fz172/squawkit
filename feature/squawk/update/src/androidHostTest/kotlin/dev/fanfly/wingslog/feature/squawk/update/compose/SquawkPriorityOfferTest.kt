@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.update.compose
 
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.thing.SquawkPriority
 import org.junit.Test
 

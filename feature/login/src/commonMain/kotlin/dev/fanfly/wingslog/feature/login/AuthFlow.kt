@@ -212,7 +212,10 @@ fun AuthFlow(
     )
 
     AuthStep.Welcome -> WelcomeScreen(
-      name = welcomeName.ifBlank { selfName.orEmpty().trim() },
+      name = welcomeName.ifBlank {
+        selfName.orEmpty()
+          .trim()
+      },
       onDone = {
         scope.launch {
           onboardingPreferences.setHasSeenWelcome()
@@ -222,7 +225,8 @@ fun AuthFlow(
     )
 
     AuthStep.NotificationPrimer -> {
-      val permissionDenied = notificationPermission.observe().value == PermissionState.DENIED
+      val permissionDenied =
+        notificationPermission.observe().value == PermissionState.DENIED
       NotificationPrimerScreen(
         permissionDenied = permissionDenied,
         onContinue = {

@@ -43,8 +43,10 @@ class LogStatsMeterTest {
 
   @Test
   fun aThingWithNoLogsAtAllHasNoReadings() {
-    assertThat(LogStats(total = 0, airframe = 0, engine = 0, propeller = 0).valueFor(
-      MeterKeys.ENGINE_HOURS,
-    )).isNull()
+    assertThat(
+      LogStats(total = 0, airframe = 0, engine = 0, propeller = 0).valueFor(
+        MeterKeys.ENGINE_HOURS,
+      )
+    ).isNull()
   }
 }

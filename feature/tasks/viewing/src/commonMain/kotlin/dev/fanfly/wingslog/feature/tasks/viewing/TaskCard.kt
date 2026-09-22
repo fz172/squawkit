@@ -56,7 +56,8 @@ fun TaskCard(
   // phrase, where a caption on its own row cost the card a divider and two lines.
   val metadata = buildAnnotatedString {
     if (statusValue.isNotBlank()) {
-      append(listOf(statusLabel, statusValue).filter { it.isNotBlank() }.joinToString(" "))
+      append(listOf(statusLabel, statusValue).filter { it.isNotBlank() }
+               .joinToString(" "))
     }
     if (subtitle.isNotBlank()) {
       if (length > 0) append(" · ")
@@ -85,7 +86,10 @@ fun TaskCard(
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        if (badgeText.isNotBlank()) StatusChip(label = badgeText, tier = badgeTier)
+        if (badgeText.isNotBlank()) StatusChip(
+          label = badgeText,
+          tier = badgeTier
+        )
         Icon(
           imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
           contentDescription = null,

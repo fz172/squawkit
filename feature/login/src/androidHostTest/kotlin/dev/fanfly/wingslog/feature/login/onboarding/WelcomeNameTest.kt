@@ -19,9 +19,24 @@ class WelcomeNameTest {
 
   @Test
   fun fallsBackToTheAuthProfileWhenNoLocalRecordExistsYet() {
-    assertThat(resolveWelcomeName(null, "Amelia Earhart")).isEqualTo("Amelia Earhart")
-    assertThat(resolveWelcomeName("", "Amelia Earhart")).isEqualTo("Amelia Earhart")
-    assertThat(resolveWelcomeName("   ", "Amelia Earhart")).isEqualTo("Amelia Earhart")
+    assertThat(
+      resolveWelcomeName(
+        null,
+        "Amelia Earhart"
+      )
+    ).isEqualTo("Amelia Earhart")
+    assertThat(
+      resolveWelcomeName(
+        "",
+        "Amelia Earhart"
+      )
+    ).isEqualTo("Amelia Earhart")
+    assertThat(
+      resolveWelcomeName(
+        "   ",
+        "Amelia Earhart"
+      )
+    ).isEqualTo("Amelia Earhart")
   }
 
   @Test

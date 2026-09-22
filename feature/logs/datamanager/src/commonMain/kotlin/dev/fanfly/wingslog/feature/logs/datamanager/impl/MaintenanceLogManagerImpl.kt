@@ -31,6 +31,7 @@ class MaintenanceLogManagerImpl(
     storeFactory.create(CollectionKind.MaintenanceLog)
   private val overviewStore: EntityStore<MaintenanceOverview> =
     storeFactory.create(CollectionKind.MaintenanceOverview)
+
   // Squawks are read here only to reopen the ones a deleted log addressed; see [reopenAddressed].
   private val squawkStore: EntityStore<Squawk> =
     storeFactory.create(CollectionKind.Squawk)
@@ -126,7 +127,13 @@ class MaintenanceLogManagerImpl(
     squawkStore.observeAll(scope)
       .first()
       .filter { it.value.addressed_by_log_id == logId }
-      .forEach { squawkStore.put(it.id, it.value.copy(addressed_by_log_id = ""), scope) }
+      .forEach {
+        squawkStore.put(
+          it.id,
+          it.value.copy(addressed_by_log_id = ""),
+          scope
+        )
+      }
   }
 
   // Overview is recomputed from the logs after every mutation. With local SQLite this is cheap,

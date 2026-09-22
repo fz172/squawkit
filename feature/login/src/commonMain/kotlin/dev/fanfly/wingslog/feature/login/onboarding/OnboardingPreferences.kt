@@ -43,12 +43,17 @@ class OnboardingPreferences(
   suspend fun setHasSeenNotificationPrimer() {
     val uid = auth.currentUser?.uid ?: return
     writeLock.withLock {
-      db.schemaQueries.upsertConfig(uid, KEY_HAS_SEEN_NOTIFICATION_PRIMER, true.toString())
+      db.schemaQueries.upsertConfig(
+        uid,
+        KEY_HAS_SEEN_NOTIFICATION_PRIMER,
+        true.toString()
+      )
     }
   }
 
   companion object {
     private const val KEY_HAS_SEEN_WELCOME = "onboarding_has_seen_welcome"
-    private const val KEY_HAS_SEEN_NOTIFICATION_PRIMER = "onboarding_has_seen_notification_primer"
+    private const val KEY_HAS_SEEN_NOTIFICATION_PRIMER =
+      "onboarding_has_seen_notification_primer"
   }
 }

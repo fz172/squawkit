@@ -107,7 +107,10 @@ private fun BoxScope.DropHighlight() {
         text = stringResource(AttachRes.string.file_drop_hint),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onPrimary,
-        modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
+        modifier = Modifier.padding(
+          horizontal = Spacing.medium,
+          vertical = Spacing.small
+        ),
       )
     }
   }

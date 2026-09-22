@@ -480,7 +480,12 @@ class AttachmentFormControllerTest {
 
   @Test
   fun hasChanges_onAddFormWithNoSeed_isTrueOnceALinkIsAdded() = runTest {
-    every { attachmentManager.makeLink(any(), any()) } returns linkAttachment("l1")
+    every {
+      attachmentManager.makeLink(
+        any(),
+        any()
+      )
+    } returns linkAttachment("l1")
 
     assertThat(controller.hasChanges.first()).isFalse()
     controller.addLink("https://example.com", "Example")

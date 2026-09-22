@@ -6,8 +6,8 @@ import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.customSpecs
-import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import io.mockk.every
@@ -139,7 +139,9 @@ class CustomFieldsTest {
 
     vm.onAddCustomField()
 
-    assertThat(vm.uiState.value.thing.customSpecs().map { it.key })
+    assertThat(
+      vm.uiState.value.thing.customSpecs()
+        .map { it.key })
       .containsExactly("custom_1", "custom_2", "custom_3")
   }
 

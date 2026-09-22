@@ -173,36 +173,39 @@ fun DataLogSectionContent(
                 modifier = motionItem().padding(bottom = Spacing.medium),
               )
             }
-            state.rows.byMonth().forEach { month ->
-              stickySectionHeader(
-                key = month.key,
-                title = month.month.toMonthHeading(),
-                count = month.rows.size,
-              )
-              itemsIndexed(month.rows, key = { _, row -> row.id.value_ }) { index, row ->
-                SwipeActionCard(
-                  // Whoever may upload may delete; a guest browses only, so the drag is disabled.
-                  actions = dataLogQuickActions(
-                    onDelete = if (state.uploadGate == UploadGate.SignedIn) {
-                      { revealController.close(); viewModel.onDeleteClick(row) }
-                    } else null,
-                  ),
-                  controller = revealController,
-                  key = row.id.value_,
-                  modifier = motionItem(),
-                ) {
-                  DataLogCard(
-                    row = row,
-                    onClick = { viewModel.select(row.id) },
-                    // The spine joins the entries of a month; the header above breaks it.
-                    connectsUp = index > 0,
-                    connectsDown = index < month.rows.lastIndex,
-                    isLatest = row.id == state.rows.first().id,
-                    showDetails = !compact
-                  )
+            state.rows.byMonth()
+              .forEach { month ->
+                stickySectionHeader(
+                  key = month.key,
+                  title = month.month.toMonthHeading(),
+                  count = month.rows.size,
+                )
+                itemsIndexed(
+                  month.rows,
+                  key = { _, row -> row.id.value_ }) { index, row ->
+                  SwipeActionCard(
+                    // Whoever may upload may delete; a guest browses only, so the drag is disabled.
+                    actions = dataLogQuickActions(
+                      onDelete = if (state.uploadGate == UploadGate.SignedIn) {
+                        { revealController.close(); viewModel.onDeleteClick(row) }
+                      } else null,
+                    ),
+                    controller = revealController,
+                    key = row.id.value_,
+                    modifier = motionItem(),
+                  ) {
+                    DataLogCard(
+                      row = row,
+                      onClick = { viewModel.select(row.id) },
+                      // The spine joins the entries of a month; the header above breaks it.
+                      connectsUp = index > 0,
+                      connectsDown = index < month.rows.lastIndex,
+                      isLatest = row.id == state.rows.first().id,
+                      showDetails = !compact
+                    )
+                  }
                 }
               }
-            }
           }
         }
       }

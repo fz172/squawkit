@@ -58,7 +58,8 @@ class RevenueCatBillingManager(
 
   private val apiKey: String? = RevenueCatApiKey.resolve(isDeveloperBuild)
 
-  private val customerInfoState = MutableStateFlow<StoreCustomerInfo>(StoreCustomerInfo.Unknown)
+  private val customerInfoState =
+    MutableStateFlow<StoreCustomerInfo>(StoreCustomerInfo.Unknown)
 
   /**
    * False when no key is configured for this build — a release build before the store products go
@@ -94,7 +95,10 @@ class RevenueCatBillingManager(
       if (verboseLogging) Purchases.logLevel = LogLevel.DEBUG
       // No appUserId here: the user may not be signed in yet. The identity coordinator calls
       // `setAppUserId` on every auth change, which aliases this anonymous id onto the real uid.
-      Purchases.configure(PurchasesConfiguration.Builder(apiKey = key).build())
+      Purchases.configure(
+        PurchasesConfiguration.Builder(apiKey = key)
+          .build()
+      )
     }
     // One long-lived delegate feeding the shared flow — rather than a `callbackFlow` per collector,
     // which would fight over the SDK's single delegate slot and drop updates for all but the last.
@@ -107,7 +111,8 @@ class RevenueCatBillingManager(
       val offerings = Purchases.sharedInstance.awaitOfferings()
       // Fall back to `current` so a dashboard that promotes a differently-named offering still works.
       val offering = offerings.getOffering(PRO_OFFERING_ID) ?: offerings.current
-      val packages = offering?.availablePackages.orEmpty().map { it.toProPackage() }
+      val packages = offering?.availablePackages.orEmpty()
+        .map { it.toProPackage() }
       if (packages.isEmpty()) {
         logger.w { "RevenueCat returned no packages for offering '$PRO_OFFERING_ID'." }
         ProOffering.Unavailable(BillingError.UNKNOWN)
@@ -162,7 +167,8 @@ class RevenueCatBillingManager(
     }
   }
 
-  override fun customerInfo(): Flow<StoreCustomerInfo> = customerInfoState.asStateFlow()
+  override fun customerInfo(): Flow<StoreCustomerInfo> =
+    customerInfoState.asStateFlow()
 
   override suspend fun setAppUserId(uid: String?) {
     if (apiKey == null) return
@@ -189,7 +195,8 @@ class RevenueCatBillingManager(
   suspend fun refreshCustomerInfo() {
     if (apiKey == null) return
     try {
-      customerInfoState.value = Purchases.sharedInstance.awaitCustomerInfo().toStoreCustomerInfo()
+      customerInfoState.value = Purchases.sharedInstance.awaitCustomerInfo()
+        .toStoreCustomerInfo()
     } catch (e: CancellationException) {
       throw e
     } catch (e: PurchasesException) {
@@ -262,22 +269,22 @@ private fun PurchasesError.toBillingError(): BillingError = when (code) {
   PurchasesErrorCode.NetworkError,
   PurchasesErrorCode.OfflineConnectionError,
   PurchasesErrorCode.ApiEndpointBlocked,
-  -> BillingError.NETWORK
+    -> BillingError.NETWORK
 
   PurchasesErrorCode.StoreProblemError,
   PurchasesErrorCode.PurchaseNotAllowedError,
   PurchasesErrorCode.PurchaseInvalidError,
   PurchasesErrorCode.ProductNotAvailableForPurchaseError,
   PurchasesErrorCode.PaymentPendingError,
-  -> BillingError.STORE_PROBLEM
+    -> BillingError.STORE_PROBLEM
 
   PurchasesErrorCode.ReceiptAlreadyInUseError,
   PurchasesErrorCode.MissingReceiptFileError,
-  -> BillingError.NOTHING_TO_RESTORE
+    -> BillingError.NOTHING_TO_RESTORE
 
   PurchasesErrorCode.UnsupportedError,
   PurchasesErrorCode.ConfigurationError,
-  -> BillingError.UNSUPPORTED
+    -> BillingError.UNSUPPORTED
 
   else -> BillingError.UNKNOWN
 }

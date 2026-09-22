@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
+import dev.fanfly.wingslog.feature.sync.data.blob.WebAppCheckBridge.tokenSource
 import kotlinx.coroutines.await
 import kotlin.js.Promise
 
@@ -19,7 +20,8 @@ object WebAppCheckBridge {
 class WebAppCheckTokenProvider : AppCheckTokenProvider {
   override suspend fun token(): String? =
     try {
-      WebAppCheckBridge.tokenSource?.invoke()?.await()
+      WebAppCheckBridge.tokenSource?.invoke()
+        ?.await()
     } catch (e: Throwable) {
       null
     }

@@ -14,13 +14,19 @@ class DueDatesTest {
 
   @Test
   fun pickerMillisRoundTrip() {
-    assertThat(picked.toPickerMillis().pickerMillisToDate()).isEqualTo(picked)
+    assertThat(
+      picked.toPickerMillis()
+        .pickerMillisToDate()
+    ).isEqualTo(picked)
   }
 
   @Test
   fun storedAndReadAsTheSameDayRegardlessOfZone() {
     // Neither side consults a zone, so there is nothing for a device in another one to disagree with.
-    assertThat(picked.toDueInstant().toDueDate()).isEqualTo(picked)
+    assertThat(
+      picked.toDueInstant()
+        .toDueDate()
+    ).isEqualTo(picked)
   }
 
   @Test

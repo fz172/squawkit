@@ -132,7 +132,10 @@ fun AboutScreen(
               GroupedRow(
                 title = title,
                 leading = {
-                  GroupedLeadingIconChip(icon = Icons.Default.Info, contentDescription = title)
+                  GroupedLeadingIconChip(
+                    icon = Icons.Default.Info,
+                    contentDescription = title
+                  )
                 },
                 trailing = {
                   Text(

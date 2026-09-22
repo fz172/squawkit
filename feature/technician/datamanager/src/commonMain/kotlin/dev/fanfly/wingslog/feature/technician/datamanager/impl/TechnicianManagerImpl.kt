@@ -1,21 +1,21 @@
 package dev.fanfly.wingslog.feature.technician.datamanager.impl
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
-import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolution
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.mergedCertifications
-import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -253,14 +252,24 @@ class TechnicianManagerImpl(
                 userScope,
               )
             }
-            group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
+            group.duplicates.forEach {
+              technicianStore.delete(
+                it.id,
+                userScope
+              )
+            }
           }
 
           // The member's mirror is theirs, not ours: it is republished from their own profile, so
           // writing our union into it would be overwritten the next time they save. Only the
           // hand-typed copy goes.
           DuplicateResolution.MERGE_INTO_MEMBER ->
-            group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
+            group.duplicates.forEach {
+              technicianStore.delete(
+                it.id,
+                userScope
+              )
+            }
 
           // Two members are two accounts; this is a heads-up about a likely mistyped certificate,
           // not something to apply.
@@ -286,20 +295,22 @@ class TechnicianManagerImpl(
         db.schemaQueries.selectConfig(user.uid, DUPLICATES_REVIEWED_KEY)
           .awaitAsOneOrNull()
       }
-    }.catch { e ->
-      // A failed read must not silently hide the prompt — showing one the user can dismiss is
-      // recoverable, swallowing the feature with no trace is not.
-      logger.w(e) { "Could not read reviewed-duplicates signature" }
-      emit(null)
     }
+      .catch { e ->
+        // A failed read must not silently hide the prompt — showing one the user can dismiss is
+        // recoverable, swallowing the feature with no trace is not.
+        logger.w(e) { "Could not read reviewed-duplicates signature" }
+        emit(null)
+      }
 
-  override suspend fun markDuplicatesReviewed(signature: String): Result<Unit> = runCatching {
-    val uid = firebaseAuth.currentUser?.uid ?: return@runCatching
-    writeLock.withLock {
-      db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, signature)
+  override suspend fun markDuplicatesReviewed(signature: String): Result<Unit> =
+    runCatching {
+      val uid = firebaseAuth.currentUser?.uid ?: return@runCatching
+      writeLock.withLock {
+        db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, signature)
+      }
+      reviewedTrigger.update { it + 1 }
     }
-    reviewedTrigger.update { it + 1 }
-  }
 
   override suspend fun saveSelfName(name: String): Result<Unit> = runCatching {
     val uid = firebaseAuth.currentUser?.uid

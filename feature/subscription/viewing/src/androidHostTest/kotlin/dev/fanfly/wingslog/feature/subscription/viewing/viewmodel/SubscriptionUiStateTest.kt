@@ -204,7 +204,10 @@ class SubscriptionUiStateTest {
   @Test
   fun `a purchase that never activates stops claiming the wait is normal`() =
     runTest {
-      val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = RecordingReconciler())
+      val vm = viewModel(
+        status = Subscription.Status.STATUS_FREE,
+        reconciler = RecordingReconciler()
+      )
       vm.onPurchaseCompleted()
 
       advanceTimeBy((STALL - 1).milliseconds)
@@ -221,7 +224,10 @@ class SubscriptionUiStateTest {
   @Test
   fun `an activation that lands in time never stalls`() =
     runTest {
-      val vm = viewModel(status = Subscription.Status.STATUS_PRO, reconciler = RecordingReconciler())
+      val vm = viewModel(
+        status = Subscription.Status.STATUS_PRO,
+        reconciler = RecordingReconciler()
+      )
       vm.onPurchaseCompleted()
 
       advanceTimeBy((STALL * 2).milliseconds)
@@ -234,7 +240,10 @@ class SubscriptionUiStateTest {
   fun `Check again re-asks the server and gives it a short window, not another full stall`() =
     runTest {
       val reconciler = RecordingReconciler()
-      val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = reconciler)
+      val vm = viewModel(
+        status = Subscription.Status.STATUS_FREE,
+        reconciler = reconciler
+      )
       vm.onPurchaseCompleted()
       advanceTimeBy((STALL + 1).milliseconds)
       runCurrent()

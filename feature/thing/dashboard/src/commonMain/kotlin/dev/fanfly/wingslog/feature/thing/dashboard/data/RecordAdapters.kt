@@ -59,11 +59,13 @@ class TaskAdapter : RecordAdapter<MaintenanceTaskWithStatus> {
       SearchField(FIELD_REFERENCE, item.card.reference_number, weight = 4),
       SearchField(FIELD_TITLE, item.card.title, weight = 3),
       SearchField(FIELD_NOTES, item.card.notes, weight = 1),
-      SearchField(FIELD_AUTHORITY,
+      SearchField(
+        FIELD_AUTHORITY,
         item.card.compliance_authority,
         weight = 1
       ),
-      SearchField(FIELD_DETAILS,
+      SearchField(
+        FIELD_DETAILS,
         item.card.compliance_details,
         weight = 1
       ),
@@ -82,7 +84,10 @@ class TaskAdapter : RecordAdapter<MaintenanceTaskWithStatus> {
 
   private val MaintenanceTaskWithStatus.isComplied get() = dueStatus.status == DueStatus.COMPLIED
 
-  override fun facetMatches(item: MaintenanceTaskWithStatus, facet: Facet): Boolean =
+  override fun facetMatches(
+    item: MaintenanceTaskWithStatus,
+    facet: Facet
+  ): Boolean =
     facet is Facet.Compliance && item.card.type == facet.value
 
   companion object {

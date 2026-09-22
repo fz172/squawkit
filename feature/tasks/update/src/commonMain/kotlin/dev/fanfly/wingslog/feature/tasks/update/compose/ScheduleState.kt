@@ -96,7 +96,10 @@ data class ScheduleState(
         // Due at the end of each listed month: "in April" means by the time April is over.
         listOf(
           InspectionRule(
-            seasonal_rule = SeasonalRule(months = seasonalMonths.sorted(), day_of_month = 0),
+            seasonal_rule = SeasonalRule(
+              months = seasonalMonths.sorted(),
+              day_of_month = 0
+            ),
           ),
         )
       }
@@ -158,7 +161,8 @@ data class ScheduleState(
         seasonalRule != null -> ScheduleState(
           mode = ScheduleMode.SEASONAL,
           recurrence = if (baseRecurrence == ScheduleRecurrence.ASAP) ScheduleRecurrence.REPEATING else baseRecurrence,
-          seasonalMonths = seasonalRule.months.filter { it in 1..12 }.toSet(),
+          seasonalMonths = seasonalRule.months.filter { it in 1..12 }
+            .toSet(),
         )
 
         meterRule != null -> ScheduleState(

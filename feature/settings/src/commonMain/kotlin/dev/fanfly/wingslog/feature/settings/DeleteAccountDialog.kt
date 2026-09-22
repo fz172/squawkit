@@ -72,7 +72,8 @@ internal fun DeleteAccountDialog(
   }
   // Case-insensitive and trimmed: an autocapitalised first letter or a trailing space from a paste
   // is a typing artefact, not a sign they meant something else.
-  val matches = typed.trim().equals(required, ignoreCase = true)
+  val matches = typed.trim()
+    .equals(required, ignoreCase = true)
 
   AlertDialog(
     // Not dismissable while the server is partway through deleting things.
@@ -92,6 +93,7 @@ internal fun DeleteAccountDialog(
           text = when (challenge) {
             is DeletionChallenge.Email ->
               stringResource(SettingsRes.string.settings_delete_account_challenge_email)
+
             DeletionChallenge.Phrase ->
               stringResource(SettingsRes.string.settings_delete_account_challenge_phrase)
           }

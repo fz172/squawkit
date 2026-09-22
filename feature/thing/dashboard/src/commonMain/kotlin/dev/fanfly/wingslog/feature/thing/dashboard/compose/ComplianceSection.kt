@@ -22,10 +22,10 @@ import dev.fanfly.wingslog.core.template.taskEmptyHint
 import dev.fanfly.wingslog.core.template.taskHistoryEmptyHint
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
-import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeRevealController
@@ -44,13 +44,13 @@ import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskAdapter
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.match_reference
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
 import wingslog.feature.tasks.sharedassets.generated.resources.starter_pack_empty_action
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
 fun ComplianceSection(
@@ -177,10 +177,23 @@ fun ComplianceSection(
               TaskCardItem(
                 cardWithStatus = item,
                 onClick = { onCardClick(item) },
-                highlight = matches.wordsIn(TaskAdapter.FIELD_TITLE, TaskAdapter.FIELD_NOTES),
-                matchNote = hiddenMatchNote(matches, setOf(TaskAdapter.FIELD_TITLE, TaskAdapter.FIELD_NOTES)) { match ->
+                highlight = matches.wordsIn(
+                  TaskAdapter.FIELD_TITLE,
+                  TaskAdapter.FIELD_NOTES
+                ),
+                matchNote = hiddenMatchNote(
+                  matches,
+                  setOf(
+                    TaskAdapter.FIELD_TITLE,
+                    TaskAdapter.FIELD_NOTES
+                  )
+                ) { match ->
                   when (match.field) {
-                    TaskAdapter.FIELD_REFERENCE -> stringResource(SearchRes.string.match_reference, item.card.reference_number)
+                    TaskAdapter.FIELD_REFERENCE -> stringResource(
+                      SearchRes.string.match_reference,
+                      item.card.reference_number
+                    )
+
                     TaskAdapter.FIELD_AUTHORITY -> item.card.compliance_authority
                     TaskAdapter.FIELD_DETAILS -> item.card.compliance_details
                     else -> null

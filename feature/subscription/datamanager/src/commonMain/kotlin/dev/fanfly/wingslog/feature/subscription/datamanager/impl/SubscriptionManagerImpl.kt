@@ -65,15 +65,21 @@ class SubscriptionManagerImpl(
       if (devOverridesHonored && forced != null) {
         forced
       } else {
-        subscription.effectiveStatusAt(clock.now().toEpochMilliseconds())
+        subscription.effectiveStatusAt(
+          clock.now()
+            .toEpochMilliseconds()
+        )
       }
     }
 
-  override fun canUploadAttachments(): Flow<Boolean> = gate(Subscription.Status.STATUS_PRO)
+  override fun canUploadAttachments(): Flow<Boolean> =
+    gate(Subscription.Status.STATUS_PRO)
 
-  override fun canEmailExports(): Flow<Boolean> = gate(Subscription.Status.STATUS_PRO)
+  override fun canEmailExports(): Flow<Boolean> =
+    gate(Subscription.Status.STATUS_PRO)
 
-  override fun canHostShare(): Flow<Boolean> = gate(Subscription.Status.STATUS_PRO)
+  override fun canHostShare(): Flow<Boolean> =
+    gate(Subscription.Status.STATUS_PRO)
 
   override fun thingLimit(): Flow<Int?> =
     status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_THING_LIMIT }

@@ -44,9 +44,23 @@ class StarterPackViewModelTest {
   private val written = mutableListOf<MaintenanceTask>()
 
   private val pack = listOf(
-    StarterTask(title = "HVAC filter", description = "Quarterly", interval_months = 3, default_selected = true),
-    StarterTask(title = "Clean gutters", description = "Twice a year", interval_months = 6, default_selected = true),
-    StarterTask(title = "Septic pump-out", description = "If on septic", interval_months = 36),
+    StarterTask(
+      title = "HVAC filter",
+      description = "Quarterly",
+      interval_months = 3,
+      default_selected = true
+    ),
+    StarterTask(
+      title = "Clean gutters",
+      description = "Twice a year",
+      interval_months = 6,
+      default_selected = true
+    ),
+    StarterTask(
+      title = "Septic pump-out",
+      description = "If on septic",
+      interval_months = 36
+    ),
   )
 
   @Before
@@ -65,7 +79,11 @@ class StarterPackViewModelTest {
   private fun viewModel(starterTasks: List<StarterTask>): StarterPackViewModel {
     val thing = Thing(
       id = THING_ID,
-      template = ThingTemplate(id = "home", version = 7, starter_tasks = starterTasks),
+      template = ThingTemplate(
+        id = "home",
+        version = 7,
+        starter_tasks = starterTasks
+      ),
     )
     every { fleetManager.loadThing(THING_ID) } returns flowOf(thing)
     return StarterPackViewModel(
@@ -83,10 +101,23 @@ class StarterPackViewModelTest {
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.isLoading).isFalse()
-    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(true, true, false).inOrder()
+    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(
+      true,
+      true,
+      false
+    )
+      .inOrder()
     assertThat(analytics.countOf("starter_tasks_offered")).isEqualTo(1)
-    assertThat(analytics.paramsFor("starter_tasks_offered").single())
-      .containsAtLeastEntriesIn(mapOf("template_id" to "home", "task_count" to "3"))
+    assertThat(
+      analytics.paramsFor("starter_tasks_offered")
+        .single()
+    )
+      .containsAtLeastEntriesIn(
+        mapOf(
+          "template_id" to "home",
+          "task_count" to "3"
+        )
+      )
     assertThat(analytics.countOf("starter_tasks_accepted")).isEqualTo(0)
   }
 
@@ -100,11 +131,23 @@ class StarterPackViewModelTest {
     vm.onAccept()
     advanceUntilIdle()
 
-    assertThat(written.map { it.title }).containsExactly("Clean gutters", "Septic pump-out").inOrder()
+    assertThat(written.map { it.title }).containsExactly(
+      "Clean gutters",
+      "Septic pump-out"
+    )
+      .inOrder()
     // Ordinary cards: the due engine needs a dated TimeRule, and nothing marks them as a pack.
     written.forEach { assertThat(it.rules.single().time_rule?.creation_date).isNotNull() }
-    assertThat(analytics.paramsFor("starter_tasks_accepted").single())
-      .containsAtLeastEntriesIn(mapOf("template_id" to "home", "task_count" to "2"))
+    assertThat(
+      analytics.paramsFor("starter_tasks_accepted")
+        .single()
+    )
+      .containsAtLeastEntriesIn(
+        mapOf(
+          "template_id" to "home",
+          "task_count" to "2"
+        )
+      )
     assertThat(vm.uiState.value.isDone).isTrue()
     assertThat(vm.uiState.value.acceptedCount).isEqualTo(2)
   }
@@ -124,7 +167,11 @@ class StarterPackViewModelTest {
 
   @Test
   fun aFailedWriteDropsOnlyItsOwnCard() = runTest(dispatcher) {
-    coEvery { taskDataManager.addTask(THING_ID, match { it.title == "HVAC filter" }) } returns
+    coEvery {
+      taskDataManager.addTask(
+        THING_ID,
+        match { it.title == "HVAC filter" })
+    } returns
       Result.failure(IllegalStateException("offline"))
     val vm = viewModel(pack)
     advanceUntilIdle()
@@ -133,7 +180,10 @@ class StarterPackViewModelTest {
     advanceUntilIdle()
 
     assertThat(written.map { it.title }).containsExactly("Clean gutters")
-    assertThat(analytics.paramsFor("starter_tasks_accepted").single()).containsEntry("task_count", "1")
+    assertThat(
+      analytics.paramsFor("starter_tasks_accepted")
+        .single()
+    ).containsEntry("task_count", "1")
   }
 
   @Test

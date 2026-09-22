@@ -59,6 +59,9 @@ class SubscriptionWireSerializationTest {
     // The one that was broken in production without ever saying so.
     val descriptor = serializer<ReconcileResponseData>().descriptor
 
-    assertThat(descriptor.elementNames.toList()).containsExactly("reconciled", "reason")
+    assertThat(descriptor.elementNames.toList()).containsExactly(
+      "reconciled",
+      "reason"
+    )
   }
 }

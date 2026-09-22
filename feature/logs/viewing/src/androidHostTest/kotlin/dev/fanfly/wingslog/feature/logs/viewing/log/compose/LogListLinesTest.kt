@@ -3,9 +3,9 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import org.junit.Test
+import kotlin.time.Instant
 
 class LogListLinesTest {
 
@@ -25,7 +25,8 @@ class LogListLinesTest {
     assertThat(lines.filterIsInstance<LogListLine.MonthHeader>()).containsExactly(
       LogListLine.MonthHeader(LocalDate(2026, 9, 1), 2, firstLogId = "a"),
       LogListLine.MonthHeader(LocalDate(2026, 7, 1), 1, firstLogId = "c"),
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
@@ -33,8 +34,18 @@ class LogListLinesTest {
     val entries = logListLines(listOf(sep17, sep03, jul25), showAds = false)
       .filterIsInstance<LogListLine.Entry>()
 
-    assertThat(entries.map { it.connectsDown }).containsExactly(true, false, false).inOrder()
-    assertThat(entries.map { it.connectsUp }).containsExactly(false, true, false).inOrder()
+    assertThat(entries.map { it.connectsDown }).containsExactly(
+      true,
+      false,
+      false
+    )
+      .inOrder()
+    assertThat(entries.map { it.connectsUp }).containsExactly(
+      false,
+      true,
+      false
+    )
+      .inOrder()
   }
 
   @Test
@@ -42,22 +53,32 @@ class LogListLinesTest {
     val entries = logListLines(listOf(sep17, sep03), showAds = false)
       .filterIsInstance<LogListLine.Entry>()
 
-    assertThat(entries.map { it.isLatest }).containsExactly(true, false).inOrder()
+    assertThat(entries.map { it.isLatest }).containsExactly(true, false)
+      .inOrder()
   }
 
   @Test
   fun anUndatedLogHeadsItsOwnGroup() {
     val lines = logListLines(listOf(sep17, log("u", null)), showAds = false)
 
-    assertThat(lines[2]).isEqualTo(LogListLine.MonthHeader(month = null, count = 1, firstLogId = "u"))
+    assertThat(lines[2]).isEqualTo(
+      LogListLine.MonthHeader(
+        month = null,
+        count = 1,
+        firstLogId = "u"
+      )
+    )
   }
 
   @Test
   fun keepsTheIncomingOrder() {
     val lines = logListLines(listOf(jul25, sep17), showAds = false)
 
-    assertThat(lines.filterIsInstance<LogListLine.Entry>().map { it.log.id })
-      .containsExactly("c", "a").inOrder()
+    assertThat(
+      lines.filterIsInstance<LogListLine.Entry>()
+        .map { it.log.id })
+      .containsExactly("c", "a")
+      .inOrder()
   }
 
   @Test
@@ -70,7 +91,11 @@ class LogListLinesTest {
 
   @Test
   fun aFilteredListReportsWhatItSkippedBetweenMatches() {
-    val lines = logListLines(listOf(sep17, jul25), showAds = false, allLogs = listOf(sep17, sep03, jul25))
+    val lines = logListLines(
+      listOf(sep17, jul25),
+      showAds = false,
+      allLogs = listOf(sep17, sep03, jul25)
+    )
 
     assertThat(lines).containsExactly(
       LogListLine.MonthHeader(LocalDate(2026, 9, 1), 1, firstLogId = "a"),
@@ -78,12 +103,17 @@ class LogListLinesTest {
       LogListLine.Gap(omitted = 1, afterLogId = "a"),
       LogListLine.MonthHeader(LocalDate(2026, 7, 1), 1, firstLogId = "c"),
       LogListLine.Entry(jul25),
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
   fun nothingIsReportedBeforeTheFirstMatchOrAfterTheLast() {
-    val lines = logListLines(listOf(sep03), showAds = false, allLogs = listOf(sep17, sep03, jul25))
+    val lines = logListLines(
+      listOf(sep03),
+      showAds = false,
+      allLogs = listOf(sep17, sep03, jul25)
+    )
 
     assertThat(lines.filterIsInstance<LogListLine.Gap>()).isEmpty()
   }
@@ -97,7 +127,11 @@ class LogListLinesTest {
 
   @Test
   fun aMatchThatIsNotTheNewestLogIsNotLit() {
-    val entries = logListLines(listOf(sep03), showAds = false, allLogs = listOf(sep17, sep03))
+    val entries = logListLines(
+      listOf(sep03),
+      showAds = false,
+      allLogs = listOf(sep17, sep03)
+    )
       .filterIsInstance<LogListLine.Entry>()
 
     assertThat(entries.single().isLatest).isFalse()

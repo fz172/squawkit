@@ -1,19 +1,19 @@
 package dev.fanfly.wingslog.feature.squawk.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkDismissReason
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
-import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.auth.FirebaseUser
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -55,7 +55,11 @@ class SquawkManagerImplTest {
     every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
 
     commentManager = mockk(relaxed = true)
-    manager = SquawkManagerImpl(FakeScopeResolver(firebaseAuth), commentManager, storeFactory)
+    manager = SquawkManagerImpl(
+      FakeScopeResolver(firebaseAuth),
+      commentManager,
+      storeFactory
+    )
   }
 
   // ---- dismissSquawk — happy path ----

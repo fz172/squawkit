@@ -10,7 +10,8 @@ sealed interface SquawkListLine {
   val key: String
 
   /** Names a priority tier and says how many squawks sit under it. */
-  data class TierHeader(val tier: SquawkPriority, val count: Int) : SquawkListLine {
+  data class TierHeader(val tier: SquawkPriority, val count: Int) :
+    SquawkListLine {
     override val key: String get() = "tier-${tier.name}"
   }
 
@@ -34,7 +35,8 @@ val SQUAWK_TIERS = listOf(
 
 /** An unset priority reads as Low everywhere else, so it groups there too. */
 val SquawkWithStatus.tier: SquawkPriority
-  get() = squawk.priority.takeIf { it in SQUAWK_TIERS } ?: SquawkPriority.SQUAWK_PRIORITY_LOW
+  get() = squawk.priority.takeIf { it in SQUAWK_TIERS }
+    ?: SquawkPriority.SQUAWK_PRIORITY_LOW
 
 /**
  * Flattens [squawks] into the lines a `LazyColumn` renders. [grouped] puts each tier under its

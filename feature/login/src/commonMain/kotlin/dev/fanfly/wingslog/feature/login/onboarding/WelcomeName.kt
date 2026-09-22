@@ -9,5 +9,13 @@ package dev.fanfly.wingslog.feature.login.onboarding
  * display name covers both gaps. Blank when neither has one, which only happens on paths that route
  * to name entry first.
  */
-internal fun resolveWelcomeName(localSelfName: String?, accountName: String?): String =
-  localSelfName.orEmpty().trim().ifBlank { accountName.orEmpty().trim() }
+internal fun resolveWelcomeName(
+  localSelfName: String?,
+  accountName: String?
+): String =
+  localSelfName.orEmpty()
+    .trim()
+    .ifBlank {
+      accountName.orEmpty()
+        .trim()
+    }

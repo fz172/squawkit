@@ -156,9 +156,21 @@ fun TaskScheduleTab(
         RecurrenceChoice(
           selected = state.recurrence,
           options = listOf(
-            RecurrenceOption(ScheduleRecurrence.REPEATING, Res.string.schedule_recurrence_repeating, Res.string.schedule_recurrence_repeating_sub),
-            RecurrenceOption(ScheduleRecurrence.ONE_TIME, Res.string.schedule_recurrence_one_time, Res.string.schedule_recurrence_one_time_sub),
-            RecurrenceOption(ScheduleRecurrence.ASAP, Res.string.schedule_recurrence_asap, Res.string.schedule_recurrence_asap_sub),
+            RecurrenceOption(
+              ScheduleRecurrence.REPEATING,
+              Res.string.schedule_recurrence_repeating,
+              Res.string.schedule_recurrence_repeating_sub
+            ),
+            RecurrenceOption(
+              ScheduleRecurrence.ONE_TIME,
+              Res.string.schedule_recurrence_one_time,
+              Res.string.schedule_recurrence_one_time_sub
+            ),
+            RecurrenceOption(
+              ScheduleRecurrence.ASAP,
+              Res.string.schedule_recurrence_asap,
+              Res.string.schedule_recurrence_asap_sub
+            ),
           ),
           onSelect = { onChange(state.copy(recurrence = it)) },
         )
@@ -172,8 +184,16 @@ fun TaskScheduleTab(
         RecurrenceChoice(
           selected = state.recurrence,
           options = listOf(
-            RecurrenceOption(ScheduleRecurrence.REPEATING, Res.string.schedule_recurrence_repeating, Res.string.schedule_recurrence_seasonal_repeating_sub),
-            RecurrenceOption(ScheduleRecurrence.ONE_TIME, Res.string.schedule_recurrence_one_time, Res.string.schedule_recurrence_seasonal_one_time_sub),
+            RecurrenceOption(
+              ScheduleRecurrence.REPEATING,
+              Res.string.schedule_recurrence_repeating,
+              Res.string.schedule_recurrence_seasonal_repeating_sub
+            ),
+            RecurrenceOption(
+              ScheduleRecurrence.ONE_TIME,
+              Res.string.schedule_recurrence_one_time,
+              Res.string.schedule_recurrence_seasonal_one_time_sub
+            ),
           ),
           onSelect = { onChange(state.copy(recurrence = it)) },
         )
@@ -186,8 +206,16 @@ fun TaskScheduleTab(
         RecurrenceChoice(
           selected = state.recurrence,
           options = listOf(
-            RecurrenceOption(ScheduleRecurrence.REPEATING, Res.string.schedule_recurrence_repeating, Res.string.schedule_recurrence_linked_repeating_sub),
-            RecurrenceOption(ScheduleRecurrence.ONE_TIME, Res.string.schedule_recurrence_one_time, Res.string.schedule_recurrence_linked_one_time_sub),
+            RecurrenceOption(
+              ScheduleRecurrence.REPEATING,
+              Res.string.schedule_recurrence_repeating,
+              Res.string.schedule_recurrence_linked_repeating_sub
+            ),
+            RecurrenceOption(
+              ScheduleRecurrence.ONE_TIME,
+              Res.string.schedule_recurrence_one_time,
+              Res.string.schedule_recurrence_linked_one_time_sub
+            ),
           ),
           onSelect = { onChange(state.copy(recurrence = it)) },
         )

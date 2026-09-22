@@ -167,7 +167,9 @@ class MaintenanceLogListViewModel(
             MaintenanceLogListUiState.Success(
               // Search ranks by relevance; this list never reorders. A query removes rows from the
               // timeline and leaves the rest where they were, newest first.
-              logs = hits.map { it.item.id }.toSet().let { kept -> sorted.filter { it.id in kept } },
+              logs = hits.map { it.item.id }
+                .toSet()
+                .let { kept -> sorted.filter { it.id in kept } },
               matches = hits.matchesById { it.id },
               technicians = logsState.logs.mapNotNull {
                 it.technician?.name?.takeIf(

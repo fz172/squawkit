@@ -13,7 +13,12 @@ import androidx.compose.ui.platform.LocalContext
 internal actual fun rememberDroppedFileReader(): DroppedFileReader {
   val activity = LocalActivity.current
   val context = LocalContext.current
-  return remember(activity, context) { AndroidDroppedFileReader(activity, context) }
+  return remember(activity, context) {
+    AndroidDroppedFileReader(
+      activity,
+      context
+    )
+  }
 }
 
 // The platform ends the drag session itself when a drag leaves or is cancelled.

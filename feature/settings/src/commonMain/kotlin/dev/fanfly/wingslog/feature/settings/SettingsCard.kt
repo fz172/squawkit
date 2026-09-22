@@ -37,7 +37,11 @@ fun SettingsRowGroup(
   modifier: Modifier = Modifier,
   dividerStartInset: Dp = GroupedDividerInset,
 ) {
-  GroupedRowGroup(rows = rows, modifier = modifier, dividerStartInset = dividerStartInset)
+  GroupedRowGroup(
+    rows = rows,
+    modifier = modifier,
+    dividerStartInset = dividerStartInset
+  )
 }
 
 @Preview

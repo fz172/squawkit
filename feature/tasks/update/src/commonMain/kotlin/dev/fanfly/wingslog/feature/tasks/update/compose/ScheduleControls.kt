@@ -1,10 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.semantics.Role
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,6 +22,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -39,6 +36,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,9 +51,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
@@ -215,7 +214,12 @@ internal fun RecurrenceChoice(
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
     SegmentedChoice(
-      options = options.map { SegmentOption(it.recurrence, stringResource(it.label)) },
+      options = options.map {
+        SegmentOption(
+          it.recurrence,
+          stringResource(it.label)
+        )
+      },
       selected = selected,
       onSelect = onSelect,
     )
@@ -241,7 +245,9 @@ internal fun UnitPillSelect(
       ScheduleTimeUnit.MONTHS to Res.string.schedule_unit_months,
       ScheduleTimeUnit.YEARS to Res.string.schedule_unit_years,
     ).map { (unit, res) ->
-      SegmentOption(unit, stringResource(res).replaceFirstChar { it.titlecase() })
+      SegmentOption(
+        unit,
+        stringResource(res).replaceFirstChar { it.titlecase() })
     },
     selected = selected,
     onSelect = onSelect,
@@ -279,16 +285,24 @@ internal fun <T> SegmentedChoice(
   ) {
     options.forEach { option ->
       val active = option.value == selected
-      val content = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+      val content =
+        if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
       Row(
         modifier = Modifier
           .weight(1f)
           .heightIn(min = LocalMinimumInteractiveComponentSize.current - Spacing.small)
           .clip(shape)
           .background(if (active) MaterialTheme.colorScheme.primary else Color.Transparent)
-          .selectable(selected = active, role = Role.RadioButton) { onSelect(option.value) }
+          .selectable(selected = active, role = Role.RadioButton) {
+            onSelect(
+              option.value
+            )
+          }
           .padding(horizontal = Spacing.small),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(
+          Spacing.extraSmall,
+          Alignment.CenterHorizontally
+        ),
         verticalAlignment = Alignment.CenterVertically,
       ) {
         if (option.icon != null) {

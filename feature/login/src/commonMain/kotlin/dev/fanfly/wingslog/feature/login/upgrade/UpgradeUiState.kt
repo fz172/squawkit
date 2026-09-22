@@ -16,7 +16,8 @@ sealed interface UpgradeUiState {
   data object Idle : UpgradeUiState
 
   /** The provider picker is open. [providers] is what this platform offers, in display order. */
-  data class ChoosingProvider(val providers: List<AuthProvider>) : UpgradeUiState
+  data class ChoosingProvider(val providers: List<AuthProvider>) :
+    UpgradeUiState
 
   /**
    * Collecting the address for an email-link upgrade. [email] lives here rather than in composable

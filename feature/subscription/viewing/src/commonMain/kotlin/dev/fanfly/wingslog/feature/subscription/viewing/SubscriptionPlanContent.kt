@@ -102,7 +102,10 @@ private val ProLabelIconSize = 14.dp
 internal fun PlanCard(state: SubscriptionUiState) {
   SubscriptionPanel(modifier = Modifier.fillMaxWidth()) {
     Column(
-      modifier = Modifier.padding(horizontal = Spacing.xLarge, vertical = Spacing.extraLarge),
+      modifier = Modifier.padding(
+        horizontal = Spacing.xLarge,
+        vertical = Spacing.extraLarge
+      ),
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
       SectionLabel(stringResource(Res.string.subscription_your_plan))
@@ -155,7 +158,10 @@ internal fun PlanCard(state: SubscriptionUiState) {
         state.purchasePlatform?.let { platform ->
           FactRow(label = stringResource(Res.string.subscription_purchased_on)) {
             FactIcon(platform.icon)
-            Text(stringResource(platform.labelRes), style = WingslogTypography.dataSmall)
+            Text(
+              stringResource(platform.labelRes),
+              style = WingslogTypography.dataSmall
+            )
           }
         }
       } else {
@@ -167,7 +173,10 @@ internal fun PlanCard(state: SubscriptionUiState) {
         Spacer(Modifier.size(Spacing.extraSmall))
       }
       FactRow(label = stringResource(Res.string.subscription_storage_used)) {
-        Text(state.storageBytesUsed.formatFileSize(), style = WingslogTypography.dataSmall)
+        Text(
+          state.storageBytesUsed.formatFileSize(),
+          style = WingslogTypography.dataSmall
+        )
       }
     }
   }

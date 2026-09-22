@@ -18,7 +18,11 @@ class StarterTasksTest {
 
   @Test
   fun aCalendarIntervalBecomesATimeRuleDatedFromNow() {
-    val card = StarterTask(title = "HVAC filter", description = "Every season", interval_months = 3)
+    val card = StarterTask(
+      title = "HVAC filter",
+      description = "Every season",
+      interval_months = 3
+    )
       .toMaintenanceTask(CanonicalTemplates.HOME, now)
 
     assertThat(card.id).isEmpty()
@@ -53,7 +57,8 @@ class StarterTasksTest {
       .toMaintenanceTask(CanonicalTemplates.HOME, now)
 
     val rule = card.rules.single().seasonal_rule
-    assertThat(rule?.months).containsExactly(4, 10).inOrder()
+    assertThat(rule?.months).containsExactly(4, 10)
+      .inOrder()
     assertThat(rule?.day_of_month).isEqualTo(0)
   }
 
@@ -67,9 +72,12 @@ class StarterTasksTest {
     ).toMaintenanceTask(CanonicalTemplates.AUTOMOTIVE, now)
 
     assertThat(card.rules).hasSize(2)
-    assertThat(card.rules.mapNotNull { it.meter_rule }.single().meter_key).isEqualTo("odometer")
-    assertThat(card.rules.mapNotNull { it.meter_rule }.single().interval).isEqualTo(5000f)
-    assertThat(card.rules.mapNotNull { it.time_rule }.single().interval_months).isEqualTo(6)
+    assertThat(card.rules.mapNotNull { it.meter_rule }
+                 .single().meter_key).isEqualTo("odometer")
+    assertThat(card.rules.mapNotNull { it.meter_rule }
+                 .single().interval).isEqualTo(5000f)
+    assertThat(card.rules.mapNotNull { it.time_rule }
+                 .single().interval_months).isEqualTo(6)
   }
 
   @Test
@@ -84,22 +92,38 @@ class StarterTasksTest {
   @Test
   fun onTheAirplaneTheSlotKeyPicksTheComponentAndNoSlotMeansAirframe() {
     val airplane = AirplaneTemplate.TEMPLATE
-    assertThat(StarterTask(title = "Annual", interval_months = 12).toMaintenanceTask(airplane, now).component)
+    assertThat(
+      StarterTask(
+        title = "Annual",
+        interval_months = 12
+      ).toMaintenanceTask(airplane, now).component
+    )
       .isEqualTo(ComponentType.COMPONENT_AIRFRAME)
     assertThat(
-      StarterTask(title = "Oil", component_slot_key = "engine", interval_months = 4)
+      StarterTask(
+        title = "Oil",
+        component_slot_key = "engine",
+        interval_months = 4
+      )
         .toMaintenanceTask(airplane, now).component
     ).isEqualTo(ComponentType.COMPONENT_ENGINE)
     assertThat(
-      StarterTask(title = "Prop", component_slot_key = "propeller", interval_months = 60)
+      StarterTask(
+        title = "Prop",
+        component_slot_key = "propeller",
+        interval_months = 60
+      )
         .toMaintenanceTask(airplane, now).component
     ).isEqualTo(ComponentType.COMPONENT_PROPELLER)
   }
 
   @Test
-  fun aThingWithNoDnaCountsAsAnAirplane()  {
+  fun aThingWithNoDnaCountsAsAnAirplane() {
     // A Thing migrated by the cutover carries no template and predates the pivot.
-    val card = StarterTask(title = "Annual", interval_months = 12).toMaintenanceTask(null, now)
+    val card = StarterTask(
+      title = "Annual",
+      interval_months = 12
+    ).toMaintenanceTask(null, now)
     assertThat(card.component).isEqualTo(ComponentType.COMPONENT_AIRFRAME)
   }
 }

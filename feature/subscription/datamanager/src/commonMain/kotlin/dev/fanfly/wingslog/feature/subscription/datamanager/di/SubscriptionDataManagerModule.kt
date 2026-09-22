@@ -30,7 +30,8 @@ val subscriptionDataManagerModule = module {
       storeFactory = get<EntityStoreFactory>(),
       appCapability = get<AppCapability>(),
       // The developer force-override (Developer Options → Force subscription status).
-      forceStatus = get<DeveloperOptionsManager>().observe().map { it.forceSubscriptionStatus },
+      forceStatus = get<DeveloperOptionsManager>().observe()
+        .map { it.forceSubscriptionStatus },
     )
   }
 

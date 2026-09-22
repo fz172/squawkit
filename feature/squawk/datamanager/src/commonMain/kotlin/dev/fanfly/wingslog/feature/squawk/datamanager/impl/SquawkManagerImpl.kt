@@ -1,18 +1,18 @@
 package dev.fanfly.wingslog.feature.squawk.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -33,18 +33,19 @@ class SquawkManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeSquawks(thingId: String): Flow<List<Squawk>> =
-    scopeResolver.resolve(thingId).flatMapLatest { scope ->
-      if (scope == null) {
-        flowOf(emptyList())
-      } else {
-        store.observeAll(scope)
-          .map { rows -> rows.map { it.value } }
-          .catch { e ->
-            logger.w(e) { "Error observing squawks for thing $thingId" }
-            emit(emptyList())
-          }
+    scopeResolver.resolve(thingId)
+      .flatMapLatest { scope ->
+        if (scope == null) {
+          flowOf(emptyList())
+        } else {
+          store.observeAll(scope)
+            .map { rows -> rows.map { it.value } }
+            .catch { e ->
+              logger.w(e) { "Error observing squawks for thing $thingId" }
+              emit(emptyList())
+            }
+        }
       }
-    }
 
   override suspend fun addSquawk(
     thingId: String,

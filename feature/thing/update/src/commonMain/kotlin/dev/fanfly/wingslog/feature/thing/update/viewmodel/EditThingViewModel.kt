@@ -193,7 +193,8 @@ class EditThingViewModel(
         if (isNewThing) {
           analytics.log(
             ThingCreated(
-              templateId = written.template?.id ?: currentThingTemplate.templateId,
+              templateId = written.template?.id
+                ?: currentThingTemplate.templateId,
               source = SOURCE_FORM
             )
           )

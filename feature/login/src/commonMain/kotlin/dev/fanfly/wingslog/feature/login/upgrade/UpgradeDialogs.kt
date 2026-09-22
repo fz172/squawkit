@@ -12,7 +12,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,22 +30,23 @@ import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.login.LoginButtonHeight
+import dev.fanfly.wingslog.feature.login.LoginButtonLabelStyle
 import dev.fanfly.wingslog.feature.login.LoginCard
 import dev.fanfly.wingslog.feature.login.LoginRow
 import dev.fanfly.wingslog.feature.login.LoginRowDivider
-import dev.fanfly.wingslog.feature.login.LoginButtonHeight
-import dev.fanfly.wingslog.feature.login.LoginButtonLabelStyle
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.apple_logo
 import wingslog.feature.login.generated.resources.google_logo
+import wingslog.feature.login.generated.resources.ic_apple
+import wingslog.feature.login.generated.resources.ic_google_rd_na
 import wingslog.feature.login.generated.resources.provider_apple
 import wingslog.feature.login.generated.resources.provider_email
 import wingslog.feature.login.generated.resources.provider_google
-import wingslog.feature.login.generated.resources.ic_apple
-import wingslog.feature.login.generated.resources.ic_google_rd_na
-import wingslog.feature.login.generated.resources.sign_in_with_email
 import wingslog.feature.login.generated.resources.upgrade_confirm_link_body
 import wingslog.feature.login.generated.resources.upgrade_confirm_link_confirm
 import wingslog.feature.login.generated.resources.upgrade_confirm_link_title
@@ -67,8 +67,6 @@ import wingslog.feature.login.generated.resources.upgrade_picker_title
 import wingslog.feature.login.generated.resources.upgrade_provider_apple
 import wingslog.feature.login.generated.resources.upgrade_provider_email
 import wingslog.feature.login.generated.resources.upgrade_provider_google
-import wingslog.core.sharedassets.generated.resources.cancel
-import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
@@ -286,7 +284,10 @@ internal fun UpgradeEmailDialog(
         enabled = !state.sending && state.email.isNotBlank(),
       ) {
         if (state.sending) {
-          CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+          CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 2.dp
+          )
         } else {
           Text(stringResource(Res.string.upgrade_email_send))
         }

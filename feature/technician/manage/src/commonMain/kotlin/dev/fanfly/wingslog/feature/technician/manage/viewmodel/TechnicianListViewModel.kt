@@ -6,12 +6,12 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.knownCertifications
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.findDuplicates
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.signature
+import dev.fanfly.wingslog.thing.Technician
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -87,7 +87,8 @@ class TechnicianListViewModel(
 
     // The self-record participates as a *keeper*, never as a duplicate: hand-typing yourself before
     // the app bootstrapped your profile is one of the commonest duplicates there is.
-    val duplicates = findDuplicates(manual = others, mirrors = linked, self = self)
+    val duplicates =
+      findDuplicates(manual = others, mirrors = linked, self = self)
 
     TechnicianListUiState(
       technicians = listOfNotNull(self) + others,
@@ -107,9 +108,11 @@ class TechnicianListViewModel(
     initialValue = TechnicianListUiState(),
   )
 
-  fun showDuplicateReview() = localState.update { it.copy(showDuplicateReview = true) }
+  fun showDuplicateReview() =
+    localState.update { it.copy(showDuplicateReview = true) }
 
-  fun hideDuplicateReview() = localState.update { it.copy(showDuplicateReview = false) }
+  fun hideDuplicateReview() =
+    localState.update { it.copy(showDuplicateReview = false) }
 
   /** "Not duplicates" — stop prompting about *these*, change nothing. A new one still prompts. */
   fun dismissDuplicatePrompt() {
@@ -122,7 +125,10 @@ class TechnicianListViewModel(
   /** Applies only the groups the user checked. Nothing is ever merged silently (§7.4). */
   fun applyMerges(groups: List<DuplicateGroup>) {
     viewModelScope.launch {
-      technicianManager.applyDuplicateMerges(groups, uiState.value.duplicatesSignature)
+      technicianManager.applyDuplicateMerges(
+        groups,
+        uiState.value.duplicatesSignature
+      )
       localState.update { it.copy(showDuplicateReview = false) }
     }
   }

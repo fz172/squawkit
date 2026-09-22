@@ -298,7 +298,11 @@ class TechnicianDuplicatesTest {
 
   // ---- several certifications per person (#684) ----
 
-  private fun certified(id: String, name: String, vararg certs: Pair<String, String>) =
+  private fun certified(
+    id: String,
+    name: String,
+    vararg certs: Pair<String, String>
+  ) =
     Technician(
       id = id,
       name = name,
@@ -315,7 +319,8 @@ class TechnicianDuplicatesTest {
     val fromTheGarage =
       certified("m2", "S. Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
 
-    val groups = findDuplicates(listOf(fromTheAnnual, fromTheGarage), emptyList())
+    val groups =
+      findDuplicates(listOf(fromTheAnnual, fromTheGarage), emptyList())
 
     assertThat(groups).hasSize(1)
     assertThat(groups.single().resolution).isEqualTo(DuplicateResolution.MERGE_MANUAL)
@@ -328,12 +333,17 @@ class TechnicianDuplicatesTest {
   fun mergingUnionsTheCertificationsRatherThanKeepingOnlyTheKeepers() {
     // Losing the second credential here is the failure the derived-role model exists to avoid: it
     // would leave the person tagged for one domain when they work in two.
-    val airplaneSide = certified("m1", "Sponge Bob", FAA_AMT to "AP-123", "abyc" to "AB-1")
-    val carSide = certified("m2", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
+    val airplaneSide =
+      certified("m1", "Sponge Bob", FAA_AMT to "AP-123", "abyc" to "AB-1")
+    val carSide =
+      certified("m2", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
 
-    val group = findDuplicates(listOf(airplaneSide, carSide), emptyList()).single()
+    val group =
+      findDuplicates(listOf(airplaneSide, carSide), emptyList()).single()
 
-    assertThat(group.mergedCertifications().map { it.type })
+    assertThat(
+      group.mergedCertifications()
+        .map { it.type })
       .containsExactly(FAA_AMT, "abyc", "ase")
   }
 
@@ -341,13 +351,17 @@ class TechnicianDuplicatesTest {
   fun theKeepersOwnCopyWinsOnACredentialBothCarry() {
     // The keeper is the richer row by construction, and a differing number for the same credential
     // is the typo the merge is resolving — not a second credential.
-    val keep = certified("m1", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
+    val keep =
+      certified("m1", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
     val other = certified("m2", "Sponge Bob", FAA_AMT to "AP-123 ")
 
     val group = findDuplicates(listOf(keep, other), emptyList()).single()
 
     assertThat(group.keep.id).isEqualTo("m1")
-    assertThat(group.mergedCertifications().first { it.type == FAA_AMT }.number)
+    assertThat(
+      group.mergedCertifications()
+        .first { it.type == FAA_AMT }.number
+    )
       .isEqualTo("AP-123")
   }
 
@@ -360,11 +374,14 @@ class TechnicianDuplicatesTest {
       certificate_type = CertificateType.CERTIFICATE_TYPE_AMT,
       cert_number = "AP-123",
     )
-    val current = certified("m2", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
+    val current =
+      certified("m2", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
 
     val group = findDuplicates(listOf(legacy, current), emptyList()).single()
 
-    assertThat(group.mergedCertifications().map { it.type })
+    assertThat(
+      group.mergedCertifications()
+        .map { it.type })
       .containsExactly(FAA_AMT, "ase")
   }
 }

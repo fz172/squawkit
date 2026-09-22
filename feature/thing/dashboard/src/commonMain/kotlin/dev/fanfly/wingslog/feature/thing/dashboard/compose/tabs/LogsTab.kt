@@ -15,16 +15,16 @@ import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.logs.viewing.log.compose.MaintenanceLogListContent
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListViewModel
+import dev.fanfly.wingslog.id.DataLogId
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
-import dev.fanfly.wingslog.id.DataLogId
-import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 
 @Composable
 fun LogsTab(
@@ -43,7 +43,9 @@ fun LogsTab(
   // composition site, so an unkeyed ViewModel would be reused and keep the previous thing's logs.
   val templateId = LocalThingTemplate.current?.id.orEmpty()
   val viewModel: MaintenanceLogListViewModel =
-    koinViewModel(key = thingId, parameters = { parametersOf(thingId, templateId) })
+    koinViewModel(
+      key = thingId,
+      parameters = { parametersOf(thingId, templateId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val filter by viewModel.filter.collectAsStateWithLifecycle()
   // The ViewModel outlives the section: a log left open when the user switched away would still
@@ -101,11 +103,12 @@ fun LogsTab(
     onAddLog = onNavigateToAddLog?.let { viewModel::onAddLog },
     onAttachmentTap = { attachment ->
       openError = null
-      attachment.dataLogIdOrNull()?.let { dataLogId ->
-        viewModel.onDismissDetail()
-        onOpenDataLog(dataLogId)
-        return@MaintenanceLogListContent
-      }
+      attachment.dataLogIdOrNull()
+        ?.let { dataLogId ->
+          viewModel.onDismissDetail()
+          onOpenDataLog(dataLogId)
+          return@MaintenanceLogListContent
+        }
       // Call open() synchronously inside the click handler so AttachmentOpenerWeb can
       // reserve window.open() during the user-gesture stack. Only the flow collection
       // moves into the coroutine.

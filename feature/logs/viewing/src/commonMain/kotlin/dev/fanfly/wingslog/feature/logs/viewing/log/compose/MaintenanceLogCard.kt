@@ -1,14 +1,8 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,15 +23,14 @@ import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.template.timelineReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.timelineReading
 import dev.fanfly.wingslog.core.ui.common.compose.TimelineGapRow
 import dev.fanfly.wingslog.core.ui.common.compose.TimelineRow
 import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
 import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -45,9 +38,9 @@ import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.viewing.generated.resources.log_file_count_one
+import wingslog.feature.logs.viewing.generated.resources.log_file_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_gap_one
 import wingslog.feature.logs.viewing.generated.resources.log_gap_plural
-import wingslog.feature.logs.viewing.generated.resources.log_file_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_one
@@ -83,7 +76,13 @@ fun MaintenanceLogCard(
 
   TimelineRow(
     // The number alone: the meter is the same down the whole column, and the detail sheet names it.
-    gutter = primary?.let { template.formatMeterNumber(it.first.key, it.second) }.orEmpty(),
+    gutter = primary?.let {
+      template.formatMeterNumber(
+        it.first.key,
+        it.second
+      )
+    }
+      .orEmpty(),
     modifier = modifier,
     connectsUp = connectsUp,
     connectsDown = connectsDown,
@@ -91,7 +90,11 @@ fun MaintenanceLogCard(
     onClick = onClick,
   ) {
     Text(
-      text = highlightWords(log.work_description.asSummaryLine(), highlight, searchHighlightStyle()),
+      text = highlightWords(
+        log.work_description.asSummaryLine(),
+        highlight,
+        searchHighlightStyle()
+      ),
       style = MaterialTheme.typography.titleMedium,
       color = MaterialTheme.colorScheme.onSurface,
       maxLines = 1,
@@ -120,9 +123,16 @@ fun LogGapRow(omitted: Int, modifier: Modifier = Modifier) {
   val lexicon = LocalThingLexicon.current
   TimelineGapRow(
     text = if (omitted == 1) {
-      stringResource(MaintenanceRes.string.log_gap_one, lexicon.logNoun.singular)
+      stringResource(
+        MaintenanceRes.string.log_gap_one,
+        lexicon.logNoun.singular
+      )
     } else {
-      stringResource(MaintenanceRes.string.log_gap_plural, omitted, lexicon.logNoun.plural)
+      stringResource(
+        MaintenanceRes.string.log_gap_plural,
+        omitted,
+        lexicon.logNoun.plural
+      )
     },
     modifier = modifier,
   )
@@ -143,7 +153,10 @@ private fun MaintenanceLog.metadataLine(): String {
     technician?.name?.takeIf { it.isNotBlank() },
     when {
       taskCount == 1 ->
-        stringResource(MaintenanceRes.string.log_task_count_one, lexicon.taskNoun.singular)
+        stringResource(
+          MaintenanceRes.string.log_task_count_one,
+          lexicon.taskNoun.singular
+        )
 
       taskCount > 1 -> stringResource(
         MaintenanceRes.string.log_task_count_plural,
@@ -155,7 +168,10 @@ private fun MaintenanceLog.metadataLine(): String {
     },
     when {
       squawkCount == 1 ->
-        stringResource(MaintenanceRes.string.log_squawk_count_one, lexicon.squawkNoun.singular)
+        stringResource(
+          MaintenanceRes.string.log_squawk_count_one,
+          lexicon.squawkNoun.singular
+        )
 
       squawkCount > 1 -> stringResource(
         MaintenanceRes.string.log_squawk_count_plural,
@@ -168,7 +184,11 @@ private fun MaintenanceLog.metadataLine(): String {
     // A count, never thumbnails: the list says a log has files, the detail sheet shows them.
     when {
       fileCount == 1 -> stringResource(MaintenanceRes.string.log_file_count_one)
-      fileCount > 1 -> stringResource(MaintenanceRes.string.log_file_count_plural, fileCount)
+      fileCount > 1 -> stringResource(
+        MaintenanceRes.string.log_file_count_plural,
+        fileCount
+      )
+
       else -> null
     },
   ).joinToString(" · ")

@@ -15,11 +15,20 @@ import platform.UniformTypeIdentifiers.UTType
  * [PickedFile.uri] is the absolute copy path, the shape [FileByteReaderImpl] and the camera flow
  * expect.
  */
-internal fun copyToTempPickedFile(sourcePath: String, name: String): PickedFile? {
-  val destPath = "${NSTemporaryDirectory()}picked_${NSUUID().UUIDString()}_$name"
+internal fun copyToTempPickedFile(
+  sourcePath: String,
+  name: String
+): PickedFile? {
+  val destPath =
+    "${NSTemporaryDirectory()}picked_${NSUUID().UUIDString()}_$name"
   val fm = NSFileManager.defaultManager
   fm.removeItemAtPath(destPath, null)
-  if (!fm.copyItemAtPath(sourcePath, toPath = destPath, error = null)) return null
+  if (!fm.copyItemAtPath(
+      sourcePath,
+      toPath = destPath,
+      error = null
+    )
+  ) return null
   val size = (fm.attributesOfItemAtPath(destPath, null)
     ?.get(NSFileSize) as? NSNumber)
     ?.longLongValue ?: 0L
