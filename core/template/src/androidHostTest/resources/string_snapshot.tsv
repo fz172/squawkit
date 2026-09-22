@@ -1055,6 +1055,7 @@ feature/datalog/sharedassets	data_log_import_reading	Reading %1$s…
 feature/datalog/sharedassets	data_log_import_storing	Saving %1$s…
 feature/datalog/sharedassets	data_log_new_pane	New pane
 feature/datalog/sharedassets	data_log_new_pane_hint	Tap, or drop a series here
+feature/datalog/sharedassets	data_log_open_chart	Open chart
 feature/datalog/sharedassets	data_log_other_thing_body	This file names %1$s. File it there instead?
 feature/datalog/sharedassets	data_log_other_thing_keep	Keep here
 feature/datalog/sharedassets	data_log_other_thing_move	File it there
@@ -1090,6 +1091,7 @@ feature/datalog/sharedassets	data_log_sidebar_hint	Tap adds to the highlighted p
 feature/datalog/sharedassets	data_log_sidebar_info	Info
 feature/datalog/sharedassets	data_log_sidebar_open	Series and info
 feature/datalog/sharedassets	data_log_sidebar_series	Series
+feature/datalog/sharedassets	data_log_sketch_loading	Reading the file for a preview…
 feature/datalog/sharedassets	data_log_supported_formats	Supported: Garmin G3X · G1000 · Dynon SkyView · Avidyne Entegra
 feature/datalog/sharedassets	data_log_tail_mismatch	Tail mismatch
 feature/datalog/sharedassets	data_log_upload	Upload Data Log
