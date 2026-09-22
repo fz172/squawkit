@@ -40,8 +40,8 @@ import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -110,7 +110,7 @@ fun MaintenanceLogDetailSheet(
 
     if (onEditClick != null) {
       DetailSheetActionRow(modifier = Modifier.padding(top = Spacing.small)) {
-        DetailSheetEditAction(
+        DetailSheetAction(
           label = stringResource(
             MaintenanceRes.string.edit_log,
             LocalThingLexicon.current.logNoun.singular,

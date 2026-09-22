@@ -28,7 +28,6 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -130,6 +129,7 @@ fun SquawkDetailSheet(
           DetailSheetAction(
             label = stringResource(Res.string.resolve_issue),
             onClick = { resolveMenuOpen = true },
+            primary = true,
             menu = {
               ResolveOptionsMenu(
                 expanded = resolveMenuOpen,
@@ -151,14 +151,13 @@ fun SquawkDetailSheet(
           DetailSheetAction(
             label = stringResource(Res.string.reopen_issue),
             onClick = onReopenClick,
-            primary = false,
           )
         }
 
         else -> Unit
       }
       if (onEditClick != null) {
-        DetailSheetEditAction(
+        DetailSheetAction(
           label = stringResource(
             Res.string.edit_squawk,
             LocalThingLexicon.current.squawkNoun.singular,

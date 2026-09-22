@@ -26,7 +26,6 @@ import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
@@ -196,7 +195,6 @@ fun TaskDetailSheet(
           DetailSheetAction(
             label = stringResource(SharedRes.string.skip_this_cycle_option),
             onClick = onSkipCycleClick,
-            primary = false,
           )
           DetailSheetAction(
             label = stringResource(
@@ -204,10 +202,11 @@ fun TaskDetailSheet(
               LocalThingLexicon.current.logNoun.singular,
             ),
             onClick = onLogWorkClick,
+            primary = true,
           )
         }
         if (onEditClick != null) {
-          DetailSheetEditAction(
+          DetailSheetAction(
             label = stringResource(SharedRes.string.edit_task),
             onClick = onEditClick,
           )

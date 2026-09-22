@@ -88,6 +88,7 @@ fun DataLogPreviewSheet(
       DetailSheetAction(
         label = stringResource(Res.string.data_log_open_chart),
         onClick = onOpenChart,
+        primary = true,
       )
       if (onDelete != null) {
         DetailSheetAction(

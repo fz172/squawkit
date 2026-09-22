@@ -7,11 +7,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.FlowRowScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -230,72 +230,71 @@ private fun DetailEndDrawer(
 }
 
 /**
- * The row a sheet's actions sit in — state changes, the route to the edit form, delete. Wraps on a
- * narrow sheet rather than squeezing the buttons, and never shares a line with the title.
+ * The row a sheet's actions sit in — state changes, the route to the edit form, delete. One row,
+ * every action the same width and height, so a sheet with one action and a sheet with three read
+ * the same way.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DetailSheetActionRow(
   modifier: Modifier = Modifier,
-  content: @Composable FlowRowScope.() -> Unit,
+  content: @Composable RowScope.() -> Unit,
 ) {
-  FlowRow(
-    modifier = modifier.fillMaxWidth(),
+  Row(
+    modifier = modifier.fillMaxWidth()
+      .height(IntrinsicSize.Min),
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-    verticalArrangement = Arrangement.spacedBy(Spacing.small),
     content = content,
   )
 }
 
 /**
- * A detail sheet's state-changing action — resolve, reopen, log work. It lives here rather than on
- * the edit form because it changes what a record *is*, not what its fields say. [menu] is anchored
- * to the button, for an action that opens options. [destructive] draws an outlined button in the
- * error colour.
+ * One action in a [DetailSheetActionRow]. [primary] is the filled one — at most one per row — and
+ * [destructive] is outlined in the error colour. A label wraps rather than truncates when the row
+ * is crowded; [menu] is anchored to the button, for an action that opens options.
  */
 @Composable
-fun DetailSheetAction(
+fun RowScope.DetailSheetAction(
   label: String,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-  primary: Boolean = true,
+  primary: Boolean = false,
   destructive: Boolean = false,
   menu: @Composable () -> Unit = {},
 ) {
-  Box(modifier = modifier) {
+  Box(
+    modifier = Modifier.weight(1f)
+      .fillMaxHeight(),
+  ) {
     val shape = RoundedCornerShape(Spacing.buttonCornerRadius)
+    val buttonModifier = Modifier.fillMaxSize()
+    val padding = PaddingValues(Spacing.small)
+    val text: @Composable RowScope.() -> Unit =
+      { Text(label, textAlign = TextAlign.Center) }
     when {
       destructive -> OutlinedButton(
         onClick = onClick,
+        modifier = buttonModifier,
         shape = shape,
+        contentPadding = padding,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-      ) { Text(label, maxLines = 1) }
+        content = text,
+      )
 
-      primary -> Button(onClick = onClick, shape = shape) { Text(label, maxLines = 1) }
-      else -> OutlinedButton(onClick = onClick, shape = shape) { Text(label, maxLines = 1) }
+      primary -> Button(
+        onClick = onClick,
+        modifier = buttonModifier,
+        shape = shape,
+        contentPadding = padding,
+        content = text,
+      )
+
+      else -> OutlinedButton(
+        onClick = onClick,
+        modifier = buttonModifier,
+        shape = shape,
+        contentPadding = padding,
+        content = text,
+      )
     }
     menu()
-  }
-}
-
-/** The route to the edit form — "Update squawk", "Update task" — for a [DetailSheetActionRow]. */
-@Composable
-fun DetailSheetEditAction(
-  label: String,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  OutlinedButton(
-    onClick = onClick,
-    modifier = modifier,
-    shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-  ) {
-    Icon(
-      Icons.Outlined.Edit,
-      contentDescription = null,
-      modifier = Modifier.size(ButtonDefaults.IconSize),
-    )
-    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-    Text(label, maxLines = 1)
   }
 }
