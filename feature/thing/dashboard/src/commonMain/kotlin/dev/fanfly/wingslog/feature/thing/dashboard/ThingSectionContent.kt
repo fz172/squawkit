@@ -309,6 +309,14 @@ fun ThingSectionContent(
   LaunchedEffect(section) {
     if (section != ShellSection.SQUAWKS) pendingSquawkScrollTarget = null
   }
+  // A record open in one section does not follow the user to the next: the task and squawk
+  // selections live in the overview ViewModel and would otherwise still be there — as a pane
+  // beside the list, or a sheet over another section — when the user came back. The log
+  // selection is the Logs tab's own and is cleared where that tab starts.
+  LaunchedEffect(section) {
+    viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
+    viewModel.onAction(ThingOverviewAction.DismissSquawkDetail)
+  }
 
   // A jump requested by the host (a tapped urgency notification) feeds the very same per-section
   // state as an in-app jump, so both reach the list — and the highlight — by one path. The host has

@@ -46,6 +46,9 @@ fun LogsTab(
     koinViewModel(key = thingId, parameters = { parametersOf(thingId, templateId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val filter by viewModel.filter.collectAsStateWithLifecycle()
+  // The ViewModel outlives the section: a log left open when the user switched away would still
+  // be open on their return. Each entry to the section starts with the list alone.
+  LaunchedEffect(viewModel) { viewModel.onDismissDetail() }
   val attachmentOpener: AttachmentOpener = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
