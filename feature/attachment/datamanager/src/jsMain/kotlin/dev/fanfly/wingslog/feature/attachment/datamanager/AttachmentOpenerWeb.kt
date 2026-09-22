@@ -110,9 +110,12 @@ internal class AttachmentOpenerWeb(
             emit(OpenState.Done)
           }
         }
-      } catch (e: Exception) {
+      } catch (e: Throwable) {
+        // Throwable, not Exception: a browser DOMException — OPFS raising NotFoundError for a blob
+        // whose row says local but whose bytes this profile never had — is not a Kotlin Exception
+        // on JS, and uncaught it took the whole app down (#1131).
         closePopup(popup)
-        emit(OpenState.Failed(e))
+        emit(OpenState.Failed(e.asKotlinException()))
       } finally {
         _downloadingIds.update { it - attachment.id }
       }
@@ -174,6 +177,10 @@ internal class AttachmentOpenerWeb(
     if (!outstandingObjectUrls.remove(url)) return  // already revoked
     js("URL.revokeObjectURL(url)")
   }
+
+  /** A JS error carries its message but no Kotlin type; the UI only ever reads the message. */
+  private fun Throwable.asKotlinException(): Exception =
+    this as? Exception ?: Exception(message ?: toString(), this)
 
   private fun String.normalizeWebUrl(): String =
     if (startsWith("http://") || startsWith("https://")) this else "https://$this"
