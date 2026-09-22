@@ -37,16 +37,26 @@ class PerThingSectionsTest {
       ShellSection.SQUAWKS,
       ShellSection.TASKS,
       ShellSection.LOGS,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
   fun aTemplateThatDeclaresFewerSectionsGetsFewerTabs() {
     val sections = perThingSectionsFor(
-      Capabilities(sections = listOf(Section.SECTION_DASHBOARD, Section.SECTION_LOGS)),
+      Capabilities(
+        sections = listOf(
+          Section.SECTION_DASHBOARD,
+          Section.SECTION_LOGS
+        )
+      ),
     )
 
-    assertThat(sections).containsExactly(ShellSection.DASHBOARD, ShellSection.LOGS).inOrder()
+    assertThat(sections).containsExactly(
+      ShellSection.DASHBOARD,
+      ShellSection.LOGS
+    )
+      .inOrder()
     assertThat(sections).doesNotContain(ShellSection.SQUAWKS)
   }
 
@@ -54,17 +64,31 @@ class PerThingSectionsTest {
   fun theDeclaredOrderIsTheRenderedOrder() {
     // The reason this is a list and not a bool per section: a set of flags cannot express order.
     val sections = perThingSectionsFor(
-      Capabilities(sections = listOf(Section.SECTION_LOGS, Section.SECTION_DASHBOARD)),
+      Capabilities(
+        sections = listOf(
+          Section.SECTION_LOGS,
+          Section.SECTION_DASHBOARD
+        )
+      ),
     )
 
-    assertThat(sections).containsExactly(ShellSection.LOGS, ShellSection.DASHBOARD).inOrder()
+    assertThat(sections).containsExactly(
+      ShellSection.LOGS,
+      ShellSection.DASHBOARD
+    )
+      .inOrder()
   }
 
   @Test
   fun aSectionThisBuildCannotRenderIsDropped() {
     // A template written by a newer client. Rendering the tab would navigate nowhere.
     val sections = perThingSectionsFor(
-      Capabilities(sections = listOf(Section.SECTION_DASHBOARD, Section.SECTION_UNKNOWN)),
+      Capabilities(
+        sections = listOf(
+          Section.SECTION_DASHBOARD,
+          Section.SECTION_UNKNOWN
+        )
+      ),
     )
 
     assertThat(sections).containsExactly(ShellSection.DASHBOARD)
@@ -79,7 +103,8 @@ class PerThingSectionsTest {
       ShellSection.SQUAWKS,
       ShellSection.TASKS,
       ShellSection.LOGS,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
@@ -92,7 +117,8 @@ class PerThingSectionsTest {
       ShellSection.TASKS,
       ShellSection.LOGS,
       ShellSection.DATA_LOGS,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test

@@ -49,7 +49,10 @@ fun rememberHeroPulse(active: Boolean = true): State<Float> {
     initialValue = if (active) 0f else 0.5f,
     targetValue = if (active) 1f else 0.5f,
     animationSpec = infiniteRepeatable(
-      animation = tween(durationMillis = HeroPeriodMillis, easing = EaseInOutSine),
+      animation = tween(
+        durationMillis = HeroPeriodMillis,
+        easing = EaseInOutSine
+      ),
       repeatMode = RepeatMode.Reverse,
     ),
     label = "settings-hero-pulse",
@@ -58,7 +61,10 @@ fun rememberHeroPulse(active: Boolean = true): State<Float> {
 
 /** Bobs the subject by ±[BobAmplitude] with [pulse]; read in the layout phase, so no recomposition. */
 fun Modifier.heroBob(pulse: () -> Float): Modifier = offset {
-  IntOffset(x = 0, y = ((pulse() - 0.5f) * 2f * BobAmplitude.toPx()).roundToInt())
+  IntOffset(
+    x = 0,
+    y = ((pulse() - 0.5f) * 2f * BobAmplitude.toPx()).roundToInt()
+  )
 }
 
 /**

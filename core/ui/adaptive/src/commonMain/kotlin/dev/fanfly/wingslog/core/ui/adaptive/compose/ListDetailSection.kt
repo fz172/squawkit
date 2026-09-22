@@ -16,10 +16,10 @@ import androidx.compose.material3.adaptive.layout.calculateThreePaneScaffoldValu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -101,7 +101,9 @@ fun ListDetailSection(
         // column rather than as the list continuing.
         Surface(
           color = MaterialTheme.colorScheme.surfaceContainerLow,
-          modifier = Modifier.onSizeChanged { pane.width = with(density) { it.width.toDp() } },
+          modifier = Modifier.onSizeChanged {
+            pane.width = with(density) { it.width.toDp() }
+          },
         ) {
           Row {
             VerticalDivider()

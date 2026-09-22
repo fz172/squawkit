@@ -9,4 +9,5 @@ import androidx.compose.runtime.staticCompositionLocalOf
  * shell entry, so that channel is the wrong shape. Null where no host has provided one (a
  * preview): callers treat that as a silent no-op.
  */
-val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState?> { null }
+val LocalSnackbarHostState =
+  staticCompositionLocalOf<SnackbarHostState?> { null }

@@ -35,7 +35,8 @@ class ListRowTest {
     }
 
     // A list only scans as a column if every row is the same height, whatever it carries.
-    rule.onNodeWithTag("row").assertHeightIsAtLeast(Spacing.rowHeight)
+    rule.onNodeWithTag("row")
+      .assertHeightIsAtLeast(Spacing.rowHeight)
   }
 
   @Test
@@ -52,11 +53,16 @@ class ListRowTest {
       }
     }
 
-    rule.onNodeWithText("Oil leak").assertExists()
-    rule.onNodeWithText("12 Sep 2026 · Weeping from the accessory case").assertExists()
-    rule.onNodeWithText("lead").assertExists()
-    rule.onNodeWithText("trail").assertExists()
-    rule.onNodeWithText("matched on N533SL").assertExists()
+    rule.onNodeWithText("Oil leak")
+      .assertExists()
+    rule.onNodeWithText("12 Sep 2026 · Weeping from the accessory case")
+      .assertExists()
+    rule.onNodeWithText("lead")
+      .assertExists()
+    rule.onNodeWithText("trail")
+      .assertExists()
+    rule.onNodeWithText("matched on N533SL")
+      .assertExists()
   }
 
   @Test
@@ -72,7 +78,8 @@ class ListRowTest {
       }
     }
 
-    rule.onNodeWithTag("row").performClick()
+    rule.onNodeWithTag("row")
+      .performClick()
     rule.waitForIdle()
 
     assertThat(clicks).isEqualTo(1)
@@ -80,13 +87,22 @@ class ListRowTest {
 
   @Test
   fun longTextTruncatesRatherThanGrowingTheRow() {
-    val long = "Replaced the left magneto per service bulletin SB-1234 and ran a mag drop check " +
-      "and a compression test on every cylinder"
+    val long =
+      "Replaced the left magneto per service bulletin SB-1234 and ran a mag drop check " +
+        "and a compression test on every cylinder"
     rule.setContent {
       MaterialTheme {
         Column {
-          ListRow(title = "Short", metadata = "Short", modifier = Modifier.testTag("short"))
-          ListRow(title = long, metadata = long, modifier = Modifier.testTag("long"))
+          ListRow(
+            title = "Short",
+            metadata = "Short",
+            modifier = Modifier.testTag("short")
+          )
+          ListRow(
+            title = long,
+            metadata = long,
+            modifier = Modifier.testTag("long")
+          )
         }
       }
     }
@@ -102,7 +118,11 @@ class ListRowTest {
     rule.setContent {
       MaterialTheme {
         Column {
-          ListRow(title = "Oil leak", metadata = "12 Sep", modifier = Modifier.testTag("plain"))
+          ListRow(
+            title = "Oil leak",
+            metadata = "12 Sep",
+            modifier = Modifier.testTag("plain")
+          )
           ListRow(
             title = "Oil leak",
             metadata = "12 Sep",
@@ -117,7 +137,8 @@ class ListRowTest {
   }
 
   private fun heightOf(tag: String): Float {
-    val bounds = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+    val bounds = rule.onNodeWithTag(tag)
+      .getUnclippedBoundsInRoot()
     return (bounds.bottom - bounds.top).value
   }
 }

@@ -21,7 +21,8 @@ object Spacing {
   val cardCornerRadius = 12.dp   // All card surfaces
   val smallCornerRadius = 8.dp   // Chips, badges, small surfaces
   val buttonHeight = 56.dp
-  val rowHeight = 72.dp           // ListRow, and anything that has to line up with one
+  val rowHeight =
+    72.dp           // ListRow, and anything that has to line up with one
   val buttonCornerRadius = 16.dp
 
   // Smaller surface radii

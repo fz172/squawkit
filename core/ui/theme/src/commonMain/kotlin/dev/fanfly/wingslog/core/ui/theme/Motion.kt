@@ -25,11 +25,13 @@ object Motion {
   // Durations, in milliseconds
   const val short = 150           // Fades, and anything leaving
   const val medium = 200          // Placement, anything arriving
-  const val long = 250            // The budget's ceiling: gesture settles, large surfaces
+  const val long =
+    250            // The budget's ceiling: gesture settles, large surfaces
 
   val easeOut: Easing = CubicBezierEasing(0f, 0f, 0.2f, 1f)      // Arriving
   val easeIn: Easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)       // Leaving
-  val gestureEaseOut: Easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f) // Held gestures only
+  val gestureEaseOut: Easing =
+    CubicBezierEasing(0.32f, 0.72f, 0f, 1f) // Held gestures only
 
   val sharedAxisOffset = 30.dp    // How far a shared-axis page travels
 
@@ -46,14 +48,22 @@ enum class MotionAxis { X, Y }
 @Composable
 fun rememberSharedAxis(axis: MotionAxis): (forward: Boolean) -> ContentTransform {
   val reduceMotion = rememberReduceMotion()
-  val offsetPx = with(LocalDensity.current) { Motion.sharedAxisOffset.roundToPx() }
+  val offsetPx =
+    with(LocalDensity.current) { Motion.sharedAxisOffset.roundToPx() }
   return remember(axis, reduceMotion, offsetPx) {
     { forward ->
       // The incoming fade waits for the outgoing one, so two pages are never legible at once.
-      val fadeIn = fadeIn(tween(Motion.medium, delayMillis = Motion.short, easing = Motion.easeOut))
+      val fadeIn = fadeIn(
+        tween(
+          Motion.medium,
+          delayMillis = Motion.short,
+          easing = Motion.easeOut
+        )
+      )
       val fadeOut = fadeOut(Motion.exit())
       val travel = if (forward) offsetPx else -offsetPx
-      val slide = tween<IntOffset>(Motion.short + Motion.medium, easing = Motion.easeOut)
+      val slide =
+        tween<IntOffset>(Motion.short + Motion.medium, easing = Motion.easeOut)
       when {
         reduceMotion -> fadeIn togetherWith fadeOut
         axis == MotionAxis.X ->

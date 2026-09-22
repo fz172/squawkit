@@ -35,6 +35,9 @@ fun ProBadge(modifier: Modifier = Modifier) {
         MaterialTheme.colorScheme.tertiaryContainer,
         RoundedCornerShape(Spacing.badgeCornerRadius),
       )
-      .padding(horizontal = BadgeHorizontalPadding, vertical = BadgeVerticalPadding),
+      .padding(
+        horizontal = BadgeHorizontalPadding,
+        vertical = BadgeVerticalPadding
+      ),
   )
 }

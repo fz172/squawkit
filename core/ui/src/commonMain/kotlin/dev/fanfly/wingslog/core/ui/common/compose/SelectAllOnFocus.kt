@@ -54,7 +54,8 @@ fun rememberSelectAllOnFocus(
     // After the frame that focused the field, not during it: a tap asks for focus and then drops
     // the caret where the finger landed, which would overwrite a selection written any earlier.
     withFrameNanos { }
-    fieldState = fieldState.copy(selection = TextRange(0, fieldState.text.length))
+    fieldState =
+      fieldState.copy(selection = TextRange(0, fieldState.text.length))
   }
 
   return SelectAllOnFocusField(

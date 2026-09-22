@@ -70,7 +70,8 @@ fun IconLabelTabRow(
 ) {
   BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
     val minTabWidth = maxWidth / tabs.size
-    val bounds = remember(tabs.size) { mutableStateListOf(*arrayOfNulls<TabBounds>(tabs.size)) }
+    val bounds =
+      remember(tabs.size) { mutableStateListOf(*arrayOfNulls<TabBounds>(tabs.size)) }
     val selectedBounds = bounds.getOrNull(selectedIndex)
     val indicatorLeft by animateFloatAsState(
       targetValue = selectedBounds?.left ?: 0f,
@@ -95,7 +96,11 @@ fun IconLabelTabRow(
           val stroke = IndicatorHeight.toPx()
           val top = size.height - stroke
           drawRect(trackColor, Offset(0f, top), Size(size.width, stroke))
-          drawRect(indicatorColor, Offset(indicatorLeft, top), Size(indicatorWidth, stroke))
+          drawRect(
+            indicatorColor,
+            Offset(indicatorLeft, top),
+            Size(indicatorWidth, stroke)
+          )
         },
     ) {
       tabs.forEachIndexed { index, spec ->
@@ -115,9 +120,13 @@ fun IconLabelTabRow(
             .fillMaxHeight()
             .bringIntoViewRequester(bringIntoView)
             .onGloballyPositioned {
-              bounds[index] = TabBounds(it.positionInParent().x, it.size.width.toFloat())
+              bounds[index] =
+                TabBounds(it.positionInParent().x, it.size.width.toFloat())
             }
-            .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(index) })
+            .selectable(
+              selected = selected,
+              role = Role.Tab,
+              onClick = { onSelect(index) })
             .padding(horizontal = Spacing.medium),
           horizontalArrangement = Arrangement.spacedBy(
             Spacing.small,

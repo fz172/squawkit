@@ -25,8 +25,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import dev.fanfly.wingslog.core.ui.theme.Spacing
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /**
  * Bottom padding a section's scrolling content must add so its last rows clear the floating pill
@@ -113,7 +113,8 @@ fun FloatingPillNavigationBar(
         items.forEach { item ->
           // The chip is the only item that can shrink: when the bar would overflow, its label
           // ellipsizes while the icons keep their full touch targets.
-          val itemModifier = if (item.selected) Modifier.weight(1f, fill = false) else Modifier
+          val itemModifier =
+            if (item.selected) Modifier.weight(1f, fill = false) else Modifier
           PillItem(item, itemModifier)
         }
       }

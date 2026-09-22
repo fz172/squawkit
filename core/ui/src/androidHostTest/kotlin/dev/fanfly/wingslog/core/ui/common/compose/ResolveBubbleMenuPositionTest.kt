@@ -58,11 +58,32 @@ class ResolveBubbleMenuPositionTest {
 
   @Test
   fun tailStaysClearOfBothCorners() {
-    assertThat(clampTailCenter(tailCenterX = 2f, width = 300f, cornerPx = 16f, tailWidthPx = 16f))
+    assertThat(
+      clampTailCenter(
+        tailCenterX = 2f,
+        width = 300f,
+        cornerPx = 16f,
+        tailWidthPx = 16f
+      )
+    )
       .isEqualTo(24f)
-    assertThat(clampTailCenter(tailCenterX = 298f, width = 300f, cornerPx = 16f, tailWidthPx = 16f))
+    assertThat(
+      clampTailCenter(
+        tailCenterX = 298f,
+        width = 300f,
+        cornerPx = 16f,
+        tailWidthPx = 16f
+      )
+    )
       .isEqualTo(276f)
-    assertThat(clampTailCenter(tailCenterX = 150f, width = 300f, cornerPx = 16f, tailWidthPx = 16f))
+    assertThat(
+      clampTailCenter(
+        tailCenterX = 150f,
+        width = 300f,
+        cornerPx = 16f,
+        tailWidthPx = 16f
+      )
+    )
       .isEqualTo(150f)
   }
 }
