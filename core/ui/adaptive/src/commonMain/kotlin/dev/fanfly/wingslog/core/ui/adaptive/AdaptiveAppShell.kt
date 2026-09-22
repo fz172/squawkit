@@ -1,7 +1,11 @@
 package dev.fanfly.wingslog.core.ui.adaptive
 
+// core/ui/adaptive cannot use the core/ui shadow; the menu body resets the scope itself.
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animate
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -30,8 +34,10 @@ import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -62,6 +68,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -90,6 +97,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.MotionAxis
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.rememberSharedAxis
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.thing.Capabilities
@@ -97,7 +105,6 @@ import dev.fanfly.wingslog.thing.Section
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.enter_invite_code
@@ -106,11 +113,13 @@ import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
 import wingslog.core.sharedassets.generated.resources.switcher_add_thing
+import wingslog.core.sharedassets.generated.resources.switcher_all_things
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
+import wingslog.core.sharedassets.generated.resources.switcher_switch
+import wingslog.core.sharedassets.generated.resources.switcher_switch_to
 import wingslog.core.sharedassets.generated.resources.your_stuff
-import wingslog.core.sharedassets.generated.resources.Res as UiRes
-// core/ui/adaptive cannot use the core/ui shadow; the menu body resets the scope itself.
 import androidx.compose.material3.DropdownMenu as M3DropdownMenu
+import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight thing projection used by the shell's switcher. */
 data class ShellThing(
@@ -151,6 +160,7 @@ enum class ShellSection(val icon: ImageVector) {
   SQUAWKS(Icons.Filled.Warning),
   TASKS(Icons.Filled.Checklist),
   LOGS(Icons.Filled.Description),
+
   /** Flight data on the airplane preset; declared by the template and gated by the build. */
   DATA_LOGS(Icons.Filled.ShowChart),
   SETTINGS(Icons.Filled.Settings),
@@ -318,7 +328,8 @@ fun AdaptiveAppShell(
       // reintroduce the frozen-at-creation lexicon on exactly the per-thing surfaces that matter.
       else thingLexicon
     // Sections travel along the axis their nav runs on: the bottom bar is a row, the sidebar a column.
-    val sharedAxis = rememberSharedAxis(if (tier.hasSideNav) MotionAxis.Y else MotionAxis.X)
+    val sharedAxis =
+      rememberSharedAxis(if (tier.hasSideNav) MotionAxis.Y else MotionAxis.X)
     val content: @Composable () -> Unit = {
       AnimatedContent(
         targetState = state.section,
@@ -645,7 +656,7 @@ private fun WingsSidebar(
       }
 
       if (showSwitcher) {
-        SidebarSwitcher(
+        SelectedThingBlock(
           state = state,
           onSelectThing = onSelectThing,
           onAddThing = onAddThing,
@@ -654,12 +665,64 @@ private fun WingsSidebar(
         )
       }
 
+      // Directly under the block, because they are its sections.
       perThingSections().forEach { section ->
         SidebarItem(
           section,
           selected = !sectionsMuted && state.section == section,
           muted = sectionsMuted,
           onClick = { onSelectSection(section) })
+      }
+
+      // Nothing here scrolls: four others at most, then the picker for the rest. The structure is
+      // the same at three things and at seventeen.
+      val others = state.things.filter { it.id != state.selectedThingId }
+      if (showSwitcher && others.isNotEmpty()) {
+        HorizontalDivider(
+          modifier = Modifier.padding(
+            horizontal = 20.dp,
+            vertical = Spacing.medium
+          )
+        )
+        Text(
+          stringResource(UiRes.string.switcher_switch_to),
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.padding(
+            horizontal = 24.dp,
+            vertical = Spacing.extraSmall
+          ),
+        )
+        others.take(QUICK_SWITCH_ROWS)
+          .forEach { thing ->
+            NavigationDrawerItem(
+              label = {
+                Text(
+                  thing.label,
+                  maxLines = 1,
+                  overflow = TextOverflow.Ellipsis
+                )
+              },
+              icon = {
+                Icon(
+                  thingIcon(thing.template?.icon.orEmpty()),
+                  contentDescription = null
+                )
+              },
+              selected = false,
+              onClick = { onSelectThing(thing.id) },
+              modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+            )
+          }
+        if (others.size > QUICK_SWITCH_ROWS) {
+          AllThingsRow(
+            count = state.things.size,
+            state = state,
+            onSelectThing = onSelectThing,
+            onAddThing = onAddThing,
+            onEnterInviteCode = onEnterInviteCode,
+          )
+        }
       }
 
       Spacer(Modifier.weight(1f))
@@ -708,9 +771,16 @@ private fun SidebarItem(
 
 private const val DisabledSectionAlpha = 0.38f
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** How many other things the sidebar offers before sending the rest to the picker. */
+private const val QUICK_SWITCH_ROWS = 4
+
+/**
+ * The selected thing, as a block rather than a row: filled and bordered, name over identifier,
+ * with a switch glyph. A highlighted row reads as "this one is tinted"; a block says the sections
+ * under it belong to it. Tapping it opens the full picker.
+ */
 @Composable
-private fun SidebarSwitcher(
+private fun SelectedThingBlock(
   state: AdaptiveShellUiState,
   onSelectThing: (String) -> Unit,
   onAddThing: () -> Unit,
@@ -718,33 +788,60 @@ private fun SidebarSwitcher(
   modifier: Modifier = Modifier,
 ) {
   var open by remember { mutableStateOf(false) }
+  val thing = state.selectedThing
   Box(modifier = modifier) {
     Surface(
       onClick = { open = true },
-      shape = RoundedCornerShape(12.dp),
-      color = MaterialTheme.colorScheme.surfaceVariant,
+      shape = RoundedCornerShape(Spacing.cardCornerRadius),
+      color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = SELECTED_BLOCK_FILL),
+      border = BorderStroke(
+        Spacing.hairline,
+        MaterialTheme.colorScheme.primary.copy(alpha = SELECTED_BLOCK_BORDER)
+      ),
       modifier = Modifier.fillMaxWidth(),
     ) {
       Row(
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier = Modifier.padding(Spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
         verticalAlignment = Alignment.CenterVertically,
       ) {
+        Box(
+          modifier = Modifier
+            .size(Spacing.huge)
+            .clip(RoundedCornerShape(Spacing.smallCornerRadius))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = SELECTED_BLOCK_ICON_FILL)),
+          contentAlignment = Alignment.Center,
+        ) {
+          Icon(
+            thingIcon(thing?.template?.icon.orEmpty()),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(Spacing.xLarge),
+          )
+        }
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            state.selectedThing?.label
-              ?: stringResource(UiRes.string.switcher_select_thing),
+            thing?.label ?: stringResource(UiRes.string.switcher_select_thing),
             style = MaterialTheme.typography.titleSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
           )
-          state.selectedThing?.subtitle?.takeIf { it.isNotBlank() }
+          thing?.subtitle?.takeIf { it.isNotBlank() }
             ?.let {
               Text(
                 it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = WingslogTypography.dataSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
               )
             }
         }
-        Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+        Icon(
+          Icons.Filled.UnfoldMore,
+          contentDescription = stringResource(UiRes.string.switcher_switch),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
       }
     }
     ThingDropdown(
@@ -757,6 +854,39 @@ private fun SidebarSwitcher(
     )
   }
 }
+
+/** "All 17 things" — the row that opens the picker for whatever the quick list left out. */
+@Composable
+private fun AllThingsRow(
+  count: Int,
+  state: AdaptiveShellUiState,
+  onSelectThing: (String) -> Unit,
+  onAddThing: () -> Unit,
+  onEnterInviteCode: (() -> Unit)?,
+) {
+  var open by remember { mutableStateOf(false) }
+  Box {
+    NavigationDrawerItem(
+      label = { Text(stringResource(UiRes.string.switcher_all_things, count)) },
+      icon = { Icon(Icons.Filled.MoreHoriz, contentDescription = null) },
+      selected = false,
+      onClick = { open = true },
+      modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+    )
+    ThingDropdown(
+      expanded = open,
+      onDismiss = { open = false },
+      state = state,
+      onSelectThing = onSelectThing,
+      onAddThing = onAddThing,
+      onEnterInviteCode = onEnterInviteCode,
+    )
+  }
+}
+
+private const val SELECTED_BLOCK_FILL = 0.35f
+private const val SELECTED_BLOCK_BORDER = 0.4f
+private const val SELECTED_BLOCK_ICON_FILL = 0.18f
 
 /* ---------------------------------------------------------------------------------------------- */
 /* COMPACT — floating pill bottom nav                                                              */
@@ -1087,7 +1217,11 @@ private fun ThingDropdown(
             },
             trailingIcon = {
               if (selected) {
-                Icon(Icons.Filled.Check, contentDescription = null, tint = accent)
+                Icon(
+                  Icons.Filled.Check,
+                  contentDescription = null,
+                  tint = accent
+                )
               }
             },
           )

@@ -56,7 +56,10 @@ core/sharedassets	settings	Settings
 core/sharedassets	shell_nav_tasks_narrow	Maint. tasks
 core/sharedassets	shell_tab_dashboard	Dashboard
 core/sharedassets	switcher_add_thing	Add a new thing
+core/sharedassets	switcher_all_things	All %1$d things
 core/sharedassets	switcher_select_thing	Select
+core/sharedassets	switcher_switch	Switch
+core/sharedassets	switcher_switch_to	Switch to
 core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
 core/sharedassets	term_with_abbreviation	%1$s (%2$s)
 core/sharedassets	thing_shared_badge	Shared

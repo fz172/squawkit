@@ -11,6 +11,9 @@
        adding a new Thing is not adding another of whatever is currently selected. -->
   <string name="switcher_add_thing">Add a new thing</string>
   <string name="switcher_select_thing">Select</string>
+  <string name="switcher_switch">Switch</string>
+  <string name="switcher_switch_to">Switch to</string>
+  <string name="switcher_all_things">All <xliff:g example="17">%1$d</xliff:g> things</string>
   <!-- The account's whole collection, named neutrally. Used by the switcher and the export
        picker: both span every template, so neither takes a single Thing's word — it does not
        become "Fleet" because today's rows happen to be aircraft. -->
