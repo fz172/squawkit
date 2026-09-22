@@ -22,9 +22,9 @@ fun Long.formatFileSize(): String {
 }
 
 /** Pure unit/quantity selection behind [formatFileSize]; split out for unit testing. */
-internal fun fileSizeParts(bytes: Long): Pair<StringResource, String?> = when {
-  bytes <= 0L -> Res.string.file_size_zero_kb to null
-  bytes < 1_000L -> Res.string.file_size_bytes to bytes.toString()
-  bytes < 1_000_000L -> Res.string.file_size_kb to ((bytes + 999L) / 1_000L).toString()
-  else -> Res.string.file_size_mb to (bytes / 1_000_000.0).formatToOneDecimalPlace()
+internal fun fileSizeParts(bytes: Long): FileSizeParts = when {
+  bytes <= 0L -> FileSizeParts(Res.string.file_size_zero_kb, null)
+  bytes < 1_000L -> FileSizeParts(Res.string.file_size_bytes, bytes.toString())
+  bytes < 1_000_000L -> FileSizeParts(Res.string.file_size_kb, ((bytes + 999L) / 1_000L).toString())
+  else -> FileSizeParts(Res.string.file_size_mb, (bytes / 1_000_000.0).formatToOneDecimalPlace())
 }

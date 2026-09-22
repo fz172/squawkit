@@ -166,9 +166,9 @@ internal fun scheduleSummary(
   state: ScheduleState,
   linkedTaskName: String?,
   meterUnit: String,
-): Triple<String, String, Boolean> {
+): ScheduleSummary {
   if (state.mode == null) {
-    return Triple(
+    return ScheduleSummary(
       stringResource(Res.string.schedule_preview_empty_primary),
       stringResource(Res.string.schedule_preview_empty_secondary),
       true,
@@ -176,7 +176,7 @@ internal fun scheduleSummary(
   }
   if (state.mode == ScheduleMode.LINKED) {
     if (state.linkedToId == null || linkedTaskName == null) {
-      return Triple(
+      return ScheduleSummary(
         stringResource(Res.string.schedule_preview_linked_unset_primary),
         stringResource(Res.string.schedule_preview_linked_unset_secondary),
         false,
@@ -187,7 +187,7 @@ internal fun scheduleSummary(
     } else {
       stringResource(Res.string.schedule_preview_linked_repeating_secondary)
     }
-    return Triple(
+    return ScheduleSummary(
       stringResource(
         Res.string.schedule_preview_linked_primary,
         linkedTaskName
@@ -198,7 +198,7 @@ internal fun scheduleSummary(
   }
   if (state.mode == ScheduleMode.SEASONAL) {
     if (state.seasonalMonths.isEmpty()) {
-      return Triple(
+      return ScheduleSummary(
         stringResource(Res.string.schedule_preview_set_months_primary),
         stringResource(Res.string.schedule_preview_set_secondary),
         false,
@@ -206,13 +206,13 @@ internal fun scheduleSummary(
     }
     val months = formatMonthList(state.seasonalMonths)
     return if (state.recurrence == ScheduleRecurrence.ONE_TIME) {
-      Triple(
+      ScheduleSummary(
         stringResource(Res.string.schedule_preview_due_seasonal_once, months),
         stringResource(Res.string.schedule_preview_one_time_secondary),
         false,
       )
     } else {
-      Triple(
+      ScheduleSummary(
         stringResource(Res.string.schedule_preview_due_seasonal, months),
         stringResource(Res.string.schedule_preview_recurring_secondary),
         false,
@@ -220,7 +220,7 @@ internal fun scheduleSummary(
     }
   }
   if (state.recurrence == ScheduleRecurrence.ASAP) {
-    return Triple(
+    return ScheduleSummary(
       stringResource(Res.string.schedule_preview_asap_primary),
       stringResource(Res.string.schedule_preview_asap_secondary),
       false,
@@ -229,7 +229,7 @@ internal fun scheduleSummary(
   if (state.mode == ScheduleMode.TIME) {
     val n = state.calValue.toIntOrNull()
     if (n == null) {
-      return Triple(
+      return ScheduleSummary(
         stringResource(
           Res.string.schedule_preview_set_calendar_primary,
           stringResource(state.calUnit.label())
@@ -244,7 +244,7 @@ internal fun scheduleSummary(
       Res.string.schedule_preview_due_in else Res.string.schedule_preview_due_every
     val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
       Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-    return Triple(
+    return ScheduleSummary(
       stringResource(primaryRes, n, unitStr),
       stringResource(secondaryRes),
       false
@@ -252,7 +252,7 @@ internal fun scheduleSummary(
   }
   // HOURS
   if (state.hourValue.isBlank()) {
-    return Triple(
+    return ScheduleSummary(
       stringResource(Res.string.schedule_preview_set_hours_primary, meterUnit),
       stringResource(Res.string.schedule_preview_set_secondary),
       false,
@@ -262,7 +262,7 @@ internal fun scheduleSummary(
     Res.string.schedule_preview_due_in_hours else Res.string.schedule_preview_due_every_hours
   val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
     Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-  return Triple(
+  return ScheduleSummary(
     stringResource(primaryRes, state.hourValue, meterUnit),
     stringResource(secondaryRes),
     false

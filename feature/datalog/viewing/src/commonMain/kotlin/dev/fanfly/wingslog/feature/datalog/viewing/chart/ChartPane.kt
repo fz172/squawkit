@@ -42,6 +42,7 @@ import dev.fanfly.wingslog.feature.datalog.model.chart.Axis
 import dev.fanfly.wingslog.feature.datalog.model.chart.DecimatedSeries
 import dev.fanfly.wingslog.feature.datalog.model.chart.Decimation
 import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation
+import dev.fanfly.wingslog.feature.datalog.model.chart.SeriesUnit
 import dev.fanfly.wingslog.feature.datalog.model.chart.TimeTicks
 import dev.fanfly.wingslog.feature.datalog.model.chart.UnitGroups
 import dev.fanfly.wingslog.feature.datalog.model.chart.YRange
@@ -122,7 +123,7 @@ fun ChartPane(
       }
     }
   val groups =
-    remember(series) { UnitGroups.group(series.map { it.key to it.unit }) }
+    remember(series) { UnitGroups.group(series.map { SeriesUnit(it.key, it.unit) }) }
   val ranges: Map<String, YRange> = remember(columns, groups) {
     groups.associate { g -> g.unit to UnitGroups.fit(g.series.mapNotNull { columns[it] }) }
   }

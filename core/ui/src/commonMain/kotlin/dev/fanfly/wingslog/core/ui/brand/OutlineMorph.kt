@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.brand
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.vector.PathParser
@@ -100,7 +101,7 @@ class OutlineMorph(private val from: FloatArray, to: FloatArray) {
     fun sample(
       pathData: String,
       n: Int = SAMPLES,
-      toUnit: (Float, Float) -> Pair<Float, Float>
+      toUnit: (Offset) -> Offset
     ): FloatArray {
       val path = PathParser().parsePathString(firstContour(pathData))
         .toPath()
@@ -108,10 +109,9 @@ class OutlineMorph(private val from: FloatArray, to: FloatArray) {
       val length = measure.length
       return FloatArray(n * 2).also { out ->
         for (i in 0 until n) {
-          val p = measure.getPosition(length * i / n)
-          val (x, y) = toUnit(p.x, p.y)
-          out[2 * i] = x
-          out[2 * i + 1] = y
+          val p = toUnit(measure.getPosition(length * i / n))
+          out[2 * i] = p.x
+          out[2 * i + 1] = p.y
         }
       }
     }

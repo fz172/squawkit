@@ -11,7 +11,8 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
-import dev.fanfly.wingslog.feature.datalog.viewing.analytics.RecordingAnalytics
+import dev.fanfly.wingslog.core.analytics.RecordedEvent
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -44,7 +45,7 @@ class DataLogListViewModelTest {
   private val logs = MutableStateFlow<List<DataLog>>(emptyList())
   private lateinit var manager: DataLogManager
   private lateinit var auth: AuthManager
-  private lateinit var analytics: RecordingAnalytics
+  private lateinit var analytics: RecordingAnalyticsManager
   private lateinit var templates: CurrentThingTemplate
 
   @Before
@@ -55,7 +56,7 @@ class DataLogListViewModelTest {
     // The import telemetry reads the stored record back; most tests never store one.
     every { manager.observeOne(any(), any()) } returns flowOf(null)
     auth = mockk()
-    analytics = RecordingAnalytics()
+    analytics = RecordingAnalyticsManager()
     templates = mockk()
     every { templates.templateId } returns "airplane"
     signIn(anonymous = false)
@@ -272,14 +273,17 @@ class DataLogListViewModelTest {
     vm.upload(listOf(PickedFile("content://x", "x.csv", "text/csv", 2_000_000)))
 
     assertThat(analytics.events).containsExactly(
-      "data_log_imported" to mapOf(
-        "template_id" to "airplane",
-        "source" to "list",
-        "format" to "GDU 460",
-        "duration_bucket" to "0-15m",
-        "size_bucket" to "1-5mb",
-        "series_count" to "2",
-      )
+      RecordedEvent(
+        "data_log_imported",
+        mapOf(
+          "template_id" to "airplane",
+          "source" to "list",
+          "format" to "GDU 460",
+          "duration_bucket" to "0-15m",
+          "size_bucket" to "1-5mb",
+          "series_count" to "2",
+        ),
+      ),
     )
   }
 
@@ -299,12 +303,15 @@ class DataLogListViewModelTest {
     vm.upload(listOf(PickedFile("content://x", "x.csv", "text/csv", 500)))
 
     assertThat(analytics.events).containsExactly(
-      "data_log_import_failed" to mapOf(
-        "template_id" to "airplane",
-        "source" to "list",
-        "reason" to "unrecognized",
-        "size_bucket" to "0-1mb",
-      )
+      RecordedEvent(
+        "data_log_import_failed",
+        mapOf(
+          "template_id" to "airplane",
+          "source" to "list",
+          "reason" to "unrecognized",
+          "size_bucket" to "0-1mb",
+        ),
+      ),
     )
   }
 

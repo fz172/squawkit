@@ -14,7 +14,8 @@ import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
-import dev.fanfly.wingslog.feature.datalog.update.analytics.RecordingAnalytics
+import dev.fanfly.wingslog.core.analytics.RecordedEvent
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
@@ -45,7 +46,7 @@ class DataLogViewerViewModelTest {
     DataLogSeriesData(IntArray(3), emptyMap(), emptyMap(), null)
   private lateinit var manager: DataLogManager
   private lateinit var layouts: ChartLayoutStore
-  private lateinit var analytics: RecordingAnalytics
+  private lateinit var analytics: RecordingAnalyticsManager
   private lateinit var templates: CurrentThingTemplate
   private var remembered: String? = null
 
@@ -54,7 +55,7 @@ class DataLogViewerViewModelTest {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     manager = mockk()
     layouts = mockk()
-    analytics = RecordingAnalytics()
+    analytics = RecordingAnalyticsManager()
     templates = mockk()
     every { templates.templateId } returns "airplane"
     every { layouts.load(id) } answers { remembered }
@@ -560,11 +561,14 @@ class DataLogViewerViewModelTest {
     viewModel()
 
     assertThat(analytics.events).containsExactly(
-      "data_log_opened" to mapOf(
-        "template_id" to "airplane",
-        "duration_bucket" to "1-3h",
-        "series_count" to "3",
-      )
+      RecordedEvent(
+        "data_log_opened",
+        mapOf(
+          "template_id" to "airplane",
+          "duration_bucket" to "1-3h",
+          "series_count" to "3",
+        ),
+      ),
     )
   }
 

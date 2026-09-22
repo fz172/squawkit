@@ -62,12 +62,13 @@ internal class ColumnAccumulator(private val capacity: Int) {
 }
 
 /** "Oil Press (PSI)" → ("Oil Press", "PSI"); a name without parentheses keeps an empty unit. */
-internal fun splitUnit(longName: String): Pair<String, String> {
+internal fun splitUnit(longName: String): SeriesLongName {
   val open = longName.lastIndexOf('(')
-  if (open <= 0 || !longName.endsWith(")")) return longName to ""
-  return longName.substring(0, open)
-    .trim() to longName.substring(open + 1, longName.length - 1)
-    .trim()
+  if (open <= 0 || !longName.endsWith(")")) return SeriesLongName(longName, "")
+  return SeriesLongName(
+    longName.substring(0, open).trim(),
+    longName.substring(open + 1, longName.length - 1).trim(),
+  )
 }
 
 internal fun parseIntAt(s: String, start: Int, end: Int): Int {

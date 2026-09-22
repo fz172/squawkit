@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.ComponentPath
+import dev.fanfly.wingslog.core.template.ComponentPathStep
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.componentAt
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
@@ -109,7 +110,7 @@ class SpecNormalisationTest {
   fun aComponentsFieldsFollowTheSameRule() {
     // Same message, same flags — the two forms cannot disagree about what `numeric` means.
     val vm = viewModel("bike")
-    val path: ComponentPath = listOf("drivetrain" to 0)
+    val path: ComponentPath = listOf(ComponentPathStep("drivetrain", 0))
 
     vm.onComponentSpecChanged(
       path,

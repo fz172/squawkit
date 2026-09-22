@@ -396,7 +396,7 @@ class TaskViewModelTest {
       complianceDetails = card.compliance_details,
       isOneTime = card.is_one_time,
       forceDueDate = card.force_due_date,
-      forceDueEngine = card.forcedDueMeter()?.second ?: 0f,
+      forceDueEngine = card.forcedDueMeter()?.value ?: 0f,
       forceCompliedStatus = card.force_complied_status,
       notes = card.notes,
       onSuccess = {},

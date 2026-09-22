@@ -14,20 +14,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.ui.common.compose.LabelledChoice
 import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubComponentDropdown(
   label: String,
-  options: List<Pair<String, String>>, // display label to serial
+  /** Each option's label, and the serial it stands for. */
+  options: List<LabelledChoice<String>>,
   selectedSerial: String?,
   onSelected: (String?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var expanded by remember { mutableStateOf(false) }
   val selectedLabel =
-    options.firstOrNull { it.second == selectedSerial }?.first ?: ""
+    options.firstOrNull { it.value == selectedSerial }?.label ?: ""
 
   ExposedDropdownMenuBox(
     expanded = expanded,

@@ -94,7 +94,7 @@ fun AddTaskRoute(
           complianceDetails = card.compliance_details,
           isOneTime = card.is_one_time,
           forceDueDate = card.force_due_date,
-          forceDueEngine = card.forcedDueMeter()?.second ?: 0f,
+          forceDueEngine = card.forcedDueMeter()?.value ?: 0f,
           notes = card.notes,
           onSuccess = {
             navController.previousBackStackEntry?.savedStateHandle?.set(

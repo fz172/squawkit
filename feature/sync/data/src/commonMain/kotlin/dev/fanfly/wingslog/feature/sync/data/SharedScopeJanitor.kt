@@ -49,12 +49,12 @@ class SharedScopeJanitor(
   var noticeSink: (SyncNotice) -> Unit = {}
 
   /**
-   * [liveShares] is the set of `(hostUid, thingId)` the member is still a member of (from the
+   * [liveShares] is the set of shared things the member is still a member of (from the
    * refs store). Any shared thing present locally but absent from [liveShares] is purged.
    */
   suspend fun purgeRevoked(
     memberUid: String,
-    liveShares: Set<Pair<String, String>>
+    liveShares: Set<SharedThingRef>
   ) {
     val ownRoot = EntityScope.userRoot(memberUid)
       .toPath()
@@ -63,7 +63,12 @@ class SharedScopeJanitor(
       .awaitAsList()
       .mapNotNull { row ->
         if (row.scope_path == ownRoot) return@mapNotNull null // the member's own thing
-        hostUidFromRoot(row.scope_path)?.let { host -> host to row.id }
+        hostUidFromRoot(row.scope_path)?.let { host ->
+          SharedThingRef(
+            host,
+            row.id
+          )
+        }
       }
       .toSet()
 
@@ -216,3 +221,4 @@ private fun hostUidFromRoot(scopePath: String): String? {
     .split('/')
   return if (segments.size == 2 && segments[0] == "users") segments[1] else null
 }
+

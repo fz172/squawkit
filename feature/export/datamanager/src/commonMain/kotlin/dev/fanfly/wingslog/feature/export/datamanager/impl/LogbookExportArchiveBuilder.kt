@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.file.ZipEntryPayload
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.template.ComponentField
+import dev.fanfly.wingslog.core.template.FieldValue
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.MeterKeys
@@ -872,7 +873,7 @@ class LogbookExportArchiveBuilder(
             cards = listOf(
               PdfSummaryCard(
                 rows = buildList {
-                  thing.exportIdentityPairs(nameFallback = thing.id)
+                  thing.exportIdentityFields(nameFallback = thing.id)
                     .forEach { (label, value) ->
                       add(
                         PdfSummaryRow(
@@ -1062,22 +1063,22 @@ class LogbookExportArchiveBuilder(
    * Declared fields keep their blank cells — a column that exists and is empty is information —
    * while an unnamed custom field is dropped, since it has no label to print it under.
    */
-  private fun Thing.exportIdentityPairs(nameFallback: String = ""): List<Pair<String, String>> {
+  private fun Thing.exportIdentityFields(nameFallback: String = ""): List<FieldValue> {
     val declared = template?.spec_fields.orEmpty()
     val titleValue = declared.firstOrNull { it.title_candidate }
       ?.let { specValue(it.key) }
       .orEmpty()
     return buildList {
       if (name.isBlank() || name != titleValue) {
-        add("Name" to name.ifBlank { nameFallback })
+        add(FieldValue("Name", name.ifBlank { nameFallback }))
       }
       declared.forEach { field ->
-        add(field.label.ifBlank { field.key } to specValue(field.key))
+        add(FieldValue(field.label.ifBlank { field.key }, specValue(field.key)))
       }
       customSpecs().forEach { spec ->
         spec.label.trim()
           .takeIf { it.isNotEmpty() }
-          ?.let { add(it to spec.value_) }
+          ?.let { add(FieldValue(it, spec.value_)) }
       }
     }
   }
@@ -1096,7 +1097,7 @@ class LogbookExportArchiveBuilder(
     }
     return buildList {
       add(listOf("Field", "Value"))
-      thing.exportIdentityPairs()
+      thing.exportIdentityFields()
         .forEach { (label, value) -> add(listOf(label, value)) }
       // Only meters the template declares: a home declares none, and a "0.0 hrs" row is exactly
       // the failure PRD §4.4 warns about.

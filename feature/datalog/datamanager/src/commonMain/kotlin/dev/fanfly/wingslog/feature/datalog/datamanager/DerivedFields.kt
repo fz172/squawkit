@@ -15,12 +15,12 @@ object DerivedFields {
       parsed.anyAbove(CanonicalSeries.AGL, AIRBORNE_AGL_FT)
 
   /** Latitude and longitude of the last row with a fix, or null when the log has none. */
-  fun endPosition(parsed: ParsedDataLog): Pair<Double, Double>? {
+  fun endPosition(parsed: ParsedDataLog): GeoPoint? {
     val position = parsed.data.position ?: return null
     for (i in position.latitude.indices.reversed()) {
       val lat = position.latitude[i]
       val lon = position.longitude[i]
-      if (!lat.isNaN() && !lon.isNaN()) return lat to lon
+      if (!lat.isNaN() && !lon.isNaN()) return GeoPoint(lat, lon)
     }
     return null
   }
