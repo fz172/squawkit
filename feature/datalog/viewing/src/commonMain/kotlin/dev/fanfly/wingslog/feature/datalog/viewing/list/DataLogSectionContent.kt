@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.core.datetime.toMonthHeading
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ListDetailSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
@@ -128,63 +129,78 @@ fun DataLogSectionContent(
           }
         }
 
-        else -> LazyColumn(
-          modifier = Modifier.fillMaxSize()
-            .nestedScroll(revealController.closeOnScroll),
-          contentPadding = PaddingValues(
-            start = Spacing.screenPadding,
-            end = Spacing.screenPadding,
-            top = Spacing.small,
-            bottom = navPillAndFabClearance,
-          ),
-          // No arrangement gap: the spine has to run unbroken from one entry into the next, so
-          // anything above them that is still a card carries its own spacing instead.
-        ) {
-          if (!compact && state.uploadGate == UploadGate.Guest) {
-            item {
-              UploadGateCard(
-                onLinkAccount = onLinkAccount,
-                modifier = Modifier.padding(bottom = Spacing.medium),
+        else -> ListDetailSection(
+          detail = state.preview?.let { preview ->
+            {
+              DataLogPreviewSheet(
+                preview = preview,
+                onDismiss = viewModel::dismissPreview,
+                onOpenChart = { onOpen(preview.row.id) },
+                onDelete = if (state.uploadGate == UploadGate.SignedIn) {
+                  { viewModel.onDeleteClick(preview.row) }
+                } else null,
               )
             }
-          }
-          items(state.imports, key = { "import-${it.key}" }) { row ->
-            ImportRowCard(
-              row = row,
-              onKeepBoth = { viewModel.confirmImport(row.key) },
-              onDismiss = { viewModel.dismissImport(row.key) },
-              onFileUnderOtherThing = { viewModel.fileUnderOtherThing(row.key) },
-              onKeepHere = { viewModel.keepHere(row.key) },
-              modifier = motionItem().padding(bottom = Spacing.medium),
-            )
-          }
-          state.rows.byMonth().forEach { month ->
-            stickySectionHeader(
-              key = month.key,
-              title = month.month.toMonthHeading(),
-              count = month.rows.size,
-            )
-            itemsIndexed(month.rows, key = { _, row -> row.id.value_ }) { index, row ->
-              SwipeActionCard(
-                // Whoever may upload may delete; a guest browses only, so the drag is disabled.
-                actions = dataLogQuickActions(
-                  onDelete = if (state.uploadGate == UploadGate.SignedIn) {
-                    { revealController.close(); viewModel.onDeleteClick(row) }
-                  } else null,
-                ),
-                controller = revealController,
-                key = row.id.value_,
-                modifier = motionItem(),
-              ) {
-                DataLogCard(
-                  row = row,
-                  onClick = { onOpen(row.id) },
-                  // The spine joins the entries of a month; the header above breaks it.
-                  connectsUp = index > 0,
-                  connectsDown = index < month.rows.lastIndex,
-                  isLatest = row.id == state.rows.first().id,
-                  showDetails = !compact
+          },
+        ) {
+          LazyColumn(
+            modifier = Modifier.fillMaxSize()
+              .nestedScroll(revealController.closeOnScroll),
+            contentPadding = PaddingValues(
+              start = Spacing.screenPadding,
+              end = Spacing.screenPadding,
+              top = Spacing.small,
+              bottom = navPillAndFabClearance,
+            ),
+            // No arrangement gap: the spine has to run unbroken from one entry into the next, so
+            // anything above them that is still a card carries its own spacing instead.
+          ) {
+            if (!compact && state.uploadGate == UploadGate.Guest) {
+              item {
+                UploadGateCard(
+                  onLinkAccount = onLinkAccount,
+                  modifier = Modifier.padding(bottom = Spacing.medium),
                 )
+              }
+            }
+            items(state.imports, key = { "import-${it.key}" }) { row ->
+              ImportRowCard(
+                row = row,
+                onKeepBoth = { viewModel.confirmImport(row.key) },
+                onDismiss = { viewModel.dismissImport(row.key) },
+                onFileUnderOtherThing = { viewModel.fileUnderOtherThing(row.key) },
+                onKeepHere = { viewModel.keepHere(row.key) },
+                modifier = motionItem().padding(bottom = Spacing.medium),
+              )
+            }
+            state.rows.byMonth().forEach { month ->
+              stickySectionHeader(
+                key = month.key,
+                title = month.month.toMonthHeading(),
+                count = month.rows.size,
+              )
+              itemsIndexed(month.rows, key = { _, row -> row.id.value_ }) { index, row ->
+                SwipeActionCard(
+                  // Whoever may upload may delete; a guest browses only, so the drag is disabled.
+                  actions = dataLogQuickActions(
+                    onDelete = if (state.uploadGate == UploadGate.SignedIn) {
+                      { revealController.close(); viewModel.onDeleteClick(row) }
+                    } else null,
+                  ),
+                  controller = revealController,
+                  key = row.id.value_,
+                  modifier = motionItem(),
+                ) {
+                  DataLogCard(
+                    row = row,
+                    onClick = { viewModel.select(row.id) },
+                    // The spine joins the entries of a month; the header above breaks it.
+                    connectsUp = index > 0,
+                    connectsDown = index < month.rows.lastIndex,
+                    isLatest = row.id == state.rows.first().id,
+                    showDetails = !compact
+                  )
+                }
               }
             }
           }

@@ -3,6 +3,9 @@ package dev.fanfly.wingslog.feature.datalog.viewing.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
+import dev.fanfly.wingslog.datalog.DataLogSeries
+import dev.fanfly.wingslog.datalog.DataLogSeriesKind
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.DataLogImportSource
 import dev.fanfly.wingslog.core.auth.AuthManager
@@ -17,6 +20,8 @@ import dev.fanfly.wingslog.feature.datalog.model.dataLogId
 import dev.fanfly.wingslog.feature.datalog.viewing.analytics.DataLogImportTelemetry
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -62,9 +67,30 @@ sealed interface DataLogListEvent {
   data object DeleteFailed : DataLogListEvent
 }
 
+/** One recorded series, as the preview pane lists it: its name and the unit it was recorded in. */
+data class DataLogSeriesChip(val name: String, val unit: String)
+
+/** One of the two series the preview sketches: its name and up to [SKETCH_POINTS] values in 0..1. */
+data class SketchSeries(val name: String, val points: List<Float>)
+
+/**
+ * What the preview pane says about a data log before the chart is opened: everything the
+ * catalogue records, plus a [sketch] once the file's series have loaded (null until then, and
+ * absent for a file this device has not downloaded).
+ */
+data class DataLogPreview(
+  val row: DataLogRow,
+  val sampleCount: Int,
+  val sampleRateHz: Float,
+  val series: List<DataLogSeriesChip>,
+  val sketch: List<SketchSeries>? = null,
+)
+
 data class DataLogListUiState(
   val isLoading: Boolean = true,
   val rows: List<DataLogRow> = emptyList(),
+  /** The open log's preview, for the detail pane; null when none is open. */
+  val preview: DataLogPreview? = null,
   val uploadGate: UploadGate = UploadGate.Guest,
   val imports: List<ImportRow> = emptyList(),
   /** The row whose delete is awaiting confirmation. */
@@ -85,6 +111,8 @@ class DataLogListViewModel(
   private val imports = MutableStateFlow<List<ImportRow>>(emptyList())
   private val loaded = MutableStateFlow(false)
   private val deleting = MutableStateFlow<DataLogRow?>(null)
+  private val selectedId = MutableStateFlow<DataLogId?>(null)
+  private val sketches = MutableStateFlow<Map<DataLogId, List<SketchSeries>>>(emptyMap())
   private var nextImportKey = 0L
 
   private val _events =
@@ -96,11 +124,16 @@ class DataLogListViewModel(
       manager.observe(thingId),
       imports,
       loaded,
-      deleting
-    ) { logs, imports, loaded, deleting ->
+      deleting,
+      combine(selectedId, sketches) { id, sketches -> Pair(id, sketches) },
+    ) { logs, imports, loaded, deleting, selection ->
+      val (selected, sketches) = selection
       DataLogListUiState(
         isLoading = !loaded,
         rows = logs.map { it.toDataLogRow() },
+        // A log deleted while open closes its pane: the preview follows the record, not the id.
+        preview = logs.firstOrNull { it.dataLogId == selected }
+          ?.toPreview(sketches[selected]),
         uploadGate = currentGate(),
         imports = imports,
         deleting = deleting,
@@ -116,6 +149,29 @@ class DataLogListViewModel(
       manager.observe(thingId)
         .collect { loaded.value = true }
     }
+  }
+
+  /** Opens [id]'s preview, and starts its sketch loading if this device has the file. */
+  fun select(id: DataLogId) {
+    selectedId.value = id
+    if (sketches.value.containsKey(id)) return
+    viewModelScope.launch {
+      // A beat first, so the pane draws before the file is read: on the web the parse and the
+      // frame share one thread, and started at once the parse won the race and the pane appeared
+      // seconds late. The series data is cached by the manager, so a log already charted answers
+      // at once; a file not yet downloaded fails, and the preview simply carries no sketch.
+      delay(SKETCH_DELAY)
+      if (selectedId.value != id) return@launch
+      manager.load(thingId, id)
+        .onSuccess { data ->
+          val record = manager.observeOne(thingId, id).first() ?: return@onSuccess
+          sketches.update { it + (id to sketchOf(record, data)) }
+        }
+    }
+  }
+
+  fun dismissPreview() {
+    selectedId.value = null
   }
 
   /** Starts one import per picked file; each becomes an [ImportRow] until it finishes cleanly. */
@@ -176,6 +232,7 @@ class DataLogListViewModel(
   fun confirmDelete() {
     val row = deleting.value ?: return
     deleting.value = null
+    if (selectedId.value == row.id) selectedId.value = null
     viewModelScope.launch {
       manager.delete(thingId, row.id)
         .onFailure { _events.tryEmit(DataLogListEvent.DeleteFailed) }
@@ -256,3 +313,43 @@ fun DataLog.toDataLogRow(): DataLogRow {
     identity = source?.identity.orEmpty(),
   )
 }
+
+private fun DataLog.toPreview(sketch: List<SketchSeries>?): DataLogPreview = DataLogPreview(
+  row = toDataLogRow(),
+  sampleCount = sample_count,
+  sampleRateHz = sample_rate_hz,
+  series = series.map { DataLogSeriesChip(name = it.name, unit = it.unit) },
+  sketch = sketch,
+)
+
+/** How many points a sketch keeps per series: a shape, not a chart. */
+internal const val SKETCH_POINTS = 120
+
+/** How many series the sketch draws. */
+private const val SKETCH_SERIES = 2
+
+/** How long the pane gets to draw before the sketch's file read starts. */
+private val SKETCH_DELAY = 300.milliseconds
+
+/**
+ * Two numeric series, each downsampled to [SKETCH_POINTS] values and normalised to 0..1 of its
+ * own range — the recording's shape at a glance, not its numbers. The series the parser
+ * recognised (a canonical id: RPM, oil pressure, fuel flow…) come first, fullest first; they say
+ * what the engine did, where the most-sampled column is as likely a GPS clock as anything.
+ */
+internal fun sketchOf(record: DataLog, data: DataLogSeriesData): List<SketchSeries> =
+  record.series
+    .filter { it.kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC && it.max > it.min }
+    .sortedWith(compareBy<DataLogSeries> { it.canonical_id.isEmpty() }.thenByDescending { it.sample_count })
+    .take(SKETCH_SERIES)
+    .mapNotNull { series ->
+      val column = data.numeric[series.column] ?: return@mapNotNull null
+      val values = column.filled
+      if (values.isEmpty()) return@mapNotNull null
+      val range = (series.max - series.min).toFloat()
+      val points = (0 until minOf(SKETCH_POINTS, values.size)).map { i ->
+        val index = i * (values.size - 1) / maxOf(1, minOf(SKETCH_POINTS, values.size) - 1)
+        ((values[index] - series.min.toFloat()) / range).coerceIn(0f, 1f)
+      }
+      SketchSeries(name = series.name, points = points)
+    }
