@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.tasks.viewing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,6 +28,7 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
@@ -103,38 +103,16 @@ fun TaskDetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     bottomBar = commentComposer,
-    actionSlot = {
-      if (onEditClick != null) {
-        DetailSheetEditAction(
-          label = stringResource(SharedRes.string.edit_task),
-          onClick = onEditClick,
-        )
-      }
-    },
     headerSlot = {
-      // When a badge is visible it occupies this slot and centers with the Edit button.
-      // When there is no badge the title takes this slot so it aligns with the button instead.
-      val badgeVisible =
-        dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON
-      if (badgeVisible) {
+      if (dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON) {
         StatusBadge(dueStatus)
-      } else {
-        Text(
-          text = card.title,
-          style = MaterialTheme.typography.displaySmall,
-        )
       }
-    },
-  ) {
-    // Title shown in content only when a badge occupied the header slot
-    val badgeVisible =
-      dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON
-    if (badgeVisible) {
       Text(
         text = card.title,
         style = MaterialTheme.typography.displaySmall,
       )
-    }
+    },
+  ) {
 
     // Line 1: compliance type badge (SB / AD), if present
     val typeLabel = when (card.type) {
@@ -210,25 +188,30 @@ fun TaskDetailSheet(
     // Due date hero
     DueDateHero(dueStatus)
 
-    if (
+    val canAct =
       onLogWorkClick != null && onSkipCycleClick != null && dueStatus.status != DueStatus.COMPLIED
-    ) {
-      Row(
-        modifier = Modifier.padding(top = Spacing.small),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-      ) {
-        DetailSheetAction(
-          label = stringResource(SharedRes.string.skip_this_cycle_option),
-          onClick = onSkipCycleClick,
-          primary = false,
-        )
-        DetailSheetAction(
-          label = stringResource(
-            SharedRes.string.create_work_log,
-            LocalThingLexicon.current.logNoun.singular,
-          ),
-          onClick = onLogWorkClick,
-        )
+    if (canAct || onEditClick != null) {
+      DetailSheetActionRow(modifier = Modifier.padding(top = Spacing.small)) {
+        if (canAct) {
+          DetailSheetAction(
+            label = stringResource(SharedRes.string.skip_this_cycle_option),
+            onClick = onSkipCycleClick,
+            primary = false,
+          )
+          DetailSheetAction(
+            label = stringResource(
+              SharedRes.string.create_work_log,
+              LocalThingLexicon.current.logNoun.singular,
+            ),
+            onClick = onLogWorkClick,
+          )
+        }
+        if (onEditClick != null) {
+          DetailSheetEditAction(
+            label = stringResource(SharedRes.string.edit_task),
+            onClick = onEditClick,
+          )
+        }
       }
     }
 

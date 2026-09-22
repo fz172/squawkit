@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -68,7 +70,7 @@ import wingslog.core.sharedassets.generated.resources.dismiss
  * Features:
  * - Consistent horizontal padding ([dev.fanfly.wingslog.core.ui.theme.Spacing.extraLarge]).
  * - Built-in vertical scrolling.
- * - Standardized header layout with a title slot and an optional action slot.
+ * - Standardized header layout with a title slot; actions go in a [DetailSheetActionRow] in the body.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +78,6 @@ fun DetailSheet(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-  actionSlot: (@Composable () -> Unit)? = null,
   /** Pinned under the scrolling body — for an input that must stay reachable, such as comments. */
   bottomBar: (@Composable () -> Unit)? = null,
   headerSlot: @Composable ColumnScope.() -> Unit,
@@ -85,7 +86,6 @@ fun DetailSheet(
   if (LocalDetailPresentation.current == DetailPresentation.Pane) {
     DetailBody(
       fillHeight = true,
-      actionSlot = actionSlot,
       bottomBar = bottomBar,
       headerSlot = headerSlot,
       content = content,
@@ -100,7 +100,6 @@ fun DetailSheet(
       modifier = modifier,
     ) {
       DetailBody(
-        actionSlot = actionSlot,
         bottomBar = bottomBar,
         headerSlot = headerSlot,
         content = content
@@ -110,7 +109,6 @@ fun DetailSheet(
     DetailEndDrawer(onDismiss = onDismiss, modifier = modifier) {
       DetailBody(
         fillHeight = true,
-        actionSlot = actionSlot,
         bottomBar = bottomBar,
         headerSlot = headerSlot,
         content = content
@@ -121,7 +119,6 @@ fun DetailSheet(
 
 @Composable
 private fun DetailBody(
-  actionSlot: (@Composable () -> Unit)?,
   bottomBar: (@Composable () -> Unit)?,
   headerSlot: @Composable ColumnScope.() -> Unit,
   content: @Composable ColumnScope.() -> Unit,
@@ -159,21 +156,7 @@ private fun DetailBody(
           Spacer(Modifier.height(Spacing.large))
         }
 
-        // Header Row
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Column(
-            modifier = Modifier
-              .weight(1f)
-              .padding(end = Spacing.small),
-          ) {
-            headerSlot()
-          }
-          actionSlot?.invoke()
-        }
+        headerSlot()
 
         // Body Content
         content()
@@ -247,12 +230,28 @@ private fun DetailEndDrawer(
 }
 
 /**
+ * The row a sheet's actions sit in — state changes, the route to the edit form, delete. Wraps on a
+ * narrow sheet rather than squeezing the buttons, and never shares a line with the title.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun DetailSheetActionRow(
+  modifier: Modifier = Modifier,
+  content: @Composable FlowRowScope.() -> Unit,
+) {
+  FlowRow(
+    modifier = modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+    content = content,
+  )
+}
+
+/**
  * A detail sheet's state-changing action — resolve, reopen, log work. It lives here rather than on
  * the edit form because it changes what a record *is*, not what its fields say. [menu] is anchored
- * to the button, for an action that opens options.
- *
- * Standard button size, like [DetailSheetEditAction]: the sheet's actions and its edit control sit
- * on the same scale, rather than a full-width bar against a text button.
+ * to the button, for an action that opens options. [destructive] draws an outlined button in the
+ * error colour.
  */
 @Composable
 fun DetailSheetAction(
@@ -260,20 +259,26 @@ fun DetailSheetAction(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
   primary: Boolean = true,
+  destructive: Boolean = false,
   menu: @Composable () -> Unit = {},
 ) {
   Box(modifier = modifier) {
     val shape = RoundedCornerShape(Spacing.buttonCornerRadius)
-    if (primary) {
-      Button(onClick = onClick, shape = shape) { Text(label, maxLines = 1) }
-    } else {
-      OutlinedButton(onClick = onClick, shape = shape) { Text(label, maxLines = 1) }
+    when {
+      destructive -> OutlinedButton(
+        onClick = onClick,
+        shape = shape,
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+      ) { Text(label, maxLines = 1) }
+
+      primary -> Button(onClick = onClick, shape = shape) { Text(label, maxLines = 1) }
+      else -> OutlinedButton(onClick = onClick, shape = shape) { Text(label, maxLines = 1) }
     }
     menu()
   }
 }
 
-/** The header's route to the edit form — "Update squawk", "Update task". */
+/** The route to the edit form — "Update squawk", "Update task" — for a [DetailSheetActionRow]. */
 @Composable
 fun DetailSheetEditAction(
   label: String,
