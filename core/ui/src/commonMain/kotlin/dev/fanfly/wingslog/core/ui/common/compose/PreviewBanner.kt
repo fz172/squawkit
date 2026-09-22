@@ -71,7 +71,11 @@ fun PreviewBanner(
       .fillMaxWidth()
       .clip(bannerShape)
       .background(tint)
-      .border(Spacing.hairline, accentColor.copy(alpha = TONE_BORDER), bannerShape),
+      .border(
+        Spacing.hairline,
+        accentColor.copy(alpha = TONE_BORDER),
+        bannerShape
+      ),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Column(

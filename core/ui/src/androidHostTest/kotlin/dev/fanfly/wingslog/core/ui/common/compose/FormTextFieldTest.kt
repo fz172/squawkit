@@ -47,9 +47,11 @@ class FormTextFieldTest {
   fun selectAllOnFocus_typingReplacesTheWholeValue() {
     rule.setContent { Field(selectAllOnFocus = true) }
 
-    rule.onNodeWithTag("field").performClick()
+    rule.onNodeWithTag("field")
+      .performClick()
     rule.waitForIdle()
-    rule.onNodeWithTag("field").performTextInput("1250")
+    rule.onNodeWithTag("field")
+      .performTextInput("1250")
     rule.waitForIdle()
 
     // The point of the flag: a meter reading is a new number, not an edit of the old one, so the
@@ -61,9 +63,11 @@ class FormTextFieldTest {
   fun withoutTheFlag_typingKeepsWhatWasThere() {
     rule.setContent { Field(selectAllOnFocus = false) }
 
-    rule.onNodeWithTag("field").performClick()
+    rule.onNodeWithTag("field")
+      .performClick()
     rule.waitForIdle()
-    rule.onNodeWithTag("field").performTextInput("9")
+    rule.onNodeWithTag("field")
+      .performTextInput("9")
 
     // Every other form field in the app still edits in place.
     assertThat(current).contains("1234.5")
@@ -73,11 +77,14 @@ class FormTextFieldTest {
   fun selectAllOnFocus_stillReportsEveryKeystroke() {
     rule.setContent { Field(selectAllOnFocus = true, initial = "") }
 
-    rule.onNodeWithTag("field").performClick()
+    rule.onNodeWithTag("field")
+      .performClick()
     rule.waitForIdle()
-    rule.onNodeWithTag("field").performTextInput("80")
+    rule.onNodeWithTag("field")
+      .performTextInput("80")
     rule.waitForIdle()
-    rule.onNodeWithTag("field").performTextInput("1")
+    rule.onNodeWithTag("field")
+      .performTextInput("1")
     rule.waitForIdle()
 
     // Selection is written once per focus, not on every recomposition — otherwise the second

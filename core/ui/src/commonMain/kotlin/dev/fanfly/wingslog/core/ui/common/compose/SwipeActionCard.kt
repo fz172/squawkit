@@ -37,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -47,6 +46,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -130,7 +130,8 @@ private const val PositionalThreshold = 0.42f
  * travel in the first third, which is what makes a dragged card feel attached to the finger rather
  * than played back. DESIGN.md §6 sanctions it for a gesture the user is still holding.
  */
-private val RevealSpec = tween<Float>(Motion.long, easing = Motion.gestureEaseOut)
+private val RevealSpec =
+  tween<Float>(Motion.long, easing = Motion.gestureEaseOut)
 
 /** How far the card dims at full reveal. The controls behind it become the lit thing. */
 private const val MaxDimAlpha = 0.16f
@@ -214,7 +215,10 @@ fun SwipeActionCard(
     derivedStateOf {
       val offset = state.offset
       val width = panelWidthPx.toFloat()
-      if (offset.isNaN() || width <= 0f) 0f else (abs(offset) / width).coerceIn(0f, 1f)
+      if (offset.isNaN() || width <= 0f) 0f else (abs(offset) / width).coerceIn(
+        0f,
+        1f
+      )
     }
   }
   val isOpen by remember(state) { derivedStateOf { state.targetValue != SwipeRevealValue.Closed } }

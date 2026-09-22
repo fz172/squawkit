@@ -11,15 +11,26 @@ class OutlineMathTest {
   @Test
   fun `winding is detected from the signed area`() {
     val reversed = floatArrayOf(0f, 1f, 1f, 1f, 1f, 0f, 0f, 0f)
-    assertThat(OutlineMath.signedArea(square) * OutlineMath.signedArea(reversed)).isLessThan(0f)
-    assertThat(OutlineMath.matchWinding(reversed, square)).usingTolerance(0.0).containsExactly(*square.toTypedArray()).inOrder()
-    assertThat(OutlineMath.matchWinding(square, square)).isSameInstanceAs(square)
+    assertThat(OutlineMath.signedArea(square) * OutlineMath.signedArea(reversed)).isLessThan(
+      0f
+    )
+    assertThat(OutlineMath.matchWinding(reversed, square)).usingTolerance(0.0)
+      .containsExactly(*square.toTypedArray())
+      .inOrder()
+    assertThat(
+      OutlineMath.matchWinding(
+        square,
+        square
+      )
+    ).isSameInstanceAs(square)
   }
 
   @Test
   fun `rotation shifts the start point cyclically`() {
     val shifted = OutlineMath.rotate(square, 1)
-    assertThat(shifted).usingTolerance(0.0).containsExactly(1f, 0f, 1f, 1f, 0f, 1f, 0f, 0f).inOrder()
+    assertThat(shifted).usingTolerance(0.0)
+      .containsExactly(1f, 0f, 1f, 1f, 0f, 1f, 0f, 0f)
+      .inOrder()
   }
 
   @Test
@@ -27,14 +38,19 @@ class OutlineMathTest {
     // The same square, starting two corners later: alignment must undo that shift exactly.
     val startedElsewhere = OutlineMath.rotate(square, 2)
     assertThat(OutlineMath.align(square, startedElsewhere))
-      .usingTolerance(0.0).containsExactly(*square.toTypedArray()).inOrder()
+      .usingTolerance(0.0)
+      .containsExactly(*square.toTypedArray())
+      .inOrder()
   }
 
   @Test
   fun `align rewinds and rotates together`() {
-    val reversedAndShifted = OutlineMath.rotate(floatArrayOf(0f, 1f, 1f, 1f, 1f, 0f, 0f, 0f), 3)
+    val reversedAndShifted =
+      OutlineMath.rotate(floatArrayOf(0f, 1f, 1f, 1f, 1f, 0f, 0f, 0f), 3)
     assertThat(OutlineMath.align(square, reversedAndShifted))
-      .usingTolerance(0.0).containsExactly(*square.toTypedArray()).inOrder()
+      .usingTolerance(0.0)
+      .containsExactly(*square.toTypedArray())
+      .inOrder()
   }
 
   @Test
@@ -42,11 +58,16 @@ class OutlineMathTest {
     val other = floatArrayOf(0.5f, 0.5f, 1.5f, 0.5f, 1.5f, 1.5f, 0.5f, 1.5f)
     val out = FloatArray(8)
     OutlineMath.lerp(square, other, 0f, out)
-    assertThat(out).usingTolerance(0.0).containsExactly(*square.toTypedArray()).inOrder()
+    assertThat(out).usingTolerance(0.0)
+      .containsExactly(*square.toTypedArray())
+      .inOrder()
     OutlineMath.lerp(square, other, 1f, out)
-    assertThat(out).usingTolerance(0.0).containsExactly(*other.toTypedArray()).inOrder()
+    assertThat(out).usingTolerance(0.0)
+      .containsExactly(*other.toTypedArray())
+      .inOrder()
     OutlineMath.lerp(square, other, 0.5f, out)
-    assertThat(out[0]).isWithin(1e-6f).of(0.25f)
+    assertThat(out[0]).isWithin(1e-6f)
+      .of(0.25f)
   }
 
   @Test

@@ -54,9 +54,11 @@ class SelectAllOnFocusTest {
   fun typingReplacesTheInterval() {
     rule.setContent { DigitsField("100") }
 
-    rule.onNodeWithTag("field").performClick()
+    rule.onNodeWithTag("field")
+      .performClick()
     rule.waitForIdle()
-    rule.onNodeWithTag("field").performTextInput("50")
+    rule.onNodeWithTag("field")
+      .performTextInput("50")
     rule.waitForIdle()
 
     assertThat(current).isEqualTo("50")
@@ -66,13 +68,16 @@ class SelectAllOnFocusTest {
   fun aRejectedCharacterLeavesTheValueAlone() {
     rule.setContent { DigitsField("100") }
 
-    rule.onNodeWithTag("field").performClick()
+    rule.onNodeWithTag("field")
+      .performClick()
     rule.waitForIdle()
-    rule.onNodeWithTag("field").performTextInput("2")
+    rule.onNodeWithTag("field")
+      .performTextInput("2")
     rule.waitForIdle()
     // The caller's filter still governs what lands: the selection only decides what the keystroke
     // replaces.
-    rule.onNodeWithTag("field").performTextInput("x")
+    rule.onNodeWithTag("field")
+      .performTextInput("x")
     rule.waitForIdle()
 
     assertThat(current).isEqualTo("2")

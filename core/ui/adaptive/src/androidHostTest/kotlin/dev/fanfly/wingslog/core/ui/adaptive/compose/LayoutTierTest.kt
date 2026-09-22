@@ -41,9 +41,7 @@ class LayoutTierTest {
     assertThat(LayoutTier.MEDIUM.hasFullSidebar).isTrue()
 
     assertThat(LayoutTier.EXPANDED.hasFullSidebar).isTrue()
-    assertThat(LayoutTier.EXPANDED.hasDashboardRail).isFalse()
 
     assertThat(LayoutTier.LARGE.hasFullSidebar).isTrue()
-    assertThat(LayoutTier.LARGE.hasDashboardRail).isTrue()
   }
 }

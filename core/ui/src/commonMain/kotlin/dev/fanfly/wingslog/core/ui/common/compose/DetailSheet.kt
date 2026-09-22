@@ -21,9 +21,13 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
@@ -38,16 +42,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import dev.fanfly.wingslog.core.ui.adaptive.compose.DetailPresentation
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalDetailPresentation
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.TextSelectionLayer
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.Res
+import wingslog.core.sharedassets.generated.resources.dismiss
 
 /**
  * A standardized template for displaying record details, adaptive by [dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier]:
  * - **COMPACT** — a [ModalBottomSheet] (the phone / legacy presentation).
  * - **MEDIUM and wider** — an end-aligned side drawer over a scrim, matching the adaptive web/tablet
  *   shell (see `docs/web/web_adaptive_layout_design.html` §4.4).
+ * - **Inside a detail pane** ([LocalDetailPresentation] is [DetailPresentation.Pane]) — the same
+ *   body drawn inline, full height, with a close control: a list-detail scaffold hosts it beside
+ *   the list, so no dialog and no scrim.
  *
  * Both presentations share the same header + body layout. The tier defaults to COMPACT outside the
  * shell, so the legacy stack is unaffected.
@@ -69,6 +81,17 @@ fun DetailSheet(
   headerSlot: @Composable ColumnScope.() -> Unit,
   content: @Composable ColumnScope.() -> Unit,
 ) {
+  if (LocalDetailPresentation.current == DetailPresentation.Pane) {
+    DetailBody(
+      fillHeight = true,
+      actionSlot = actionSlot,
+      bottomBar = bottomBar,
+      headerSlot = headerSlot,
+      content = content,
+      onClose = onDismiss,
+    )
+    return
+  }
   if (LocalLayoutTier.current == LayoutTier.COMPACT) {
     ModalBottomSheet(
       onDismissRequest = onDismiss,
@@ -104,6 +127,8 @@ private fun DetailBody(
   // The drawer is full height, so its bar belongs at the bottom edge. A bottom sheet hugs its
   // content instead: a short record keeps a short sheet, with the bar right under it.
   fillHeight: Boolean = false,
+  /** A pane has no scrim to tap and no handle to drag, so it carries its own close control. */
+  onClose: (() -> Unit)? = null,
 ) {
   TextSelectionLayer {
     Column(
@@ -118,7 +143,20 @@ private fun DetailBody(
           .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
-        Spacer(Modifier.height(Spacing.large))
+        if (onClose != null) {
+          IconButton(
+            onClick = onClose,
+            modifier = Modifier.align(Alignment.End)
+              .padding(top = Spacing.small),
+          ) {
+            Icon(
+              Icons.Default.Close,
+              contentDescription = stringResource(Res.string.dismiss)
+            )
+          }
+        } else {
+          Spacer(Modifier.height(Spacing.large))
+        }
 
         // Header Row
         Row(

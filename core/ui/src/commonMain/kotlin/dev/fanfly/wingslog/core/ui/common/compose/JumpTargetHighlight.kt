@@ -91,7 +91,9 @@ suspend fun LazyListState.animateScrollToCenter(index: Int) {
     val viewport = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
     animateScrollToItem(index, scrollOffset = -viewport / 2)
   }
-  val item = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return
-  val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+  val item =
+    layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return
+  val viewportCenter =
+    (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
   animateScrollBy((item.offset + item.size / 2 - viewportCenter).toFloat())
 }

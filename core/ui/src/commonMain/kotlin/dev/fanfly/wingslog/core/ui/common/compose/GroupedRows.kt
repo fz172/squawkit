@@ -267,7 +267,8 @@ fun GroupedActionRow(
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
 ) {
-  val tint = MaterialTheme.colorScheme.primary.copy(alpha = if (enabled) 1f else 0.42f)
+  val tint =
+    MaterialTheme.colorScheme.primary.copy(alpha = if (enabled) 1f else 0.42f)
   GroupedRow(
     title = title,
     titleColor = tint,

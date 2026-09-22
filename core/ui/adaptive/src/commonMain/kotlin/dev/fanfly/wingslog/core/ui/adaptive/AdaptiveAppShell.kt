@@ -87,10 +87,12 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.DetailPaneState
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingNavItem
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavBarHeight
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavigationBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalDetailPane
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -273,10 +275,10 @@ data class AdaptiveShellUiState(
  * The adaptive web/tablet shell.
  *
  * Navigation container by tier:
- * - **EXPANDED / LARGE** — a custom [WingsSidebar] (brand + thing switcher + sections + account
- *   footer), matching the design mock (D2: custom sidebar).
- * - **MEDIUM** — `NavigationSuiteScaffold` icon rail, with the switcher in the top bar.
- * - **COMPACT** — the same section shell as rail tiers once a thing exists.
+ * - **MEDIUM / EXPANDED / LARGE** — the custom [WingsSidebar] (brand, the selected thing, its
+ *   sections, the switch list, an account footer); MEDIUM draws it narrower with abbreviated
+ *   labels. There is no icon rail.
+ * - **COMPACT** — a floating pill bottom bar with the switcher in the top bar.
  *
  * Section bodies are supplied by the host via [sectionContent] (M3: real per-thing content), and
  * the no-thing prompt by [emptyFleetContent] — both are host slots because real content lives in
@@ -1020,99 +1022,109 @@ private fun ShellContent(
       targetValue = 0f,
     ) { value, _ -> scrollBehavior.state.heightOffset = value }
   }
-  Scaffold(
-    // Let the section's scrolling list drive the top bar's collapse/expand.
-    modifier =
-      if (showTopBar) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier,
-    // Settings is full-screen and has no add action; suppress the FAB there. The FAB rides the
-    // trailing edge of the same width-capped frame as the content so they stay aligned on LARGE. On
-    // COMPACT the FAB instead rides in the bottom overlay above the floating pill (see the caller's
-    // bottomOverlay), so the scaffold slot is used only on the sidebar tiers.
-    floatingActionButton = {
-      if (!edgeToEdgeBottom && state.section != ShellSection.SETTINGS) {
-        ConstrainedFloatingAction(ContentWidth.Pane) { fab() }
-      }
-    },
-    contentWindowInsets =
-      if (fullScreenSettings || edgeToEdgeBottom) {
-        // Let content run edge-to-edge under the floating pill / system nav bar; the section lists
-        // re-add the bottom space they need via LocalNavPillClearance.
-        ScaffoldDefaults.contentWindowInsets
-          .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-      } else {
-        ScaffoldDefaults.contentWindowInsets
+  val detailPane = remember { DetailPaneState() }
+  CompositionLocalProvider(LocalDetailPane provides detailPane) {
+    Scaffold(
+      // Let the section's scrolling list drive the top bar's collapse/expand.
+      modifier =
+        if (showTopBar) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier,
+      // Settings is full-screen and has no add action; suppress the FAB there. The FAB rides the
+      // trailing edge of the same width-capped frame as the content so they stay aligned on LARGE. On
+      // COMPACT the FAB instead rides in the bottom overlay above the floating pill (see the caller's
+      // bottomOverlay), so the scaffold slot is used only on the sidebar tiers.
+      floatingActionButton = {
+        if (!edgeToEdgeBottom && state.section != ShellSection.SETTINGS) {
+          // Stepped in past an open detail pane, so it rides the list rather than the pane.
+          Box(Modifier.padding(end = detailPane.width)) {
+            ConstrainedFloatingAction(ContentWidth.Pane) { fab() }
+          }
+        }
       },
-    // Lift snackbars above the pill too, so a "changes discarded" notice isn't hidden behind it.
-    snackbarHost = {
-      Box(modifier = Modifier.padding(bottom = if (edgeToEdgeBottom) contentBottomClearance else 0.dp)) {
-        SnackbarHost(snackbarHostState)
-      }
-    },
-    topBar = {
-      if (showTopBar) {
-        // The bar shares the content column's width cap so the title and actions line up with the
-        // content below on wide (LARGE) panes.
-        ConstrainedTopBar(ContentWidth.Pane) {
-          TopAppBar(
-            title = {
-              ActionBarTitle(state)
-            },
-            navigationIcon = {
-              if (onExitSettings != null && state.section == ShellSection.SETTINGS) {
-                IconButton(onClick = onExitSettings) {
-                  Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(UiRes.string.back),
-                  )
-                }
-              }
-            },
-            actions = {
-              if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
-                TopBarSwitcher(
-                  state = state,
-                  onSelectThing = onSelectThing,
-                  onAddThing = onAddThing,
-                  onEnterInviteCode = onEnterInviteCode,
-                )
-              }
-              if (onOpenSettings != null && state.section != ShellSection.SETTINGS) {
-                IconButton(onClick = onOpenSettings) {
-                  AvatarIcon(
-                    displayName = state.accountName,
-                    photoUri = state.accountPhotoUrl,
-                    size = Spacing.huge,
-                    contentDescription = stringResource(UiRes.string.settings),
-                  )
-                }
-              }
-            },
-            scrollBehavior = scrollBehavior,
-          )
+      contentWindowInsets =
+        if (fullScreenSettings || edgeToEdgeBottom) {
+          // Let content run edge-to-edge under the floating pill / system nav bar; the section lists
+          // re-add the bottom space they need via LocalNavPillClearance.
+          ScaffoldDefaults.contentWindowInsets
+            .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+        } else {
+          ScaffoldDefaults.contentWindowInsets
+        },
+      // Lift snackbars above the pill too, so a "changes discarded" notice isn't hidden behind it.
+      snackbarHost = {
+        Box(modifier = Modifier.padding(bottom = if (edgeToEdgeBottom) contentBottomClearance else 0.dp)) {
+          SnackbarHost(snackbarHostState)
         }
-      }
-    },
-  ) { padding ->
-    // Cap the section body at the pane width so content stays readable on very wide windows
-    // (github.com/fz172/squawkit/issues/101). Only LARGE panes are wide enough for the cap to bite;
-    // narrower tiers keep filling the window as before.
-    Box(
-      modifier = Modifier.fillMaxSize()
-        .padding(padding)
-    ) {
+      },
+      topBar = {
+        if (showTopBar) {
+          // The bar shares the content column's width cap so the title and actions line up with the
+          // content below on wide (LARGE) panes.
+          ConstrainedTopBar(ContentWidth.Pane) {
+            TopAppBar(
+              title = {
+                ActionBarTitle(state)
+              },
+              navigationIcon = {
+                if (onExitSettings != null && state.section == ShellSection.SETTINGS) {
+                  IconButton(onClick = onExitSettings) {
+                    Icon(
+                      Icons.AutoMirrored.Filled.ArrowBack,
+                      contentDescription = stringResource(UiRes.string.back),
+                    )
+                  }
+                }
+              },
+              actions = {
+                if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
+                  TopBarSwitcher(
+                    state = state,
+                    onSelectThing = onSelectThing,
+                    onAddThing = onAddThing,
+                    onEnterInviteCode = onEnterInviteCode,
+                  )
+                }
+                if (onOpenSettings != null && state.section != ShellSection.SETTINGS) {
+                  IconButton(onClick = onOpenSettings) {
+                    AvatarIcon(
+                      displayName = state.accountName,
+                      photoUri = state.accountPhotoUrl,
+                      size = Spacing.huge,
+                      contentDescription = stringResource(UiRes.string.settings),
+                    )
+                  }
+                }
+              },
+              scrollBehavior = scrollBehavior,
+            )
+          }
+        }
+      },
+    ) { padding ->
+      // Cap the section body at the pane width so content stays readable on very wide windows
+      // (github.com/fz172/squawkit/issues/101). Only LARGE panes are wide enough for the cap to bite;
+      // narrower tiers keep filling the window as before.
       Box(
-        modifier = Modifier.constrainedContentWidth(ContentWidth.Pane)
-          .fillMaxHeight()
-          .align(Alignment.TopCenter)
+        modifier = Modifier.fillMaxSize()
+          .padding(padding)
       ) {
-        // Section lists read this to pad their bottom so their last rows clear the floating pill they
-        // now scroll beneath.
-        CompositionLocalProvider(LocalNavPillClearance provides contentBottomClearance) {
-          content()
+        Box(
+          // Uncapped while a detail pane is open: list and detail share the whole width, the pane at
+          // the window's edge, rather than a column with empty ground either side of it.
+          modifier = (if (detailPane.open) Modifier.fillMaxWidth() else Modifier.constrainedContentWidth(
+            ContentWidth.Pane
+          ))
+            .fillMaxHeight()
+            .align(Alignment.TopCenter)
+        ) {
+          // Section lists read this to pad their bottom so their last rows clear the floating pill they
+          // now scroll beneath.
+          CompositionLocalProvider(LocalNavPillClearance provides contentBottomClearance) {
+            content()
+          }
         }
+        // The floating pill (or nothing, on sidebar tiers) rides above the content, aligning itself.
+        bottomOverlay()
       }
-      // The floating pill (or nothing, on sidebar tiers) rides above the content, aligning itself.
-      bottomOverlay()
     }
   }
 }

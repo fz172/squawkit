@@ -34,7 +34,10 @@ class SwipeRevealControllerTest {
     val controller = SwipeRevealController()
     controller.open("a")
 
-    val consumed = controller.closeOnScroll.onPreScroll(Offset(0f, 12f), NestedScrollSource.UserInput)
+    val consumed = controller.closeOnScroll.onPreScroll(
+      Offset(0f, 12f),
+      NestedScrollSource.UserInput
+    )
 
     assertThat(consumed).isEqualTo(Offset.Zero)
     assertThat(controller.openKey).isNull()
@@ -45,7 +48,10 @@ class SwipeRevealControllerTest {
     val controller = SwipeRevealController()
     controller.open("a")
 
-    controller.closeOnScroll.onPreScroll(Offset(12f, 0f), NestedScrollSource.UserInput)
+    controller.closeOnScroll.onPreScroll(
+      Offset(12f, 0f),
+      NestedScrollSource.UserInput
+    )
 
     assertThat(controller.openKey).isEqualTo("a")
   }

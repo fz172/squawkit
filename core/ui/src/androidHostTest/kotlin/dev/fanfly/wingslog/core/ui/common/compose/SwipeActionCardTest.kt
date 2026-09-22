@@ -39,8 +39,10 @@ class SwipeActionCardTest {
   @get:Rule
   val rule = createComposeRule()
 
-  private val resolve = SwipeAction(Icons.Default.Check, "Resolve", SwipeActionTone.POSITIVE, {})
-  private val delete = SwipeAction(Icons.Default.Delete, "Delete", SwipeActionTone.DESTRUCTIVE, {})
+  private val resolve =
+    SwipeAction(Icons.Default.Check, "Resolve", SwipeActionTone.POSITIVE, {})
+  private val delete =
+    SwipeAction(Icons.Default.Delete, "Delete", SwipeActionTone.DESTRUCTIVE, {})
 
   @Composable
   private fun Card(
@@ -49,7 +51,12 @@ class SwipeActionCardTest {
     controller: SwipeRevealController,
     onClick: () -> Unit = {},
   ) {
-    SwipeActionCard(actions = actions, controller = controller, key = tag, modifier = Modifier.width(320.dp)) {
+    SwipeActionCard(
+      actions = actions,
+      controller = controller,
+      key = tag,
+      modifier = Modifier.width(320.dp)
+    ) {
       // The button sits at the trailing edge so it is still on screen once the card slides open.
       Box(
         modifier = Modifier
@@ -64,43 +71,64 @@ class SwipeActionCardTest {
   }
 
   /** Unclipped: an open card sits partly outside the root and a clipped left edge reads 0. */
-  private fun cardLeft(tag: String) = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot().left
+  private fun cardLeft(tag: String) = rule.onNodeWithTag(tag)
+    .getUnclippedBoundsInRoot().left
 
   @Test
   fun dragPastThreshold_opensInEitherDirection_andBothRevealTheSameLabels() {
     rule.setContent {
-      MaterialTheme { Card("card", listOf(resolve, delete), rememberSwipeRevealController()) }
+      MaterialTheme {
+        Card(
+          "card",
+          listOf(resolve, delete),
+          rememberSwipeRevealController()
+        )
+      }
     }
 
-    rule.onNodeWithTag("card").performTouchInput { swipeLeft() }
+    rule.onNodeWithTag("card")
+      .performTouchInput { swipeLeft() }
     rule.waitForIdle()
     assertThat(cardLeft("card")).isLessThan(0.dp)
-    rule.onNodeWithText("Resolve").assertIsDisplayed()
-    rule.onNodeWithText("Delete").assertIsDisplayed()
+    rule.onNodeWithText("Resolve")
+      .assertIsDisplayed()
+    rule.onNodeWithText("Delete")
+      .assertIsDisplayed()
     val openEnd = cardLeft("card")
 
-    rule.onNodeWithTag("card").performTouchInput { swipeRight() }
+    rule.onNodeWithTag("card")
+      .performTouchInput { swipeRight() }
     rule.waitForIdle()
     // From open-end a swipe right lands on closed; one more opens the start side.
-    rule.onNodeWithTag("card").performTouchInput { swipeRight() }
+    rule.onNodeWithTag("card")
+      .performTouchInput { swipeRight() }
     rule.waitForIdle()
     assertThat(cardLeft("card")).isGreaterThan(0.dp)
     assertThat(cardLeft("card")).isEqualTo(-openEnd)
-    rule.onNodeWithText("Resolve").assertIsDisplayed()
-    rule.onNodeWithText("Delete").assertIsDisplayed()
+    rule.onNodeWithText("Resolve")
+      .assertIsDisplayed()
+    rule.onNodeWithText("Delete")
+      .assertIsDisplayed()
   }
 
   @Test
   fun dragUnderThreshold_snapsBackClosed() {
     rule.setContent {
-      MaterialTheme { Card("card", listOf(resolve, delete), rememberSwipeRevealController()) }
+      MaterialTheme {
+        Card(
+          "card",
+          listOf(resolve, delete),
+          rememberSwipeRevealController()
+        )
+      }
     }
 
-    rule.onNodeWithTag("card").performTouchInput {
-      down(center)
-      moveBy(Offset(-30f, 0f))
-      up()
-    }
+    rule.onNodeWithTag("card")
+      .performTouchInput {
+        down(center)
+        moveBy(Offset(-30f, 0f))
+        up()
+      }
     rule.waitForIdle()
 
     assertThat(cardLeft("card")).isEqualTo(0.dp)
@@ -109,10 +137,17 @@ class SwipeActionCardTest {
   @Test
   fun emptyActionList_doesNotMove() {
     rule.setContent {
-      MaterialTheme { Card("card", emptyList(), rememberSwipeRevealController()) }
+      MaterialTheme {
+        Card(
+          "card",
+          emptyList(),
+          rememberSwipeRevealController()
+        )
+      }
     }
 
-    rule.onNodeWithTag("card").performTouchInput { swipeLeft() }
+    rule.onNodeWithTag("card")
+      .performTouchInput { swipeLeft() }
     rule.waitForIdle()
 
     assertThat(cardLeft("card")).isEqualTo(0.dp)
@@ -121,14 +156,23 @@ class SwipeActionCardTest {
   @Test
   fun openDistance_isTheActionRowWidth() {
     rule.setContent {
-      MaterialTheme { Card("card", listOf(resolve, delete), rememberSwipeRevealController()) }
+      MaterialTheme {
+        Card(
+          "card",
+          listOf(resolve, delete),
+          rememberSwipeRevealController()
+        )
+      }
     }
 
-    rule.onNodeWithTag("card").performTouchInput { swipeLeft() }
+    rule.onNodeWithTag("card")
+      .performTouchInput { swipeLeft() }
     rule.waitForIdle()
 
-    val resolveBounds = rule.onNodeWithText("Resolve").getUnclippedBoundsInRoot()
-    val deleteBounds = rule.onNodeWithText("Delete").getUnclippedBoundsInRoot()
+    val resolveBounds = rule.onNodeWithText("Resolve")
+      .getUnclippedBoundsInRoot()
+    val deleteBounds = rule.onNodeWithText("Delete")
+      .getUnclippedBoundsInRoot()
     // The revealed row spans exactly the gap the card slid open, inset by ActionRowInset at each
     // end. Measuring the row inside its own inset is what made the card stop 4dp short and park
     // over the first icon, so this pins both edges rather than just the width.
@@ -141,13 +185,19 @@ class SwipeActionCardTest {
     var clicks = 0
     rule.setContent {
       MaterialTheme {
-        Card("card", listOf(resolve, delete), rememberSwipeRevealController(), onClick = { clicks++ })
+        Card(
+          "card",
+          listOf(resolve, delete),
+          rememberSwipeRevealController(),
+          onClick = { clicks++ })
       }
     }
-    rule.onNodeWithTag("card").performTouchInput { swipeLeft() }
+    rule.onNodeWithTag("card")
+      .performTouchInput { swipeLeft() }
     rule.waitForIdle()
 
-    rule.onNodeWithTag("card-click").performClick()
+    rule.onNodeWithTag("card-click")
+      .performClick()
     rule.waitForIdle()
 
     assertThat(clicks).isEqualTo(0)
@@ -165,11 +215,13 @@ class SwipeActionCardTest {
         }
       }
     }
-    rule.onNodeWithTag("first").performTouchInput { swipeLeft() }
+    rule.onNodeWithTag("first")
+      .performTouchInput { swipeLeft() }
     rule.waitForIdle()
     assertThat(cardLeft("first")).isLessThan(0.dp)
 
-    rule.onNodeWithTag("second").performTouchInput { swipeLeft() }
+    rule.onNodeWithTag("second")
+      .performTouchInput { swipeLeft() }
     rule.waitForIdle()
 
     assertThat(cardLeft("first")).isEqualTo(0.dp)

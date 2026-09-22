@@ -45,6 +45,8 @@ kotlin {
       api(libs.compose.ui.backhandler)
       api(libs.material3)
       api(libs.material3.adaptive.navigation.suite)
+      api(libs.material3.adaptive.layout)
+      api(libs.material3.adaptive.navigation)
       api(libs.components.resources)
       api(libs.material.icons.extended)
     }

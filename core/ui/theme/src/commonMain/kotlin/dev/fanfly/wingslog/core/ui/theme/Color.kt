@@ -45,24 +45,30 @@ val Amber10 = Color(0xFF271900)          // On tertiary container — light mode
 // The light ladder stops where it does on purpose: StatusWarningLight (#8B5E00) has to clear 4.5:1
 // as text on the deepest container, and it reaches 4.52 on Neutral88. Darkening the ramp further
 // buys separation by failing contrast.
-internal val Neutral04 = Color(0xFF06090F)   // dark: surfaceContainerLowest, surfaceDim
+internal val Neutral04 =
+  Color(0xFF06090F)   // dark: surfaceContainerLowest, surfaceDim
 internal val Neutral06 = Color(0xFF0A0E14)   // dark: background, surface
 internal val Neutral11 = Color(0xFF151C27)   // dark: surfaceContainerLow
 internal val Neutral15 = Color(0xFF1B2431)   // dark: surfaceContainer
-internal val Neutral20 = Color(0xFF222C3B)   // dark: surfaceContainerHigh, inverseSurface (light)
+internal val Neutral20 =
+  Color(0xFF222C3B)   // dark: surfaceContainerHigh, inverseSurface (light)
 internal val Neutral25 = Color(0xFF293446)   // dark: surfaceContainerHighest
 internal val Neutral30 = Color(0xFF313C4C)   // dark: outlineVariant
-internal val Neutral35 = Color(0xFF3A4557)   // dark: surfaceVariant, surfaceBright
+internal val Neutral35 =
+  Color(0xFF3A4557)   // dark: surfaceVariant, surfaceBright
 internal val Neutral40 = Color(0xFF545F72)   // light: onSurfaceVariant
 internal val Neutral55 = Color(0xFF6B7A8F)   // both: outline
 internal val Neutral70 = Color(0xFF9BA8BC)   // dark: onSurfaceVariant
 internal val Neutral80 = Color(0xFFC3CBD8)   // light: outlineVariant
-internal val Neutral86 = Color(0xFFD3DBE7)   // light: surfaceVariant, surfaceDim
+internal val Neutral86 =
+  Color(0xFFD3DBE7)   // light: surfaceVariant, surfaceDim
 internal val Neutral88 = Color(0xFFE0E6EF)   // light: surfaceContainerHighest
 internal val Neutral90 = Color(0xFFE1E7F0)   // dark: onSurface, inverseSurface
 internal val Neutral91 = Color(0xFFE4EAF2)   // light: surfaceContainerHigh
-internal val Neutral94 = Color(0xFFE8EDF4)   // light: surfaceContainer — the card
-internal val Neutral96 = Color(0xFFF1F4FA)   // light: surfaceContainerLow, inverseOnSurface
+internal val Neutral94 =
+  Color(0xFFE8EDF4)   // light: surfaceContainer — the card
+internal val Neutral96 =
+  Color(0xFFF1F4FA)   // light: surfaceContainerLow, inverseOnSurface
 internal val Neutral98 = Color(0xFFF7F9FC)   // light: background, surface
 internal val Neutral12 = Color(0xFF141A24)   // light: onSurface, onBackground
 
