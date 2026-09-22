@@ -91,6 +91,8 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingNavItem
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavBarHeight
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavigationBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.DetailPaneState
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalDetailPane
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -273,10 +275,10 @@ data class AdaptiveShellUiState(
  * The adaptive web/tablet shell.
  *
  * Navigation container by tier:
- * - **EXPANDED / LARGE** — a custom [WingsSidebar] (brand + thing switcher + sections + account
- *   footer), matching the design mock (D2: custom sidebar).
- * - **MEDIUM** — `NavigationSuiteScaffold` icon rail, with the switcher in the top bar.
- * - **COMPACT** — the same section shell as rail tiers once a thing exists.
+ * - **MEDIUM / EXPANDED / LARGE** — the custom [WingsSidebar] (brand, the selected thing, its
+ *   sections, the switch list, an account footer); MEDIUM draws it narrower with abbreviated
+ *   labels. There is no icon rail.
+ * - **COMPACT** — a floating pill bottom bar with the switcher in the top bar.
  *
  * Section bodies are supplied by the host via [sectionContent] (M3: real per-thing content), and
  * the no-thing prompt by [emptyFleetContent] — both are host slots because real content lives in
@@ -1020,6 +1022,8 @@ private fun ShellContent(
       targetValue = 0f,
     ) { value, _ -> scrollBehavior.state.heightOffset = value }
   }
+  val detailPane = remember { DetailPaneState() }
+  CompositionLocalProvider(LocalDetailPane provides detailPane) {
   Scaffold(
     // Let the section's scrolling list drive the top bar's collapse/expand.
     modifier =
@@ -1030,7 +1034,10 @@ private fun ShellContent(
     // bottomOverlay), so the scaffold slot is used only on the sidebar tiers.
     floatingActionButton = {
       if (!edgeToEdgeBottom && state.section != ShellSection.SETTINGS) {
-        ConstrainedFloatingAction(ContentWidth.Pane) { fab() }
+        // Stepped in past an open detail pane, so it rides the list rather than the pane.
+        Box(Modifier.padding(end = detailPane.width)) {
+          ConstrainedFloatingAction(ContentWidth.Pane) { fab() }
+        }
       }
     },
     contentWindowInsets =
@@ -1101,7 +1108,9 @@ private fun ShellContent(
         .padding(padding)
     ) {
       Box(
-        modifier = Modifier.constrainedContentWidth(ContentWidth.Pane)
+        // Uncapped while a detail pane is open: list and detail share the whole width, the pane at
+        // the window's edge, rather than a column with empty ground either side of it.
+        modifier = (if (detailPane.open) Modifier.fillMaxWidth() else Modifier.constrainedContentWidth(ContentWidth.Pane))
           .fillMaxHeight()
           .align(Alignment.TopCenter)
       ) {
@@ -1114,6 +1123,7 @@ private fun ShellContent(
       // The floating pill (or nothing, on sidebar tiers) rides above the content, aligning itself.
       bottomOverlay()
     }
+  }
   }
 }
 

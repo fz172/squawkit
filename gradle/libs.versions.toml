@@ -1,6 +1,6 @@
 [versions]
-agp = "9.4.0"
-qrose = "1.2.0"
+agp = "9.4.1"
+qrose = "1.3.0"
 coilCompose = "3.6.2"
 documentfile = "1.1.0"
 kotlinxCoroutines = "1.11.0"
@@ -8,13 +8,13 @@ composeMultiplatform = "1.12.0"
 
 activityKtx = "1.13.0"
 composeBom = "2026.08.00"
-robolectric = "4.16.1"
+robolectric = "4.17"
 coreKtx = "1.19.0"
 credentials = "1.6.0"
 firebaseBom = "34.18.0"
 firebaseCrashlyticsGradle = "3.0.8"
 gitlive = "2.7.0"
-googleid = "1.2.0"
+googleid = "1.2.1"
 jetbrainsLifecycle = "2.11.0"
 junit = "4.13.2"
 kermit = "2.2.0"
@@ -22,13 +22,14 @@ koin = "4.2.2"
 kotlin = "2.4.20"
 kotlinxDatetime = "0.8.0"
 kover = "0.9.9"
-ktor = "3.5.2"
+ktor = "3.6.0"
 lifecycleRuntimeKtx = "2.11.0"
 material3 = "1.9.0"
+material3Adaptive = "1.2.0"
 materialIconsExtended = "1.7.3"
 mockk = "1.14.11"
 navigationCompose = "2.9.2"
-playServicesAds = "25.4.0"
+playServicesAds = "25.5.0"
 playServicesAuth = "22.0.0"
 userMessagingPlatform = "4.0.0"
 purchasesKmp = "3.7.0"
@@ -95,6 +96,8 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3" }
+material3-adaptive-layout = { module = "org.jetbrains.compose.material3.adaptive:adaptive-layout", version.ref = "material3Adaptive" }
+material3-adaptive-navigation = { module = "org.jetbrains.compose.material3.adaptive:adaptive-navigation", version.ref = "material3Adaptive" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }

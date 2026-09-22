@@ -32,6 +32,7 @@ import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ListDetailSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.common.compose.SkeletonBlock
@@ -453,6 +454,74 @@ fun ThingSectionContent(
       }
 
     is ThingOverviewUiState.Success -> {
+      // The open task's detail, which a wide tier hosts as a pane beside the list and a phone as
+      // a sheet. Here rather than in the Tasks tab because it can be opened from a log's Affected
+      // Tasks as well.
+      val taskDetail: (@Composable () -> Unit)? =
+        state.selectedTask?.let { selectedTask ->
+          {
+            TaskDetailSheet(
+              cardWithStatus = selectedTask,
+              logs = state.logsForSelectedTask,
+              onDismiss = {
+                taskSheetOpenError = null
+                onAction(ThingOverviewAction.DismissTaskDetail)
+              },
+              onEditClick = {
+                onAction(
+                  ThingOverviewAction.EditTaskClick(
+                    thingId,
+                    selectedTask.card.id
+                  )
+                )
+              },
+              onAttachmentTap = { attachment ->
+                taskSheetOpenError = null
+                attachment.dataLogIdOrNull()
+                  ?.let { dataLogId ->
+                    onAction(ThingOverviewAction.DismissTaskDetail)
+                    onAction(
+                      ThingOverviewAction.OpenDataLogClick(
+                        thingId,
+                        dataLogId
+                      )
+                    )
+                    return@TaskDetailSheet
+                  }
+                val openFlow = attachmentOpener.open(attachment)
+                coroutineScope.launch {
+                  openFlow.collect { openState ->
+                    if (openState is OpenState.Failed) taskSheetOpenError =
+                      openState.error.message
+                  }
+                }
+              },
+              syncStates = state.syncStates,
+              dataLogs = state.dataLogs,
+              openError = taskSheetOpenError,
+              onLogWorkClick = {
+                onAction(ThingOverviewAction.DismissTaskDetail)
+                onAction(ThingOverviewAction.TaskCreateLogClick(selectedTask.card.id))
+              },
+              onSkipCycleClick = {
+                onAction(ThingOverviewAction.DismissTaskDetail)
+                onAction(ThingOverviewAction.TaskSkipClick(selectedTask))
+              },
+              comments = commentThread?.let { thread ->
+                {
+                  RecordCommentThread(
+                    thread
+                  )
+                }
+              },
+              commentComposer = commentThread?.let { thread ->
+                { RecordCommentComposer(thread, state.isAnonymous) }
+              },
+            )
+          }
+
+        }
+
       when (section) {
         ShellSection.DASHBOARD -> OverviewTab(
           state = state,
@@ -462,13 +531,15 @@ fun ThingSectionContent(
           onMutationAction = onAction,
         )
 
-        ShellSection.TASKS -> MaintenanceTasksTab(
-          state = state,
-          onAction = onAction,
-          scrollToTaskId = pendingTaskScrollTarget,
-          // The shell top bar already shows the section title; avoid duplicating it.
-          showHeader = false,
-        )
+        ShellSection.TASKS -> ListDetailSection(detail = taskDetail) {
+          MaintenanceTasksTab(
+            state = state,
+            onAction = onAction,
+            scrollToTaskId = pendingTaskScrollTarget,
+            // The shell top bar already shows the section title; avoid duplicating it.
+            showHeader = false,
+          )
+        }
 
         ShellSection.SQUAWKS -> SquawkTab(
           state = state,
@@ -530,63 +601,8 @@ fun ThingSectionContent(
         ShellSection.SETTINGS -> Unit
       }
 
-      // Task detail + delete confirmation overlays. SquawkTab and LogsTab render their own detail
-      // overlays; the task detail lives at this level in the legacy screen too (it can be opened
-      // from the Tasks tab or jumped to from a log), so render it here for the shell path.
-      state.selectedTask?.let { selectedTask ->
-        TaskDetailSheet(
-          cardWithStatus = selectedTask,
-          logs = state.logsForSelectedTask,
-          onDismiss = {
-            taskSheetOpenError = null
-            onAction(ThingOverviewAction.DismissTaskDetail)
-          },
-          onEditClick = {
-            onAction(
-              ThingOverviewAction.EditTaskClick(
-                thingId,
-                selectedTask.card.id
-              )
-            )
-          },
-          onAttachmentTap = { attachment ->
-            taskSheetOpenError = null
-            attachment.dataLogIdOrNull()
-              ?.let { dataLogId ->
-                onAction(ThingOverviewAction.DismissTaskDetail)
-                onAction(
-                  ThingOverviewAction.OpenDataLogClick(
-                    thingId,
-                    dataLogId
-                  )
-                )
-                return@TaskDetailSheet
-              }
-            val openFlow = attachmentOpener.open(attachment)
-            coroutineScope.launch {
-              openFlow.collect { openState ->
-                if (openState is OpenState.Failed) taskSheetOpenError =
-                  openState.error.message
-              }
-            }
-          },
-          syncStates = state.syncStates,
-          dataLogs = state.dataLogs,
-          openError = taskSheetOpenError,
-          onLogWorkClick = {
-            onAction(ThingOverviewAction.DismissTaskDetail)
-            onAction(ThingOverviewAction.TaskCreateLogClick(selectedTask.card.id))
-          },
-          onSkipCycleClick = {
-            onAction(ThingOverviewAction.DismissTaskDetail)
-            onAction(ThingOverviewAction.TaskSkipClick(selectedTask))
-          },
-          comments = commentThread?.let { thread -> { RecordCommentThread(thread) } },
-          commentComposer = commentThread?.let { thread ->
-            { RecordCommentComposer(thread, state.isAnonymous) }
-          },
-        )
-      }
+      // Over any section but Tasks, which hosts it itself.
+      if (section != ShellSection.TASKS) taskDetail?.invoke()
 
       // Here rather than in the Tasks tab: the sheet that raises it can be open over any section.
       if (state.skippingTaskId != null) {
