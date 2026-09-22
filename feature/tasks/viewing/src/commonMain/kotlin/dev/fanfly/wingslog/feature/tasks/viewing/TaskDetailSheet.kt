@@ -13,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +27,7 @@ import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -105,9 +105,10 @@ fun TaskDetailSheet(
     bottomBar = commentComposer,
     actionSlot = {
       if (onEditClick != null) {
-        TextButton(onClick = onEditClick) {
-          Text(stringResource(SharedRes.string.edit_task))
-        }
+        DetailSheetEditAction(
+          label = stringResource(SharedRes.string.edit_task),
+          onClick = onEditClick,
+        )
       }
     },
     headerSlot = {
@@ -220,7 +221,6 @@ fun TaskDetailSheet(
           label = stringResource(SharedRes.string.skip_this_cycle_option),
           onClick = onSkipCycleClick,
           primary = false,
-          modifier = Modifier.weight(1f),
         )
         DetailSheetAction(
           label = stringResource(
@@ -228,7 +228,6 @@ fun TaskDetailSheet(
             LocalThingLexicon.current.logNoun.singular,
           ),
           onClick = onLogWorkClick,
-          modifier = Modifier.weight(1f),
         )
       }
     }

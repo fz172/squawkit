@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +23,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -38,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -249,6 +250,9 @@ private fun DetailEndDrawer(
  * A detail sheet's state-changing action — resolve, reopen, log work. It lives here rather than on
  * the edit form because it changes what a record *is*, not what its fields say. [menu] is anchored
  * to the button, for an action that opens options.
+ *
+ * Standard button size, like [DetailSheetEditAction]: the sheet's actions and its edit control sit
+ * on the same scale, rather than a full-width bar against a text button.
  */
 @Composable
 fun DetailSheetAction(
@@ -260,26 +264,33 @@ fun DetailSheetAction(
 ) {
   Box(modifier = modifier) {
     val shape = RoundedCornerShape(Spacing.buttonCornerRadius)
-    val content: @Composable RowScope.() -> Unit = {
-      Text(text = label.uppercase(), fontWeight = FontWeight.Bold, maxLines = 1)
-    }
-    val buttonModifier = Modifier.fillMaxWidth()
-      .height(Spacing.buttonHeight)
     if (primary) {
-      Button(
-        onClick = onClick,
-        modifier = buttonModifier,
-        shape = shape,
-        content = content
-      )
+      Button(onClick = onClick, shape = shape) { Text(label, maxLines = 1) }
     } else {
-      OutlinedButton(
-        onClick = onClick,
-        modifier = buttonModifier,
-        shape = shape,
-        content = content
-      )
+      OutlinedButton(onClick = onClick, shape = shape) { Text(label, maxLines = 1) }
     }
     menu()
+  }
+}
+
+/** The header's route to the edit form — "Update squawk", "Update task". */
+@Composable
+fun DetailSheetEditAction(
+  label: String,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  OutlinedButton(
+    onClick = onClick,
+    modifier = modifier,
+    shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+  ) {
+    Icon(
+      Icons.Outlined.Edit,
+      contentDescription = null,
+      modifier = Modifier.size(ButtonDefaults.IconSize),
+    )
+    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+    Text(label, maxLines = 1)
   }
 }

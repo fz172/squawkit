@@ -15,7 +15,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +28,7 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -88,14 +88,13 @@ fun SquawkDetailSheet(
     bottomBar = commentComposer,
     actionSlot = {
       if (onEditClick != null) {
-        TextButton(onClick = onEditClick) {
-          Text(
-            stringResource(
-              Res.string.edit_squawk,
-              LocalThingLexicon.current.squawkNoun.singular,
-            ),
-          )
-        }
+        DetailSheetEditAction(
+          label = stringResource(
+            Res.string.edit_squawk,
+            LocalThingLexicon.current.squawkNoun.singular,
+          ),
+          onClick = onEditClick,
+        )
       }
     },
     headerSlot = {
