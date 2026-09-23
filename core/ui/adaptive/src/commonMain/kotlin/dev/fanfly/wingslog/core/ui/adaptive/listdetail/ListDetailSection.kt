@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive.compose
+package dev.fanfly.wingslog.core.ui.adaptive.listdetail
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,15 +16,12 @@ import androidx.compose.material3.adaptive.layout.calculateThreePaneScaffoldValu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
 
 /**
  * A section as list and detail side by side on the tiers with a sidebar — the third column of
@@ -116,24 +113,6 @@ fun ListDetailSection(
     },
   )
 }
-
-/** How a record's detail sheet presents: on its own over the app, or inline as a scaffold's pane. */
-enum class DetailPresentation { Sheet, Pane }
-
-val LocalDetailPresentation = compositionLocalOf { DetailPresentation.Sheet }
-
-/**
- * What the shell needs to know about an open detail pane: that one is open, so the content column
- * drops its width cap and the pane runs to the window's edge; and how wide it is, so the floating
- * action steps in past it and rides the list rather than the pane's bottom bar. Set by
- * [ListDetailSection], read by the shell.
- */
-class DetailPaneState {
-  var open: Boolean by mutableStateOf(false)
-  var width: Dp by mutableStateOf(0.dp)
-}
-
-val LocalDetailPane = compositionLocalOf { DetailPaneState() }
 
 /**
  * The list's share of the width, the detail taking the rest — the tablet mock's proportions.

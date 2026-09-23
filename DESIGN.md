@@ -466,7 +466,7 @@ Account
 
 ### How this shapes the UX
 
-There is no fleet list screen. The **adaptive shell** (`core/ui/adaptive/AdaptiveAppShell.kt`, driven by `feature/shell`) holds one selected Thing at a time and renders four **sections** for it; the Thing is chosen in the **switcher** — sidebar rows on wide tiers, a picker behind the top bar on compact ones. Each section is a per-Thing entity type. The Dashboard **does not list entities** — it aggregates them.
+There is no fleet list screen. The **adaptive shell** (`core/ui/adaptive/shell/AdaptiveAppShell.kt`, driven by `feature/shell`) holds one selected Thing at a time and renders four **sections** for it; the Thing is chosen in the **switcher** — sidebar rows on wide tiers, a picker behind the top bar on compact ones. Each section is a per-Thing entity type. The Dashboard **does not list entities** — it aggregates them.
 
 | Section                               | Source                      | Layout                                                                                                       |
 |---------------------------------------|-----------------------------|--------------------------------------------------------------------------------------------------------------|
@@ -497,7 +497,7 @@ A Thing whose DNA this build cannot interpret renders `DegradedThingContent` ins
 
 ## 9. Screen Layouts
 
-### 9A. The shell and the switcher (`core/ui/adaptive/AdaptiveAppShell.kt`, `feature/shell/AdaptiveShellRoute.kt`)
+### 9A. The shell and the switcher (`core/ui/adaptive/shell/AdaptiveAppShell.kt`, `feature/shell/AdaptiveShellRoute.kt`)
 
 The selected Thing **is** the page. There is no hero-metrics fleet grid; the switcher is a list of Things with two lines each — the name, and beneath it make and model or whatever spec field the template marks `is_identifier`.
 
@@ -639,7 +639,7 @@ An empty Due list shows `EmptyState` with the template's `task_hint`, and — wh
 
 | Component            | Source File                                               | Pattern                                                                                                    |
 |----------------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| AdaptiveAppShell     | `core/ui/adaptive/AdaptiveAppShell.kt`                    | Tier-adaptive chrome: nav pill / rail / sidebar + switcher                                                 |
+| AdaptiveAppShell     | `core/ui/adaptive/shell/AdaptiveAppShell.kt`                    | Tier-adaptive chrome: nav pill / rail / sidebar + switcher                                                 |
 | FleetEmptyState      | `feature/fleet/viewing/FleetEmptyState.kt`                | Empty account: add a Thing or redeem an invite                                                             |
 | PickThingTypeSheet   | `feature/thing/update/PickThingTypeSheet.kt`              | Bottom sheet, preset grid                                                                                  |
 | StarterPackRoute     | `feature/tasks/update/starter/StarterPackRoute.kt`        | Checklist form with Add / Skip                                                                             |

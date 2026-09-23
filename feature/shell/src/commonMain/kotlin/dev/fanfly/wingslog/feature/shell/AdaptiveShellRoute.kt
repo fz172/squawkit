@@ -26,10 +26,10 @@ import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SELECT_THING_ID
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
-import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
-import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveAppShell
+import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
+import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel

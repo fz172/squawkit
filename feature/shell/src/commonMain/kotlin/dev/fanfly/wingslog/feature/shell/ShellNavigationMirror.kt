@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.shell
 
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -55,9 +55,9 @@ import dev.fanfly.wingslog.core.template.overviewTaskEmptyTitle
 import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.template.specLines
 import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.common.compose.LocalListRowGround
 import dev.fanfly.wingslog.core.ui.common.compose.SectionHeader

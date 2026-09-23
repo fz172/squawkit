@@ -35,9 +35,9 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ListDetailSection
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.listdetail.ListDetailSection
+import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
@@ -90,6 +90,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.thing.dashboard.data.squawkListLines
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.SquawkPriority
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -112,7 +113,6 @@ import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_high
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_low
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_medium
-import kotlin.time.Clock
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 private val squawkOrder = compareByDescending<SquawkWithStatus> {

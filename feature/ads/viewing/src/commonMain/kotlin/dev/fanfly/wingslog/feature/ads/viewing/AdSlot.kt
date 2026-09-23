@@ -28,8 +28,8 @@ import dev.fanfly.wingslog.core.analytics.AdSlotFilled
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.appinfo.AppCapability
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager

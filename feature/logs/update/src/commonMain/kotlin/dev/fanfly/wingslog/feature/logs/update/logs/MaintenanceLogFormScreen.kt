@@ -54,9 +54,9 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DangerZone
 import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
@@ -79,6 +79,7 @@ import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
 import dev.fanfly.wingslog.id.ThingId
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
@@ -100,7 +101,6 @@ import wingslog.feature.logs.update.generated.resources.delete_this_log_subtitle
 import wingslog.feature.logs.update.generated.resources.delete_this_log_title
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
-import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes

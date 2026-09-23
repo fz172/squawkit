@@ -21,8 +21,8 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.taskEmptyHint
 import dev.fanfly.wingslog.core.template.taskHistoryEmptyHint
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.widget.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider

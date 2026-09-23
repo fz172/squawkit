@@ -23,10 +23,10 @@ import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalTextSelectionLayers
-import dev.fanfly.wingslog.core.ui.adaptive.compose.TextSelectionLayer
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.ui.adaptive.selection.LocalTextSelectionLayers
+import dev.fanfly.wingslog.core.ui.adaptive.selection.TextSelectionLayer
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
@@ -38,9 +38,9 @@ import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
 import dev.fanfly.wingslog.feature.shell.PopToShellOnNotificationTap
 import dev.fanfly.wingslog.feature.shell.ShellNavigationMirror
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
+import dev.fanfly.wingslog.feature.shell.dataLogRoutes
 import dev.fanfly.wingslog.feature.shell.formDialogs
 import dev.fanfly.wingslog.feature.shell.settingsDetailRoutes
-import dev.fanfly.wingslog.feature.shell.dataLogRoutes
 import dev.fanfly.wingslog.feature.shell.sharingRoutes
 import kotlinx.browser.document
 import org.jetbrains.compose.resources.getString

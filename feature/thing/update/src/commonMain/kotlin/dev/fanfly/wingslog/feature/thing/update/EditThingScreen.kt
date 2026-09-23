@@ -40,9 +40,9 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DangerZone

@@ -6,7 +6,7 @@ import androidx.navigation.NavGraph
 import androidx.savedstate.read
 import androidx.savedstate.savedState
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
 import dev.fanfly.wingslog.feature.shell.ShellNavigationMirror
 import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope

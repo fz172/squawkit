@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive.compose
+package dev.fanfly.wingslog.core.ui.adaptive.selection
 
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable

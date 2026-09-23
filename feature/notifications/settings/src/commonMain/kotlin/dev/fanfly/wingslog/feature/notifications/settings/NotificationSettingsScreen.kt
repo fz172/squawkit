@@ -36,9 +36,9 @@ import androidx.compose.ui.draw.clip
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
