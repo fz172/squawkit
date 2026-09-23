@@ -1,0 +1,111 @@
+package dev.fanfly.wingslog.feature.logs.update.form.work
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.componentTypesApply
+import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
+import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.logs.update.form.LogSection
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.Thing
+import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.component_type
+import wingslog.core.sharedassets.generated.resources.select_date
+import wingslog.feature.logs.sharedassets.generated.resources.maintenance_date
+import wingslog.feature.logs.update.generated.resources.Res
+import wingslog.feature.logs.update.generated.resources.component_section_description
+import wingslog.feature.logs.update.generated.resources.date_section_description
+import wingslog.feature.logs.update.generated.resources.work_description_required
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+
+@Composable
+fun LogWorkTab(
+  maintenanceDate: LocalDate?,
+  onDateClick: () -> Unit,
+  workDescription: String,
+  onWorkDescriptionChange: (String) -> Unit,
+  thing: Thing?,
+  selectedComponentType: ComponentType,
+  onComponentTypeChange: (ComponentType) -> Unit,
+  selectedSubComponent: String?,
+  onSubComponentChange: (String?) -> Unit,
+  error: UiText?,
+  modifier: Modifier = Modifier,
+) {
+  Column(
+    modifier = modifier.fillMaxWidth(),
+    verticalArrangement = Arrangement.spacedBy(Spacing.massive),
+  ) {
+    LogSection(
+      header = stringResource(SharedRes.string.maintenance_date),
+      description = stringResource(Res.string.date_section_description),
+    ) {
+      val dateText = maintenanceDate?.toDisplayFormat()
+        ?: stringResource(CoreRes.string.select_date)
+      FormValueField(
+        value = dateText,
+        label = stringResource(SharedRes.string.maintenance_date),
+        showLabel = false,
+        onClick = onDateClick,
+        accessibilityDescription = stringResource(SharedRes.string.maintenance_date),
+        leadingIcon = {
+          Icon(Icons.Default.CalendarToday, contentDescription = null)
+        },
+        modifier = Modifier.fillMaxWidth(),
+      )
+    }
+
+    // Removed, not disabled, for a template whose things have no parts worth naming. Asking "which
+    // component was serviced" of a thing with one undivided body is a question with one answer.
+    //
+    // And removed for every preset outside aviation, whatever its capability says: the control's
+    // three options are `ComponentType`, an enum frozen to airframe / engine / propeller, so a
+    // boat's propulsion and a car's tyres cannot be named by it at all (#732). Their logs are
+    // filed against the thing itself. See [componentTypesApply].
+    if (componentTypesApply) {
+      LogSection(
+        header = stringResource(CoreRes.string.component_type),
+        description = stringResource(
+          Res.string.component_section_description,
+          LocalThingLexicon.current.thingNoun.singular,
+        ),
+      ) {
+        ComponentSection(
+          thing = thing,
+          selectedComponentType = selectedComponentType,
+          selectedSubComponent = selectedSubComponent,
+          onComponentTypeChange = onComponentTypeChange,
+          onSubComponentChange = onSubComponentChange,
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
+    }
+
+    FormTextField(
+      value = workDescription,
+      onValueChange = onWorkDescriptionChange,
+      label = stringResource(Res.string.work_description_required),
+      modifier = Modifier.fillMaxWidth(),
+      singleLine = false,
+      minLines = 4,
+      maxLines = 8,
+      keyboardOptions = FormKeyboard.Sentences,
+      isError = error != null,
+      supportingText = error?.asString(),
+    )
+  }
+}
