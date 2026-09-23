@@ -1,15 +1,11 @@
-package dev.fanfly.wingslog.feature.settings
+package dev.fanfly.wingslog.feature.settings.about
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -23,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -35,25 +30,19 @@ import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.common.compose.heroBob
-import dev.fanfly.wingslog.core.ui.common.compose.rememberHeroPulse
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import org.jetbrains.compose.resources.painterResource
+import dev.fanfly.wingslog.feature.settings.row.SettingsRow
+import dev.fanfly.wingslog.feature.settings.row.SettingsRowGroup
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import wingslog.core.sharedassets.generated.resources.app_icon
-import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.feature.settings.generated.resources.about_contact_support
 import wingslog.feature.settings.generated.resources.about_contact_support_subtitle
 import wingslog.feature.settings.generated.resources.about_rate
 import wingslog.feature.settings.generated.resources.about_terms
 import wingslog.feature.settings.generated.resources.about_version_title
 import wingslog.feature.settings.generated.resources.settings_about
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
-
-private val AppIconSize = 96.dp
 
 /**
  * About SquawkIt: the legal page, the ways to reach us, and the version, in one group. Link rows
@@ -153,35 +142,4 @@ fun AboutScreen(
   }
 }
 
-/** The app mark (bobbing, like the heroes) and its name; the version is a row below. */
-@Composable
-private fun AppIdentity() {
-  val pulse = rememberHeroPulse()
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(top = Spacing.large),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(Spacing.large),
-  ) {
-    // The store icon itself, in colour; only the corners are ours — the same radius the launchers use.
-    Image(
-      painter = painterResource(CoreRes.drawable.app_icon),
-      contentDescription = null,
-      modifier = Modifier
-        .size(AppIconSize)
-        .heroBob { pulse.value }
-        .clip(RoundedCornerShape(Spacing.extraLarge)),
-    )
-    Column(
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Text(
-        text = stringResource(CoreRes.string.app_name),
-        style = MaterialTheme.typography.headlineSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-      )
-    }
-  }
-}
+internal val AppIconSize = 96.dp
