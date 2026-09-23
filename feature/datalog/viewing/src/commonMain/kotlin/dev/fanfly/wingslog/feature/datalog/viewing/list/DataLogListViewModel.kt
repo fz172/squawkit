@@ -9,11 +9,10 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toInstant
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
-import dev.fanfly.wingslog.datalog.DataLogSeries
-import dev.fanfly.wingslog.datalog.DataLogSeriesKind
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
+import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
@@ -70,8 +69,11 @@ sealed interface DataLogListEvent {
 /** One recorded series, as the preview pane lists it: its name and the unit it was recorded in. */
 data class DataLogSeriesChip(val name: String, val unit: String)
 
-/** One of the two series the preview sketches: its name and up to [SKETCH_POINTS] values in 0..1. */
+/** The series the preview sketches: its name and up to [SKETCH_POINTS] values in 0..1. */
 data class SketchSeries(val name: String, val points: List<Float>)
+
+/** A loaded sketch; [series] is null when the log has nothing the chart would open with. */
+data class Sketch(val series: SketchSeries?)
 
 /**
  * What the preview pane says about a data log before the chart is opened: everything the
@@ -83,7 +85,7 @@ data class DataLogPreview(
   val sampleCount: Int,
   val sampleRateHz: Float,
   val series: List<DataLogSeriesChip>,
-  val sketch: List<SketchSeries>? = null,
+  val sketch: Sketch? = null,
 )
 
 data class DataLogListUiState(
@@ -113,7 +115,7 @@ class DataLogListViewModel(
   private val deleting = MutableStateFlow<DataLogRow?>(null)
   private val selectedId = MutableStateFlow<DataLogId?>(null)
   private val sketches =
-    MutableStateFlow<Map<DataLogId, List<SketchSeries>>>(emptyMap())
+    MutableStateFlow<Map<DataLogId, Sketch>>(emptyMap())
   private var nextImportKey = 0L
 
   private val _events =
@@ -316,7 +318,7 @@ fun DataLog.toDataLogRow(): DataLogRow {
   )
 }
 
-private fun DataLog.toPreview(sketch: List<SketchSeries>?): DataLogPreview =
+private fun DataLog.toPreview(sketch: Sketch?): DataLogPreview =
   DataLogPreview(
     row = toDataLogRow(),
     sampleCount = sample_count,
@@ -328,37 +330,30 @@ private fun DataLog.toPreview(sketch: List<SketchSeries>?): DataLogPreview =
 /** How many points a sketch keeps per series: a shape, not a chart. */
 internal const val SKETCH_POINTS = 120
 
-/** How many series the sketch draws. */
-private const val SKETCH_SERIES = 2
-
 /** How long the pane gets to draw before the sketch's file read starts. */
 private val SKETCH_DELAY = 300.milliseconds
 
 /**
- * Two numeric series, each downsampled to [SKETCH_POINTS] values and normalised to 0..1 of its
- * own range — the recording's shape at a glance, not its numbers. The series the parser
- * recognised (a canonical id: RPM, oil pressure, fuel flow…) come first, fullest first; they say
- * what the engine did, where the most-sampled column is as likely a GPS clock as anything.
+ * The series the chart opens with ([defaultLayout]), downsampled to [SKETCH_POINTS] values and
+ * normalised to 0..1 of its range — the recording's shape at a glance, not its numbers, and the
+ * same line the user sees first after *Open chart*. Nothing for a flat series or one whose column
+ * is not numeric.
  */
 internal fun sketchOf(
   record: DataLog,
   data: DataLogSeriesData
-): List<SketchSeries> =
-  record.series
-    .filter { it.kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC && it.max > it.min }
-    .sortedWith(compareBy<DataLogSeries> { it.canonical_id.isEmpty() }.thenByDescending { it.sample_count })
-    .take(SKETCH_SERIES)
-    .mapNotNull { series ->
-      val column = data.numeric[series.column] ?: return@mapNotNull null
-      val values = column.filled
-      if (values.isEmpty()) return@mapNotNull null
-      val range = (series.max - series.min).toFloat()
-      val points = (0 until minOf(SKETCH_POINTS, values.size)).map { i ->
-        val index = i * (values.size - 1) / maxOf(
-          1,
-          minOf(SKETCH_POINTS, values.size) - 1
-        )
-        ((values[index] - series.min.toFloat()) / range).coerceIn(0f, 1f)
-      }
-      SketchSeries(name = series.name, points = points)
-    }
+): Sketch {
+  val key = defaultLayout(record.series).panes.firstOrNull()
+    ?.series
+    ?.firstOrNull() ?: return Sketch(null)
+  val series = record.series.firstOrNull { it.column == key.column } ?: return Sketch(null)
+  val values = data.numeric[series.column]?.filled ?: return Sketch(null)
+  if (values.isEmpty() || series.max <= series.min) return Sketch(null)
+  val range = (series.max - series.min).toFloat()
+  val count = minOf(SKETCH_POINTS, values.size)
+  val points = (0 until count).map { i ->
+    val index = i * (values.size - 1) / maxOf(1, count - 1)
+    ((values[index] - series.min.toFloat()) / range).coerceIn(0f, 1f)
+  }
+  return Sketch(SketchSeries(name = series.name, points = points))
+}

@@ -41,7 +41,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * What opening the chart would give, before it is opened: how long the log ran and how much it
- * recorded, and a sketch of its two fullest series. *Open chart* is then
+ * recorded, and a sketch of the series the chart opens with. *Open chart* is then
  * a deliberate step rather than the only way to learn anything about the file.
  *
  * A `DetailSheet`, so it is the pane beside the list on a wide tier and a sheet on a phone.
@@ -122,7 +122,7 @@ fun DataLogPreviewSheet(
     }
 
     Spacer(Modifier.height(Spacing.large))
-    Sketch(preview.sketch)
+    SketchPane(preview.sketch)
   }
 }
 
@@ -150,11 +150,8 @@ private fun Fact(label: String, value: String, modifier: Modifier = Modifier) {
  * what it measured; the chart does that.
  */
 @Composable
-private fun Sketch(sketch: List<SketchSeries>?) {
-  val colors = listOf(
-    MaterialTheme.colorScheme.primary,
-    MaterialTheme.colorScheme.tertiary
-  )
+private fun SketchPane(sketch: Sketch?) {
+  val color = MaterialTheme.colorScheme.primary
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     if (sketch == null) {
       Text(
@@ -164,39 +161,32 @@ private fun Sketch(sketch: List<SketchSeries>?) {
       )
       return
     }
-    if (sketch.isEmpty()) return
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
-      sketch.forEachIndexed { index, series ->
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Canvas(Modifier.size(Spacing.small)) { drawCircle(colors[index % colors.size]) }
-          Text(
-            text = series.name,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-          )
-        }
-      }
+    val series = sketch.series ?: return
+    if (series.points.size < 2) return
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Canvas(Modifier.size(Spacing.small)) { drawCircle(color) }
+      Text(
+        text = series.name,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+      )
     }
     Canvas(
       modifier = Modifier
         .fillMaxWidth()
         .height(SKETCH_HEIGHT),
     ) {
-      val stroke = Stroke(width = Spacing.hairline.toPx() * 2)
-      sketch.forEachIndexed { index, series ->
-        if (series.points.size < 2) return@forEachIndexed
-        val path = Path()
-        series.points.forEachIndexed { i, value ->
-          val x = size.width * i / (series.points.size - 1)
-          val y = size.height * (1f - value)
-          if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-        drawPath(path, colors[index % colors.size], style = stroke)
+      val path = Path()
+      series.points.forEachIndexed { i, value ->
+        val x = size.width * i / (series.points.size - 1)
+        val y = size.height * (1f - value)
+        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
       }
+      drawPath(path, color, style = Stroke(width = Spacing.hairline.toPx() * 2))
     }
   }
 }
