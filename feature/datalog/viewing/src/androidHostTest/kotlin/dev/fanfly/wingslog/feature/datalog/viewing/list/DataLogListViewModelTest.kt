@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.list
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.RecordedEvent
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
@@ -12,11 +14,9 @@ import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
-import dev.fanfly.wingslog.feature.datalog.model.NumericColumn
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
-import dev.fanfly.wingslog.core.analytics.RecordedEvent
-import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
+import dev.fanfly.wingslog.feature.datalog.model.NumericColumn
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -351,7 +351,12 @@ class DataLogListViewModelTest {
 
   private fun seriesData() = DataLogSeriesData(
     timeSeconds = intArrayOf(0, 1, 2),
-    numeric = mapOf(0 to NumericColumn(raw = floatArrayOf(0f, 1f, 2f), filled = floatArrayOf(0f, 1f, 2f))),
+    numeric = mapOf(
+      0 to NumericColumn(
+        raw = floatArrayOf(0f, 1f, 2f),
+        filled = floatArrayOf(0f, 1f, 2f)
+      )
+    ),
     text = emptyMap(),
     position = null,
   )
@@ -376,21 +381,22 @@ class DataLogListViewModelTest {
   }
 
   @Test
-  fun aFailedDownloadLeavesThePreviewWithoutASketchRatherThanLoadingForever() = runTest {
-    val record = numericLog("a")
-    val id = DataLogId("a")
-    logs.value = listOf(record)
-    every { manager.observeOne(thingId, id) } returns flowOf(record)
-    every { manager.ensureLocal(thingId, id) } returns
-      flowOf(DownloadState.Failed(IllegalStateException("offline")))
-    val vm = viewModel()
-    vm.uiState.first { !it.isLoading }
+  fun aFailedDownloadLeavesThePreviewWithoutASketchRatherThanLoadingForever() =
+    runTest {
+      val record = numericLog("a")
+      val id = DataLogId("a")
+      logs.value = listOf(record)
+      every { manager.observeOne(thingId, id) } returns flowOf(record)
+      every { manager.ensureLocal(thingId, id) } returns
+        flowOf(DownloadState.Failed(IllegalStateException("offline")))
+      val vm = viewModel()
+      vm.uiState.first { !it.isLoading }
 
-    vm.select(id)
-    advanceUntilIdle()
+      vm.select(id)
+      advanceUntilIdle()
 
-    val preview = vm.uiState.value.preview!!
-    assertThat(preview.sketch).isEqualTo(Sketch(null))
-    coVerify(exactly = 0) { manager.load(any(), any()) }
-  }
+      val preview = vm.uiState.value.preview!!
+      assertThat(preview.sketch).isEqualTo(Sketch(null))
+      coVerify(exactly = 0) { manager.load(any(), any()) }
+    }
 }

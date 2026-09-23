@@ -13,9 +13,9 @@ import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
-import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
+import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
 import dev.fanfly.wingslog.feature.datalog.viewing.analytics.DataLogImportTelemetry
 import dev.fanfly.wingslog.id.DataLogId
@@ -168,12 +168,17 @@ class DataLogListViewModel(
       if (selectedId.value != id) return@launch
       val fetched = manager.ensureLocal(thingId, id)
         .first { it !is DownloadState.Downloading }
-      val sketch = if (fetched is DownloadState.Failed) Sketch(null) else manager.load(thingId, id)
-        .mapCatching { data ->
-          val record = manager.observeOne(thingId, id).first()
-          if (record == null) Sketch(null) else sketchOf(record, data)
-        }
-        .getOrDefault(Sketch(null))
+      val sketch =
+        if (fetched is DownloadState.Failed) Sketch(null) else manager.load(
+          thingId,
+          id
+        )
+          .mapCatching { data ->
+            val record = manager.observeOne(thingId, id)
+              .first()
+            if (record == null) Sketch(null) else sketchOf(record, data)
+          }
+          .getOrDefault(Sketch(null))
       sketches.update { it + (id to sketch) }
     }
   }
@@ -350,7 +355,8 @@ internal fun sketchOf(
   val key = defaultLayout(record.series).panes.firstOrNull()
     ?.series
     ?.firstOrNull() ?: return Sketch(null)
-  val series = record.series.firstOrNull { it.column == key.column } ?: return Sketch(null)
+  val series =
+    record.series.firstOrNull { it.column == key.column } ?: return Sketch(null)
   val values = data.numeric[series.column]?.filled ?: return Sketch(null)
   if (values.isEmpty() || series.max <= series.min) return Sketch(null)
   val range = (series.max - series.min).toFloat()

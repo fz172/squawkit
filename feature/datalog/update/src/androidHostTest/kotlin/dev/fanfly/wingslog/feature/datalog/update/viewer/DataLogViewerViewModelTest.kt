@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.datalog.update.viewer
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.RecordedEvent
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogSeries
@@ -14,8 +16,6 @@ import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
-import dev.fanfly.wingslog.core.analytics.RecordedEvent
-import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery

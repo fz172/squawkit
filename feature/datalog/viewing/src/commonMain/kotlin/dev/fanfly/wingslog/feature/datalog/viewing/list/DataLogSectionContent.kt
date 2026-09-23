@@ -137,7 +137,8 @@ fun DataLogSectionContent(
               // A sheet or drawer is a dialog window; left open behind the viewer it composes
               // again during the swipe back and captures the gesture, so back bounces to the
               // chart. The pane has no window and stays for the return.
-              val paned = LocalDetailPresentation.current == DetailPresentation.Pane
+              val paned =
+                LocalDetailPresentation.current == DetailPresentation.Pane
               DataLogPreviewSheet(
                 preview = preview,
                 onDismiss = viewModel::dismissPreview,

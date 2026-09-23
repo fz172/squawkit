@@ -123,7 +123,14 @@ fun ChartPane(
       }
     }
   val groups =
-    remember(series) { UnitGroups.group(series.map { SeriesUnit(it.key, it.unit) }) }
+    remember(series) {
+      UnitGroups.group(series.map {
+        SeriesUnit(
+          it.key,
+          it.unit
+        )
+      })
+    }
   val ranges: Map<String, YRange> = remember(columns, groups) {
     groups.associate { g -> g.unit to UnitGroups.fit(g.series.mapNotNull { columns[it] }) }
   }
