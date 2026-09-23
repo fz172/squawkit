@@ -35,11 +35,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayDateTime
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
-import dev.fanfly.wingslog.core.ui.common.compose.DropdownMenu
-import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
-import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
+import dev.fanfly.wingslog.core.ui.form.FormKeyboard
+import dev.fanfly.wingslog.core.ui.form.FormTextField
+import dev.fanfly.wingslog.core.ui.list.ListRowDivider
+import dev.fanfly.wingslog.core.ui.popup.AlertDialog
+import dev.fanfly.wingslog.core.ui.popup.DropdownMenu
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -47,6 +47,7 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.comments.model.CommentEntry
 import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.delete
@@ -65,7 +66,6 @@ import wingslog.feature.comments.sharedassets.generated.resources.comment_post
 import wingslog.feature.comments.sharedassets.generated.resources.comment_you
 import wingslog.feature.comments.sharedassets.generated.resources.comments_empty
 import wingslog.feature.comments.sharedassets.generated.resources.sign_in_to_add_comments
-import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**

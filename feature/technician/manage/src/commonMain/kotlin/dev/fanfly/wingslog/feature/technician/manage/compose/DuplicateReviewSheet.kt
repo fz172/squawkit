@@ -20,7 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
+import dev.fanfly.wingslog.core.ui.sheet.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolution

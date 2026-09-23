@@ -15,7 +15,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.TemplateRegistry
-import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
+import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource

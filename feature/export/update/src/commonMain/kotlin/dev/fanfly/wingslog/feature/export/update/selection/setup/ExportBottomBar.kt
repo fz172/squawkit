@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
+import dev.fanfly.wingslog.core.ui.text.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.export.update.selection.ExportUiState

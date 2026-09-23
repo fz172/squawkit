@@ -15,7 +15,7 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.currentFor
-import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment

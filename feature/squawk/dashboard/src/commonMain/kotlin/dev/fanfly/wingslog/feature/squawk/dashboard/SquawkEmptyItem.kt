@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.list.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import org.jetbrains.compose.resources.stringResource

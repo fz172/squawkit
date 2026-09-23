@@ -14,8 +14,8 @@ import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.usesComponentTypes
-import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.form.FormKeyboard
+import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.tasks.update.form.IdentityRadioItem

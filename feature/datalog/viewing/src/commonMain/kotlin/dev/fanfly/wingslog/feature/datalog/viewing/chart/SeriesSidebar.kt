@@ -31,7 +31,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
+import dev.fanfly.wingslog.core.ui.badge.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography

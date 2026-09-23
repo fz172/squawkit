@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.dashboard.api
 
-import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.text.UiText
 
 sealed interface ThingOverviewEvent {
 

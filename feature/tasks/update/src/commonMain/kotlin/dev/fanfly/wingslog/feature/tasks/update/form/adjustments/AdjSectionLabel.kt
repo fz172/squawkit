@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 @Composable

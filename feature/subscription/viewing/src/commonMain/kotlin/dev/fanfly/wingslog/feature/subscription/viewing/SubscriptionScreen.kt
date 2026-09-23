@@ -36,7 +36,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.CustomerCenterHost
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProPaywallHost

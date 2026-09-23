@@ -3,8 +3,8 @@ package dev.fanfly.wingslog.feature.tasks.update.form.schedule
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
-import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
+import dev.fanfly.wingslog.core.ui.badge.PreviewBanner
+import dev.fanfly.wingslog.core.ui.badge.PreviewBannerTone
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import kotlin.time.Clock
 import kotlinx.datetime.TimeZone

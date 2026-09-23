@@ -14,8 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
-import dev.fanfly.wingslog.core.ui.common.compose.LabelledChoice
+import dev.fanfly.wingslog.core.ui.form.FormValueField
+import dev.fanfly.wingslog.core.ui.form.LabelledChoice
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

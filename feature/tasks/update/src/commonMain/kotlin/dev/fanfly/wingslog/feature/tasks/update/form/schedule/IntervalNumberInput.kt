@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.ui.common.compose.rememberSelectAllOnFocus
+import dev.fanfly.wingslog.core.ui.form.rememberSelectAllOnFocus
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 @Composable

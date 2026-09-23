@@ -13,7 +13,7 @@ import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship

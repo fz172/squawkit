@@ -8,7 +8,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.ComponentRow
 import dev.fanfly.wingslog.core.template.valueOf
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.thing.update.generated.resources.make

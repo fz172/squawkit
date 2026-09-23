@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
+import dev.fanfly.wingslog.core.ui.text.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.update.selection.ExportUiState

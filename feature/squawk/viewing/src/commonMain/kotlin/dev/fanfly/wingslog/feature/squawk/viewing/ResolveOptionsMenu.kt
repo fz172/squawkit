@@ -5,8 +5,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.ui.common.compose.ResolveBubbleMenu
-import dev.fanfly.wingslog.core.ui.common.compose.ResolveMenuAction
+import dev.fanfly.wingslog.core.ui.menu.ResolveBubbleMenu
+import dev.fanfly.wingslog.core.ui.menu.ResolveMenuAction
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res

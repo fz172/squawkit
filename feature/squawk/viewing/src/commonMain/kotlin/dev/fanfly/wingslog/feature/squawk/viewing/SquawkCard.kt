@@ -19,10 +19,10 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.ui.common.compose.ListRow
-import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
-import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
-import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
+import dev.fanfly.wingslog.core.ui.badge.StatusChip
+import dev.fanfly.wingslog.core.ui.list.ListRow
+import dev.fanfly.wingslog.core.ui.text.highlightWords
+import dev.fanfly.wingslog.core.ui.text.searchHighlightStyle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.statusColors

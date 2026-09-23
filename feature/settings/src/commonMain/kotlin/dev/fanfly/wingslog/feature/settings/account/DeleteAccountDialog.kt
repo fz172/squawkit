@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
+import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.AccountDeletion
 import dev.fanfly.wingslog.feature.settings.DeletionChallenge

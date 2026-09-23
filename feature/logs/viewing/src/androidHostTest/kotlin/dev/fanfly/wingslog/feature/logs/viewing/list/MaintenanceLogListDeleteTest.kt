@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
-import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.search.model.SearchTuning

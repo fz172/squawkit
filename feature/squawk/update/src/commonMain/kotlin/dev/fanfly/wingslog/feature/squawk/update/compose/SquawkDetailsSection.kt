@@ -25,9 +25,9 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
-import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.form.FormKeyboard
+import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import dev.fanfly.wingslog.thing.MaintenanceLog

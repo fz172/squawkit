@@ -48,8 +48,8 @@ import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.list.EmptyState
+import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE

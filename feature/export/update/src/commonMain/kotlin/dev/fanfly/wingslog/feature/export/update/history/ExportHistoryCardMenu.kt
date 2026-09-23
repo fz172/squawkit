@@ -12,7 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.common.compose.DropdownMenu
+import dev.fanfly.wingslog.core.ui.popup.DropdownMenu
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.delete

@@ -34,7 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.auth.EmailLinkAuthenticator
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.list.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.login.data.PendingEmailCache
 import dev.gitlive.firebase.Firebase

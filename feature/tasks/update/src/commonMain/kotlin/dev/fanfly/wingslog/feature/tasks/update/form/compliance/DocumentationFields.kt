@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.form.FormKeyboard
+import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.sharedassets.generated.resources.Res

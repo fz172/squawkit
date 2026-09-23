@@ -18,7 +18,7 @@ import dev.fanfly.wingslog.core.template.currentReadings
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState

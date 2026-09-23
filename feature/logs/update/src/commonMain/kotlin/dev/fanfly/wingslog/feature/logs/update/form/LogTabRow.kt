@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.metersLabel
-import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
-import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
+import dev.fanfly.wingslog.core.ui.bar.IconLabelTabRow
+import dev.fanfly.wingslog.core.ui.bar.IconLabelTabSpec
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

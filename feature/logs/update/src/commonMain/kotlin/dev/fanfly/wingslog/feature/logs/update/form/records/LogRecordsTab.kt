@@ -14,7 +14,7 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.technicianNoun
-import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
+import dev.fanfly.wingslog.core.ui.form.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.update.form.LogSection
 import dev.fanfly.wingslog.thing.MaintenanceTask

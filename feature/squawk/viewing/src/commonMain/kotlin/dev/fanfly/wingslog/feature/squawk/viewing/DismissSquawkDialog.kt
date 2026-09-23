@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
+import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import dev.fanfly.wingslog.thing.SquawkDismissReason

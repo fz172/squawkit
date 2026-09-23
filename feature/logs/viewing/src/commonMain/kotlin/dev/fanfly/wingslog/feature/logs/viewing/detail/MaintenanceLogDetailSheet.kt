@@ -20,8 +20,8 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
+import dev.fanfly.wingslog.core.ui.sheet.DetailSheet
+import dev.fanfly.wingslog.core.ui.sheet.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo

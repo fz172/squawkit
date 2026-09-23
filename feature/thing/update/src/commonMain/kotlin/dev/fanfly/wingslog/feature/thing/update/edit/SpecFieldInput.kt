@@ -17,8 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
-import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
+import dev.fanfly.wingslog.core.ui.form.FormTextField
+import dev.fanfly.wingslog.core.ui.form.FormValueField
 import dev.fanfly.wingslog.thing.SpecField
 
 /**

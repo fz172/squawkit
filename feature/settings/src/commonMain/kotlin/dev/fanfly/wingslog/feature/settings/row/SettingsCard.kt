@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.settings.row
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedCard
+import dev.fanfly.wingslog.core.ui.grouped.GroupedCard
 
 /**
  * A grouped settings surface: a bordered, 16dp-radius card that stacks its rows top to bottom.

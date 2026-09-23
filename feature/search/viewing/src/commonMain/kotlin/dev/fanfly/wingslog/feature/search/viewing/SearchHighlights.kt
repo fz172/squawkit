@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.feature.search.viewing
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
-import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
-import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
+import dev.fanfly.wingslog.core.ui.text.highlightWords
+import dev.fanfly.wingslog.core.ui.text.searchHighlightStyle
 import dev.fanfly.wingslog.feature.search.model.FieldMatch
 
 /** The matched words in the given fields, for highlighting the text a card shows. */

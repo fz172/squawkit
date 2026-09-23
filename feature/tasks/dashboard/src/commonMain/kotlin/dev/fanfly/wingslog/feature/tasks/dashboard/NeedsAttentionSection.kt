@@ -14,9 +14,9 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.formatMeterValue
-import dev.fanfly.wingslog.core.ui.common.compose.ListRow
-import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
-import dev.fanfly.wingslog.core.ui.common.compose.SectionHeader
+import dev.fanfly.wingslog.core.ui.list.ListRow
+import dev.fanfly.wingslog.core.ui.list.ListRowDivider
+import dev.fanfly.wingslog.core.ui.list.SectionHeader
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus

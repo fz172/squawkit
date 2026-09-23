@@ -101,7 +101,13 @@ core/
   crash/                # CrashReporter over Firebase Crashlytics (Android + iOS, one GitLive-backed
                         #   impl in mobileMain; no-op on web), Kermit breadcrumb writer, uid binder
   di/                   # CommonAppModules.kt — the single list of Koin modules shared by all hosts
-  ui/                   # Material 3 theme, color tokens, shared Compose components
+  ui/                   # Shared Compose components, one package per concern: form/ (FormTextField,
+                        #   FormValueField, BottomButtons, UnsavedChangesDialog), grouped/ (GroupedRow
+                        #   family, GroupedSection), list/ (ListRow, TimelineRow, SectionHeader,
+                        #   SkeletonList, EmptyState), sheet/ (DetailSheet, PickerSheet), popup/ (the
+                        #   selection-safe AlertDialog / ModalBottomSheet / DropdownMenu / DatePickerDialog),
+                        #   swipe/ (SwipeActionCard), menu/ (ResolveBubbleMenu), bar/, badge/, hero/,
+                        #   text/ (UiText, highlight, file-size formatting), brand/
     theme/              #   WingslogTheme, palette, Spacing, StatusColors, AppearanceController
     adaptive/           #   AdaptiveAppShell, layout tiers, AdaptiveFormDialogFrame, ConstrainedTopBar
     widget/avataricon/  #   AvatarIcon composable
@@ -726,7 +732,7 @@ foundation on mouse-down (`layouts are not part of the same hierarchy`). So ever
 starts a fresh scope:
 
 - `AlertDialog`, `ModalBottomSheet`, `DropdownMenu`, `DatePickerDialog` come from
-  `dev.fanfly.wingslog.core.ui.common.compose` (`SelectionSafePopups.kt`), never from Material
+  `dev.fanfly.wingslog.core.ui.popup`, never from Material
   directly. Same names and signatures; only the import differs.
 - Nav dialog destinations are registered with `selectionDialog(...)` (`feature/shell`), never the
   raw `dialog(...)` builder.

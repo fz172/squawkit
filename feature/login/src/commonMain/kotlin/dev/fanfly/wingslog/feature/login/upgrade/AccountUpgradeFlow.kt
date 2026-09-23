@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
+import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

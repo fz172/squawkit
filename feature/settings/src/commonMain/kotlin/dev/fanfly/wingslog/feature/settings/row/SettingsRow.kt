@@ -6,9 +6,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedChevron
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
+import dev.fanfly.wingslog.core.ui.grouped.GroupedChevron
+import dev.fanfly.wingslog.core.ui.grouped.GroupedLeadingIconChip
+import dev.fanfly.wingslog.core.ui.grouped.GroupedRow
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.settings.row.SettingsLevel.DEFAULT
 

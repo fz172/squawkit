@@ -9,8 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.ui.common.compose.FormLockedNote
-import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.form.FormLockedNote
+import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res

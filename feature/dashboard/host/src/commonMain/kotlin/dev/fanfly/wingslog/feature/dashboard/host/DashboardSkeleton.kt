@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.common.compose.SkeletonBlock
-import dev.fanfly.wingslog.core.ui.common.compose.skeletonPulse
+import dev.fanfly.wingslog.core.ui.list.SkeletonBlock
+import dev.fanfly.wingslog.core.ui.list.skeletonPulse
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /** The dashboard's outline: title, the status card, the meter strip, then activity. */

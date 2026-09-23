@@ -20,7 +20,7 @@ import dev.fanfly.wingslog.core.template.childrenInSlot
 import dev.fanfly.wingslog.core.template.joinAsPhrase
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.ui.common.compose.LabelledChoice
+import dev.fanfly.wingslog.core.ui.form.LabelledChoice
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.thing.ComponentType

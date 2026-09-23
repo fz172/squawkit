@@ -27,8 +27,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.auth.AuthProvider
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
-import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
+import dev.fanfly.wingslog.core.ui.popup.AlertDialog
+import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.login.LoginButtonHeight
 import dev.fanfly.wingslog.feature.login.LoginButtonLabelStyle

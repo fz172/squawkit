@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
+import dev.fanfly.wingslog.core.ui.swipe.SwipeActionTone
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import org.junit.Test
 

@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.model.settings.Subscription
-import dev.fanfly.wingslog.core.ui.common.compose.LabelledChoice
+import dev.fanfly.wingslog.core.ui.form.LabelledChoice
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.settings.generated.resources.Res

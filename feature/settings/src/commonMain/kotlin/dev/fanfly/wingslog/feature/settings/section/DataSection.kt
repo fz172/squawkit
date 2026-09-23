@@ -4,7 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.grouped.GroupedSection
 import dev.fanfly.wingslog.feature.settings.row.SettingsRow
 import dev.fanfly.wingslog.feature.settings.row.SettingsRowGroup
 import org.jetbrains.compose.resources.stringResource

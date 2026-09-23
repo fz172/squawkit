@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.ui.common.compose.ResolveBubbleMenu
-import dev.fanfly.wingslog.core.ui.common.compose.ResolveMenuAction
+import dev.fanfly.wingslog.core.ui.menu.ResolveBubbleMenu
+import dev.fanfly.wingslog.core.ui.menu.ResolveMenuAction
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.sharedassets.generated.resources.Res

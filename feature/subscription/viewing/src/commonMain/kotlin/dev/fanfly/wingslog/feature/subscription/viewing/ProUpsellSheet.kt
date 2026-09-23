@@ -14,7 +14,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
+import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res

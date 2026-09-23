@@ -20,8 +20,8 @@ import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.listdetail.ListDetailSection
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
-import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
+import dev.fanfly.wingslog.core.ui.list.SkeletonList
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewEvent
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState

@@ -32,10 +32,10 @@ import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.logEmptyHint
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.ui.adaptive.listdetail.ListDetailSection
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
-import dev.fanfly.wingslog.core.ui.common.compose.animateScrollToCenter
-import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
+import dev.fanfly.wingslog.core.ui.list.EmptyState
+import dev.fanfly.wingslog.core.ui.list.SkeletonList
+import dev.fanfly.wingslog.core.ui.list.animateScrollToCenter
+import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState

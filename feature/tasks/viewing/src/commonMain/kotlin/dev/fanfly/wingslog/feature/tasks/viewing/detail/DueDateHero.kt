@@ -11,7 +11,7 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.meter
-import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
+import dev.fanfly.wingslog.core.ui.badge.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
