@@ -141,4 +141,26 @@ class DataLogSketchTest {
 
     assertThat(sketchOf(record, data(0 to column(5f, 5f))).series).isNull()
   }
+
+  @Test
+  fun rowsBeforeTheSensorCameUpStayGaps() {
+    // Forward-filling leaves the leading cells NaN; they must reach the pane as NaN, not as 0.
+    val record = DataLog(
+      series = listOf(
+        series(
+          0,
+          "RPM",
+          DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+          samples = 2,
+          min = 0.0,
+          max = 10.0
+        )
+      ),
+    )
+
+    val sketch = sketchOf(record, data(0 to column(Float.NaN, Float.NaN, 5f, 10f))).series!!
+
+    assertThat(sketch.points[0].isNaN()).isTrue()
+    assertThat(sketch.points.last()).isEqualTo(1f)
+  }
 }

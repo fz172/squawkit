@@ -180,11 +180,19 @@ private fun SketchPane(sketch: Sketch?) {
         .fillMaxWidth()
         .height(SKETCH_HEIGHT),
     ) {
+      // A NaN is a gap — the rows before a sensor came up — and one NaN inside a path voids all
+      // of it, so the pen lifts there and lands again at the next value.
       val path = Path()
+      var penDown = false
       series.points.forEachIndexed { i, value ->
+        if (value.isNaN()) {
+          penDown = false
+          return@forEachIndexed
+        }
         val x = size.width * i / (series.points.size - 1)
         val y = size.height * (1f - value)
-        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        if (penDown) path.lineTo(x, y) else path.moveTo(x, y)
+        penDown = true
       }
       drawPath(path, color, style = Stroke(width = Spacing.hairline.toPx() * 2))
     }

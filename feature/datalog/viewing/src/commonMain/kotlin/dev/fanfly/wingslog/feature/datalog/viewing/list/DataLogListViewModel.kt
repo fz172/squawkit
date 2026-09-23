@@ -70,7 +70,7 @@ sealed interface DataLogListEvent {
 /** One recorded series, as the preview pane lists it: its name and the unit it was recorded in. */
 data class DataLogSeriesChip(val name: String, val unit: String)
 
-/** The series the preview sketches: its name and up to [SKETCH_POINTS] values in 0..1. */
+/** The series the preview sketches: its name and up to [SKETCH_POINTS] values in 0..1, NaN for a gap. */
 data class SketchSeries(val name: String, val points: List<Float>)
 
 /** A loaded sketch; [series] is null when the log has nothing the chart would open with. */
@@ -341,7 +341,7 @@ private val SKETCH_DELAY = 300.milliseconds
  * The series the chart opens with ([defaultLayout]), downsampled to [SKETCH_POINTS] values and
  * normalised to 0..1 of its range — the recording's shape at a glance, not its numbers, and the
  * same line the user sees first after *Open chart*. Nothing for a flat series or one whose column
- * is not numeric.
+ * is not numeric; a cell still empty after forward-filling stays NaN, a gap to draw around.
  */
 internal fun sketchOf(
   record: DataLog,
