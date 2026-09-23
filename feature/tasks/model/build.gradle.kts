@@ -10,6 +10,8 @@ kotlin {
     namespace = "dev.fanfly.wingslog.feature.tasks.model"
     compileSdk = 37
     minSdk = 33
+
+    withHostTest {}
   }
 
   js {
@@ -22,7 +24,14 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
+      implementation(project(":core:datetime"))
+      implementation(project(":feature:search:model"))
       implementation(libs.kotlinx.datetime)
     }
   }
+}
+
+dependencies {
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.truth)
 }

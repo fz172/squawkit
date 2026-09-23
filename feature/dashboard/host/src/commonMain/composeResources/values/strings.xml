@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="thing_load_error">Couldn't load this <xliff:g example="aircraft">%1$s</xliff:g></string>
+  <string name="degraded_title">Needs a newer version of the app</string>
+  <string name="degraded_body">This was set up on a device running a newer version. Nothing has been lost — but this version cannot show or edit it properly, so it is shown exactly as stored.</string>
+  <string name="degraded_stored_details">Stored details</string>
+  <string name="degraded_no_stored_details">No details stored.</string>
+  <string name="degraded_update">Update the app</string>
+  <string name="degraded_reload">Reload</string>
+  <string name="spec_line_label"><xliff:g example="Tail Number">%1$s</xliff:g>:</string>
+  <string name="overview_all_logs">All logs</string>
+  <string name="overview_next_due">Next due</string>
+  <string name="overview_title_with_count"><xliff:g example="Work logs">%1$s</xliff:g> · <xliff:g example="40">%2$d</xliff:g></string>
+  <string name="overview_meters">Meters</string>
+  <string name="overview_meters_as_of">as of <xliff:g example="09/05/2026">%1$s</xliff:g></string>
+  <string name="overview_open_squawks">Open <xliff:g example="squawks">%1$s</xliff:g></string>
+</resources>

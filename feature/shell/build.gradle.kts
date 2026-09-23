@@ -38,7 +38,7 @@ kotlin {
       implementation(project(":core:nav"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
-      implementation(project(":feature:thing:dashboard"))
+      implementation(project(":feature:dashboard:host"))
       implementation(project(":feature:thing:update"))
       implementation(project(":feature:export:update"))
       implementation(project(":feature:fleet:datamanager"))

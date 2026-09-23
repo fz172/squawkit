@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.template.displaySubtitle
 import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellThing
+import dev.fanfly.wingslog.feature.dashboard.host.RecordJump
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
@@ -21,7 +22,6 @@ import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
-import dev.fanfly.wingslog.feature.thing.dashboard.RecordJump
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

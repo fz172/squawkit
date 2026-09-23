@@ -24,6 +24,7 @@ kotlin {
   // logic of its own.
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":feature:tasks:dashboard"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:update"))
       implementation(libs.koin.core)

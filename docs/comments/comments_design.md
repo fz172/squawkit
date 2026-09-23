@@ -127,7 +127,7 @@ can pin it under the scrolling body (`DetailSheet.bottomBar`), where it stays re
 the thread gets. The ⋮ menu appears only on a comment that is both yours and not already deleted.
 
 Both sheets are driven through `CommentThreadController`, a UI-free state machine in `datamanager`.
-The list screen hosts it: `RecordCommentHost` (in `feature/thing/dashboard`) opens one controller
+The list screen hosts it: `RecordCommentHost` (in `feature/comments/datamanager`) opens one controller
 for
 whichever record's sheet is open — derived from the selected squawk or task, so every way a sheet
 closes also closes the thread — in a scope of its own, so closing the sheet stops the collection.

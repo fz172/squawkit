@@ -24,7 +24,6 @@ kotlin {
   // logic of its own.
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":feature:thing:dashboard"))
       implementation(project(":feature:thing:update"))
       implementation(libs.koin.core)
     }

@@ -470,7 +470,7 @@ There is no fleet list screen. The **adaptive shell** (`core/ui/adaptive/shell/A
 
 | Section                               | Source                      | Layout                                                                                                       |
 |---------------------------------------|-----------------------------|--------------------------------------------------------------------------------------------------------------|
-| Dashboard (`feature/thing/dashboard`) | Aggregated                  | Vertical flow: hero → alerts → data card → work logs (compact); the same order with a two-column rail (wide) |
+| Dashboard (`feature/dashboard`) | Aggregated                  | Vertical flow: hero → alerts → data card → work logs (compact); the same order with a two-column rail (wide) |
 | Squawks (`feature/squawk/viewing`)    | `SquawkWithStatus`          | Vertical card list + segmented filter (Open/Closed) — named from the lexicon                                 |
 | Tasks (`feature/tasks/viewing`)       | `MaintenanceTaskWithStatus` | Vertical card list + segmented filter (Due/History)                                                          |
 | Logs (`feature/logs/viewing`)         | `MaintenanceLog`            | Vertical card list + segmented filter                                                                        |
@@ -530,7 +530,7 @@ Four steps, of which the last two are skippable (PRD §8.1):
 
 The shell switches to the new Thing when the form closes.
 
-### 9C. Dashboard (`feature/thing/dashboard/compose/tabs/OverviewTab.kt`)
+### 9C. Dashboard (`feature/dashboard/host/overview/OverviewTab.kt`)
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -643,8 +643,8 @@ An empty Due list shows `EmptyState` with the template's `task_hint`, and — wh
 | FleetEmptyState      | `feature/fleet/viewing/FleetEmptyState.kt`                | Empty account: add a Thing or redeem an invite                                                             |
 | PickThingTypeSheet   | `feature/thing/update/PickThingTypeSheet.kt`              | Bottom sheet, preset grid                                                                                  |
 | StarterPackRoute     | `feature/tasks/update/starter/StarterPackRoute.kt`        | Checklist form with Add / Skip                                                                             |
-| ThingDataCard        | `feature/thing/dashboard/compose/ThingDataCard.kt`        | Spec block, meter readings and component chips; always expanded (§8)                                       |
-| DegradedThingContent | `feature/thing/dashboard/compose/DegradedThingContent.kt` | Read-only fallback for uninterpretable DNA                                                                 |
+| ThingDataCard        | `feature/dashboard/host/overview/ThingDataCard.kt`        | Spec block, meter readings and component chips; always expanded (§8)                                       |
+| DegradedThingContent | `feature/dashboard/host/DegradedThingContent.kt` | Read-only fallback for uninterpretable DNA                                                                 |
 | MaintenanceLogCard   | `feature/logs/viewing/log/compose/MaintenanceLogCard.kt`  | Card with optional component badge + divider                                                               |
 | TaskCard             | `feature/tasks/viewing/TaskCard.kt`                       | Card with icon + label/value + status border                                                               |
 | SquawkCard           | `feature/squawk/viewing/SquawkCard.kt`                    | Card with dual badges + title/desc                                                                         |
