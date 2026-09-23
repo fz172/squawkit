@@ -1,0 +1,208 @@
+package dev.fanfly.wingslog.feature.tasks.update.form.adjustments
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
+import dev.fanfly.wingslog.feature.tasks.update.form.schedule.IntervalNumberInput
+import dev.fanfly.wingslog.feature.tasks.update.form.schedule.ScheduleMode
+import dev.fanfly.wingslog.thing.MeterDef
+import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.select_date
+import wingslog.feature.tasks.update.generated.resources.Res
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_linked
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_unset
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_prefix_at
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_subtitle
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_title
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_was_date
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_was_hours
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+
+/**
+ * The forced next-due controls: a switch, then a date or a meter reading. Shared with the create
+ * form's "First due" section, which is the same override written once — the first cycle is
+ * whatever the user says, and the schedule takes over after the first log clears it.
+ */
+@Composable
+internal fun RescheduleCard(
+  mode: ScheduleMode?,
+  rescheduleOn: Boolean,
+  onToggle: (Boolean) -> Unit,
+  forcedEngineHours: String,
+  onForcedEngineHoursChange: (String) -> Unit,
+  forcedDateMillis: Long?,
+  onDateClick: () -> Unit,
+  meter: MeterDef?,
+  meterUnit: String,
+  title: String = stringResource(Res.string.adj_reschedule_title),
+  subtitle: String = stringResource(Res.string.adj_reschedule_subtitle),
+) {
+  val isLinked = mode == ScheduleMode.LINKED
+  val noMode = mode == null
+  val disabled = isLinked || noMode
+  val primary = MaterialTheme.colorScheme.primary
+  val borderColor =
+    if (rescheduleOn) primary else MaterialTheme.colorScheme.outlineVariant
+
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .alpha(if (disabled) 0.55f else 1f)
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(MaterialTheme.colorScheme.surfaceContainer)
+      .border(
+        Spacing.hairline,
+        borderColor,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      ),
+  ) {
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .clickable(
+          enabled = !disabled,
+          role = Role.Switch,
+        ) { onToggle(!rescheduleOn) }
+        .padding(
+          horizontal = Spacing.large,
+          vertical = Spacing.medium
+        ),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+    ) {
+      Column(modifier = Modifier.weight(1f)) {
+        Text(
+          title,
+          style = MaterialTheme.typography.bodyLarge,
+          fontWeight = FontWeight.SemiBold,
+          color = MaterialTheme.colorScheme.onSurface,
+        )
+        val caption = when {
+          isLinked -> stringResource(Res.string.adj_reschedule_disabled_linked)
+          noMode -> stringResource(Res.string.adj_reschedule_disabled_unset)
+          else -> subtitle
+        }
+        Text(
+          caption,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      Switch(
+        checked = rescheduleOn && !disabled,
+        onCheckedChange = null,
+        enabled = !disabled,
+      )
+    }
+
+    AnimatedVisibility(
+      visible = rescheduleOn && !disabled,
+      enter = fadeIn() + expandVertically(),
+      exit = fadeOut() + shrinkVertically(),
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .border(
+            width = Spacing.hairline,
+            color = MaterialTheme.colorScheme.outlineVariant,
+            shape = RoundedCornerShape(Spacing.none)
+          )
+          .padding(
+            horizontal = Spacing.large,
+            vertical = Spacing.medium
+          ),
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
+      ) {
+        when (mode) {
+          ScheduleMode.TIME, ScheduleMode.SEASONAL -> {
+            val dateStr = forcedDateMillis?.pickerMillisToDate()
+              ?.toDisplayFormat()
+            Row(
+              modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .clickable(role = Role.Button) { onDateClick() }
+                .padding(
+                  horizontal = Spacing.medium,
+                  vertical = Spacing.medium
+                ),
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+              Icon(
+                Icons.Default.CalendarToday,
+                contentDescription = null,
+                modifier = Modifier.size(Spacing.large),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+              Text(
+                dateStr ?: stringResource(CoreRes.string.select_date),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (dateStr != null) FontWeight.Bold else FontWeight.Normal,
+                color = if (dateStr != null) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+            if (forcedDateMillis != null) {
+              Text(
+                stringResource(Res.string.adj_reschedule_was_date),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
+
+          ScheduleMode.HOURS -> {
+            IntervalNumberInput(
+              value = forcedEngineHours,
+              onChange = { onForcedEngineHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
+              suffix = meterUnit,
+              prefix = stringResource(Res.string.adj_reschedule_prefix_at),
+              keyboard = if (meter?.decimal != false) KeyboardType.Decimal else KeyboardType.Number,
+            )
+            if (forcedEngineHours.isNotBlank()) {
+              Text(
+                stringResource(Res.string.adj_reschedule_was_hours),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
+
+          else -> Unit
+        }
+      }
+    }
+  }
+}

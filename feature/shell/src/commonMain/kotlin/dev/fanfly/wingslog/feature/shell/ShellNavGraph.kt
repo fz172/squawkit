@@ -21,9 +21,9 @@ import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
 import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
+import dev.fanfly.wingslog.feature.tasks.update.form.AddTaskRoute
+import dev.fanfly.wingslog.feature.tasks.update.form.EditTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.starter.StarterPackRoute
-import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
-import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel

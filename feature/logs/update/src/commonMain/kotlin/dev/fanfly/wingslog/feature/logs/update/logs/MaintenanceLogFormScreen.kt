@@ -76,7 +76,7 @@ import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogForm
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.logs.viewing.log.compose.DeleteLogConfirmDialog
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
-import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
+import dev.fanfly.wingslog.feature.tasks.update.picker.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
 import dev.fanfly.wingslog.id.ThingId
 import kotlin.time.Instant

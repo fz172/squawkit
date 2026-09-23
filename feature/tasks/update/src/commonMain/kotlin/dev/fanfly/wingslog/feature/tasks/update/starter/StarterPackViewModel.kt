@@ -10,39 +10,17 @@ import dev.fanfly.wingslog.core.analytics.StarterTasksOffered
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
-import dev.fanfly.wingslog.thing.Lexicon
-import dev.fanfly.wingslog.thing.StarterTask
-import dev.fanfly.wingslog.thing.ThingTemplate
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
-
-data class StarterPackItem(
-  val task: StarterTask,
-  val selected: Boolean,
-)
-
-data class StarterPackUiState(
-  val isLoading: Boolean = true,
-  val template: ThingTemplate? = null,
-  val lexicon: Lexicon = GenericLexicon.LEXICON,
-  val items: List<StarterPackItem> = emptyList(),
-  val isSaving: Boolean = false,
-  /** Set once the step is over, either way; how many were written says which way. */
-  val isDone: Boolean = false,
-  val acceptedCount: Int = 0,
-) {
-  val selectedCount: Int get() = items.count { it.selected }
-}
 
 /**
  * Step 4 of creating a Thing (PRD §8.1): the template's recommended schedule, offered once.
