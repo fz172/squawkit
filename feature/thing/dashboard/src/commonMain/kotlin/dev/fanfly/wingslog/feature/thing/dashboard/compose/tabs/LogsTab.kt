@@ -17,9 +17,9 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
-import dev.fanfly.wingslog.feature.logs.viewing.log.compose.MaintenanceLogListContent
-import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListEvent
-import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListViewModel
+import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListContent
+import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListEvent
+import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.id.DataLogId
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
