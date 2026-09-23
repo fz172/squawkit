@@ -48,7 +48,7 @@ Always read these first so you copy the current conventions (namespaces, compile
 - `feature/tasks/di/build.gradle.kts`
 - `feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/TaskDataManager.kt`
 - `feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/TasksDataManagerModule.kt`
-- `feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/viewmodel/TasksUpdateModule.kt`
+- `feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/di/TasksUpdateModule.kt`
 - `feature/tasks/di/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/di/TasksModule.kt` — the uber-module shape
 
 If the user's feature is more similar to `feature/logs` (no compute layer), read that one too.

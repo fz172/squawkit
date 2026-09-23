@@ -46,7 +46,7 @@ import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogSectionContent
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogUploadFab
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
-import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
+import dev.fanfly.wingslog.feature.tasks.viewing.detail.TaskDetailSheet
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.DegradedThingContent
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentComposer
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentThread
