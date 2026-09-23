@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.export.update
+package dev.fanfly.wingslog.feature.export.update.selection
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -10,7 +10,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryOutcome
-import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportHistoryViewModel
+import dev.fanfly.wingslog.feature.export.update.rememberExportFileDownloader
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -23,9 +23,11 @@ import wingslog.feature.export.sharedassets.generated.resources.export_history_d
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_throttled
 
 @Composable
-fun ExportHistoryRoute(
+fun ExportSelectionRoute(
   navController: NavController,
-  viewModel: ExportHistoryViewModel = koinViewModel(),
+  onNavigateToHistory: () -> Unit,
+  onSeePlans: () -> Unit,
+  viewModel: ExportViewModel = koinViewModel(),
 ) {
   val state by viewModel.state.collectAsStateWithLifecycle()
   val downloader = rememberExportFileDownloader()
@@ -56,10 +58,18 @@ fun ExportHistoryRoute(
     }
   }
 
-  ExportHistoryScreen(
+  ExportSelectionScreen(
     state = state,
     onNavigateBack = { navController.popBackStack() },
-    onNew = { navController.popBackStack() },
+    onNavigateToHistory = onNavigateToHistory,
+    onToggleThing = viewModel::onToggleThing,
+    onSelectAll = viewModel::onSelectAll,
+    onClearAll = viewModel::onClearAll,
+    onToggleFormat = viewModel::onToggleFormat,
+    onDateRangeChange = viewModel::onDateRangeChange,
+    onCustomRangeChange = viewModel::onCustomRangeChange,
+    onExport = viewModel::onExport,
+    onCancel = viewModel::onCancel,
     onDownloadExport = { exportId, filePath, fileName ->
       coroutineScope.launch {
         val success = downloader.download(filePath, fileName) {
@@ -68,10 +78,13 @@ fun ExportHistoryRoute(
         snackbarHostState.showSnackbar(if (success) downloadedMessage else downloadFailedMessage)
       }
     },
-    onResendDelivery = { record -> viewModel.onResendDelivery(record.export_id) },
-    onRetryDelivery = { record -> viewModel.onRetryDelivery(record.export_id) },
-    onSaveToDevice = { record -> viewModel.onSaveToDevice(record.export_id) },
-    onDelete = { record -> viewModel.onDelete(record.export_id) },
+    onSendToEmail = viewModel::onSendToEmail,
+    onDone = {
+      viewModel.onDone()
+      navController.popBackStack()
+    },
+    onRetry = viewModel::onRetry,
+    onSeePlans = onSeePlans,
     snackbarHostState = snackbarHostState,
   )
 }

@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.export.di
 
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.platformExportModule
-import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUpdateModule
+import dev.fanfly.wingslog.feature.export.update.di.exportUpdateModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
 

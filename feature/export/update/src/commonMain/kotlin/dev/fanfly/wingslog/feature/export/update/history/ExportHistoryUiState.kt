@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.export.update.viewmodel
+package dev.fanfly.wingslog.feature.export.update.history
 
 import dev.fanfly.wingslog.export.ExportRecord
 
