@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.settings.section
 
-import androidx.compose.foundation.layout.only
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
