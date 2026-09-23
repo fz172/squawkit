@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
@@ -14,6 +15,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import kotlin.time.Clock
@@ -118,4 +120,12 @@ internal fun DueDateHero(dueStatus: DueMetadata) {
       }
     }
   }
+}
+
+@Composable
+private fun dueStatusColor(status: DueStatus): Color = when (status) {
+  DueStatus.OVERDUE -> MaterialTheme.statusColors.critical.accent
+  DueStatus.DUE_SOON -> MaterialTheme.statusColors.caution.accent
+  DueStatus.COMPLIED -> MaterialTheme.statusColors.positive.accent
+  DueStatus.NORMAL -> MaterialTheme.statusColors.positive.accent
 }

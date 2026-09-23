@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.update.form.compliance
+package dev.fanfly.wingslog.feature.tasks.update
 
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.template.LexiconFormatter

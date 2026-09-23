@@ -9,9 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.tasks.update.form.identity.IdentityRadioItem
-import dev.fanfly.wingslog.feature.tasks.update.form.identity.IdentitySection
-import dev.fanfly.wingslog.feature.tasks.update.form.identity.taskLockedReason
+import dev.fanfly.wingslog.feature.tasks.update.abbreviationFirstLabel
+import dev.fanfly.wingslog.feature.tasks.update.form.IdentityRadioItem
+import dev.fanfly.wingslog.feature.tasks.update.form.IdentitySection
+import dev.fanfly.wingslog.feature.tasks.update.form.taskLockedReason
 import dev.fanfly.wingslog.thing.ComplianceType
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res

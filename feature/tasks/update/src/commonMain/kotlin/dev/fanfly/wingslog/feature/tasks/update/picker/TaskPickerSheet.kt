@@ -20,7 +20,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
-import dev.fanfly.wingslog.feature.tasks.update.form.compliance.pluralLabel
+import dev.fanfly.wingslog.feature.tasks.update.pluralLabel
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource

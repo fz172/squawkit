@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.update.form.identity
+package dev.fanfly.wingslog.feature.tasks.update.form
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

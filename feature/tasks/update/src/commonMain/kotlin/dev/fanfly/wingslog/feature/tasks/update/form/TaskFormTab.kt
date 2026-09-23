@@ -39,13 +39,13 @@ enum class TaskFormTab {
     }
 }
 
-var BASIC_TAB = TaskTabSpec(Icons.Default.Edit, Res.string.basics)
+internal val BASIC_TAB = TaskTabSpec(Icons.Default.Edit, Res.string.basics)
 
-var COMPLIANCE_TAB = TaskTabSpec(Icons.Default.Info, Res.string.compliance)
+internal val COMPLIANCE_TAB = TaskTabSpec(Icons.Default.Info, Res.string.compliance)
 
-var SCHEDULE_TAB = TaskTabSpec(Icons.Default.DateRange, Res.string.schedule)
+internal val SCHEDULE_TAB = TaskTabSpec(Icons.Default.DateRange, Res.string.schedule)
 
-var ADJUSTMENT_TAB = TaskTabSpec(Icons.Default.Tune, Res.string.adjustments)
+internal val ADJUSTMENT_TAB = TaskTabSpec(Icons.Default.Tune, Res.string.adjustments)
 
 internal val TaskFormTab.spec: TaskTabSpec
   get() = when (this) {
