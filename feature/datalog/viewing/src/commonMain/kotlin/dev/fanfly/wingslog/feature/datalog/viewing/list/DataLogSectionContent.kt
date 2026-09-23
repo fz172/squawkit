@@ -25,7 +25,9 @@ import dev.fanfly.wingslog.core.datetime.toMonthHeading
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
+import dev.fanfly.wingslog.core.ui.adaptive.compose.DetailPresentation
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ListDetailSection
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalDetailPresentation
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
@@ -132,10 +134,17 @@ fun DataLogSectionContent(
         else -> ListDetailSection(
           detail = state.preview?.let { preview ->
             {
+              // A sheet or drawer is a dialog window; left open behind the viewer it composes
+              // again during the swipe back and captures the gesture, so back bounces to the
+              // chart. The pane has no window and stays for the return.
+              val paned = LocalDetailPresentation.current == DetailPresentation.Pane
               DataLogPreviewSheet(
                 preview = preview,
                 onDismiss = viewModel::dismissPreview,
-                onOpenChart = { onOpen(preview.row.id) },
+                onOpenChart = {
+                  if (!paned) viewModel.dismissPreview()
+                  onOpen(preview.row.id)
+                },
                 onDelete = if (state.uploadGate == UploadGate.SignedIn) {
                   { viewModel.onDeleteClick(preview.row) }
                 } else null,

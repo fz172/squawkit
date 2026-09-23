@@ -40,7 +40,8 @@ class DataLogSketchTest {
     )
 
   @Test
-  fun recognisedSeriesComeBeforeTheMostSampledOnes() {
+  fun sketchesTheSeriesTheChartOpensWith() {
+    // Engine 1 RPM is the chart's default, however much else was sampled.
     val record = DataLog(
       series = listOf(
         series(
@@ -68,54 +69,40 @@ class DataLogSketchTest {
     val data =
       data(0 to column(1f, 2f), 1 to column(1f, 2f), 2 to column(1f, 2f))
 
-    assertThat(sketchOf(record, data).map { it.name }).containsExactly(
-      "E1 RPM",
-      "E1 OilP"
-    )
-      .inOrder()
+    assertThat(sketchOf(record, data).series?.name).isEqualTo("E1 RPM")
   }
 
   @Test
-  fun picksTheTwoFullestNumericSeries() {
+  fun fallsBackToTheFirstPlottableSeriesLikeTheChart() {
     val record = DataLog(
       series = listOf(
         series(
           0,
-          "RPM",
-          DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
-          samples = 500
-        ),
-        series(
-          1,
           "Mode",
           DataLogSeriesKind.DATA_LOG_SERIES_KIND_TEXT,
           samples = 900
         ),
         series(
-          2,
+          1,
           "Oil Press",
           DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
           samples = 800
         ),
         series(
-          3,
+          2,
           "CHT",
           DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
           samples = 700
         ),
       ),
     )
-    val data =
-      data(0 to column(1f, 2f), 2 to column(1f, 2f), 3 to column(1f, 2f))
+    val data = data(1 to column(1f, 2f), 2 to column(1f, 2f))
 
-    val sketch = sketchOf(record, data)
-
-    assertThat(sketch.map { it.name }).containsExactly("Oil Press", "CHT")
-      .inOrder()
+    assertThat(sketchOf(record, data).series?.name).isEqualTo("Oil Press")
   }
 
   @Test
-  fun normalisesEachSeriesToItsOwnRangeAndDownsamples() {
+  fun normalisesToTheSeriesRangeAndDownsamples() {
     val values = FloatArray(1000) { it.toFloat() }
     val record = DataLog(
       series = listOf(
@@ -130,7 +117,7 @@ class DataLogSketchTest {
       ),
     )
 
-    val sketch = sketchOf(record, data(0 to column(*values))).single()
+    val sketch = sketchOf(record, data(0 to column(*values))).series!!
 
     assertThat(sketch.points).hasSize(SKETCH_POINTS)
     assertThat(sketch.points.first()).isEqualTo(0f)
@@ -152,6 +139,28 @@ class DataLogSketchTest {
       ),
     )
 
-    assertThat(sketchOf(record, data(0 to column(5f, 5f)))).isEmpty()
+    assertThat(sketchOf(record, data(0 to column(5f, 5f))).series).isNull()
+  }
+
+  @Test
+  fun rowsBeforeTheSensorCameUpStayGaps() {
+    // Forward-filling leaves the leading cells NaN; they must reach the pane as NaN, not as 0.
+    val record = DataLog(
+      series = listOf(
+        series(
+          0,
+          "RPM",
+          DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+          samples = 2,
+          min = 0.0,
+          max = 10.0
+        )
+      ),
+    )
+
+    val sketch = sketchOf(record, data(0 to column(Float.NaN, Float.NaN, 5f, 10f))).series!!
+
+    assertThat(sketch.points[0].isNaN()).isTrue()
+    assertThat(sketch.points.last()).isEqualTo(1f)
   }
 }
