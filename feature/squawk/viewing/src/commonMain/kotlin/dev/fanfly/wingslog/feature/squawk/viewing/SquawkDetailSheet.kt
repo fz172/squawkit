@@ -15,7 +15,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +29,8 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
@@ -86,16 +87,15 @@ fun SquawkDetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     bottomBar = commentComposer,
-    actionSlot = {
-      if (onEditClick != null) {
-        TextButton(onClick = onEditClick) {
-          Text(
-            stringResource(
-              Res.string.edit_squawk,
-              LocalThingLexicon.current.squawkNoun.singular,
-            ),
-          )
-        }
+    headerAction = onEditClick?.let {
+      {
+        DetailSheetEditAction(
+          label = stringResource(
+            Res.string.edit_squawk,
+            LocalThingLexicon.current.squawkNoun.singular,
+          ),
+          onClick = it,
+        )
       }
     },
     headerSlot = {
@@ -135,39 +135,44 @@ fun SquawkDetailSheet(
       )
     }
 
-    when (item.status) {
-      SquawkStatus.OPEN -> if (onFixedClick != null && onDismissNoWorkPlanned != null) {
-        DetailSheetAction(
-          label = stringResource(Res.string.resolve_issue),
-          onClick = { resolveMenuOpen = true },
-          modifier = Modifier.padding(top = Spacing.small),
-          menu = {
-            ResolveOptionsMenu(
-              expanded = resolveMenuOpen,
-              onDismissRequest = { resolveMenuOpen = false },
-              onDismissNoWorkPlanned = {
-                resolveMenuOpen = false
-                onDismissNoWorkPlanned()
-              },
-              onFixedClick = {
-                resolveMenuOpen = false
-                onFixedClick()
-              },
-            )
-          },
-        )
-      }
+    val canAct = when (item.status) {
+      SquawkStatus.OPEN -> onFixedClick != null && onDismissNoWorkPlanned != null
+      SquawkStatus.DISMISSED -> onReopenClick != null
+      else -> false
+    }
+    if (canAct) DetailSheetActionRow(modifier = Modifier.padding(top = Spacing.small)) {
+      when (item.status) {
+        SquawkStatus.OPEN -> if (onFixedClick != null && onDismissNoWorkPlanned != null) {
+          DetailSheetAction(
+            label = stringResource(Res.string.resolve_issue),
+            onClick = { resolveMenuOpen = true },
+            primary = true,
+            menu = {
+              ResolveOptionsMenu(
+                expanded = resolveMenuOpen,
+                onDismissRequest = { resolveMenuOpen = false },
+                onDismissNoWorkPlanned = {
+                  resolveMenuOpen = false
+                  onDismissNoWorkPlanned()
+                },
+                onFixedClick = {
+                  resolveMenuOpen = false
+                  onFixedClick()
+                },
+              )
+            },
+          )
+        }
 
-      SquawkStatus.DISMISSED -> if (onReopenClick != null) {
-        DetailSheetAction(
-          label = stringResource(Res.string.reopen_issue),
-          onClick = onReopenClick,
-          primary = false,
-          modifier = Modifier.padding(top = Spacing.small),
-        )
-      }
+        SquawkStatus.DISMISSED -> if (onReopenClick != null) {
+          DetailSheetAction(
+            label = stringResource(Res.string.reopen_issue),
+            onClick = onReopenClick,
+          )
+        }
 
-      else -> Unit
+        else -> Unit
+      }
     }
 
     Spacer(Modifier.height(Spacing.medium))

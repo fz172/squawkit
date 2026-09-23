@@ -22,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +40,7 @@ import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -91,16 +91,15 @@ fun MaintenanceLogDetailSheet(
   DetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
-    actionSlot = {
-      if (onEditClick != null) {
-        TextButton(onClick = onEditClick) {
-          Text(
-            stringResource(
-              MaintenanceRes.string.edit_log,
-              LocalThingLexicon.current.logNoun.singular,
-            )
-          )
-        }
+    headerAction = onEditClick?.let {
+      {
+        DetailSheetEditAction(
+          label = stringResource(
+            MaintenanceRes.string.edit_log,
+            LocalThingLexicon.current.logNoun.singular,
+          ),
+          onClick = it,
+        )
       }
     },
     headerSlot = {

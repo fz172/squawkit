@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -23,7 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -38,7 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -67,7 +71,8 @@ import wingslog.core.sharedassets.generated.resources.dismiss
  * Features:
  * - Consistent horizontal padding ([dev.fanfly.wingslog.core.ui.theme.Spacing.extraLarge]).
  * - Built-in vertical scrolling.
- * - Standardized header layout with a title slot and an optional action slot.
+ * - Standardized header layout: a title slot with an optional icon-only [headerAction] at its end;
+ *   the record's actions go in a [DetailSheetActionRow] in the body.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,7 +80,8 @@ fun DetailSheet(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-  actionSlot: (@Composable () -> Unit)? = null,
+  /** A [DetailSheetEditAction], typically — small enough to share the title row. */
+  headerAction: (@Composable () -> Unit)? = null,
   /** Pinned under the scrolling body — for an input that must stay reachable, such as comments. */
   bottomBar: (@Composable () -> Unit)? = null,
   headerSlot: @Composable ColumnScope.() -> Unit,
@@ -84,7 +90,7 @@ fun DetailSheet(
   if (LocalDetailPresentation.current == DetailPresentation.Pane) {
     DetailBody(
       fillHeight = true,
-      actionSlot = actionSlot,
+      headerAction = headerAction,
       bottomBar = bottomBar,
       headerSlot = headerSlot,
       content = content,
@@ -99,7 +105,7 @@ fun DetailSheet(
       modifier = modifier,
     ) {
       DetailBody(
-        actionSlot = actionSlot,
+        headerAction = headerAction,
         bottomBar = bottomBar,
         headerSlot = headerSlot,
         content = content
@@ -109,7 +115,7 @@ fun DetailSheet(
     DetailEndDrawer(onDismiss = onDismiss, modifier = modifier) {
       DetailBody(
         fillHeight = true,
-        actionSlot = actionSlot,
+        headerAction = headerAction,
         bottomBar = bottomBar,
         headerSlot = headerSlot,
         content = content
@@ -120,7 +126,7 @@ fun DetailSheet(
 
 @Composable
 private fun DetailBody(
-  actionSlot: (@Composable () -> Unit)?,
+  headerAction: (@Composable () -> Unit)?,
   bottomBar: (@Composable () -> Unit)?,
   headerSlot: @Composable ColumnScope.() -> Unit,
   content: @Composable ColumnScope.() -> Unit,
@@ -158,20 +164,12 @@ private fun DetailBody(
           Spacer(Modifier.height(Spacing.large))
         }
 
-        // Header Row
         Row(
           modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
+          verticalAlignment = Alignment.Top,
         ) {
-          Column(
-            modifier = Modifier
-              .weight(1f)
-              .padding(end = Spacing.small),
-          ) {
-            headerSlot()
-          }
-          actionSlot?.invoke()
+          Column(modifier = Modifier.weight(1f)) { headerSlot() }
+          headerAction?.invoke()
         }
 
         // Body Content
@@ -246,40 +244,86 @@ private fun DetailEndDrawer(
 }
 
 /**
- * A detail sheet's state-changing action — resolve, reopen, log work. It lives here rather than on
- * the edit form because it changes what a record *is*, not what its fields say. [menu] is anchored
- * to the button, for an action that opens options.
+ * The row a sheet's actions sit in — state changes, the route to the edit form, delete. One row,
+ * every action the same width and height, so a sheet with one action and a sheet with three read
+ * the same way.
  */
 @Composable
-fun DetailSheetAction(
+fun DetailSheetActionRow(
+  modifier: Modifier = Modifier,
+  content: @Composable RowScope.() -> Unit,
+) {
+  Row(
+    modifier = modifier.fillMaxWidth()
+      .height(IntrinsicSize.Min),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    content = content,
+  )
+}
+
+/**
+ * One action in a [DetailSheetActionRow]. [primary] is the filled one — at most one per row — and
+ * [destructive] is outlined in the error colour. A label wraps rather than truncates when the row
+ * is crowded; [menu] is anchored to the button, for an action that opens options.
+ */
+@Composable
+fun RowScope.DetailSheetAction(
   label: String,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-  primary: Boolean = true,
+  primary: Boolean = false,
+  destructive: Boolean = false,
   menu: @Composable () -> Unit = {},
 ) {
-  Box(modifier = modifier) {
+  Box(
+    modifier = Modifier.weight(1f)
+      .fillMaxHeight(),
+  ) {
     val shape = RoundedCornerShape(Spacing.buttonCornerRadius)
-    val content: @Composable RowScope.() -> Unit = {
-      Text(text = label.uppercase(), fontWeight = FontWeight.Bold, maxLines = 1)
-    }
-    val buttonModifier = Modifier.fillMaxWidth()
-      .height(Spacing.buttonHeight)
-    if (primary) {
-      Button(
+    val buttonModifier = Modifier.fillMaxSize()
+    val padding = PaddingValues(Spacing.small)
+    val text: @Composable RowScope.() -> Unit =
+      { Text(label, textAlign = TextAlign.Center) }
+    when {
+      destructive -> OutlinedButton(
         onClick = onClick,
         modifier = buttonModifier,
         shape = shape,
-        content = content
+        contentPadding = padding,
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        content = text,
       )
-    } else {
-      OutlinedButton(
+
+      primary -> Button(
         onClick = onClick,
         modifier = buttonModifier,
         shape = shape,
-        content = content
+        contentPadding = padding,
+        content = text,
+      )
+
+      else -> OutlinedButton(
+        onClick = onClick,
+        modifier = buttonModifier,
+        shape = shape,
+        contentPadding = padding,
+        content = text,
       )
     }
     menu()
+  }
+}
+
+/**
+ * The route to the edit form, on the title row — icon only, because updating a record is the rare
+ * action next to resolving or logging against it, and a labelled button there squeezes the title.
+ */
+@Composable
+fun DetailSheetEditAction(
+  label: String,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  IconButton(onClick = onClick, modifier = modifier) {
+    Icon(Icons.Outlined.Edit, contentDescription = label)
   }
 }

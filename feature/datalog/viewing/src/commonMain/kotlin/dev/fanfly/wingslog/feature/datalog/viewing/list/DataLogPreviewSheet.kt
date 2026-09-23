@@ -14,7 +14,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +25,7 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -82,17 +82,22 @@ fun DataLogPreviewSheet(
         )
       }
     },
-    actionSlot = onDelete?.let {
-      {
-        TextButton(onClick = it) { Text(stringResource(CoreRes.string.delete)) }
-      }
-    },
   ) {
     Spacer(Modifier.height(Spacing.medium))
-    DetailSheetAction(
-      label = stringResource(Res.string.data_log_open_chart),
-      onClick = onOpenChart,
-    )
+    DetailSheetActionRow {
+      DetailSheetAction(
+        label = stringResource(Res.string.data_log_open_chart),
+        onClick = onOpenChart,
+        primary = true,
+      )
+      if (onDelete != null) {
+        DetailSheetAction(
+          label = stringResource(CoreRes.string.delete),
+          onClick = onDelete,
+          destructive = true,
+        )
+      }
+    }
     Spacer(Modifier.height(Spacing.large))
 
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {

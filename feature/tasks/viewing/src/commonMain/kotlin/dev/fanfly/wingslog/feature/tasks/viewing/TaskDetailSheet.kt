@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.tasks.viewing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +12,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +27,8 @@ import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetEditAction
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
@@ -103,37 +103,24 @@ fun TaskDetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     bottomBar = commentComposer,
-    actionSlot = {
-      if (onEditClick != null) {
-        TextButton(onClick = onEditClick) {
-          Text(stringResource(SharedRes.string.edit_task))
-        }
-      }
-    },
-    headerSlot = {
-      // When a badge is visible it occupies this slot and centers with the Edit button.
-      // When there is no badge the title takes this slot so it aligns with the button instead.
-      val badgeVisible =
-        dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON
-      if (badgeVisible) {
-        StatusBadge(dueStatus)
-      } else {
-        Text(
-          text = card.title,
-          style = MaterialTheme.typography.displaySmall,
+    headerAction = onEditClick?.let {
+      {
+        DetailSheetEditAction(
+          label = stringResource(SharedRes.string.edit_task),
+          onClick = it,
         )
       }
     },
-  ) {
-    // Title shown in content only when a badge occupied the header slot
-    val badgeVisible =
-      dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON
-    if (badgeVisible) {
+    headerSlot = {
+      if (dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON) {
+        StatusBadge(dueStatus)
+      }
       Text(
         text = card.title,
         style = MaterialTheme.typography.displaySmall,
       )
-    }
+    },
+  ) {
 
     // Line 1: compliance type badge (SB / AD), if present
     val typeLabel = when (card.type) {
@@ -212,15 +199,10 @@ fun TaskDetailSheet(
     if (
       onLogWorkClick != null && onSkipCycleClick != null && dueStatus.status != DueStatus.COMPLIED
     ) {
-      Row(
-        modifier = Modifier.padding(top = Spacing.small),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-      ) {
+      DetailSheetActionRow(modifier = Modifier.padding(top = Spacing.small)) {
         DetailSheetAction(
           label = stringResource(SharedRes.string.skip_this_cycle_option),
           onClick = onSkipCycleClick,
-          primary = false,
-          modifier = Modifier.weight(1f),
         )
         DetailSheetAction(
           label = stringResource(
@@ -228,7 +210,7 @@ fun TaskDetailSheet(
             LocalThingLexicon.current.logNoun.singular,
           ),
           onClick = onLogWorkClick,
-          modifier = Modifier.weight(1f),
+          primary = true,
         )
       }
     }
