@@ -126,7 +126,7 @@ fun EditTaskRoute(
           complianceDetails = updatedCard.compliance_details,
           isOneTime = updatedCard.is_one_time,
           forceDueDate = updatedCard.force_due_date,
-          forceDueEngine = updatedCard.forcedDueMeter()?.second ?: 0f,
+          forceDueEngine = updatedCard.forcedDueMeter()?.value ?: 0f,
           forceCompliedStatus = updatedCard.force_complied_status,
           notes = updatedCard.notes,
           onSuccess = {

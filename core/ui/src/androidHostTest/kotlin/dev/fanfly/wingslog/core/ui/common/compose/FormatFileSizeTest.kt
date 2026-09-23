@@ -13,28 +13,28 @@ class FormatFileSizeTest {
   @Test
   fun zeroOrNegative_usesZeroKb() {
     assertThat(fileSizeParts(0L))
-      .isEqualTo(Res.string.file_size_zero_kb to null)
+      .isEqualTo(FileSizeParts(Res.string.file_size_zero_kb, null))
     assertThat(fileSizeParts(-5L))
-      .isEqualTo(Res.string.file_size_zero_kb to null)
+      .isEqualTo(FileSizeParts(Res.string.file_size_zero_kb, null))
   }
 
   @Test
   fun belowOneKb_showsBytes() {
-    assertThat(fileSizeParts(1L)).isEqualTo(Res.string.file_size_bytes to "1")
-    assertThat(fileSizeParts(999L)).isEqualTo(Res.string.file_size_bytes to "999")
+    assertThat(fileSizeParts(1L)).isEqualTo(FileSizeParts(Res.string.file_size_bytes, "1"))
+    assertThat(fileSizeParts(999L)).isEqualTo(FileSizeParts(Res.string.file_size_bytes, "999"))
   }
 
   @Test
   fun kbRange_roundsUp() {
-    assertThat(fileSizeParts(1_000L)).isEqualTo(Res.string.file_size_kb to "1")
-    assertThat(fileSizeParts(1_001L)).isEqualTo(Res.string.file_size_kb to "2")
-    assertThat(fileSizeParts(999_999L)).isEqualTo(Res.string.file_size_kb to "1000")
+    assertThat(fileSizeParts(1_000L)).isEqualTo(FileSizeParts(Res.string.file_size_kb, "1"))
+    assertThat(fileSizeParts(1_001L)).isEqualTo(FileSizeParts(Res.string.file_size_kb, "2"))
+    assertThat(fileSizeParts(999_999L)).isEqualTo(FileSizeParts(Res.string.file_size_kb, "1000"))
   }
 
   @Test
   fun mbRange_oneDecimalPlace() {
-    assertThat(fileSizeParts(1_000_000L)).isEqualTo(Res.string.file_size_mb to "1.0")
-    assertThat(fileSizeParts(25_960_000L)).isEqualTo(Res.string.file_size_mb to "26.0")
-    assertThat(fileSizeParts(26_214_400L)).isEqualTo(Res.string.file_size_mb to "26.2")
+    assertThat(fileSizeParts(1_000_000L)).isEqualTo(FileSizeParts(Res.string.file_size_mb, "1.0"))
+    assertThat(fileSizeParts(25_960_000L)).isEqualTo(FileSizeParts(Res.string.file_size_mb, "26.0"))
+    assertThat(fileSizeParts(26_214_400L)).isEqualTo(FileSizeParts(Res.string.file_size_mb, "26.2"))
   }
 }

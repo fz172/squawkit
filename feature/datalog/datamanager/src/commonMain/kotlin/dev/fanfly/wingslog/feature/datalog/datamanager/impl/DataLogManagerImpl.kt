@@ -229,8 +229,8 @@ class DataLogManagerImpl(
           sample_rate_hz = parsed.sampleRateHz,
           series = parsed.series,
           airborne = DerivedFields.airborne(parsed),
-          end_latitude = end?.first ?: 0.0,
-          end_longitude = end?.second ?: 0.0,
+          end_latitude = end?.latitude ?: 0.0,
+          end_longitude = end?.longitude ?: 0.0,
         )
       } else {
         record

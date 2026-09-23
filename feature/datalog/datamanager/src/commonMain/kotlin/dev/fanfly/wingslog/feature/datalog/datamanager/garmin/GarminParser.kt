@@ -397,9 +397,9 @@ class GarminParser : DataLogParser {
           val split = longNames.map(::splitUnit)
           return Layout(
             format = DataLogFormat.DATA_LOG_FORMAT_GARMIN_G3X,
-            names = split.map { it.first },
+            names = split.map { it.name },
             shortNames = shortNames,
-            units = split.map { it.second },
+            units = split.map { it.unit },
           )
         }
         // G1000: the short name is the only name there is, so it is also the display name.

@@ -446,13 +446,13 @@ private fun PanelHeader(state: ManageAccessUiState, onLeading: () -> Unit) {
 }
 
 @Composable
-private fun panelTitles(state: ManageAccessUiState): Pair<String, String> =
+private fun panelTitles(state: ManageAccessUiState): PanelTitles =
   when (state.view) {
-    AccessPanelView.MAIN -> stringResource(Res.string.manage_access_title) to state.thingLabel
-    AccessPanelView.INVITE -> stringResource(
-      Res.string.invite_title,
-      LocalThingLexicon.current.thingNoun.singular,
-    ) to state.thingLabel
+    AccessPanelView.MAIN -> PanelTitles(stringResource(Res.string.manage_access_title), state.thingLabel)
+    AccessPanelView.INVITE -> PanelTitles(
+      stringResource(Res.string.invite_title, LocalThingLexicon.current.thingNoun.singular),
+      state.thingLabel,
+    )
 
     AccessPanelView.CODE -> {
       val invite = state.activeInvite
@@ -464,7 +464,7 @@ private fun panelTitles(state: ManageAccessUiState): Pair<String, String> =
       } else {
         ""
       }
-      stringResource(Res.string.manage_access_code_title) to subtitle
+      PanelTitles(stringResource(Res.string.manage_access_code_title), subtitle)
     }
 
     AccessPanelView.MEMBER -> {
@@ -474,7 +474,7 @@ private fun panelTitles(state: ManageAccessUiState): Pair<String, String> =
           .orEmpty()
       val subtitle = member?.let { roleLabel(it.role, it.isHost) }
         .orEmpty()
-      name to subtitle
+      PanelTitles(name, subtitle)
     }
   }
 

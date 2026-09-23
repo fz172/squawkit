@@ -251,15 +251,19 @@ private fun sharedThingScopePrefix(
 private fun sharedThingIn(
   row: DirtyRow,
   uid: String
-): Pair<String, String>? {
+): SharedThingRef? {
   val parts = parseScopePath(row.scope_path)
   if (parts.size < 2 || parts[0] != "users") return null
   val hostUid = parts[1]
   if (hostUid == uid) return null
 
   return when {
-    parts.size >= 4 && parts[2] == "thing" -> hostUid to parts[3]
-    parts.size == 2 && row.collection == CollectionKind.Thing -> hostUid to row.id
+    parts.size >= 4 && parts[2] == "thing" -> SharedThingRef(hostUid, parts[3])
+    parts.size == 2 && row.collection == CollectionKind.Thing -> SharedThingRef(
+      hostUid,
+      row.id
+    )
+
     else -> null
   }
 }

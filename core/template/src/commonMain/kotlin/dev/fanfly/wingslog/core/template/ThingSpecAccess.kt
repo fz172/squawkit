@@ -211,7 +211,7 @@ private fun walkPreservingOrder(
  * Indexing within a slot rather than the child list keeps a path stable when other slots are
  * added beside it, and matches how ids are derived.
  */
-typealias ComponentPath = List<Pair<String, Int>>
+typealias ComponentPath = List<ComponentPathStep>
 
 private fun List<Component>.at(slotKey: String, index: Int): Component? =
   filter { it.slot_key == slotKey }.getOrNull(index)
@@ -297,7 +297,7 @@ fun Thing.ensureComponentAt(path: ComponentPath): Thing {
     if (result.componentAt(prefix) == null) {
       result = result.addComponent(
         prefix.dropLast(1),
-        Component(slot_key = prefix.last().first),
+        Component(slot_key = prefix.last().slotKey),
       )
     }
   }

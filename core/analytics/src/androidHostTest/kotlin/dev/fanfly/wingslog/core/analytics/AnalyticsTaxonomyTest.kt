@@ -288,7 +288,7 @@ class AnalyticsTaxonomyTest {
 
   @Test
   fun logSendsTheEventNameAndFlattenedParams() {
-    val recorded = mutableListOf<Pair<String, Map<String, String>>>()
+    val recorded = mutableListOf<RecordedEvent>()
     val analytics = object : AnalyticsManager {
       override fun logScreenView(
         screenName: String,
@@ -296,7 +296,7 @@ class AnalyticsTaxonomyTest {
       ) = Unit
 
       override fun logEvent(name: String, params: Map<String, String>) {
-        recorded += name to params
+        recorded += RecordedEvent(name, params)
       }
 
       override fun setAnalyticsCollectionEnabled(enabled: Boolean) = Unit
@@ -305,7 +305,7 @@ class AnalyticsTaxonomyTest {
     analytics.log(ThingCreated(templateId = "bicycle", source = "picker"))
 
     assertThat(recorded).containsExactly(
-      "thing_created" to mapOf("template_id" to "bicycle", "source" to "picker")
+      RecordedEvent("thing_created", mapOf("template_id" to "bicycle", "source" to "picker"))
     )
   }
 }

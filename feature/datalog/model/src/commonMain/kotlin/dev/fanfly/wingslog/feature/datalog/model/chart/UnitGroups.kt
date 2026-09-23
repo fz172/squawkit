@@ -28,7 +28,7 @@ object UnitGroups {
    * Groups [series] by unit in pane order: the first unit reads on the left axis, the second on the
    * right, the rest draw on their own scale and read only in chips (design §11.2).
    */
-  fun group(series: List<Pair<SeriesKey, String>>): List<UnitGroup> {
+  fun group(series: List<SeriesUnit>): List<UnitGroup> {
     val order = LinkedHashMap<String, MutableList<SeriesKey>>()
     series.forEach { (key, unit) -> order.getOrPut(unit) { mutableListOf() } += key }
     return order.entries.mapIndexed { index, (unit, keys) ->

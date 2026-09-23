@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.model.settings.Subscription
+import dev.fanfly.wingslog.core.ui.common.compose.LabelledChoice
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.settings.generated.resources.Res
@@ -39,10 +40,10 @@ fun SubscriptionDeveloperSettings(
   forceStatus: Subscription.Status?,
   onSelectForceStatus: (Subscription.Status?) -> Unit,
 ) {
-  val options: List<Pair<String, Subscription.Status?>> = listOf(
-    stringResource(Res.string.developer_options_force_off) to null,
-    stringResource(Res.string.developer_options_force_free) to Subscription.Status.STATUS_FREE,
-    stringResource(Res.string.developer_options_force_pro) to Subscription.Status.STATUS_PRO,
+  val options: List<LabelledChoice<Subscription.Status?>> = listOf(
+    LabelledChoice(stringResource(Res.string.developer_options_force_off), null),
+    LabelledChoice(stringResource(Res.string.developer_options_force_free), Subscription.Status.STATUS_FREE),
+    LabelledChoice(stringResource(Res.string.developer_options_force_pro), Subscription.Status.STATUS_PRO),
   )
   Column(
     modifier = Modifier

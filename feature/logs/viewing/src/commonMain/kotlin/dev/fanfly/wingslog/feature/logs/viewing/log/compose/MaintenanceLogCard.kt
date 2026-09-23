@@ -77,10 +77,7 @@ fun MaintenanceLogCard(
   TimelineRow(
     // The number alone: the meter is the same down the whole column, and the detail sheet names it.
     gutter = primary?.let {
-      template.formatMeterNumber(
-        it.first.key,
-        it.second
-      )
+      template.formatMeterNumber(it.meter.key, it.value)
     }
       .orEmpty(),
     modifier = modifier,

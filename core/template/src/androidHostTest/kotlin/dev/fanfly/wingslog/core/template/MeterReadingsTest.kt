@@ -223,7 +223,7 @@ class MeterReadingsTest {
       ),
     )
 
-    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
+    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.meter?.key)
       .isEqualTo(MeterKeys.AIRFRAME_HOURS)
   }
 
@@ -239,7 +239,7 @@ class MeterReadingsTest {
       ),
     )
 
-    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
+    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.meter?.key)
       .isEqualTo(MeterKeys.ENGINE_HOURS)
   }
 
@@ -256,7 +256,7 @@ class MeterReadingsTest {
       ),
     )
 
-    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
+    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.meter?.key)
       .isEqualTo(MeterKeys.AIRFRAME_HOURS)
   }
 
@@ -271,7 +271,7 @@ class MeterReadingsTest {
       ),
     )
 
-    assertThat(AirplaneTemplate.TEMPLATE.timelineReading(log)?.second).isEqualTo(
+    assertThat(AirplaneTemplate.TEMPLATE.timelineReading(log)?.value).isEqualTo(
       1111.0
     )
   }

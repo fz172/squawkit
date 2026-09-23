@@ -221,12 +221,18 @@ fun ThingTemplate?.componentRows(thing: Thing): List<ComponentRow> {
     depth: Int,
   ): List<ComponentRow> = slots.flatMap { slot ->
     val filling = siblings.filter { it.slot_key == slot.slot_key }
-    val occurrences: List<Pair<Component?, Int?>> = when {
-      slot.repeatable -> filling.mapIndexed { index, component -> component to index }
-      else -> listOf(filling.firstOrNull() to null)
+    val occurrences: List<SlotOccurrence> = when {
+      slot.repeatable -> filling.mapIndexed { index, component ->
+        SlotOccurrence(
+          component,
+          index
+        )
+      }
+
+      else -> listOf(SlotOccurrence(filling.firstOrNull(), ordinal = null))
     }
     occurrences.flatMapIndexed { index, (component, ordinal) ->
-      val path = parentPath + (slot.slot_key to index)
+      val path = parentPath + ComponentPathStep(slot.slot_key, index)
       listOf(
         ComponentRow(
           slot,

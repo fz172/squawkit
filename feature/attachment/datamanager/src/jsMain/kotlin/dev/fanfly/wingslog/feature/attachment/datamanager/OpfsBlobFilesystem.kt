@@ -76,7 +76,7 @@ internal class OpfsBlobFilesystem : BlobFilesystem {
   private suspend fun parentDirectory(
     relativePath: String,
     create: Boolean,
-  ): Pair<dynamic, String>? {
+  ): OpfsFileLocation? {
     val parts = relativePath.split('/')
       .filter { it.isNotBlank() }
     require(parts.isNotEmpty()) { "relativePath must include a file name" }
@@ -100,9 +100,7 @@ internal class OpfsBlobFilesystem : BlobFilesystem {
       }
     }
 
-    // Pair(...) instead of `to` infix: `directory` is `dynamic`, so `directory to x` compiles
-    // to `directory.to(x)` as a JS method call instead of dispatching through the extension.
-    return Pair(directory, parts.last())
+    return OpfsFileLocation(directory, parts.last())
   }
 
   private suspend fun opfsRoot(): dynamic {

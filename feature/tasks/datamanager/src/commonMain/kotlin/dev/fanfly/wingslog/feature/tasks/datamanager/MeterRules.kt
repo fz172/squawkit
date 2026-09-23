@@ -28,10 +28,10 @@ fun MaintenanceTask.defaultMeterKey(): String =
  * A `MeterRule` carries its own key — that is the whole point, and what lets a car be scheduled on
  * mileage.
  */
-fun MaintenanceTask.meterIntervalFor(rule: InspectionRule): Pair<String, Float>? =
+fun MaintenanceTask.meterIntervalFor(rule: InspectionRule): MeterAmount? =
   rule.meter_rule
     ?.takeIf { it.meter_key.isNotEmpty() && it.interval > 0f }
-    ?.let { it.meter_key to it.interval }
+    ?.let { MeterAmount(it.meter_key, it.interval) }
 
 /**
  * The forced due value this task carries, and the meter it is measured in, or null when no
@@ -40,12 +40,14 @@ fun MaintenanceTask.meterIntervalFor(rule: InspectionRule): Pair<String, Float>?
  * An override with a value but no key still falls back to [defaultMeterKey]: the key is a string,
  * so "unset" and "empty" are the same thing, and an aviation override is what an empty one means.
  */
-fun MaintenanceTask.forcedDueMeter(): Pair<String, Float>? =
+fun MaintenanceTask.forcedDueMeter(): MeterAmount? =
   force_due_meter
     ?.takeIf { it.value_ > 0.0 }
     ?.let { forced ->
-      (forced.meter_key.takeIf { it.isNotEmpty() }
-        ?: defaultMeterKey()) to forced.value_.toFloat()
+      MeterAmount(
+        forced.meter_key.takeIf { it.isNotEmpty() } ?: defaultMeterKey(),
+        forced.value_.toFloat(),
+      )
     }
 
 /** This task with its forced due value set to [value] in [meterKey], or cleared when null. */

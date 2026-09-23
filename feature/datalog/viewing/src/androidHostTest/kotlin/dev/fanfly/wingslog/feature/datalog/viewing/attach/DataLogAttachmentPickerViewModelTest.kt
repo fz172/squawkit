@@ -9,7 +9,8 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
-import dev.fanfly.wingslog.feature.datalog.viewing.analytics.RecordingAnalytics
+import dev.fanfly.wingslog.core.analytics.RecordedEvent
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -39,7 +40,7 @@ class DataLogAttachmentPickerViewModelTest {
   private val logs = MutableStateFlow<List<DataLog>>(emptyList())
   private lateinit var manager: DataLogManager
   private lateinit var auth: AuthManager
-  private lateinit var analytics: RecordingAnalytics
+  private lateinit var analytics: RecordingAnalyticsManager
   private lateinit var templates: CurrentThingTemplate
   private val file = PickedFile("content://x", "x.csv", "text/csv", 1)
 
@@ -50,7 +51,7 @@ class DataLogAttachmentPickerViewModelTest {
     every { manager.observe(thingId) } returns logs
     every { manager.observeOne(any(), any()) } returns flowOf(null)
     auth = mockk()
-    analytics = RecordingAnalytics()
+    analytics = RecordingAnalyticsManager()
     templates = mockk()
     every { templates.templateId } returns "airplane"
     signIn(anonymous = false)
@@ -206,8 +207,8 @@ class DataLogAttachmentPickerViewModelTest {
 
     vm.upload(listOf(file))
 
-    assertThat(analytics.events.single().first).isEqualTo("data_log_imported")
-    assertThat(analytics.events.single().second).containsEntry(
+    assertThat(analytics.events.single().name).isEqualTo("data_log_imported")
+    assertThat(analytics.events.single().params).containsEntry(
       "source",
       "attachment"
     )

@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
@@ -70,12 +71,15 @@ fun ThingHero(
   val morph = remember {
     val crate = ThingGlyphPaths.CRATE
     OutlineMorph(
-      from = OutlineMorph.sample(crate.paths.first().data) { x, y ->
-        (x - crate.viewportX) / crate.viewportSize to (y - crate.viewportY) / crate.viewportSize
+      from = OutlineMorph.sample(crate.paths.first().data) { p ->
+        Offset(
+          (p.x - crate.viewportX) / crate.viewportSize,
+          (p.y - crate.viewportY) / crate.viewportSize,
+        )
       },
-      to = OutlineMorph.sample(BrandPlaneGeometry.BODY_OUTLINE) { x, y ->
+      to = OutlineMorph.sample(BrandPlaneGeometry.BODY_OUTLINE) { p ->
         with(BrandPlaneGeometry) {
-          (x * SCALE + TRANSLATE_X) / VIEWPORT to (y * SCALE + TRANSLATE_Y) / VIEWPORT
+          Offset((p.x * SCALE + TRANSLATE_X) / VIEWPORT, (p.y * SCALE + TRANSLATE_Y) / VIEWPORT)
         }
       },
     )

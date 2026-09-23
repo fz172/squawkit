@@ -26,6 +26,7 @@ import dev.fanfly.wingslog.core.template.childrenInSlot
 import dev.fanfly.wingslog.core.template.joinAsPhrase
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.ui.common.compose.LabelledChoice
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
@@ -117,7 +118,7 @@ fun ComponentSection(
             } else {
               makeModel
             }
-            label to engine.serial
+            LabelledChoice(label, engine.serial)
           }
           when (options.size) {
             0 -> Text(
@@ -133,7 +134,7 @@ fun ComponentSection(
             // The ViewModel already auto-selects the sole engine's serial.
             1 -> ReadOnlyComponentField(
               label = stringResource(CoreRes.string.component_engine),
-              value = options.first().first,
+              value = options.first().label,
               modifier = Modifier.fillMaxWidth(),
             )
 
@@ -160,7 +161,7 @@ fun ComponentSection(
           )
         } else {
           // Collect all propeller components from all engines
-          val options = mutableListOf<Pair<String, String>>()
+          val options = mutableListOf<LabelledChoice<String>>()
           thing.allComponentsInSlot(SlotKeys.ENGINE)
             .forEach { engine ->
               val prop = engine.childInSlot(SlotKeys.PROPELLER)
@@ -173,7 +174,7 @@ fun ComponentSection(
                   makeModel,
                   hub.serial,
                 )
-                options.add(label to hub.serial)
+                options.add(LabelledChoice(label, hub.serial))
               }
               prop?.childrenInSlot(SlotKeys.BLADE)
                 ?.forEach { blade ->
@@ -186,7 +187,7 @@ fun ComponentSection(
                       makeModel,
                       blade.serial,
                     )
-                    options.add(label to blade.serial)
+                    options.add(LabelledChoice(label, blade.serial))
                   }
                 }
             }

@@ -187,14 +187,14 @@ class SquawkTabViewModelTest {
         query = "xpdr"
       )
     )
-    assertThat(analytics.events.map { it.first }).containsExactly(
+    assertThat(analytics.events.map { it.name }).containsExactly(
       "record_filter_applied",
       "record_search"
     )
       .inOrder()
-    assertThat(analytics.events[0].second["value"]).isEqualTo("priority:high")
-    assertThat(analytics.events[1].second["explained"]).isEqualTo("true")
-    assertThat(analytics.events[1].second["results"]).isEqualTo("1-5")
+    assertThat(analytics.events[0].params["value"]).isEqualTo("priority:high")
+    assertThat(analytics.events[1].params["explained"]).isEqualTo("true")
+    assertThat(analytics.events[1].params["results"]).isEqualTo("1-5")
   }
 
   @Test

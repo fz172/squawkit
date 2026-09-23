@@ -400,10 +400,10 @@ class DynonParser : DataLogParser {
         ) raw.dropLast(1) else raw
         if (cells.size < 2) throw DataLogParseException("no columns")
         val split = cells.map(::splitUnit)
-        val names = split.map { it.first }
+        val names = split.map { it.name }
         return Layout(
           names = names,
-          units = split.map { it.second },
+          units = split.map { it.unit },
           sessionTimeColumn = names.indexOf(SESSION_TIME_NAME),
           gpsDateTimeColumn = names.indexOf(GPS_DATE_TIME_NAME),
           systemTimeColumn = names.indexOf(SYSTEM_TIME_NAME),

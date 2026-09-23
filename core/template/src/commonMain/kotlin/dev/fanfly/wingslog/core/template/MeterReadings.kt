@@ -122,12 +122,12 @@ fun ThingTemplate?.formatMeterValue(meterKey: String?, value: Double): String =
  * [meterForComponent] answers for the airplane; everywhere else it is the template's first meter,
  * which is where the fallback starts anyway.
  */
-fun ThingTemplate?.primaryReading(log: MaintenanceLog): Pair<MeterDef, Double>? {
+fun ThingTemplate?.primaryReading(log: MaintenanceLog): MeterValue? {
   val meters = this?.meters.orEmpty()
   val preferred = listOfNotNull(meterForComponent(log.component_type))
   return (preferred + meters).firstNotNullOfOrNull { meter ->
     log.readingFor(meter.key)
-      ?.let { meter to it }
+      ?.let { MeterValue(meter, it) }
   }
 }
 
@@ -136,8 +136,8 @@ fun ThingTemplate?.primaryReading(log: MaintenanceLog): Pair<MeterDef, Double>? 
  * its gutter. Not [primaryReading]: that follows the component, and an unlabelled column that mixes
  * engine, propeller and airframe hours reads as one meter jumping about.
  */
-fun ThingTemplate?.timelineReading(log: MaintenanceLog): Pair<MeterDef, Double>? {
+fun ThingTemplate?.timelineReading(log: MaintenanceLog): MeterValue? {
   val meter = this?.meters?.firstOrNull() ?: return null
   return log.readingFor(meter.key)
-    ?.let { meter to it }
+    ?.let { MeterValue(meter, it) }
 }

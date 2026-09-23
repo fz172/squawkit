@@ -69,7 +69,7 @@ class TaskDueManagerImpl(
     // float for an override set before `force_due_meter` existed (#759).
     val forcedDue = card.forcedDueMeter()
     val hasForcedEngine = forcedDue != null
-    val forcedMeterKey = forcedDue?.first ?: card.defaultMeterKey()
+    val forcedMeterKey = forcedDue?.meterKey ?: card.defaultMeterKey()
 
     /** The highest reading any log carries for [meterKey]. */
     fun currentReading(meterKey: String): Float =
@@ -95,11 +95,11 @@ class TaskDueManagerImpl(
       val nextDueDate = if (hasForcedDate) {
         forceDueDate.toDueDate()
       } else null
-      val nextDueEngine = forcedDue?.second
+      val nextDueEngine = forcedDue?.value
       // An override carries no interval, so borrow one from a rule measured in the same meter.
       val window = card.rules.firstNotNullOfOrNull { card.meterIntervalFor(it) }
-        ?.takeIf { (key, _) -> key == forcedMeterKey }
-        ?.let { (_, interval) -> dueSoonWindowFor(interval) }
+        ?.takeIf { it.meterKey == forcedMeterKey }
+        ?.let { dueSoonWindowFor(it.value) }
         ?: DEFAULT_DUE_SOON_WINDOW
 
       val status = when {

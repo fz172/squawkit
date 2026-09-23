@@ -93,9 +93,9 @@ class ComponentTreeTest {
       .inOrder()
     // The path is what every edit action addresses, so it has to survive the walk intact.
     assertThat(rows.last().path).containsExactly(
-      SlotKeys.ENGINE to 0,
-      SlotKeys.PROPELLER to 0,
-      SlotKeys.BLADE to 1,
+      ComponentPathStep(SlotKeys.ENGINE, 0),
+      ComponentPathStep(SlotKeys.PROPELLER, 0),
+      ComponentPathStep(SlotKeys.BLADE, 1),
     )
       .inOrder()
   }
@@ -128,10 +128,24 @@ class ComponentTreeTest {
       .containsExactly("propulsion", "electrical_safety", "steering", "rigging")
       .inOrder()
     assertThat(
-      airplane.slotsUnder(listOf("engine" to 0, "propeller" to 0))
+      airplane.slotsUnder(
+        listOf(
+          ComponentPathStep("engine", 0),
+          ComponentPathStep("propeller", 0)
+        )
+      )
         .map { it.slot_key })
       .containsExactly("blade")
-    assertThat(airplane.slotsUnder(listOf("nope" to 0))).isEmpty()
+    assertThat(
+      airplane.slotsUnder(
+        listOf(
+          ComponentPathStep(
+            "nope",
+            0
+          )
+        )
+      )
+    ).isEmpty()
   }
 
   @Test
@@ -305,8 +319,8 @@ class ComponentTreeTest {
     assertThat(
       airplane.addableSlotsUnder(
         listOf(
-          SlotKeys.ENGINE to 0,
-          SlotKeys.PROPELLER to 0
+          ComponentPathStep(SlotKeys.ENGINE, 0),
+          ComponentPathStep(SlotKeys.PROPELLER, 0)
         )
       )
         .map { it.slot_key },

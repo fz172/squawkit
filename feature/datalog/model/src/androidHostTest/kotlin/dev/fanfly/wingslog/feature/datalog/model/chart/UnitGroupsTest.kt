@@ -10,10 +10,10 @@ class UnitGroupsTest {
   fun firstUnitLeftSecondRightRestUnaxed() {
     val groups = UnitGroups.group(
       listOf(
-        SeriesKey(1) to "PSI",
-        SeriesKey(2) to "deg F",
-        SeriesKey(3) to "PSI",
-        SeriesKey(4) to "gal"
+        SeriesUnit(SeriesKey(1), "PSI"),
+        SeriesUnit(SeriesKey(2), "deg F"),
+        SeriesUnit(SeriesKey(3), "PSI"),
+        SeriesUnit(SeriesKey(4), "gal")
       ),
     )
     assertThat(groups.map { it.unit }).containsExactly("PSI", "deg F", "gal")

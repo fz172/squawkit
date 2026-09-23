@@ -202,7 +202,7 @@ class MaintenanceLogListFilterTest {
     vm.onSearchQueryChange("transponder")
     vm.onSearchQueryChange("transponder")
     vm.clearFilter()
-    assertThat(analytics.events.map { it.first })
+    assertThat(analytics.events.map { it.name })
       .containsExactly(
         "record_filter_applied",
         "record_filter_applied",
@@ -210,7 +210,7 @@ class MaintenanceLogListFilterTest {
         "record_filter_applied"
       )
       .inOrder()
-    assertThat(analytics.events[0].second).containsExactlyEntriesIn(
+    assertThat(analytics.events[0].params).containsExactlyEntriesIn(
       mapOf(
         "template_id" to "airplane",
         "tab" to "logs",
@@ -218,8 +218,8 @@ class MaintenanceLogListFilterTest {
         "value" to "engine"
       ),
     )
-    assertThat(analytics.events[1].second["value"]).isEqualTo("3m")
-    assertThat(analytics.events[2].second).containsExactlyEntriesIn(
+    assertThat(analytics.events[1].params["value"]).isEqualTo("3m")
+    assertThat(analytics.events[2].params).containsExactlyEntriesIn(
       mapOf(
         "template_id" to "airplane",
         "tab" to "logs",
@@ -228,7 +228,7 @@ class MaintenanceLogListFilterTest {
         "explained" to "false"
       ),
     )
-    assertThat(analytics.events[3].second["kind"]).isEqualTo("clear")
+    assertThat(analytics.events[3].params["kind"]).isEqualTo("clear")
   }
 
   @Test

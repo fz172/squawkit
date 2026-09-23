@@ -550,8 +550,8 @@ internal fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
         if (primary != null) {
           Text(
             LocalThingTemplate.current.formatMeterValue(
-              primary.first.key,
-              primary.second
+              primary.meter.key,
+              primary.value
             ),
             style = WingslogTypography.dataSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),

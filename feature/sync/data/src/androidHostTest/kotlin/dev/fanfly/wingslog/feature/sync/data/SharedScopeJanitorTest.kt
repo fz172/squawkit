@@ -108,7 +108,15 @@ class SharedScopeJanitorTest {
       SharedScopeJanitor(db, DatabaseWriteLock(), blobs = blobs)
     seedFixture()
 
-    janitorWithBlobs.purgeRevoked(MEMBER, liveShares = setOf(HOST to SHARED_AC))
+    janitorWithBlobs.purgeRevoked(
+      MEMBER,
+      liveShares = setOf(
+        SharedThingRef(
+          HOST,
+          SHARED_AC
+        )
+      )
+    )
 
     coVerify(exactly = 0) { blobs.purgeLocal(any()) }
     coVerify(exactly = 0) { blobs.delete(any()) }
@@ -117,7 +125,10 @@ class SharedScopeJanitorTest {
   @Test
   fun keeps_a_shared_thing_that_still_has_a_live_ref() = runTest {
     seedFixture()
-    janitor.purgeRevoked(MEMBER, liveShares = setOf(HOST to SHARED_AC))
+    janitor.purgeRevoked(
+      MEMBER,
+      liveShares = setOf(SharedThingRef(HOST, SHARED_AC))
+    )
 
     assertThat(thingAt(EntityScope.userRoot(HOST))).hasSize(1)
     assertThat(

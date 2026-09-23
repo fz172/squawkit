@@ -39,7 +39,7 @@ class MeterRulesTest {
     )
 
     assertThat(card.meterIntervalFor(card.rules.single()))
-      .isEqualTo("odometer" to 5000f)
+      .isEqualTo(MeterAmount("odometer", 5000f))
   }
 
   @Test
@@ -58,7 +58,7 @@ class MeterRulesTest {
     )
 
     assertThat(card.meterIntervalFor(card.rules.single()))
-      .isEqualTo(MeterKeys.ENGINE_HOURS to 100f)
+      .isEqualTo(MeterAmount(MeterKeys.ENGINE_HOURS, 100f))
   }
 
   @Test
@@ -71,7 +71,7 @@ class MeterRulesTest {
     )
 
     assertThat(card.rules.mapNotNull { card.meterIntervalFor(it) })
-      .containsExactly(MeterKeys.ENGINE_HOURS to 100f, "odometer" to 5000f)
+      .containsExactly(MeterAmount(MeterKeys.ENGINE_HOURS, 100f), MeterAmount("odometer", 5000f))
       .inOrder()
   }
 
@@ -114,14 +114,14 @@ class MeterRulesTest {
     // what an empty one has always meant.
     val card = task().copy(force_due_meter = MeterReading("", value_ = 250.0))
 
-    assertThat(card.forcedDueMeter()).isEqualTo(MeterKeys.ENGINE_HOURS to 250f)
+    assertThat(card.forcedDueMeter()).isEqualTo(MeterAmount(MeterKeys.ENGINE_HOURS, 250f))
   }
 
   @Test
   fun aKeyedOverrideWinsAndCarriesItsMeter() {
     val card = task().withForcedDueMeter("odometer", 90000f)
 
-    assertThat(card.forcedDueMeter()).isEqualTo("odometer" to 90000f)
+    assertThat(card.forcedDueMeter()).isEqualTo(MeterAmount("odometer", 90000f))
   }
 
   @Test

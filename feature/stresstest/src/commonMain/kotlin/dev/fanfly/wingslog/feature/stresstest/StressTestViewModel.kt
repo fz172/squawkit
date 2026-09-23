@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.stresstest
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.template.FieldValue
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.slotLabel
@@ -47,13 +48,14 @@ enum class StressTestProgressStep {
  * What was written, in the shape of the preset that was picked: a car reports a VIN and four
  * tires where an aeroplane reports a tail number and its engines. Labels come from the template.
  */
+
 data class StressTestSummary(
   val thingName: String,
   val templateName: String,
-  /** Template spec label to the value generated for it, blanks dropped. */
-  val specs: List<Pair<String, String>>,
-  /** Top-level slot label to how many of that slot the thing carries. */
-  val components: List<Pair<String, Int>>,
+  /** Each template spec and the value generated for it, blanks dropped. */
+  val specs: List<FieldValue>,
+  /** Each top-level slot and how many of it the thing carries. */
+  val components: List<SlotCount>,
   val technicianCount: Int,
   val taskCount: Int,
   val logCount: Int,
@@ -207,11 +209,11 @@ class StressTestViewModel(
           templateName = template.display_name,
           specs = data.thing.spec
             .filter { it.value_.isNotBlank() }
-            .map { template.specLabel(it.key, it.key) to it.value_ },
+            .map { FieldValue(template.specLabel(it.key, it.key), it.value_) },
           components = data.thing.components
             .groupingBy { it.slot_key }
             .eachCount()
-            .map { (key, count) -> template.slotLabel(key, key) to count },
+            .map { (key, count) -> SlotCount(template.slotLabel(key, key), count) },
           technicianCount = data.technicians.size,
           taskCount = data.tasks.size,
           logCount = data.logs.size,

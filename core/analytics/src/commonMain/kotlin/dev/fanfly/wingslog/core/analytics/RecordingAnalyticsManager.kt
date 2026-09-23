@@ -14,7 +14,7 @@ package dev.fanfly.wingslog.core.analytics
 class RecordingAnalyticsManager : AnalyticsManager {
 
   /** Every event, in order, as the name and flattened params that reached the SDK boundary. */
-  val events: List<Pair<String, Map<String, String>>> get() = _events
+  val events: List<RecordedEvent> get() = _events
 
   /** Screen views, kept separately so an event assertion is not perturbed by navigation. */
   val screenViews: List<String> get() = _screenViews
@@ -22,7 +22,7 @@ class RecordingAnalyticsManager : AnalyticsManager {
   var collectionEnabled: Boolean? = null
     private set
 
-  private val _events = mutableListOf<Pair<String, Map<String, String>>>()
+  private val _events = mutableListOf<RecordedEvent>()
   private val _screenViews = mutableListOf<String>()
 
   override fun logScreenView(screenName: String, params: Map<String, String>) {
@@ -30,7 +30,7 @@ class RecordingAnalyticsManager : AnalyticsManager {
   }
 
   override fun logEvent(name: String, params: Map<String, String>) {
-    _events += name to params
+    _events += RecordedEvent(name, params)
   }
 
   override fun setAnalyticsCollectionEnabled(enabled: Boolean) {
@@ -44,9 +44,9 @@ class RecordingAnalyticsManager : AnalyticsManager {
 
   /** The params of every event with [name], for asserting a property such as `template_id`. */
   fun paramsFor(name: String): List<Map<String, String>> =
-    _events.filter { it.first == name }
-      .map { it.second }
+    _events.filter { it.name == name }
+      .map { it.params }
 
   /** How many times [name] was emitted — the shape most of these assertions want. */
-  fun countOf(name: String): Int = _events.count { it.first == name }
+  fun countOf(name: String): Int = _events.count { it.name == name }
 }

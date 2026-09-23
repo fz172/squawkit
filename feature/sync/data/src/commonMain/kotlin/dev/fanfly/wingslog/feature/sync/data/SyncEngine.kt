@@ -352,7 +352,7 @@ class SyncEngine(
     scope.launch {
       refStore.observeAll(userRoot)
         .map { rows ->
-          rows.map { it.value.host_uid to it.value.aircraft_id }
+          rows.map { SharedThingRef(it.value.host_uid, it.value.aircraft_id) }
             .toSet()
         }
         .distinctUntilChanged()

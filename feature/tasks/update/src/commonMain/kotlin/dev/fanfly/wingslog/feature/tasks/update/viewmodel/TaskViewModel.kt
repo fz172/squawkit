@@ -124,7 +124,7 @@ data class TaskFormState(
       // set by a build that predates the keyed field (#759).
       val forcedDue = card.forcedDueMeter()
       val forceOverrideEngine = forcedDue != null
-      val forcedEngineHours = forcedDue?.second?.toString() ?: ""
+      val forcedEngineHours = forcedDue?.value?.toString() ?: ""
       val forceOverrideDate = card.force_due_date != null
       val forcedDateMillis =
         card.force_due_date?.toDueDate()
@@ -487,7 +487,7 @@ class TaskViewModel(
     return rules != stored.rules ||
       isOneTime != stored.is_one_time ||
       forceDueDate != stored.force_due_date ||
-      forceDueEngine != (stored.forcedDueMeter()?.second ?: 0f)
+      forceDueEngine != (stored.forcedDueMeter()?.value ?: 0f)
   }
 
   fun saveEditedTask(
