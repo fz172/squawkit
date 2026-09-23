@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.data
+package dev.fanfly.wingslog.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,9 +21,11 @@ import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
+import dev.fanfly.wingslog.feature.settings.account.DeleteAccountDialog
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
+import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +38,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 /**
  * Apple Hide My Email hands us an alias at this domain. We know the string; the pilot does not —
@@ -369,12 +370,4 @@ class SettingsViewModel(
       }
     }
   }
-}
-
-/** What [SettingsViewModel.openProfile] resolved the profile card's tap to. */
-sealed interface ProfileTarget {
-  data class Self(val technicianId: String) : ProfileTarget
-
-  /** No self record to edit yet — a guest who never named themselves. */
-  data object Roster : ProfileTarget
 }

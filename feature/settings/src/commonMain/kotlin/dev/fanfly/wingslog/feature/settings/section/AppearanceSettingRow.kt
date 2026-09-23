@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings
+package dev.fanfly.wingslog.feature.settings.section
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,6 +32,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
+import dev.fanfly.wingslog.feature.settings.row.SettingsCard
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.settings.generated.resources.appearance_dark
 import wingslog.feature.settings.generated.resources.appearance_light

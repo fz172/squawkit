@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings
+package dev.fanfly.wingslog.feature.settings.account
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,8 +20,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.settings.data.AccountDeletion
-import dev.fanfly.wingslog.feature.settings.data.DeletionChallenge
+import dev.fanfly.wingslog.feature.settings.AccountDeletion
+import dev.fanfly.wingslog.feature.settings.DeletionChallenge
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.settings.generated.resources.settings_delete_account_body

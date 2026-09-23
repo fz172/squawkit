@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings
+package dev.fanfly.wingslog.feature.settings.row
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -10,12 +10,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.GroupedChevron
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
-import dev.fanfly.wingslog.feature.settings.SettingsLevel.DEFAULT
-
-enum class SettingsLevel {
-  DEFAULT,
-  DANGER
-}
+import dev.fanfly.wingslog.feature.settings.row.SettingsLevel.DEFAULT
 
 /**
  * A single clickable navigation row inside a [SettingsCard]: a tinted icon chip, a title with an

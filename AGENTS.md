@@ -233,7 +233,7 @@ feature/
     datamanager/        #   DeveloperOptionsManager, DeveloperFlags, Koin module
                         #   (synced as CollectionKind.DeveloperOptions; UI lives in feature/settings)
   settings/             # App settings (flat module, no submodule split)
-                        #   SettingsScreen, appearance/logging rows, DeleteAccountDialog,
+                        #   SettingsContent + section/ (Preferences, Data, Support, Account), profile/, account/, about/, row/,
                         #   developeroptions/ — DeveloperOptionsScreen, SubscriptionDeveloperSettings,
                         #   DisplayAdsDeveloperSettings
   userprofile/          # Legacy profile remnant (sharedassets only) — being unified with Technician

@@ -15,7 +15,7 @@ import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOpti
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
-import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
+import dev.fanfly.wingslog.feature.settings.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsViewModel
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager

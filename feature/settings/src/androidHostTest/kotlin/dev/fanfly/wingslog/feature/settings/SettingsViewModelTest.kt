@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.data
+package dev.fanfly.wingslog.feature.settings
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
