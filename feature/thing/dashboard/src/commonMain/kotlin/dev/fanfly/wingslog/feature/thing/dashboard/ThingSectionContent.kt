@@ -1,24 +1,13 @@
 package dev.fanfly.wingslog.feature.thing.dashboard
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,198 +15,26 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.listdetail.ListDetailSection
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
 import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.core.ui.common.compose.SkeletonBlock
 import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
-import dev.fanfly.wingslog.core.ui.common.compose.skeletonPulse
-import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
-import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogSectionContent
-import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogUploadFab
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
-import dev.fanfly.wingslog.feature.tasks.viewing.detail.TaskDetailSheet
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.DegradedThingContent
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentComposer
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentThread
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.LogsTab
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.MaintenanceTasksTab
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.OverviewTab
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.SquawkTab
-import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
-import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
-import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewEvent
-import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
-import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewViewModel
+import dev.fanfly.wingslog.feature.thing.dashboard.logs.LogsTab
+import dev.fanfly.wingslog.feature.thing.dashboard.overview.OverviewTab
+import dev.fanfly.wingslog.feature.thing.dashboard.squawks.SquawkTab
+import dev.fanfly.wingslog.feature.thing.dashboard.tasks.MaintenanceTasksTab
 import dev.fanfly.wingslog.id.ThingId
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import wingslog.core.sharedassets.generated.resources.empty_add_thing
-import wingslog.feature.logs.sharedassets.generated.resources.add_log
-import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
-import wingslog.feature.tasks.sharedassets.generated.resources.add_task
 import wingslog.feature.thing.dashboard.generated.resources.thing_load_error
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
-import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
-
-/**
- * Host entry point for the adaptive shell's **per-thing** section bodies: maps a [dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection]
- * (+ optional ambient [thingId]) to the right content. Both hosts (`AppEntry`, `WebApp`) call this
- * from the shell's `sectionContent` slot for everything except [dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection.SETTINGS], which is
- * global and rendered by the host directly (it depends on `feature:settings`).
- *
- * - per-thing sections → [ThingSectionContent], or an empty state when no thing exists.
- */
-@Composable
-fun ShellSectionBody(
-  section: ShellSection,
-  thingId: String?,
-  navController: NavController,
-  onNavigateToSection: (ShellSection) -> Unit,
-  /** Switch to an associated record's section and scroll to it. The host owns the target: each
-   * section is its own composition, so state remembered here would not survive the switch. */
-  onJumpToRecord: (RecordJump) -> Unit = {},
-  /**
-   * A record the host wants scrolled to and highlighted in [section]'s list — currently a tapped
-   * urgency notification (notifications design §5.3). Interpreted against [section], which the host
-   * sets to match the record's kind, so this needs no type of its own. [onScrollTargetConsumed] is
-   * called once it has been handed to the list, so the host can drop it and not re-trigger the jump
-   * every time the pilot returns to this section.
-   */
-  scrollToRecordId: String? = null,
-  onScrollTargetConsumed: () -> Unit = {},
-  /** A guest asked to link an account (data log design §8.4): the host opens Settings on its sheet. */
-  onLinkAccount: () -> Unit = {},
-) {
-  if (thingId != null) {
-    ThingSectionContent(
-      thingId = thingId,
-      section = section,
-      navController = navController,
-      onNavigateToSection = onNavigateToSection,
-      onJumpToRecord = onJumpToRecord,
-      scrollToRecordId = scrollToRecordId,
-      onScrollTargetConsumed = onScrollTargetConsumed,
-      onLinkAccount = onLinkAccount,
-    )
-  } else {
-    Box(
-      modifier = Modifier.fillMaxSize(),
-      contentAlignment = Alignment.Center
-    ) {
-      Text(
-        stringResource(
-          CoreRes.string.empty_add_thing,
-          LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
-        ),
-        style = MaterialTheme.typography.bodyMedium
-      )
-    }
-  }
-}
-
-/**
- * The per-section floating action button for the adaptive shell's `sectionFab` slot: Add Squawk /
- * Task / Log for the matching section, navigating into the same add screens that
- * [ThingSectionContent]'s `onAction` uses. Dashboard has no primary add action and Settings is
- * global, so neither shows a FAB. Returns nothing until a thing is selected — the add routes are
- * all thing-scoped.
- *
- * Lives here (not in `core:ui`) because the shell cannot depend on the feature add-screen routes; it
- * is rendered inside the shell's own Scaffold FAB slot so snackbars offset around it.
- */
-@Composable
-fun ShellSectionFab(
-  section: ShellSection,
-  thingId: String?,
-  navController: NavController,
-  /**
-   * False for a thing whose DNA this build cannot interpret. Every add route leads to a form built
-   * from the template, so offering one here would write under rules we cannot read (design §6.2).
-   */
-  renderable: Boolean = true,
-  onLinkAccount: () -> Unit = {},
-) {
-  if (thingId == null || !renderable) return
-  when (section) {
-    ShellSection.DATA_LOGS -> DataLogUploadFab(
-      thingId = ThingId(thingId),
-      onLinkAccount = onLinkAccount
-    )
-
-    ShellSection.SQUAWKS ->
-      SectionAddFab(
-        label = stringResource(
-          SquawkRes.string.add_squawk,
-          LocalThingLexicon.current.squawkNoun.singular,
-        ),
-        onClick = {
-          navController.navigate(
-            Screen.AddSquawk.createRoute(
-              thingId
-            )
-          )
-        },
-      )
-
-    ShellSection.TASKS ->
-      SectionAddFab(
-        label = stringResource(TasksRes.string.add_task),
-        onClick = {
-          navController.navigate(
-            Screen.AddMaintenanceTask.createRoute(
-              thingId
-            )
-          )
-        },
-      )
-
-    ShellSection.LOGS ->
-      SectionAddFab(
-        label = stringResource(
-          LogsRes.string.add_log,
-          LocalThingLexicon.current.logNoun.singular,
-        ),
-        onClick = {
-          navController.navigate(
-            Screen.AddMaintenanceLog.createRoute(
-              thingId
-            )
-          )
-        },
-      )
-
-    ShellSection.DASHBOARD, ShellSection.SETTINGS -> Unit
-  }
-}
-
-@Composable
-private fun SectionAddFab(label: String, onClick: () -> Unit) {
-  ExtendedFloatingActionButton(
-    onClick = onClick,
-    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-    text = { Text(label) },
-    // Nudge the FAB inward so it clears the wide-screen Logs table's right border. Applied to the
-    // shared FAB so the position stays identical across the Squawks/Tasks/Logs sections.
-    modifier = Modifier.padding(end = Spacing.medium),
-  )
-}
 
 /**
  * Renders the content of a single adaptive-shell [dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection] for a given thing (M3).
@@ -256,9 +73,6 @@ fun ThingSectionContent(
     viewModel.onResumed()
     onPauseOrDispose { }
   }
-  val attachmentOpener: AttachmentOpener = koinInject()
-  val coroutineScope = rememberCoroutineScope()
-  var taskSheetOpenError by remember(thingId) { mutableStateOf<String?>(null) }
   // A quick action runs inside the shell entry, so the cross-screen back-stack channel is the
   // wrong shape for its snackbar; the shell provides its host here instead (design §7). Only the
   // message events land here — navigation is driven from the onAction wrapper below.
@@ -334,105 +148,7 @@ fun ThingSectionContent(
     onScrollTargetConsumed()
   }
 
-  // Single navigation entry point: intercept the navigation actions and drive the host navController
-  // directly; delegate every other (state) action to the ViewModel. This keeps add/edit for tasks,
-  // logs, squawks, and the thing on one deterministic path and removes the cross-ViewModel event
-  // relay that previously dropped log navigation. Edit actions dismiss their detail overlay first so
-  // it doesn't float above the pushed screen.
-  val onAction: (ThingOverviewAction) -> Unit =
-    remember(viewModel, navController, thingId) {
-      { action ->
-        when (action) {
-          is ThingOverviewAction.AddLogClick ->
-            navController.navigate(
-              Screen.AddMaintenanceLog.createRoute(
-                thingId
-              )
-            )
-
-          // Resolve → Fixed / Create work log: the ViewModel closes the bubble and logs the
-          // commit, then we open Create Log with the record pre-linked (design §5.1).
-          is ThingOverviewAction.SquawkFixedClick -> {
-            viewModel.onAction(action)
-            navController.navigate(
-              Screen.AddMaintenanceLog.createRoute(
-                thingId,
-                squawkId = action.squawkId,
-              )
-            )
-          }
-
-          is ThingOverviewAction.TaskCreateLogClick -> {
-            viewModel.onAction(action)
-            navController.navigate(
-              Screen.AddMaintenanceLog.createRoute(
-                thingId,
-                cardId = action.cardId,
-              )
-            )
-          }
-
-          is ThingOverviewAction.EditLogClick ->
-            navController.navigate(
-              Screen.EditMaintenanceLog.createRoute(
-                thingId,
-                action.logId
-              )
-            )
-
-          is ThingOverviewAction.AddTaskClick ->
-            navController.navigate(
-              Screen.AddMaintenanceTask.createRoute(
-                thingId
-              )
-            )
-
-          is ThingOverviewAction.AddStarterPackClick ->
-            navController.navigate(Screen.StarterPack.createRoute(thingId))
-
-          is ThingOverviewAction.EditTaskClick -> {
-            viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
-            navController.navigate(
-              Screen.EditMaintenanceTask.createRoute(
-                thingId,
-                action.cardId
-              )
-            )
-          }
-
-          is ThingOverviewAction.AddSquawkClick ->
-            navController.navigate(Screen.AddSquawk.createRoute(thingId))
-
-          is ThingOverviewAction.EditSquawkClick -> {
-            viewModel.onAction(ThingOverviewAction.DismissSquawkDetail)
-            navController.navigate(
-              Screen.EditSquawk.createRoute(
-                thingId,
-                action.squawkId
-              )
-            )
-          }
-
-          is ThingOverviewAction.OpenDataLogClick ->
-            navController.navigate(
-              Screen.DataLogViewer.createRoute(
-                ThingId(action.thingId),
-                action.dataLogId
-              )
-            )
-
-          is ThingOverviewAction.EditClick ->
-            navController.navigate(Screen.EditThing.createRoute(thingId))
-
-          is ThingOverviewAction.ManageAccessClick ->
-            navController.navigate(Screen.ManageAccess.createRoute(thingId))
-
-          ThingOverviewAction.BackClick -> Unit
-
-          else -> viewModel.onAction(action)
-        }
-      }
-    }
+  val onAction = rememberSectionActionHandler(viewModel, navController, thingId)
 
   when (val state = uiState) {
     // The state is assembled from every flow at once, so Success never carries an empty list that
@@ -462,73 +178,12 @@ fun ThingSectionContent(
       }
 
     is ThingOverviewUiState.Success -> {
-      // The open task's detail, which a wide tier hosts as a pane beside the list and a phone as
-      // a sheet. Here rather than in the Tasks tab because it can be opened from a log's Affected
-      // Tasks as well.
-      val taskDetail: (@Composable () -> Unit)? =
-        state.selectedTask?.let { selectedTask ->
-          {
-            TaskDetailSheet(
-              cardWithStatus = selectedTask,
-              logs = state.logsForSelectedTask,
-              onDismiss = {
-                taskSheetOpenError = null
-                onAction(ThingOverviewAction.DismissTaskDetail)
-              },
-              onEditClick = {
-                onAction(
-                  ThingOverviewAction.EditTaskClick(
-                    thingId,
-                    selectedTask.card.id
-                  )
-                )
-              },
-              onAttachmentTap = { attachment ->
-                taskSheetOpenError = null
-                attachment.dataLogIdOrNull()
-                  ?.let { dataLogId ->
-                    onAction(ThingOverviewAction.DismissTaskDetail)
-                    onAction(
-                      ThingOverviewAction.OpenDataLogClick(
-                        thingId,
-                        dataLogId
-                      )
-                    )
-                    return@TaskDetailSheet
-                  }
-                val openFlow = attachmentOpener.open(attachment)
-                coroutineScope.launch {
-                  openFlow.collect { openState ->
-                    if (openState is OpenState.Failed) taskSheetOpenError =
-                      openState.error.message
-                  }
-                }
-              },
-              syncStates = state.syncStates,
-              dataLogs = state.dataLogs,
-              openError = taskSheetOpenError,
-              onLogWorkClick = {
-                onAction(ThingOverviewAction.DismissTaskDetail)
-                onAction(ThingOverviewAction.TaskCreateLogClick(selectedTask.card.id))
-              },
-              onSkipCycleClick = {
-                onAction(ThingOverviewAction.DismissTaskDetail)
-                onAction(ThingOverviewAction.TaskSkipClick(selectedTask))
-              },
-              comments = commentThread?.let { thread ->
-                {
-                  RecordCommentThread(
-                    thread
-                  )
-                }
-              },
-              commentComposer = commentThread?.let { thread ->
-                { RecordCommentComposer(thread, state.isAnonymous) }
-              },
-            )
-          }
-
-        }
+      val taskDetail = taskDetailFor(
+        state = state,
+        thingId = thingId,
+        onAction = onAction,
+        commentThread = commentThread,
+      )
 
       when (section) {
         ShellSection.DASHBOARD -> OverviewTab(
@@ -630,38 +285,5 @@ fun ThingSectionContent(
         )
       }
     }
-  }
-}
-
-/** The dashboard's outline: title, the status card, the meter strip, then activity. */
-@Composable
-private fun DashboardSkeleton() {
-  Column(
-    modifier = Modifier
-      .fillMaxSize()
-      .skeletonPulse()
-      .padding(Spacing.screenPadding),
-    verticalArrangement = Arrangement.spacedBy(Spacing.large),
-  ) {
-    SkeletonBlock(
-      Modifier.fillMaxWidth(0.5f)
-        .height(Spacing.huge)
-    )
-    SkeletonBlock(
-      Modifier.fillMaxWidth()
-        .height(Spacing.buttonHeight)
-    )
-    SkeletonBlock(
-      Modifier.fillMaxWidth()
-        .height(Spacing.massive * 3)
-    )
-    SkeletonBlock(
-      Modifier.fillMaxWidth()
-        .height(Spacing.rowHeight)
-    )
-    SkeletonBlock(
-      Modifier.fillMaxWidth()
-        .height(Spacing.massive * 4)
-    )
   }
 }

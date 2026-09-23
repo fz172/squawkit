@@ -17,9 +17,9 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
-import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
-import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewViewModel
+import dev.fanfly.wingslog.feature.thing.dashboard.ThingOverviewViewModel
+import dev.fanfly.wingslog.feature.thing.dashboard.squawks.SquawkTabViewModel
+import dev.fanfly.wingslog.feature.thing.dashboard.tasks.TaskTabViewModel
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module

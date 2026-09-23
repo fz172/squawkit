@@ -42,7 +42,7 @@ class ScreenViewNotDoubleCountedTest {
     // Shell state, not routes: the section and its tabs live under one `app` route, which is
     // suppressed for its own reason. Nothing double-counts these.
     "AdaptiveShellRoute.kt" to ShellState,
-    "SquawkTab.kt" to ShellState,
+    "SquawkListControls.kt" to ShellState,
     "MaintenanceTasksTab.kt" to ShellState,
   )
 
