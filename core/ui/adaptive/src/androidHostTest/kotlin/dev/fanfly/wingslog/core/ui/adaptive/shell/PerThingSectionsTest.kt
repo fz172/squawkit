@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive
+package dev.fanfly.wingslog.core.ui.adaptive.shell
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate

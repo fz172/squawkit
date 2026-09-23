@@ -37,10 +37,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import dev.fanfly.wingslog.core.template.OfferedCertification
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedFloatingAction
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup

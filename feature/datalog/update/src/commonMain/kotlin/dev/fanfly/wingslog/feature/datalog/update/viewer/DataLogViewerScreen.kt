@@ -64,9 +64,9 @@ import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAG
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.TextSelectionLayer
-import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.layout.layoutTierFor
+import dev.fanfly.wingslog.core.ui.adaptive.selection.TextSelectionLayer
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
@@ -107,6 +107,7 @@ import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 import dev.fanfly.wingslog.feature.datalog.viewing.list.toDataLogRow
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -146,7 +147,6 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_reading
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_reset
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_utc_offset
-import kotlin.math.roundToInt
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**

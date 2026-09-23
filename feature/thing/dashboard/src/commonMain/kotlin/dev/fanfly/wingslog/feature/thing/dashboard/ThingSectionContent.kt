@@ -31,9 +31,9 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ListDetailSection
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
+import dev.fanfly.wingslog.core.ui.adaptive.listdetail.ListDetailSection
+import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
+import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.common.compose.SkeletonBlock
 import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
@@ -77,9 +77,9 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
 
 /**
- * Host entry point for the adaptive shell's **per-thing** section bodies: maps a [dev.fanfly.wingslog.core.ui.adaptive.ShellSection]
+ * Host entry point for the adaptive shell's **per-thing** section bodies: maps a [dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection]
  * (+ optional ambient [thingId]) to the right content. Both hosts (`AppEntry`, `WebApp`) call this
- * from the shell's `sectionContent` slot for everything except [dev.fanfly.wingslog.core.ui.adaptive.ShellSection.SETTINGS], which is
+ * from the shell's `sectionContent` slot for everything except [dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection.SETTINGS], which is
  * global and rendered by the host directly (it depends on `feature:settings`).
  *
  * - per-thing sections → [ThingSectionContent], or an empty state when no thing exists.
@@ -220,7 +220,7 @@ private fun SectionAddFab(label: String, onClick: () -> Unit) {
 }
 
 /**
- * Renders the content of a single adaptive-shell [dev.fanfly.wingslog.core.ui.adaptive.ShellSection] for a given thing (M3).
+ * Renders the content of a single adaptive-shell [dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection] for a given thing (M3).
  *
  * Reuses the existing per-tab composables ([OverviewTab], [MaintenanceTasksTab], [LogsTab],
  * [SquawkTab]) but drives them from an [ThingOverviewViewModel] scoped to the ambient
@@ -231,7 +231,7 @@ private fun SectionAddFab(label: String, onClick: () -> Unit) {
  * (overview → squawks, log → task) are surfaced via [onNavigateToSection] so the shell can switch
  * sections.
  *
- * [dev.fanfly.wingslog.core.ui.adaptive.ShellSection.SETTINGS] is global and handled by the host, not here.
+ * [dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection.SETTINGS] is global and handled by the host, not here.
  */
 @Composable
 fun ThingSectionContent(

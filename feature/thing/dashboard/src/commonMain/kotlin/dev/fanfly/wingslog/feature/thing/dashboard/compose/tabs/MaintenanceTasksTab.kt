@@ -27,8 +27,8 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
@@ -51,6 +51,8 @@ import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.thing.ComplianceType
+import kotlin.math.roundToInt
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
@@ -66,8 +68,6 @@ import wingslog.feature.search.sharedassets.generated.resources.filter_scope_com
 import wingslog.feature.search.sharedassets.generated.resources.filter_scope_due
 import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
-import kotlin.math.roundToInt
-import kotlin.time.Clock
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 @Composable

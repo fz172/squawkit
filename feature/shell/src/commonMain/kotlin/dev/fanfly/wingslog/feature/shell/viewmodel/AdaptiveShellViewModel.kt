@@ -9,9 +9,9 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
-import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
-import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
-import dev.fanfly.wingslog.core.ui.adaptive.ShellThing
+import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveShellUiState
+import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellThing
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget

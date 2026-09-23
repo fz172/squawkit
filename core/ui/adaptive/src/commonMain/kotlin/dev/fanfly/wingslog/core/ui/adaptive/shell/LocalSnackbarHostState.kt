@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive.compose
+package dev.fanfly.wingslog.core.ui.adaptive.shell
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.staticCompositionLocalOf

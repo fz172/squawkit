@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive
+package dev.fanfly.wingslog.core.ui.adaptive.shell
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist

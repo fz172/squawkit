@@ -8,8 +8,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
-import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 
 /** MEDIUM / EXPANDED / LARGE: the [WingsSidebar] beside the section content. */
 @Composable

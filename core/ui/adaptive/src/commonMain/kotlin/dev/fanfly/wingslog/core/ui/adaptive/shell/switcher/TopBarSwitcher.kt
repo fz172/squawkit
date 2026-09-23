@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
+import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveShellUiState
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
 import wingslog.core.sharedassets.generated.resources.Res as UiRes

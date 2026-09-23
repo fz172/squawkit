@@ -14,13 +14,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
-import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
-import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingNavItem
-import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavBarHeight
-import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavigationBar
-import dev.fanfly.wingslog.core.ui.adaptive.label
-import dev.fanfly.wingslog.core.ui.adaptive.perThingSections
+import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingNavItem
+import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingPillNavBarHeight
+import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingPillNavigationBar
+import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.LocalNavPillClearance
 
 /** COMPACT: section content under a floating pill bottom nav, with the switcher in the top bar. */
 @OptIn(ExperimentalComposeUiApi::class)

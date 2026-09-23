@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive
+package dev.fanfly.wingslog.core.ui.adaptive.shell
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -10,11 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
-import dev.fanfly.wingslog.core.ui.adaptive.shell.EmptyFleetShell
-import dev.fanfly.wingslog.core.ui.adaptive.shell.ScaffoldShell
-import dev.fanfly.wingslog.core.ui.adaptive.shell.SidebarShell
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.layout.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.MotionAxis
 import dev.fanfly.wingslog.core.ui.theme.rememberSharedAxis
 
@@ -22,7 +19,7 @@ import dev.fanfly.wingslog.core.ui.theme.rememberSharedAxis
  * The adaptive web/tablet shell.
  *
  * Navigation container by tier:
- * - **MEDIUM / EXPANDED / LARGE** — the custom [dev.fanfly.wingslog.core.ui.adaptive.shell.WingsSidebar] (brand, the selected thing, its
+ * - **MEDIUM / EXPANDED / LARGE** — the custom [WingsSidebar] (brand, the selected thing, its
  *   sections, the switch list, an account footer); MEDIUM draws it narrower with abbreviated
  *   labels. There is no icon rail.
  * - **COMPACT** — a floating pill bottom bar with the switcher in the top bar.

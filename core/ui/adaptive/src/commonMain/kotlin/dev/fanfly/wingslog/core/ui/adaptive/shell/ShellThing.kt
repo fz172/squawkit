@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive
+package dev.fanfly.wingslog.core.ui.adaptive.shell
 
 import dev.fanfly.wingslog.thing.ThingTemplate
 

@@ -17,7 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
+import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.enter_invite_code

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive
+package dev.fanfly.wingslog.core.ui.adaptive.shell
 
 /** Plain UI state for [AdaptiveAppShell]; produced by a host-side ViewModel. */
 data class AdaptiveShellUiState(

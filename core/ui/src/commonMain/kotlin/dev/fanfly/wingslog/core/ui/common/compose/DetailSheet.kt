@@ -46,18 +46,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import dev.fanfly.wingslog.core.ui.adaptive.compose.DetailPresentation
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalDetailPresentation
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.TextSelectionLayer
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.listdetail.DetailPresentation
+import dev.fanfly.wingslog.core.ui.adaptive.listdetail.LocalDetailPresentation
+import dev.fanfly.wingslog.core.ui.adaptive.selection.TextSelectionLayer
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.Res
 import wingslog.core.sharedassets.generated.resources.dismiss
 
 /**
- * A standardized template for displaying record details, adaptive by [dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier]:
+ * A standardized template for displaying record details, adaptive by [dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier]:
  * - **COMPACT** — a [ModalBottomSheet] (the phone / legacy presentation).
  * - **MEDIUM and wider** — an end-aligned side drawer over a scrim, matching the adaptive web/tablet
  *   shell (see `docs/web/web_adaptive_layout_design.html` §4.4).

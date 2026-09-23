@@ -37,9 +37,9 @@ import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.logEmptyHint
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.technicianNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ListDetailSection
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.listdetail.ListDetailSection
+import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
@@ -77,6 +77,8 @@ import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -96,8 +98,6 @@ import wingslog.feature.search.sharedassets.generated.resources.filter_q_worked_
 import wingslog.feature.search.sharedassets.generated.resources.match_serial
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes

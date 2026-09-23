@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive.compose
+package dev.fanfly.wingslog.core.ui.adaptive.layout
 
 import androidx.compose.ui.unit.dp
 import com.google.common.truth.Truth.assertThat
