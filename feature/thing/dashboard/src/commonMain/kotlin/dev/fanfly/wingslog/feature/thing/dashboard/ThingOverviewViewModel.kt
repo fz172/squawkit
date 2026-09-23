@@ -41,7 +41,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.feature.thing.dashboard.comments.RecordCommentHost
+import dev.fanfly.wingslog.feature.comments.datamanager.RecordCommentHost
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType

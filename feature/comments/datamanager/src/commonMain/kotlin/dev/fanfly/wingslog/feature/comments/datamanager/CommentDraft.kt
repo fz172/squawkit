@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.thing.dashboard.comments
+package dev.fanfly.wingslog.feature.comments.datamanager
 
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 
