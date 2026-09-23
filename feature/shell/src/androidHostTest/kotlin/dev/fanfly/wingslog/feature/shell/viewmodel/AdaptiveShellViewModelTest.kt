@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
+import dev.fanfly.wingslog.feature.dashboard.host.RecordJump
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
@@ -23,7 +24,6 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
-import dev.fanfly.wingslog.feature.thing.dashboard.RecordJump
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Technician

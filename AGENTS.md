@@ -133,16 +133,20 @@ feature/
     sharedassets/       #   Strings, drawables shared across fleet UI
     viewing/            #   FleetEmptyState (rendered by the shell)
     di/                 #   fleetModule
-  aircraft/             # Aircraft detail view + aircraft CRUD (not part of fleet/)
-    dashboard/          #   AircraftOverviewScreen, 4 tabs (Overview → Squawks → Tasks → Logs),
-                        #   AircraftOverviewViewModel, AircraftTab enum
-    update/             #   EditAircraftScreen (add/edit), EditAircraftViewModel, Engine/Airframe sections
+  dashboard/            # The per-thing dashboard: a skeleton that aggregates the features' tabs
+    api/                #   The contract the tabs read: ThingOverviewUiState, ThingOverviewAction, ThingOverviewEvent, LogStats
+    host/               #   ShellSectionBody / ShellSectionFab, ThingSectionContent, ThingOverviewViewModel,
+                        #   overview/ (the Overview tab's composition: hero, rails, ThingDataCard)
+    di/                 #   dashboardModule
+  thing/                # Thing CRUD (not part of fleet/)
+    update/             #   EditThingScreen (add/edit), EditThingViewModel, spec and component sections
     di/                 #   thingModule
   logs/                 # Maintenance logs
     datamanager/        #   MaintenanceLogManager: CRUD for logs and maintenance overview
     sharedassets/       #   Strings, LogPickerSheet, MaintenanceDisplayExtensions
     viewing/            #   MaintenanceLogCard, MaintenanceLogDetailSheet, list ViewModel
     update/             #   MaintenanceLogFormScreen, form ViewModels
+    dashboard/          #   LogsTab, RecentLogRow, LogOnboardingCard — the feature's dashboard contribution
     di/                 #   logsModule
   tasks/                # Inspection compliance (canonical layout — the reference implementation)
     model/              #   DueMetadata, MaintenanceTaskWithStatus, domain enums
@@ -150,6 +154,7 @@ feature/
     sharedassets/       #   Strings, drawables
     viewing/            #   TaskCard, TaskDetailSheet
     update/             #   AddTaskScreen, EditTaskScreen, ViewModels, form sections
+    dashboard/          #   MaintenanceTasksTab, TaskTabViewModel, ComplianceSection, NeedsAttentionSection, taskDetailFor
     di/                 #   tasksModule
   squawk/               # Defect/discrepancy tracking — Aircraft Overview tab 2
     model/              #   SquawkWithStatus, SquawkStatus (OPEN / ADDRESSED / DISMISSED)
@@ -158,6 +163,7 @@ feature/
     viewing/            #   SquawkCard, SquawkDetailSheet, SquawkPickerSheet, AogAlertSection
     update/             #   SquawkFormScreen (Details / Comments tabs), DismissSquawkDialog,
                         #   SquawkFormViewModel
+    dashboard/          #   SquawkTab, SquawkTabViewModel, list lines, SquawkRailRow
     di/                 #   squawkModule
   search/               # Per-tab search and filter (docs/search/search_filter_design.md, project #11)
     model/              #   RecordFilter, TimeWindow, RecordAdapter, SearchHit — pure Kotlin
@@ -166,7 +172,7 @@ feature/
     viewing/            #   RecordFilterBar, RecordFilterSheet, RecordCountRow, NoRecordsMatch, ActiveFilterChip
   comments/             # Collaborator notes on a squawk or a task (#749). See docs/comments/
     model/              #   CommentEntry, CommentThreadState, CommentTarget, CommentParentKind
-    datamanager/        #   CommentManager over EntityStore<Comment>, CommentThreadController
+    datamanager/        #   CommentManager over EntityStore<Comment>, CommentThreadController, RecordCommentHost
     sharedassets/       #   Strings
     viewing/            #   CommentThreadSection — the tab body, shared by both forms
   technician/           # Technician management
@@ -274,6 +280,7 @@ model         →  core:model, kotlinx only
 datamanager   →  :model, core:storage, core:model, Koin, Coroutines (Firebase only where justified)
 viewing       →  :model, :sharedassets, core:ui, core:model
 update        →  :model, :datamanager, :viewing, :sharedassets, core:*
+dashboard     →  :model, :datamanager, :viewing, :sharedassets, feature:dashboard:api, core:*
 di            →  every sibling submodule that declares a Koin module, Koin — nothing else
 ```
 
@@ -291,6 +298,7 @@ logic.
 | Resources | `sharedassets/` | `strings.xml` and drawables used by both `viewing/` and `update/`; may hold small leaf presentation helpers (label mappers, shared input fields) that other features consume without pulling in this feature's UI modules — may depend on `core:ui`/`core:model`, never on another feature |
 | Display | `viewing/` | Stateless composables — cards, list items, detail sheets, alert sections |
 | Edit | `update/` | One package per screen holding its route, screen, ViewModel + `UiState` and the components the screen composes (grouped into sub-packages by the part of the screen they build, e.g. `selection/setup/`); Koin ViewModel module in `di/`. Packages are named for a concern, never for a kind of declaration — no `viewmodel/` or `compose/` buckets (reference: `feature/export/update`; older modules are being converted under #1142) |
+| Dashboard | `dashboard/` | The feature's contribution to the per-thing dashboard (`feature/dashboard`): its section tab, tab ViewModel and the rows the overview rails render. Depends on `feature/dashboard/api` for the section state and actions, never on `feature/dashboard/host`. Keep it minimal — anything that fits `model/`, `viewing/` or `update/` goes there instead |
 | DI | `di/` | One `<Name>Module.kt` whose `<name>Module` bundles the sibling modules with `includes()`; no bindings of its own |
 
 ### Non-canonical exceptions (do not copy these for new features)
@@ -300,8 +308,9 @@ logic.
 - **`feature/settings/`** — flat module; also hosts the Developer Options screens.
 - **`feature/userprofile/`** — legacy remnant, being unified with Technician
   (`docs/technician/userprofile_as_technician.md`).
-- **`feature/thing/dashboard/`** — single submodule with its own ViewModel and DI module; its
-  sibling `aircraft/update` is canonical.
+- **`feature/dashboard/`** — `api` + `host` + `di`, not the canonical five: it is a skeleton that
+  composes other features' `dashboard/` submodules, never a feature of its own. Nothing feature-
+  specific goes in `host/`; it goes in that feature's `dashboard/`.
 - **`feature/fleet/`** — no `model` or `update`; `viewing/` holds only `FleetEmptyState`, and
   `picker/data` is a data-only leaf. When a feature has no `update` sibling, `viewing/` may host the
   list ViewModel (e.g. `logs:viewing`'s `MaintenanceLogListViewModel`).

@@ -53,6 +53,7 @@ kotlin {
       implementation(project(":feature:tasks:di"))
       implementation(project(":feature:technician:di"))
       implementation(project(":feature:thing:di"))
+      implementation(project(":feature:dashboard:di"))
     }
     sourceSets.getByName("androidMain")
       .dependencies {

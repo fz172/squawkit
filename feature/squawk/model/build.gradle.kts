@@ -25,6 +25,9 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
+      implementation(project(":core:datetime"))
+      implementation(project(":feature:search:model"))
+      implementation(libs.kotlinx.datetime)
     }
   }
 }

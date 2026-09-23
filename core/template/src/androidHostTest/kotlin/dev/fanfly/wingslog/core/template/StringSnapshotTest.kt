@@ -4,8 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Noun
-import org.junit.Test
 import java.io.File
+import org.junit.Test
 
 /**
  * **The aviation cohort's copy guardrail** (PRD §13; `pivot_rollout_design.md` §8).
@@ -394,11 +394,11 @@ class StringSnapshotTest {
     // a rail's title is fixed text rather than a frame ("No work logs yet" is not what the aviation
     // app says), so they moved to `Lexicon.empty_states` with the rest of the empty-state copy.
     frame(
-      "feature/thing/dashboard",
+      "feature/dashboard/host",
       "thing_load_error"
     ) { it.thingNoun.singular },
     frame(
-      "feature/thing/dashboard",
+      "feature/dashboard/host",
       "overview_open_squawks"
     ) { it.squawkNoun.plural },
     frame("feature/thing/update", "delete_thing") {

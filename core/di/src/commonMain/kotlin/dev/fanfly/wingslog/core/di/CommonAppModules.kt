@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.feature.ads.di.adsModule
 import dev.fanfly.wingslog.feature.attachment.di.attachmentModule
 import dev.fanfly.wingslog.feature.comments.datamanager.commentsModule
+import dev.fanfly.wingslog.feature.dashboard.di.dashboardModule
 import dev.fanfly.wingslog.feature.datalog.di.dataLogModule
 import dev.fanfly.wingslog.feature.export.di.exportModule
 import dev.fanfly.wingslog.feature.fleet.di.fleetModule
@@ -72,6 +73,7 @@ val commonAppModules: List<Module> = listOf(
   syncModule,
   fleetModule,
   thingModule,
+  dashboardModule,
   logsModule,
   dataLogModule,
   tasksModule,

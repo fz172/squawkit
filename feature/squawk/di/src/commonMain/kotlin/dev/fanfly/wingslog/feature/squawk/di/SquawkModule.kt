@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.squawk.di
 
+import dev.fanfly.wingslog.feature.squawk.dashboard.di.squawkDashboardModule
 import dev.fanfly.wingslog.feature.squawk.datamanager.squawkDataManagerModule
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUpdateModule
 import org.koin.core.module.Module
@@ -11,6 +12,7 @@ import org.koin.dsl.module
  */
 val squawkModule: Module = module {
   includes(
+    squawkDashboardModule,
     squawkDataManagerModule,
     squawkUpdateModule,
   )

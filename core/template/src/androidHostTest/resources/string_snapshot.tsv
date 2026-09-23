@@ -897,21 +897,21 @@ feature/technician/sharedassets	technician_update_name	Update name
 feature/technician/sharedassets	technician_email_label	Email
 feature/technician/sharedassets	technician_email_managed	Managed by your sign-in provider
 feature/technician/sharedassets	technician_delete_hint	Past logs keep their record of this person
-feature/thing/dashboard	degraded_body	This was set up on a device running a newer version. Nothing has been lost — but this version cannot show or edit it properly, so it is shown exactly as stored.
-feature/thing/dashboard	degraded_no_stored_details	No details stored.
-feature/thing/dashboard	degraded_reload	Reload
-feature/thing/dashboard	degraded_stored_details	Stored details
-feature/thing/dashboard	degraded_title	Needs a newer version of the app
-feature/thing/dashboard	degraded_update	Update the app
-feature/thing/dashboard	overview_all_logs	All logs
-feature/thing/dashboard	overview_meters	Meters
-feature/thing/dashboard	overview_meters_as_of	as of %1$s
-feature/thing/dashboard	overview_needs_attention	Needs attention
-feature/thing/dashboard	overview_next_due	Next due
-feature/thing/dashboard	overview_open_squawks	Open squawks
-feature/thing/dashboard	overview_title_with_count	%1$s · %2$d
-feature/thing/dashboard	spec_line_label	%1$s:
-feature/thing/dashboard	thing_load_error	Couldn't load this aircraft
+feature/dashboard/host	degraded_body	This was set up on a device running a newer version. Nothing has been lost — but this version cannot show or edit it properly, so it is shown exactly as stored.
+feature/dashboard/host	degraded_no_stored_details	No details stored.
+feature/dashboard/host	degraded_reload	Reload
+feature/dashboard/host	degraded_stored_details	Stored details
+feature/dashboard/host	degraded_title	Needs a newer version of the app
+feature/dashboard/host	degraded_update	Update the app
+feature/dashboard/host	overview_all_logs	All logs
+feature/dashboard/host	overview_meters	Meters
+feature/dashboard/host	overview_meters_as_of	as of %1$s
+feature/tasks/dashboard	overview_needs_attention	Needs attention
+feature/dashboard/host	overview_next_due	Next due
+feature/dashboard/host	overview_open_squawks	Open squawks
+feature/dashboard/host	overview_title_with_count	%1$s · %2$d
+feature/dashboard/host	spec_line_label	%1$s:
+feature/dashboard/host	thing_load_error	Couldn't load this aircraft
 feature/thing/update	delete_thing	Delete Aircraft?
 feature/thing/update	delete_thing_member_plural	people will
 feature/thing/update	delete_thing_member_singular	person will

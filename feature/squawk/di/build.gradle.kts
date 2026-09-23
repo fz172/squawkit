@@ -24,6 +24,7 @@ kotlin {
   // logic of its own.
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":feature:squawk:dashboard"))
       implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:squawk:update"))
       implementation(libs.koin.core)

@@ -30,6 +30,8 @@ import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
+import dev.fanfly.wingslog.feature.dashboard.host.ShellSectionBody
+import dev.fanfly.wingslog.feature.dashboard.host.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
@@ -39,8 +41,6 @@ import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
-import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionBody
-import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.thing.update.picker.PickThingTypeSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
