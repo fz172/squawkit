@@ -66,8 +66,10 @@ internal fun splitUnit(longName: String): SeriesLongName {
   val open = longName.lastIndexOf('(')
   if (open <= 0 || !longName.endsWith(")")) return SeriesLongName(longName, "")
   return SeriesLongName(
-    longName.substring(0, open).trim(),
-    longName.substring(open + 1, longName.length - 1).trim(),
+    longName.substring(0, open)
+      .trim(),
+    longName.substring(open + 1, longName.length - 1)
+      .trim(),
   )
 }
 

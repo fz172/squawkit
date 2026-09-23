@@ -28,7 +28,12 @@ class DerivedFieldsTest {
       parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN)
         .single()
     assertThat(DerivedFields.airborne(parsed)).isFalse()
-    assertThat(DerivedFields.endPosition(parsed)).isEqualTo(GeoPoint(39.0810252, -114.1003005))
+    assertThat(DerivedFields.endPosition(parsed)).isEqualTo(
+      GeoPoint(
+        39.0810252,
+        -114.1003005
+      )
+    )
   }
 
   @Test
@@ -71,7 +76,12 @@ class DerivedFieldsTest {
         }
       },
     )
-    assertThat(DerivedFields.endPosition(parsed)).isEqualTo(GeoPoint(37.5, -121.5))
+    assertThat(DerivedFields.endPosition(parsed)).isEqualTo(
+      GeoPoint(
+        37.5,
+        -121.5
+      )
+    )
   }
 
   @Test

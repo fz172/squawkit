@@ -158,7 +158,10 @@ class DataLogSketchTest {
       ),
     )
 
-    val sketch = sketchOf(record, data(0 to column(Float.NaN, Float.NaN, 5f, 10f))).series!!
+    val sketch = sketchOf(
+      record,
+      data(0 to column(Float.NaN, Float.NaN, 5f, 10f))
+    ).series!!
 
     assertThat(sketch.points[0].isNaN()).isTrue()
     assertThat(sketch.points.last()).isEqualTo(1f)

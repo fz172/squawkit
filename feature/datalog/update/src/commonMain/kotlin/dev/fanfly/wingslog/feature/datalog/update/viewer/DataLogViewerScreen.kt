@@ -198,7 +198,8 @@ fun DataLogViewerScreen(
   // The sidebar's inputs, hoisted above the scaffold: on a phone the sidebar is a drawer around
   // the whole screen rather than inside its content, or the top bar paints over it.
   val infoByColumn = remember(ready?.record) {
-    ready?.record?.series?.associateBy { it.column }.orEmpty()
+    ready?.record?.series?.associateBy { it.column }
+      .orEmpty()
   }
   val dragState = remember(ready?.record) { SeriesDragState() }
   val onDrop: (SeriesDrag, DropTarget?) -> Unit = { drag, target ->
@@ -218,40 +219,41 @@ fun DataLogViewerScreen(
       null -> Unit
     }
   }
-  val sidebar: (@Composable () -> Unit)? = if (ready == null || row == null) null else {
-    val facts = viewerFacts(ready.record, row)
-    val lambda: @Composable () -> Unit = {
-      SeriesSidebar(
-        catalogue = ready.record.series,
-        // The map pane's series reads as charted wherever the target happens to be: it is
-        // the only pane a position series can be in, so the target says nothing about it.
-        inTargetPane = ready.layout.panes.firstOrNull { it.id == ready.layout.targetPane }?.series?.toSet()
-          .orEmpty() +
-          ready.layout.panes.filter { pane ->
-            pane.series.firstOrNull()
-              ?.let { infoByColumn[it.column]?.paneKind() } == PaneKind.MAP
-          }
-            .flatMap { it.series },
-        tab = ready.sidebarTab,
-        onTab = viewModel::setSidebarTab,
-        query = ready.seriesQuery,
-        onQuery = viewModel::setSeriesQuery,
-        onAdd = { key ->
-          ready.layout.targetPane?.let {
-            viewModel.toggleSeries(
-              it,
-              key
-            )
-          } ?: viewModel.spawnPane(key)
-        },
-        dragState = dragState,
-        onDrop = onDrop,
-        facts = facts,
-        identityMismatch = row.identityMismatch,
-      )
+  val sidebar: (@Composable () -> Unit)? =
+    if (ready == null || row == null) null else {
+      val facts = viewerFacts(ready.record, row)
+      val lambda: @Composable () -> Unit = {
+        SeriesSidebar(
+          catalogue = ready.record.series,
+          // The map pane's series reads as charted wherever the target happens to be: it is
+          // the only pane a position series can be in, so the target says nothing about it.
+          inTargetPane = ready.layout.panes.firstOrNull { it.id == ready.layout.targetPane }?.series?.toSet()
+            .orEmpty() +
+            ready.layout.panes.filter { pane ->
+              pane.series.firstOrNull()
+                ?.let { infoByColumn[it.column]?.paneKind() } == PaneKind.MAP
+            }
+              .flatMap { it.series },
+          tab = ready.sidebarTab,
+          onTab = viewModel::setSidebarTab,
+          query = ready.seriesQuery,
+          onQuery = viewModel::setSeriesQuery,
+          onAdd = { key ->
+            ready.layout.targetPane?.let {
+              viewModel.toggleSeries(
+                it,
+                key
+              )
+            } ?: viewModel.spawnPane(key)
+          },
+          dragState = dragState,
+          onDrop = onDrop,
+          facts = facts,
+          identityMismatch = row.identityMismatch,
+        )
+      }
+      lambda
     }
-    lambda
-  }
   // The viewer is a top-level route outside the adaptive shell, so it derives its own tier;
   // otherwise every window would take the phone layout and hide the sidebar in a drawer.
   BoxWithConstraints {
@@ -363,7 +365,7 @@ fun DataLogViewerScreen(
                   ?: -1
               }
               var boxOrigin by remember { mutableStateOf(Offset.Zero) }
-                val adsManager: AdsManager = koinInject()
+              val adsManager: AdsManager = koinInject()
               val showAds by adsManager.shouldShowsAds()
                 .collectAsState(initial = false)
               // PRD R44a: one fixed unit, never in a pane and never over a chart. Android and iOS
@@ -432,7 +434,11 @@ fun DataLogViewerScreen(
                             style = WingslogTypography.dataSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                           )
-                          TextButton(onClick = { viewModel.onGesture(GestureIntent.Reset) }) {
+                          TextButton(onClick = {
+                            viewModel.onGesture(
+                              GestureIntent.Reset
+                            )
+                          }) {
                             Text(stringResource(Res.string.data_log_viewer_reset))
                           }
                         }
