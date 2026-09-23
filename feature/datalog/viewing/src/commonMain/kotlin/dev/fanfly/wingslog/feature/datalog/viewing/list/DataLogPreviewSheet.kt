@@ -3,8 +3,6 @@ package dev.fanfly.wingslog.feature.datalog.viewing.list
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,13 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import dev.fanfly.wingslog.core.datetime.formatDuration
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetActionRow
-import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -47,12 +41,12 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * What opening the chart would give, before it is opened: how long the log ran and how much it
- * recorded, a sketch of its two fullest series, and every series as a chip. *Open chart* is then
+ * recorded, and a sketch of its two fullest series. *Open chart* is then
  * a deliberate step rather than the only way to learn anything about the file.
  *
  * A `DetailSheet`, so it is the pane beside the list on a wide tier and a sheet on a phone.
  */
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataLogPreviewSheet(
   preview: DataLogPreview,
@@ -129,30 +123,6 @@ fun DataLogPreviewSheet(
 
     Spacer(Modifier.height(Spacing.large))
     Sketch(preview.sketch)
-
-    Spacer(Modifier.height(Spacing.large))
-    FormSectionLabel(
-      text = LexiconFormatter.titleCase(LocalThingLexicon.current.dataLogNoun) + " · " +
-        stringResource(Res.string.data_log_fact_series),
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(Spacing.small))
-    FlowRow(
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-      verticalArrangement = Arrangement.spacedBy(Spacing.small),
-    ) {
-      preview.series.forEach { series ->
-        SuggestionChip(
-          onClick = onOpenChart,
-          label = {
-            Text(
-              if (series.unit.isBlank()) series.name else "${series.name} · ${series.unit}",
-              maxLines = 1,
-            )
-          },
-        )
-      }
-    }
   }
 }
 
