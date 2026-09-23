@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toInstant
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
@@ -77,8 +78,7 @@ data class Sketch(val series: SketchSeries?)
 
 /**
  * What the preview pane says about a data log before the chart is opened: everything the
- * catalogue records, plus a [sketch] once the file's series have loaded (null until then, and
- * absent for a file this device has not downloaded).
+ * catalogue records, plus a [sketch] once the file's series have loaded (null until then).
  */
 data class DataLogPreview(
   val row: DataLogRow,
@@ -154,7 +154,7 @@ class DataLogListViewModel(
     }
   }
 
-  /** Opens [id]'s preview, and starts its sketch loading if this device has the file. */
+  /** Opens [id]'s preview and starts its sketch: the file is fetched first when it is not here yet. */
   fun select(id: DataLogId) {
     selectedId.value = id
     if (sketches.value.containsKey(id)) return
@@ -162,15 +162,19 @@ class DataLogListViewModel(
       // A beat first, so the pane draws before the file is read: on the web the parse and the
       // frame share one thread, and started at once the parse won the race and the pane appeared
       // seconds late. The series data is cached by the manager, so a log already charted answers
-      // at once; a file not yet downloaded fails, and the preview simply carries no sketch.
+      // at once. Download or parse failing leaves the preview without a sketch, not without a
+      // pane — the facts come from the catalogue.
       delay(SKETCH_DELAY)
       if (selectedId.value != id) return@launch
-      manager.load(thingId, id)
-        .onSuccess { data ->
-          val record = manager.observeOne(thingId, id)
-            .first() ?: return@onSuccess
-          sketches.update { it + (id to sketchOf(record, data)) }
+      val fetched = manager.ensureLocal(thingId, id)
+        .first { it !is DownloadState.Downloading }
+      val sketch = if (fetched is DownloadState.Failed) Sketch(null) else manager.load(thingId, id)
+        .mapCatching { data ->
+          val record = manager.observeOne(thingId, id).first()
+          if (record == null) Sketch(null) else sketchOf(record, data)
         }
+        .getOrDefault(Sketch(null))
+      sketches.update { it + (id to sketch) }
     }
   }
 

@@ -6,9 +6,13 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogSeries
+import dev.fanfly.wingslog.datalog.DataLogSeriesKind
 import dev.fanfly.wingslog.datalog.DataLogSource
+import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
+import dev.fanfly.wingslog.feature.datalog.model.NumericColumn
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.core.analytics.RecordedEvent
@@ -30,6 +34,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -327,5 +332,65 @@ class DataLogListViewModelTest {
     vm.upload(listOf(PickedFile("content://x", "x.csv", "text/csv", 500)))
 
     assertThat(analytics.events).isEmpty()
+  }
+
+  // --- The preview's sketch ---
+
+  private fun numericLog(id: String) = log(id, "2026-09-02T21:47:56Z").copy(
+    series = listOf(
+      DataLogSeries(
+        column = 0,
+        name = "RPM",
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        sample_count = 3,
+        min = 0.0,
+        max = 2.0,
+      ),
+    ),
+  )
+
+  private fun seriesData() = DataLogSeriesData(
+    timeSeconds = intArrayOf(0, 1, 2),
+    numeric = mapOf(0 to NumericColumn(raw = floatArrayOf(0f, 1f, 2f), filled = floatArrayOf(0f, 1f, 2f))),
+    text = emptyMap(),
+    position = null,
+  )
+
+  @Test
+  fun aPreviewFetchesTheFileBeforeSketchingIt() = runTest {
+    val record = numericLog("a")
+    val id = DataLogId("a")
+    logs.value = listOf(record)
+    every { manager.observeOne(thingId, id) } returns flowOf(record)
+    every { manager.ensureLocal(thingId, id) } returns
+      flowOf(DownloadState.Downloading(0.5f), DownloadState.Done)
+    coEvery { manager.load(thingId, id) } returns Result.success(seriesData())
+    val vm = viewModel()
+    vm.uiState.first { !it.isLoading }
+
+    vm.select(id)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.preview?.sketch?.series?.name).isEqualTo("RPM")
+    coVerify(exactly = 1) { manager.load(thingId, id) }
+  }
+
+  @Test
+  fun aFailedDownloadLeavesThePreviewWithoutASketchRatherThanLoadingForever() = runTest {
+    val record = numericLog("a")
+    val id = DataLogId("a")
+    logs.value = listOf(record)
+    every { manager.observeOne(thingId, id) } returns flowOf(record)
+    every { manager.ensureLocal(thingId, id) } returns
+      flowOf(DownloadState.Failed(IllegalStateException("offline")))
+    val vm = viewModel()
+    vm.uiState.first { !it.isLoading }
+
+    vm.select(id)
+    advanceUntilIdle()
+
+    val preview = vm.uiState.value.preview!!
+    assertThat(preview.sketch).isEqualTo(Sketch(null))
+    coVerify(exactly = 0) { manager.load(any(), any()) }
   }
 }
