@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.export.update.viewmodel
+package dev.fanfly.wingslog.feature.export.update.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

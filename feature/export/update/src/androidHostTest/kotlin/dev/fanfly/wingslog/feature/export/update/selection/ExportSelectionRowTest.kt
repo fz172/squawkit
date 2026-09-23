@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.export.update.viewmodel
+package dev.fanfly.wingslog.feature.export.update.selection
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager

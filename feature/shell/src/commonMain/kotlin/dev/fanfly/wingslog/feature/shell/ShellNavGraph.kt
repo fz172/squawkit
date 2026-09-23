@@ -9,8 +9,8 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.widget.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.feature.datalog.update.viewer.DataLogViewerScreen
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
-import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
-import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
+import dev.fanfly.wingslog.feature.export.update.history.ExportHistoryRoute
+import dev.fanfly.wingslog.feature.export.update.selection.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.notifications.settings.NotificationSettingsScreen
 import dev.fanfly.wingslog.feature.settings.AboutScreen

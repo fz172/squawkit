@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.export.update.viewmodel
+package dev.fanfly.wingslog.feature.export.update.selection
 
 /**
  * Date-range options exposed by the selection UI.

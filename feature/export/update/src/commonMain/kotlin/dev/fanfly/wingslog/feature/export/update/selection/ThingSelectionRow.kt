@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.export.update.viewmodel
+package dev.fanfly.wingslog.feature.export.update.selection
 
 /**
  * Display-ready thing row used by the export picker.

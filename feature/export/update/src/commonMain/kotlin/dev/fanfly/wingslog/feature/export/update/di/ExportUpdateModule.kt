@@ -1,9 +1,11 @@
-package dev.fanfly.wingslog.feature.export.update.viewmodel
+package dev.fanfly.wingslog.feature.export.update.di
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
+import dev.fanfly.wingslog.feature.export.update.history.ExportHistoryViewModel
+import dev.fanfly.wingslog.feature.export.update.selection.ExportViewModel
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager

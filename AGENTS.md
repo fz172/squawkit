@@ -290,7 +290,7 @@ logic.
 | Data | `datamanager/` | Manager interface, `impl/` package, Koin `*Module.kt` |
 | Resources | `sharedassets/` | `strings.xml` and drawables used by both `viewing/` and `update/`; may hold small leaf presentation helpers (label mappers, shared input fields) that other features consume without pulling in this feature's UI modules — may depend on `core:ui`/`core:model`, never on another feature |
 | Display | `viewing/` | Stateless composables — cards, list items, detail sheets, alert sections |
-| Edit | `update/` | Screens, routes, `viewmodel/` package with ViewModel + `UiState`, Koin ViewModel module, `compose/` package for form field components |
+| Edit | `update/` | One package per screen holding its route, screen, ViewModel + `UiState` and the components the screen composes (grouped into sub-packages by the part of the screen they build, e.g. `selection/setup/`); Koin ViewModel module in `di/`. Packages are named for a concern, never for a kind of declaration — no `viewmodel/` or `compose/` buckets (reference: `feature/export/update`; older modules are being converted under #1142) |
 | DI | `di/` | One `<Name>Module.kt` whose `<name>Module` bundles the sibling modules with `includes()`; no bindings of its own |
 
 ### Non-canonical exceptions (do not copy these for new features)
