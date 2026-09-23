@@ -23,7 +23,7 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
-import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
+import dev.fanfly.wingslog.feature.thing.dashboard.RecordJump
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Technician

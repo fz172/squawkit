@@ -41,7 +41,7 @@ import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionFab
-import dev.fanfly.wingslog.feature.thing.update.PickThingTypeSheet
+import dev.fanfly.wingslog.feature.thing.update.picker.PickThingTypeSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

@@ -1,0 +1,190 @@
+package dev.fanfly.wingslog.feature.thing.dashboard.overview
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dataset
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.componentTree
+import dev.fanfly.wingslog.core.template.specLines
+import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.thing.dashboard.LogStats
+import dev.fanfly.wingslog.thing.Thing
+import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.edit
+import wingslog.core.sharedassets.generated.resources.manage_access
+import wingslog.feature.logs.viewing.generated.resources.collapse_details
+import wingslog.feature.logs.viewing.generated.resources.expand_details
+import wingslog.feature.logs.viewing.generated.resources.thing_data
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+
+@Composable
+fun ThingDataCard(
+  thing: Thing,
+  /** The meters' current readings; null hides the block, as does a template with no meters. */
+  stats: LogStats? = null,
+  onEditClick: (() -> Unit)? = null,
+  onManageAccessClick: (() -> Unit)? = null,
+) {
+  var expanded by rememberSaveable { mutableStateOf(true) }
+  val rotationState by animateFloatAsState(
+    targetValue = if (expanded) 180f else 0f,
+    animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+  )
+
+  Surface(
+    modifier = Modifier.fillMaxWidth(),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
+    color = MaterialTheme.colorScheme.surfaceContainer,
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    )
+  ) {
+    Column {
+      Row(
+        modifier = Modifier.fillMaxWidth()
+          .clickable { expanded = !expanded }
+          .padding(
+            horizontal = Spacing.large,
+            vertical = Spacing.large
+          ),
+        verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+          imageVector = Icons.Default.Dataset,
+          contentDescription = null,
+          modifier = Modifier.size(Spacing.xLarge),
+          tint = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+          text = stringResource(
+            MaintenanceRes.string.thing_data,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+          ),
+          modifier = Modifier
+            .padding(start = Spacing.medium)
+            .weight(1f),
+
+          style = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 14.sp,
+            letterSpacing = 0.05.sp
+          ),
+          color = MaterialTheme.colorScheme.secondary
+        )
+
+        Icon(
+          imageVector = Icons.Default.KeyboardArrowDown,
+          contentDescription = if (expanded) stringResource(MaintenanceRes.string.collapse_details) else stringResource(
+            MaintenanceRes.string.expand_details
+          ),
+          modifier = Modifier.size(Spacing.extraLarge)
+            .rotate(rotationState),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+      }
+
+      AnimatedVisibility(visible = expanded) {
+        Column(
+          modifier = Modifier.padding(
+            bottom = Spacing.large,
+            start = Spacing.large,
+            end = Spacing.large
+          ),
+          verticalArrangement = Arrangement.spacedBy(Spacing.large)
+        ) {
+          // The thing's identity, from the spec fields the template declares. It used to be
+          // captioned AIRFRAME and read make/model/serial, which a home has none of (#729).
+          //
+          // It is drawn into this card directly rather than into a nested one: a nested card is
+          // what says "this is a part attached to the thing", and the spec IS the thing. Make and
+          // model head the block as the phrase that names it; everything else carries the label
+          // the template gives it, which is what stops an airplane's tail number from riding
+          // along in the make/model run and its serial from being captioned with that value.
+          val template = LocalThingTemplate.current
+          val spec = template.specLines(thing)
+          if (!spec.isEmpty) {
+            ThingSpecBlock(spec)
+          }
+
+          // The whole block is behind `meters` because a capability removes UI: a homeowner should
+          // never see a meter cell at all (PRD §4.8).
+          val meters = template?.meters.orEmpty()
+          if (stats != null && LocalThingCapabilities.current.meters && meters.isNotEmpty()) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            MeterReadings(meters, stats)
+          }
+
+          // Every stored component, walked from the template's slots.
+          val components = template.componentTree(thing)
+            .filter { it.row.component != null }
+          if (LocalThingCapabilities.current.components && components.isNotEmpty()) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            ComponentTree(components)
+          }
+
+          if (onEditClick != null || onManageAccessClick != null) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+              if (onManageAccessClick != null) {
+                OutlinedButton(
+                  onClick = onManageAccessClick,
+                  modifier = Modifier.weight(1f)
+                ) {
+                  Text(text = stringResource(CoreRes.string.manage_access))
+                }
+              }
+              if (onEditClick != null) {
+                OutlinedButton(
+                  onClick = onEditClick,
+                  modifier = Modifier.weight(1f)
+                ) {
+                  Text(text = stringResource(CoreRes.string.edit))
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

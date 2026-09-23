@@ -1,0 +1,230 @@
+package dev.fanfly.wingslog.feature.thing.dashboard.tasks
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.taskEmptyHint
+import dev.fanfly.wingslog.core.template.taskHistoryEmptyHint
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.widget.AdaptiveCardList
+import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeRevealController
+import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
+import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.ListRow
+import dev.fanfly.wingslog.feature.ads.model.withAdSlots
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
+import dev.fanfly.wingslog.feature.search.model.FieldMatch
+import dev.fanfly.wingslog.feature.search.viewing.hiddenMatchNote
+import dev.fanfly.wingslog.feature.search.viewing.wordsIn
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import wingslog.feature.search.sharedassets.generated.resources.match_reference
+import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
+import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
+import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
+import wingslog.feature.tasks.sharedassets.generated.resources.starter_pack_empty_action
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
+
+@Composable
+fun ComplianceSection(
+  activeTasks: List<MaintenanceTaskWithStatus>,
+  completedTasks: List<MaintenanceTaskWithStatus>,
+  showComplied: Boolean,
+  onToggleComplied: (Boolean) -> Unit,
+  onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
+  /** Offers the template's starter pack from the empty state; null when there is none to offer. */
+  onAddStarterPack: (() -> Unit)? = null,
+  /** Task to report the on-screen position of, so the tab can scroll it into view. */
+  scrollTargetId: String? = null,
+  /** Receives the vertical middle of the [scrollTargetId] card, in root coordinates. */
+  onTargetPositioned: (Float) -> Unit = {},
+  /** The jumped-to card, once the scroll to it has landed. */
+  highlightedId: String? = null,
+  showHeader: Boolean = true,
+  /** The per-tab search and filter bar, under the header, and the result count below it. */
+  filterBar: @Composable () -> Unit,
+  countRow: @Composable () -> Unit,
+  /** Shown instead of the empty states when a filter left nothing to list. */
+  noMatch: (@Composable () -> Unit)? = null,
+  /** The words the active search matched on a task, for highlighting. */
+  matchesFor: (MaintenanceTaskWithStatus) -> List<FieldMatch> = { emptyList() },
+  /**
+   * Swipe quick actions per card, and the one-open-card controller the list shares. Both null (the
+   * default) leaves the section gesture-free, which is what the Overview tab's rail wants.
+   */
+  revealController: SwipeRevealController? = null,
+  quickActionsFor: (@Composable (MaintenanceTaskWithStatus) -> List<SwipeAction>)? = null,
+  modifier: Modifier = Modifier,
+) {
+  Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+  ) {
+    if (showHeader) {
+      Text(
+        text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.taskNoun),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+      )
+    }
+
+    filterBar()
+
+    DualSegmentedFilter(
+      option1 = stringResource(
+        SharedRes.string.due_with_count,
+        activeTasks.size
+      ),
+      option2 = stringResource(
+        SharedRes.string.history_with_count,
+        completedTasks.size
+      ),
+      selectedIndex = if (showComplied) 1 else 0,
+      onSelect = { onToggleComplied(it == 1) },
+    )
+
+    countRow()
+
+    val displayList = if (showComplied) completedTasks else activeTasks
+    // Due / History are independent lists with independent counters, exactly like squawks
+    // Open / Closed — this is a toggle over flat lists, not the grouped list the PRD describes.
+    val adsManager: AdsManager = koinInject()
+    val showAds by adsManager.shouldShowsAds()
+      .collectAsState(initial = false)
+    val rows = remember(displayList, showAds) {
+      if (showAds) withAdSlots(displayList) else displayList.map {
+        ListRow.Item(
+          it
+        )
+      }
+    }
+
+    if (displayList.isEmpty()) {
+      if (noMatch != null) {
+        noMatch()
+      } else if (!showComplied) {
+        EmptyState(
+          title = stringResource(
+            SharedRes.string.no_tasks_yet,
+            LocalThingLexicon.current.taskNoun.plural,
+          ),
+          description = LocalThingLexicon.current.taskEmptyHint,
+          icon = Icons.Default.CheckCircle,
+          actionText = onAddStarterPack?.let {
+            stringResource(
+              SharedRes.string.starter_pack_empty_action,
+              LocalThingLexicon.current.taskNoun.plural,
+            )
+          },
+          onActionClick = onAddStarterPack,
+        )
+      } else {
+        Text(
+          text = LocalThingLexicon.current.taskHistoryEmptyHint,
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.padding(vertical = Spacing.large)
+        )
+      }
+    } else {
+      AdaptiveCardList(
+        items = rows,
+        columns = LocalLayoutTier.current.cardColumns,
+        spacing = Spacing.medium,
+        // Rows are flat now, so the hairline between them does the separating a gap used to.
+        rowSpacing = Spacing.none,
+        isSpanning = { it is ListRow.Ad },
+        separator = { ListRowDivider() },
+      ) { row ->
+        when (row) {
+          is ListRow.Ad -> AdSlot(
+            surface = AdSurface.TASKS,
+            slotIndex = row.slotIndex,
+          )
+
+          is ListRow.Item -> {
+            val item = row.value
+            val isJumpTarget = item.card.id == scrollTargetId
+            val matches = matchesFor(item)
+            val taskCard = @Composable {
+              TaskCardItem(
+                cardWithStatus = item,
+                onClick = { onCardClick(item) },
+                highlight = matches.wordsIn(
+                  TaskAdapter.FIELD_TITLE,
+                  TaskAdapter.FIELD_NOTES
+                ),
+                matchNote = hiddenMatchNote(
+                  matches,
+                  setOf(
+                    TaskAdapter.FIELD_TITLE,
+                    TaskAdapter.FIELD_NOTES
+                  )
+                ) { match ->
+                  when (match.field) {
+                    TaskAdapter.FIELD_REFERENCE -> stringResource(
+                      SearchRes.string.match_reference,
+                      item.card.reference_number
+                    )
+
+                    TaskAdapter.FIELD_AUTHORITY -> item.card.compliance_authority
+                    TaskAdapter.FIELD_DETAILS -> item.card.compliance_details
+                    else -> null
+                  }
+                },
+                modifier = Modifier.fillMaxWidth()
+                  .then(
+                    if (isJumpTarget) {
+                      Modifier.onGloballyPositioned {
+                        onTargetPositioned(it.positionInRoot().y + it.size.height / 2f)
+                      }
+                    } else {
+                      Modifier
+                    }
+                  )
+                  .jumpTargetHighlight(active = item.card.id == highlightedId),
+              )
+            }
+            if (revealController == null || quickActionsFor == null) {
+              taskCard()
+            } else {
+              SwipeActionCard(
+                actions = quickActionsFor(item),
+                controller = revealController,
+                key = item.card.id,
+                modifier = Modifier.fillMaxWidth(),
+                content = taskCard,
+              )
+            }
+          }
+        }
+      }
+    }
+  }
+}

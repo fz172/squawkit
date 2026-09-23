@@ -1,0 +1,756 @@
+package dev.fanfly.wingslog.feature.thing.dashboard
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.QuickActionKind
+import dev.fanfly.wingslog.core.analytics.QuickActionSource
+import dev.fanfly.wingslog.core.analytics.QuickActionSurface
+import dev.fanfly.wingslog.core.analytics.RecordQuickAction
+import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.TemplateResolution
+import dev.fanfly.wingslog.core.template.currentFor
+import dev.fanfly.wingslog.core.template.currentReadings
+import dev.fanfly.wingslog.core.template.readingFor
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
+import dev.fanfly.wingslog.feature.comments.model.CommentAction
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.model.dataLogId
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.squawk.model.openAog
+import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.feature.thing.dashboard.comments.RecordCommentHost
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.core.sharedassets.generated.resources.save_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
+import wingslog.feature.squawk.sharedassets.generated.resources.squawk_deleted
+import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
+import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
+
+class ThingOverviewViewModel(
+  private val fleetManager: FleetManager,
+  private val logManager: MaintenanceLogManager,
+  private val taskDataManager: TaskDataManager,
+  private val taskStatusManager: TaskStatusManager,
+  private val attachmentOpener: AttachmentOpener,
+  private val attachmentManager: AttachmentManager,
+  private val dataLogManager: DataLogManager,
+  private val squawkManager: SquawkManager,
+  private val commentManager: CommentManager,
+  private val sharingManager: SharingManager,
+  private val thingScopeResolver: ThingScopeResolver,
+  private val templateRegistry: TemplateRegistry,
+  private val analytics: AnalyticsManager,
+  private val auth: FirebaseAuth,
+  private val thingId: String,
+) : ViewModel() {
+
+  private val _uiState =
+    MutableStateFlow<ThingOverviewUiState>(ThingOverviewUiState.Loading)
+  val uiState: StateFlow<ThingOverviewUiState> = _uiState.asStateFlow()
+
+  private val commentHost = RecordCommentHost(commentManager, viewModelScope)
+
+  /** The open detail sheet's comment thread; null while no squawk or task sheet is showing. */
+  val commentThread: StateFlow<CommentThreadController?> = commentHost.thread
+
+  // Buffered, not rendezvous: a quick action's snackbar can be emitted between the section being
+  // torn down and the new one attaching its collector, and a rendezvous send would park there.
+  private val _events = Channel<ThingOverviewEvent>(Channel.BUFFERED)
+
+  /** Navigation and snackbar events; `ThingSectionContent` collects them (design §7). */
+  val events: Flow<ThingOverviewEvent> = _events.receiveAsFlow()
+  private var cachedLogs: List<MaintenanceLog> = emptyList()
+
+  /** Due status depends on the clock, not only on stored data; re-evaluate when the screen returns. */
+  fun onResumed() {
+    taskStatusManager.refreshDueStatus()
+  }
+
+  init {
+    // Derived from the state rather than hooked into each action: a sheet closes in several ways
+    // (dismiss, delete, a resolve that navigates away) and every one of them clears the selection.
+    viewModelScope.launch {
+      _uiState
+        .map { (it as? ThingOverviewUiState.Success)?.commentTarget() }
+        .distinctUntilChanged()
+        .collect(commentHost::show)
+    }
+    viewModelScope.launch {
+      commentHost.errors.collect { action ->
+        val message = when (action) {
+          CommentAction.POST -> CommentsRes.string.comment_post_failed
+          CommentAction.EDIT -> CommentsRes.string.comment_edit_failed
+          CommentAction.DELETE -> CommentsRes.string.comment_delete_failed
+        }
+        _events.send(ThingOverviewEvent.ShowMessage(UiText.StringRes(message)))
+      }
+    }
+  }
+
+  init {
+    loadThingAndStats()
+  }
+
+  // Blob sync state must be observed at the scope that actually holds this thing's data: the
+  // caller's own tree for an owned plane, or the host's tree for a shared one. Deriving the path
+  // from the uid alone (the old `/users/$uid/thing/...`) missed a member's shared thing
+  // entirely, so sync state never resolved. Drive it off [ThingScopeResolver] instead, which
+  // re-emits when the thing flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun blobStatesFlow(): Flow<Map<String, BlobSyncState>> =
+    thingScopeResolver.resolve(thingId)
+      .flatMapLatest { scope ->
+        if (scope == null) flowOf(emptyMap())
+        else attachmentManager.observeBlobStates(scope.toPath())
+      }
+
+  /** Every data log with its raw file's blob state, keyed by id, for DATA_LOG attachment rows. */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun dataLogsFlow(): Flow<Map<DataLogId, DataLogRowInfo>> {
+    val typedThingId = ThingId(thingId)
+    return dataLogManager.observe(typedThingId)
+      .flatMapLatest { logs ->
+        if (logs.isEmpty()) return@flatMapLatest flowOf(emptyMap())
+        combine(
+          logs.map { log ->
+            dataLogManager.observeBlobState(typedThingId, log.dataLogId)
+              .map { state ->
+                log.dataLogId to DataLogRowInfo(
+                  log.source?.product.orEmpty(),
+                  log.duration_seconds,
+                  state
+                )
+              }
+          }
+        ) { entries -> entries.toMap() }
+      }
+  }
+
+  private fun loadThingAndStats() {
+    viewModelScope.launch {
+      _uiState.update { ThingOverviewUiState.Loading }
+      // Every collection shares one SQLDelight `entity` table, and SQLDelight notifies query
+      // listeners per *table*, so any write anywhere — adding a squawk, a sync writeback — re-runs
+      // and re-emits every observer here with identical content. Unfiltered, that re-ran
+      // computeNextDue for every task card several times per unrelated write. distinctUntilChanged
+      // drops the duplicates; the store still re-queries and re-decodes, which is a separate
+      // (larger) fix at the EntityStore level.
+      combine(
+        fleetManager.loadThing(thingId)
+          .distinctUntilChanged(),
+        logManager.observeLogs(thingId)
+          .distinctUntilChanged(),
+        taskStatusManager.observeTasksWithStatus(thingId)
+          .distinctUntilChanged(),
+        logManager.observeMaintenanceOverview(thingId)
+          .distinctUntilChanged(),
+        combine(
+          squawkManager.observeSquawks(thingId)
+            .distinctUntilChanged(),
+          combine(
+            blobStatesFlow(),
+            attachmentOpener.downloadingIds
+          ) { blobStates, downloadingIds ->
+            buildMap {
+              putAll(blobStates)
+              downloadingIds.forEach {
+                put(
+                  it,
+                  BlobSyncState.Downloading
+                )
+              }
+            }
+          }.distinctUntilChanged(),
+          // The caller's role on this thing, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
+          // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
+          sharingManager.observeMyRole(thingId)
+            .distinctUntilChanged(),
+          sharingManager.observeIsShared(thingId)
+            .distinctUntilChanged(),
+          dataLogsFlow().distinctUntilChanged(),
+        ) { squawks, syncs, myRole, shared, dataLogs ->
+          ShareContext(squawks, syncs, myRole, shared, dataLogs)
+        }
+      ) { thing, logs, cardsWithStatus, overview, shareContext ->
+        val (squawkList, syncStates, myRole, isShared, dataLogs) = shareContext
+        cachedLogs = logs
+        val degraded = thing?.let {
+          templateRegistry.resolve(it) as? TemplateResolution.Degraded
+        }
+        if (degraded != null) {
+          // Before anything else is computed: the stats and due-status work below reads the
+          // template's meters, and running it under DNA we cannot interpret is what produces the
+          // wrong numbers this state exists to avoid showing (design §6.2).
+          ThingOverviewUiState.Degraded(thing, degraded.reason)
+        } else if (thing != null) {
+          val template = templateRegistry.forThingWithFallback(thing)
+          val readingsAsOf = logs
+            .filter { log -> template.meters.any { log.readingFor(it.key) != null } }
+            .maxByOrNull { it.timestamp?.getEpochSecond() ?: 0L }
+            ?.timestamp
+            ?.toLocalDate()
+          val stats = if (overview != null) {
+            LogStats(
+              total = overview.total_log_count.toLong(),
+              airframe = overview.airframe_log_count.toLong(),
+              engine = overview.engine_log_count.toLong(),
+              propeller = overview.propeller_log_count.toLong(),
+              // Every meter this template declares that the overview has a value for. `currentFor`
+              // falls back to the three aviation fields, so an overview written before `current`
+              // existed still answers (#730).
+              readings = template.meters.mapNotNull { meter ->
+                overview.currentFor(meter.key)
+                  ?.let { meter.key to it }
+              }
+                .toMap(),
+              readingsAsOf = readingsAsOf,
+            )
+          } else {
+            // No overview stored yet — compute the same readings straight from the logs.
+            val fromLogs =
+              currentReadings(logs).associate { it.meter_key to it.value_ }
+            LogStats(
+              total = logs.size.toLong(),
+              airframe = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME }
+                .toLong(),
+              engine = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE }
+                .toLong(),
+              propeller = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER }
+                .toLong(),
+              readings = template.meters.mapNotNull { meter ->
+                fromLogs[meter.key]?.let { meter.key to it }
+              }
+                .toMap(),
+              readingsAsOf = readingsAsOf,
+            )
+          }
+
+          val active =
+            cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
+          val complied =
+            cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
+
+          val current = _uiState.value as? ThingOverviewUiState.Success
+          val refreshedSelected = current?.selectedTask?.let { sel ->
+            cardsWithStatus.find { it.card.id == sel.card.id }
+          }
+          val refreshedDetailLogs = refreshedSelected?.let { sel ->
+            logs.filter { sel.card.id in it.inspection_ids }
+              .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+          } ?: emptyList()
+
+          val squawksWithStatus = squawkList.map { it.toWithStatus() }
+          val aogSquawks = squawksWithStatus.openAog()
+
+          ThingOverviewUiState.Success(
+            thing = thing,
+            logStats = stats,
+            activeTasks = active,
+            completedTasks = complied,
+            recentLogs = logs.sortedByDescending {
+              it.timestamp?.getEpochSecond() ?: 0L
+            }
+              .take(4),
+            selectedTask = refreshedSelected,
+            logsForSelectedTask = refreshedDetailLogs,
+            deletingTaskId = current?.deletingTaskId,
+            resolvingTaskId = current?.resolvingTaskId,
+            skippingTaskId = current?.skippingTaskId,
+            syncStates = syncStates,
+            dataLogs = dataLogs,
+            squawks = squawksWithStatus,
+            aogSquawks = aogSquawks,
+            resolvingSquawkId = current?.resolvingSquawkId,
+            dismissingSquawkId = current?.dismissingSquawkId,
+            deletingSquawkId = current?.deletingSquawkId,
+            myRole = myRole,
+            shared = isShared,
+            isAnonymous = auth.currentUser?.isAnonymous ?: true,
+          )
+        } else {
+          ThingOverviewUiState.Error
+        }
+      }.collect { state ->
+        _uiState.update { state }
+      }
+    }
+  }
+
+  fun onAction(action: ThingOverviewAction) {
+    when (action) {
+      ThingOverviewAction.BackClick -> {
+        viewModelScope.launch { _events.send(ThingOverviewEvent.NavigateBack) }
+      }
+
+      is ThingOverviewAction.EditClick -> {
+        viewModelScope.launch {
+          _events.send(
+            ThingOverviewEvent.NavigateToEditThing(
+              action.thingId
+            )
+          )
+        }
+      }
+
+      ThingOverviewAction.DeleteConfirm -> {
+        deleteThing()
+      }
+
+      is ThingOverviewAction.ManageAccessClick -> {
+        viewModelScope.launch {
+          _events.send(
+            ThingOverviewEvent.NavigateToManageAccess(
+              action.thingId
+            )
+          )
+        }
+      }
+
+      is ThingOverviewAction.AddLogClick -> {
+        viewModelScope.launch {
+          _events.send(
+            ThingOverviewEvent.NavigateToAddLog(
+              action.thingId
+            )
+          )
+        }
+      }
+
+      is ThingOverviewAction.EditLogClick -> {
+        viewModelScope.launch {
+          _events.send(
+            ThingOverviewEvent.NavigateToEditLog(
+              action.thingId,
+              action.logId
+            )
+          )
+        }
+      }
+
+      is ThingOverviewAction.AddTaskClick -> {
+        viewModelScope.launch {
+          _events.send(
+            ThingOverviewEvent.NavigateToAddTask(
+              action.thingId
+            )
+          )
+        }
+      }
+
+      // Navigation only — ThingSectionContent drives the navController and never forwards it.
+      is ThingOverviewAction.AddStarterPackClick -> Unit
+
+      is ThingOverviewAction.TaskCardClick -> {
+        showTaskDetails(action.card)
+      }
+
+      ThingOverviewAction.DismissTaskDetail -> {
+        hideTaskDetail()
+      }
+
+      // Navigation only; ThingSectionContent routes it.
+      is ThingOverviewAction.OpenDataLogClick -> Unit
+
+      is ThingOverviewAction.EditTaskClick -> {
+        hideTaskDetail()
+        viewModelScope.launch {
+          _events.send(
+            ThingOverviewEvent.NavigateToEditTask(
+              action.thingId,
+              action.cardId
+            )
+          )
+        }
+      }
+
+      ThingOverviewAction.CancelDeleteTask -> {
+        cancelDeleteTask()
+      }
+
+      ThingOverviewAction.ConfirmDeleteTask -> {
+        confirmDeleteTask()
+      }
+
+      is ThingOverviewAction.AddSquawkClick -> {
+        viewModelScope.launch {
+          _events.send(
+            ThingOverviewEvent.NavigateToAddSquawk(
+              action.thingId
+            )
+          )
+        }
+      }
+
+      is ThingOverviewAction.ShowSquawkDetail -> {
+        val log =
+          cachedLogs.firstOrNull { it.id == action.squawk.squawk.addressed_by_log_id }
+        _uiState.update { state ->
+          if (state is ThingOverviewUiState.Success)
+            state.copy(
+              selectedSquawk = action.squawk,
+              logForSelectedSquawk = log
+            )
+          else state
+        }
+      }
+
+      ThingOverviewAction.DismissSquawkDetail -> {
+        _uiState.update { state ->
+          if (state is ThingOverviewUiState.Success)
+            state.copy(
+              selectedSquawk = null,
+              logForSelectedSquawk = null
+            )
+          else state
+        }
+      }
+
+      is ThingOverviewAction.EditSquawkClick -> {
+        viewModelScope.launch {
+          _events.send(
+            ThingOverviewEvent.NavigateToEditSquawk(
+              action.thingId,
+              action.squawkId
+            )
+          )
+        }
+      }
+
+      is ThingOverviewAction.SquawkResolveClick ->
+        updateSuccess { it.copy(resolvingSquawkId = action.squawk.squawk.id) }
+
+      ThingOverviewAction.DismissSquawkResolveMenu ->
+        updateSuccess { it.copy(resolvingSquawkId = null) }
+
+      // Navigation is the section's job; committing the analytics and closing the bubble is ours.
+      is ThingOverviewAction.SquawkFixedClick -> {
+        logQuickAction(QuickActionSurface.SQUAWKS, QuickActionKind.RESOLVE)
+        updateSuccess { it.copy(resolvingSquawkId = null) }
+      }
+
+      is ThingOverviewAction.SquawkDismissClick ->
+        updateSuccess {
+          it.copy(
+            resolvingSquawkId = null,
+            dismissingSquawkId = action.squawkId
+          )
+        }
+
+      is ThingOverviewAction.ConfirmDismissSquawk -> dismissSquawk(action.reason)
+
+      is ThingOverviewAction.SquawkReopenClick -> reopenSquawk(action.squawkId)
+
+      ThingOverviewAction.CancelDismissSquawk ->
+        updateSuccess { it.copy(dismissingSquawkId = null) }
+
+      is ThingOverviewAction.DeleteSquawkClick ->
+        updateSuccess {
+          it.copy(
+            resolvingSquawkId = null,
+            deletingSquawkId = action.squawk.squawk.id
+          )
+        }
+
+      ThingOverviewAction.ConfirmDeleteSquawk -> confirmDeleteSquawk()
+
+      ThingOverviewAction.CancelDeleteSquawk ->
+        updateSuccess { it.copy(deletingSquawkId = null) }
+
+      is ThingOverviewAction.TaskResolveClick ->
+        updateSuccess { it.copy(resolvingTaskId = action.card.card.id) }
+
+      ThingOverviewAction.DismissTaskResolveMenu ->
+        updateSuccess { it.copy(resolvingTaskId = null) }
+
+      is ThingOverviewAction.TaskCreateLogClick -> {
+        logQuickAction(QuickActionSurface.TASKS, QuickActionKind.RESOLVE)
+        updateSuccess { it.copy(resolvingTaskId = null) }
+      }
+
+      is ThingOverviewAction.TaskSkipClick ->
+        updateSuccess {
+          it.copy(resolvingTaskId = null, skippingTaskId = action.card.card.id)
+        }
+
+      ThingOverviewAction.ConfirmSkipTask -> confirmSkipTask()
+
+      ThingOverviewAction.CancelSkipTask ->
+        updateSuccess { it.copy(skippingTaskId = null) }
+
+      is ThingOverviewAction.DeleteTaskClick ->
+        updateSuccess {
+          it.copy(resolvingTaskId = null, deletingTaskId = action.card.card.id)
+        }
+    }
+  }
+
+  /** Rewrites [ThingOverviewUiState.Success]; a no-op in any other state. */
+  private inline fun updateSuccess(
+    crossinline transform: (ThingOverviewUiState.Success) -> ThingOverviewUiState.Success,
+  ) {
+    _uiState.update { state ->
+      if (state is ThingOverviewUiState.Success) transform(state) else state
+    }
+  }
+
+  /**
+   * Fired at commit — after the confirmation for Delete and Skip, on selection for Fixed /
+   * Dismiss / Create work log — so a cancelled confirmation logs nothing (PRD R25).
+   */
+  private fun logQuickAction(
+    surface: QuickActionSurface,
+    action: QuickActionKind,
+  ) {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    analytics.log(
+      RecordQuickAction(
+        templateId = state.thing.template?.id.orEmpty(),
+        surface = surface,
+        action = action,
+        source = QuickActionSource.SWIPE,
+      )
+    )
+  }
+
+  /** The words this build renders the thing in — what the snackbars name a record with (R24). */
+  private fun lexicon(state: ThingOverviewUiState.Success) =
+    templateRegistry.lexiconFor(templateRegistry.forThingWithFallback(state.thing))
+
+  private fun dismissSquawk(reason: SquawkDismissReason) {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    val squawkId = state.dismissingSquawkId ?: return
+    viewModelScope.launch {
+      // The manager, and nothing lower: the tombstone it writes is what fans the collaborator
+      // notification out (design §8).
+      squawkManager.dismissSquawk(state.thing.id, squawkId, reason)
+        .onSuccess {
+          logQuickAction(
+            QuickActionSurface.SQUAWKS,
+            QuickActionKind.RESOLVE
+          )
+        }
+        .onFailure {
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
+          )
+        }
+      updateSuccess { it.copy(dismissingSquawkId = null) }
+    }
+  }
+
+  private fun reopenSquawk(squawkId: String) {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    viewModelScope.launch {
+      squawkManager.reopenSquawk(state.thing.id, squawkId)
+        .onFailure {
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
+          )
+        }
+    }
+  }
+
+  private fun confirmDeleteSquawk() {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    val squawkId = state.deletingSquawkId ?: return
+    viewModelScope.launch {
+      squawkManager.deleteSquawk(state.thing.id, squawkId)
+        .onSuccess {
+          logQuickAction(QuickActionSurface.SQUAWKS, QuickActionKind.DELETE)
+          updateSuccess {
+            it.copy(
+              deletingSquawkId = null,
+              resolvingSquawkId = null,
+              selectedSquawk = null,
+              logForSelectedSquawk = null,
+            )
+          }
+          _events.send(
+            ThingOverviewEvent.ShowMessage(
+              UiText.StringRes(
+                SquawkRes.string.squawk_deleted,
+                listOf(LexiconFormatter.sentenceCase(lexicon(state).squawkNoun)),
+              )
+            )
+          )
+        }
+        // The card stays and the dialog closes: the record is still there to try again on (R14).
+        .onFailure {
+          updateSuccess { it.copy(deletingSquawkId = null) }
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.delete_failed))
+          )
+        }
+    }
+  }
+
+  private fun confirmSkipTask() {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    val cardId = state.skippingTaskId ?: return
+    val card = (state.activeTasks + state.completedTasks)
+      .find { it.card.id == cardId }?.card ?: return
+    viewModelScope.launch {
+      // The dashboard already holds the reading the form derives, so the write is the same one
+      // TaskViewModel.skipThisCycle makes (design §5.1).
+      val reading = state.logStats?.valueFor(card.defaultMeterKey())
+        ?.toFloat() ?: 0f
+      taskDataManager.skipCycle(state.thing.id, card, reading)
+        .onSuccess {
+          logQuickAction(
+            QuickActionSurface.TASKS,
+            QuickActionKind.SKIP
+          )
+        }
+      updateSuccess { it.copy(skippingTaskId = null) }
+    }
+  }
+
+  private fun showTaskDetails(cardWithStatus: MaintenanceTaskWithStatus) {
+    val relevantLogs =
+      cachedLogs.filter { cardWithStatus.card.id in it.inspection_ids }
+        .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+    _uiState.update { state ->
+      if (state is ThingOverviewUiState.Success) {
+        state.copy(
+          selectedTask = cardWithStatus,
+          logsForSelectedTask = relevantLogs,
+        )
+      } else state
+    }
+  }
+
+  fun hideTaskDetail() {
+    _uiState.update { state ->
+      if (state is ThingOverviewUiState.Success) {
+        state.copy(
+          selectedTask = null,
+          logsForSelectedTask = emptyList()
+        )
+      } else state
+    }
+  }
+
+  fun cancelDeleteTask() {
+    _uiState.update { state ->
+      if (state is ThingOverviewUiState.Success) {
+        state.copy(deletingTaskId = null)
+      } else state
+    }
+  }
+
+  fun confirmDeleteTask() {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    val cardId = state.deletingTaskId ?: return
+    deleteTask(cardId)
+  }
+
+  fun deleteTask(cardId: String) {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    viewModelScope.launch {
+      taskDataManager.deleteTask(
+        state.thing.id,
+        cardId
+      )
+        .onSuccess {
+          logQuickAction(QuickActionSurface.TASKS, QuickActionKind.DELETE)
+          updateSuccess { it.copy(deletingTaskId = null, selectedTask = null) }
+          _events.send(
+            ThingOverviewEvent.ShowMessage(
+              UiText.StringRes(
+                TasksRes.string.task_deleted,
+                listOf(LexiconFormatter.sentenceCase(lexicon(state).taskNoun)),
+              )
+            )
+          )
+        }
+        .onFailure {
+          updateSuccess { it.copy(deletingTaskId = null) }
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.delete_failed))
+          )
+        }
+    }
+  }
+
+  fun deleteThing() {
+    viewModelScope.launch {
+      fleetManager.deleteThing(thingId)
+        .onSuccess {
+          _events.send(ThingOverviewEvent.NavigateBack)
+        }
+        .onFailure { error ->
+          _events.send(
+            ThingOverviewEvent.ShowMessage(
+              error.message?.let { UiText.DynamicString(it) }
+                ?: UiText.StringRes(CoreRes.string.delete_failed)
+            )
+          )
+        }
+    }
+  }
+}
+
+/** A squawk sheet wins if both are somehow set; in practice only one sheet is ever open. */
+private fun ThingOverviewUiState.Success.commentTarget(): CommentTarget? =
+  selectedSquawk?.let {
+    CommentTarget(
+      thing.id,
+      it.squawk.id,
+      CommentParentKind.SQUAWK
+    )
+  }
+    ?: selectedTask?.let {
+      CommentTarget(
+        thing.id,
+        it.card.id,
+        CommentParentKind.MAINTENANCE_TASK
+      )
+    }

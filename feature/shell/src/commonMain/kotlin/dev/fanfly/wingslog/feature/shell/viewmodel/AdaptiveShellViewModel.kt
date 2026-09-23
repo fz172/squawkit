@@ -21,7 +21,7 @@ import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
-import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
+import dev.fanfly.wingslog.feature.thing.dashboard.RecordJump
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

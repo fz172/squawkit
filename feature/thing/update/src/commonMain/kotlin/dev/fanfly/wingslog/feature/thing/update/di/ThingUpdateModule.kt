@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
+import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 

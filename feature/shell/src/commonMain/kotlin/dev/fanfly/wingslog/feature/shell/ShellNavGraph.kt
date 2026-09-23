@@ -27,7 +27,7 @@ import dev.fanfly.wingslog.feature.tasks.update.starter.StarterPackRoute
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
-import dev.fanfly.wingslog.feature.thing.update.EditThingScreen
+import dev.fanfly.wingslog.feature.thing.update.edit.EditThingScreen
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import org.koin.compose.viewmodel.koinViewModel
