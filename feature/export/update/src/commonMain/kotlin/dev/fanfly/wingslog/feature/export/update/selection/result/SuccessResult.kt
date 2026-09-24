@@ -28,8 +28,8 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.update.selection.ExportUiState
 import dev.fanfly.wingslog.feature.export.update.selection.rangeSummary
 import dev.fanfly.wingslog.feature.export.update.selection.thingSummary
-import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
-import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProUpsellSheet
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.UpsellTrigger
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_download

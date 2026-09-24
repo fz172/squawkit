@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.subscription.viewing
+package dev.fanfly.wingslog.feature.subscription.viewing.paywall
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,9 +28,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.PromoCodeError
-import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.PromoCodeUiState
-import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.PromoTerm
+import dev.fanfly.wingslog.feature.subscription.viewing.PromoCodeError
+import dev.fanfly.wingslog.feature.subscription.viewing.PromoCodeUiState
+import dev.fanfly.wingslog.feature.subscription.viewing.PromoTerm
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel

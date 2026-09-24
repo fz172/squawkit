@@ -39,8 +39,10 @@ import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.CustomerCenterHost
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProMembershipContent
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProPaywallContent
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProPaywallHost
-import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionViewModel
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.PromoCodeDialog
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.subscription.viewing.generated.resources.Res

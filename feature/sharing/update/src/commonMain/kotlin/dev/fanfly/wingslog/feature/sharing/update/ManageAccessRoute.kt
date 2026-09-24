@@ -14,8 +14,8 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessScreen
-import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
-import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProUpsellSheet
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.UpsellTrigger
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.sharing.sharedassets.generated.resources.Res

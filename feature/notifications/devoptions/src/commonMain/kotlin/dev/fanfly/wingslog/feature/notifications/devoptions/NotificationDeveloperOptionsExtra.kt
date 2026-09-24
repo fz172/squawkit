@@ -33,38 +33,16 @@ import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanner
 import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.notifications.devoptions.generated.resources.Res
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_at
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_counts
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_never
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_title
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_trigger
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_header
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_open_settings_action
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_permission_title
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_request_action
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_action
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_done
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_hint
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_no_user
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_title
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_never_run
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_now_action
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_now_title
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_completed
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_debounced
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_disabled
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_no_permission
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_no_user
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_prefs_unresolved
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_denied
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_granted
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_undetermined
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_unsupported
 
 /**
  * Developer Options section for the notifications feature.
@@ -195,128 +173,4 @@ class NotificationDeveloperOptionsExtra(
     // No trailing divider — the host draws one after every extra.
   }
 
-  @Composable
-  private fun ScanResult.toLabel(): String = when (this) {
-    ScanResult.NoUser -> stringResource(Res.string.notifications_devoptions_scan_result_no_user)
-    ScanResult.Debounced -> stringResource(Res.string.notifications_devoptions_scan_result_debounced)
-    ScanResult.PrefsUnresolved -> stringResource(Res.string.notifications_devoptions_scan_result_prefs_unresolved)
-    ScanResult.Disabled -> stringResource(Res.string.notifications_devoptions_scan_result_disabled)
-    ScanResult.NoPermission -> stringResource(Res.string.notifications_devoptions_scan_result_no_permission)
-    is ScanResult.Completed -> stringResource(
-      Res.string.notifications_devoptions_scan_result_completed,
-      notificationsPosted
-    )
-  }
-
-  private fun PermissionState.toLabelRes() = when (this) {
-    PermissionState.UNDETERMINED -> Res.string.notifications_devoptions_state_undetermined
-    PermissionState.GRANTED -> Res.string.notifications_devoptions_state_granted
-    PermissionState.DENIED -> Res.string.notifications_devoptions_state_denied
-    PermissionState.UNSUPPORTED -> Res.string.notifications_devoptions_state_unsupported
-  }
-
-  /**
-   * Wipes this account's watermarks. Kept next to "scan now" because the two are used together:
-   * reset, scan to re-seed, change a record, scan again.
-   */
-  @Composable
-  private fun ResetWatermarksRow(
-    scope: CoroutineScope,
-    onReset: suspend () -> Boolean,
-  ) {
-    var status by remember { mutableStateOf<StringResource?>(null) }
-    var resetting by remember { mutableStateOf(false) }
-
-    Spacer(Modifier.height(Spacing.medium))
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = Spacing.small),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Column(modifier = Modifier.weight(1f)) {
-        Text(
-          text = stringResource(Res.string.notifications_devoptions_reset_watermarks_title),
-          style = MaterialTheme.typography.bodyLarge,
-        )
-        Text(
-          text = stringResource(
-            status ?: Res.string.notifications_devoptions_reset_watermarks_hint
-          ),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-      Spacer(Modifier.height(Spacing.small))
-      OutlinedButton(
-        enabled = !resetting,
-        onClick = {
-          resetting = true
-          scope.launch {
-            status =
-              if (onReset()) Res.string.notifications_devoptions_reset_watermarks_done
-              else Res.string.notifications_devoptions_reset_watermarks_no_user
-            resetting = false
-          }
-        },
-      ) {
-        Text(stringResource(Res.string.notifications_devoptions_reset_watermarks_action))
-      }
-    }
-  }
-
-  /**
-   * Design §11's diagnostics. Read from the persisted [ScanRecord] rather than from whatever this
-   * process happens to have run, so a background scan that happened while the app was closed —
-   * the case the §6.6 metric is about — is still visible here.
-   */
-  @Composable
-  private fun ScanDiagnosticsRow(lastScan: ScanRecord?) {
-    Spacer(Modifier.height(Spacing.medium))
-    Text(
-      text = stringResource(Res.string.notifications_devoptions_diagnostics_title),
-      style = MaterialTheme.typography.labelSmall,
-      color = MaterialTheme.colorScheme.primary,
-      fontWeight = FontWeight.SemiBold,
-      modifier = Modifier.padding(bottom = Spacing.small),
-    )
-    if (lastScan == null) {
-      Text(
-        text = stringResource(Res.string.notifications_devoptions_diagnostics_never),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      return
-    }
-    Column {
-      Text(
-        text = stringResource(
-          Res.string.notifications_devoptions_diagnostics_at,
-          lastScan.at.toString(),
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      Text(
-        text = stringResource(
-          Res.string.notifications_devoptions_diagnostics_trigger,
-          lastScan.trigger.name,
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      Text(
-        text = stringResource(
-          Res.string.notifications_devoptions_diagnostics_counts,
-          lastScan.recordsExamined,
-          lastScan.crossingsFound,
-          lastScan.crossingsSuppressed,
-          lastScan.notificationsPosted,
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-  }
 }
