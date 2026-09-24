@@ -136,7 +136,7 @@ fun DataLogViewerScreen(
       val scaffold: @Composable () -> Unit = {
         Scaffold(
           topBar = {
-ViewerTopBar(
+            ViewerTopBar(
               title = row?.startLocal?.date?.toDisplayFormat(numberOnly = false)
                 ?: LexiconFormatter.titleCase(lexicon.dataLogNoun),
               ready = ready != null,
@@ -152,9 +152,13 @@ ViewerTopBar(
           val content = Modifier.padding(innerPadding)
             .fillMaxSize()
           when (val s = state) {
-is DataLogViewerUiState.Loading -> ViewerLoading(s, content)
+            is DataLogViewerUiState.Loading -> ViewerLoading(s, content)
 
-is DataLogViewerUiState.Failed -> ViewerFailed(s, viewModel::retry, content)
+            is DataLogViewerUiState.Failed -> ViewerFailed(
+              s,
+              viewModel::retry,
+              content
+            )
 
             is DataLogViewerUiState.Ready -> ViewerReady(
               state = s,

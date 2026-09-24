@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.viewer
 
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,7 +21,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 @Composable
 internal fun DeleteDataLogDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
   val lexicon = LocalThingLexicon.current
-    AlertDialog(
+  AlertDialog(
     onDismissRequest = onDismiss,
     title = {
       Text(

@@ -32,35 +32,35 @@ internal fun ViewerTopBar(
   onDelete: () -> Unit,
 ) {
   WingsLogTopAppBar(
-  title = title,
-  onBackClick = onBack,
-  actions = {
-    if (ready) {
-      IconButton(onClick = onToggleClockAxis) {
-        Icon(
-          Icons.Filled.Schedule,
-          contentDescription = stringResource(Res.string.data_log_viewer_clock_axis),
-          tint = if (clockAxis) MaterialTheme.colorScheme.primary
-          else LocalContentColor.current,
-        )
+    title = title,
+    onBackClick = onBack,
+    actions = {
+      if (ready) {
+        IconButton(onClick = onToggleClockAxis) {
+          Icon(
+            Icons.Filled.Schedule,
+            contentDescription = stringResource(Res.string.data_log_viewer_clock_axis),
+            tint = if (clockAxis) MaterialTheme.colorScheme.primary
+            else LocalContentColor.current,
+          )
+        }
       }
-    }
-    if (ready && LocalLayoutTier.current.isCompact) {
-      IconButton(onClick = onOpenSidebar) {
-        Icon(
-          Icons.Filled.Tune,
-          contentDescription = stringResource(Res.string.data_log_sidebar_open)
-        )
+      if (ready && LocalLayoutTier.current.isCompact) {
+        IconButton(onClick = onOpenSidebar) {
+          Icon(
+            Icons.Filled.Tune,
+            contentDescription = stringResource(Res.string.data_log_sidebar_open)
+          )
+        }
       }
-    }
-    if (ready) {
-      IconButton(onClick = onDelete) {
-        Icon(
-          Icons.Filled.Delete,
-          contentDescription = stringResource(CoreRes.string.delete)
-        )
+      if (ready) {
+        IconButton(onClick = onDelete) {
+          Icon(
+            Icons.Filled.Delete,
+            contentDescription = stringResource(CoreRes.string.delete)
+          )
+        }
       }
-    }
-  },
-)
+    },
+  )
 }

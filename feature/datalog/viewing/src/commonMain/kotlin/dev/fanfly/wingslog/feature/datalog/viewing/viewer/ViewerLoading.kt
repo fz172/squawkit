@@ -17,27 +17,30 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer
 
 /** The spinner, with the phase it is in when the load is slow enough to name one. */
 @Composable
-internal fun ViewerLoading(state: DataLogViewerUiState.Loading, modifier: Modifier = Modifier) {
-  Box(
-  modifier,
-  contentAlignment = Alignment.Center
+internal fun ViewerLoading(
+  state: DataLogViewerUiState.Loading,
+  modifier: Modifier = Modifier
 ) {
-  Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+  Box(
+    modifier,
+    contentAlignment = Alignment.Center
   ) {
-    CircularProgressIndicator()
-    val phase = when {
-      state.reading -> Res.string.data_log_viewer_reading
-      state.download != null -> Res.string.data_log_viewer_downloading
-      else -> null
-    }
-    if (phase != null) {
-      Text(
-        stringResource(phase),
-        style = MaterialTheme.typography.bodyMedium
-      )
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+    ) {
+      CircularProgressIndicator()
+      val phase = when {
+        state.reading -> Res.string.data_log_viewer_reading
+        state.download != null -> Res.string.data_log_viewer_downloading
+        else -> null
+      }
+      if (phase != null) {
+        Text(
+          stringResource(phase),
+          style = MaterialTheme.typography.bodyMedium
+        )
+      }
     }
   }
-}
 }

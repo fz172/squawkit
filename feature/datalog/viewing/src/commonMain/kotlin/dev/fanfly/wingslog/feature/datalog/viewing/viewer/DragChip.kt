@@ -19,24 +19,24 @@ import kotlin.math.roundToInt
 internal fun DragChip(drag: SeriesDrag, boxOrigin: Offset) {
   val local = drag.position - boxOrigin
   Surface(
-  shape = RoundedCornerShape(Spacing.smallCornerRadius),
-  color = MaterialTheme.colorScheme.surfaceContainerHighest,
-  tonalElevation = Spacing.extraSmall,
-  shadowElevation = Spacing.extraSmall,
-  modifier = Modifier.offset {
-    IntOffset(
-      local.x.roundToInt(),
-      local.y.roundToInt()
+    shape = RoundedCornerShape(Spacing.smallCornerRadius),
+    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    tonalElevation = Spacing.extraSmall,
+    shadowElevation = Spacing.extraSmall,
+    modifier = Modifier.offset {
+      IntOffset(
+        local.x.roundToInt(),
+        local.y.roundToInt()
+      )
+    },
+  ) {
+    Text(
+      drag.label,
+      style = MaterialTheme.typography.labelMedium,
+      modifier = Modifier.padding(
+        horizontal = Spacing.medium,
+        vertical = Spacing.small
+      ),
     )
-  },
-) {
-  Text(
-    drag.label,
-    style = MaterialTheme.typography.labelMedium,
-    modifier = Modifier.padding(
-      horizontal = Spacing.medium,
-      vertical = Spacing.small
-    ),
-  )
-}
+  }
 }
