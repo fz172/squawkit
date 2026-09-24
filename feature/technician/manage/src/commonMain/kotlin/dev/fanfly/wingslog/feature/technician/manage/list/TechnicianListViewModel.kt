@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.technician.manage.viewmodel
+package dev.fanfly.wingslog.feature.technician.manage.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

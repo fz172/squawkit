@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.technician.manage.viewmodel
+package dev.fanfly.wingslog.feature.technician.manage.list
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry

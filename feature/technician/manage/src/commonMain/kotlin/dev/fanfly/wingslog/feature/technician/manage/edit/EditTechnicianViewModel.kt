@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.technician.manage.viewmodel
+package dev.fanfly.wingslog.feature.technician.manage.edit
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -14,17 +14,17 @@ import dev.fanfly.wingslog.core.template.offeredCertifications
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificationEntry
+import dev.fanfly.wingslog.feature.technician.sharedassets.certification.CertificationEntry
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Technician
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Instant
 
 data class EditTechnicianUiState(
   val id: String = "",

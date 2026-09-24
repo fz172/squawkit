@@ -1,15 +1,12 @@
-package dev.fanfly.wingslog.feature.technician.manage.compose
+package dev.fanfly.wingslog.feature.technician.manage.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,13 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Merge
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,10 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
-import dev.fanfly.wingslog.core.ui.grouped.GroupedSection
 import dev.fanfly.wingslog.core.ui.hero.SettingsHero
 import dev.fanfly.wingslog.core.ui.layout.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
@@ -48,13 +39,9 @@ import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.list.EmptyState
 import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
-import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_action
-import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_dismiss
-import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_title
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_review_title
 import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
 import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
@@ -232,71 +219,6 @@ fun TechnicianListScreen(
               )
             }
           }
-        }
-      }
-    }
-  }
-}
-
-/** One labelled card of roster rows. */
-@Composable
-private fun TechnicianGroup(
-  title: String,
-  technicians: List<Technician>,
-  offered: List<OfferedCertification>,
-  onClick: (Technician) -> Unit,
-  photoFor: (Technician) -> String?,
-  selfId: String? = null,
-  isLinked: Boolean = false,
-) {
-  GroupedSection(title) {
-    GroupedRowGroup(
-      rows = technicians.map { technician ->
-        {
-          TechnicianRow(
-            technician = technician,
-            offered = offered,
-            onClick = { onClick(technician) },
-            photoUri = photoFor(technician),
-            isSelf = technician.id == selfId,
-            isLinked = isLinked,
-          )
-        }
-      },
-    )
-  }
-}
-
-/**
- * Dismissible nudge that look-alike rows are worth reconciling (design §7.4). "Not duplicates" is a
- * real answer — it records that the user has looked, so the prompt does not nag again.
- */
-@Composable
-private fun DuplicatePrompt(
-  onReview: () -> Unit,
-  onDismiss: () -> Unit,
-) {
-  Card(
-    modifier = Modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.secondaryContainer,
-      contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-    ),
-  ) {
-    Column(
-      modifier = Modifier.padding(Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.small),
-    ) {
-      Text(
-        text = stringResource(TechnicianRes.string.duplicates_prompt_title),
-        style = MaterialTheme.typography.bodyMedium,
-      )
-      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        TextButton(onClick = onReview) {
-          Text(stringResource(TechnicianRes.string.duplicates_prompt_action))
-        }
-        TextButton(onClick = onDismiss) {
-          Text(stringResource(TechnicianRes.string.duplicates_prompt_dismiss))
         }
       }
     }

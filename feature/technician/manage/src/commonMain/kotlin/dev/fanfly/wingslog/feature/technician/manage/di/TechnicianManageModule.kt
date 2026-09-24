@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.technician.manage.di
 
-import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
-import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
+import dev.fanfly.wingslog.feature.technician.manage.edit.EditTechnicianViewModel
+import dev.fanfly.wingslog.feature.technician.manage.list.TechnicianListViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 

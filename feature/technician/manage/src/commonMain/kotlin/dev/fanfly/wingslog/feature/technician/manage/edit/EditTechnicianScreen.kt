@@ -1,26 +1,18 @@
-package dev.fanfly.wingslog.feature.technician.manage.compose
+package dev.fanfly.wingslog.feature.technician.manage.edit
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,13 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.form.BottomButtons
 import dev.fanfly.wingslog.core.ui.form.DestructiveActionCard
-import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.grouped.GroupedCard
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.grouped.GroupedSection
@@ -50,8 +40,7 @@ import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificationInputFields
+import dev.fanfly.wingslog.feature.technician.sharedassets.certification.CertificationInputFields
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.save
@@ -67,7 +56,6 @@ import wingslog.feature.technician.sharedassets.generated.resources.technician_e
 import wingslog.feature.technician.sharedassets.generated.resources.technician_email_managed
 import wingslog.feature.technician.sharedassets.generated.resources.technician_name_label
 import wingslog.feature.technician.sharedassets.generated.resources.technician_section_details
-import wingslog.feature.technician.sharedassets.generated.resources.technician_update_name
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
@@ -255,92 +243,5 @@ fun EditTechnicianScreen(
         isPrimaryFunctionInProgress = uiState.isSaving,
       )
     }
-  }
-}
-
-/** The name editor: one field in a dialog, so the Details card stays a record rather than a form. */
-@Composable
-private fun RenameDialog(
-  draft: String,
-  onDraftChange: (String) -> Unit,
-  onConfirm: () -> Unit,
-  onDismiss: () -> Unit,
-) {
-  AlertDialog(
-    onDismissRequest = onDismiss,
-    title = { Text(stringResource(TechnicianRes.string.technician_update_name)) },
-    text = {
-      FormTextField(
-        value = draft,
-        onValueChange = onDraftChange,
-        label = stringResource(TechnicianRes.string.name_required),
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-      )
-    },
-    confirmButton = {
-      TextButton(onClick = onConfirm, enabled = draft.isNotBlank()) {
-        Text(stringResource(CoreRes.string.save))
-      }
-    },
-    dismissButton = {
-      TextButton(onClick = onDismiss) { Text(stringResource(CoreRes.string.cancel)) }
-    },
-  )
-}
-
-/**
- * A labelled value inside the Details card. With [onEdit] the row opens an editor and carries a
- * pencil; without it the value is locked (a lock glyph and a [supporting] line saying who owns it).
- */
-@Composable
-private fun ProfileFieldRow(
-  label: String,
-  value: String,
-  onEdit: (() -> Unit)? = null,
-  placeholder: String? = null,
-  supporting: String? = null,
-) {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .then(if (onEdit != null) Modifier.clickable(onClick = onEdit) else Modifier)
-      .padding(horizontal = Spacing.xLarge, vertical = Spacing.large),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Column(
-      modifier = Modifier.weight(1f),
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Text(
-        text = label,
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      val empty = value.isBlank() && placeholder != null
-      Text(
-        text = if (empty) placeholder.orEmpty() else value,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = if (empty) MaterialTheme.colorScheme.onSurfaceVariant
-        else MaterialTheme.colorScheme.onSurface,
-      )
-      if (supporting != null) {
-        Text(
-          text = supporting,
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-    }
-    Spacer(Modifier.width(Spacing.large))
-    Icon(
-      imageVector = if (onEdit != null) Icons.Default.Edit else Icons.Default.Lock,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(end = Spacing.extraSmall),
-    )
   }
 }

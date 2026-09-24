@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.technician.manage.compose
+package dev.fanfly.wingslog.feature.technician.manage.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.technician.manage.compose
+package dev.fanfly.wingslog.feature.technician.manage.list
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
@@ -24,8 +24,8 @@ import dev.fanfly.wingslog.core.ui.grouped.GroupedChevron
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRow
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.certificationLines
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.summary
+import dev.fanfly.wingslog.feature.technician.sharedassets.certification.certificationLines
+import dev.fanfly.wingslog.feature.technician.sharedassets.certification.summary
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
