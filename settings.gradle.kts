@@ -64,7 +64,6 @@ include(":feature:datalog:model")
 include(":feature:datalog:datamanager")
 include(":feature:datalog:sharedassets")
 include(":feature:datalog:viewing")
-include(":feature:datalog:update")
 include(":feature:datalog:di")
 
 include(":feature:sharing:model")

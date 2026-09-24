@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.datalog.di
 
 import dev.fanfly.wingslog.feature.datalog.datamanager.dataLogDataManagerModule
-import dev.fanfly.wingslog.feature.datalog.update.viewmodel.dataLogUpdateModule
 import dev.fanfly.wingslog.feature.datalog.viewing.di.dataLogViewingModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -14,6 +13,5 @@ val dataLogModule: Module = module {
   includes(
     dataLogDataManagerModule,
     dataLogViewingModule,
-    dataLogUpdateModule,
   )
 }

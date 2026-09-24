@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.datalog.update.viewer
+package dev.fanfly.wingslog.feature.datalog.viewing.viewer
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement

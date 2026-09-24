@@ -30,6 +30,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":feature:datalog:viewing"))
       // The shared app graph must reach every feature UI module it hosts — this module plays
       // the same aggregator role for composables/nav that core:di plays for Koin modules.
       implementation(project(":core:analytics"))
@@ -45,7 +46,6 @@ kotlin {
       implementation(project(":feature:fleet:picker:data"))
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:logs:update"))
-      implementation(project(":feature:datalog:update"))
       implementation(project(":feature:settings"))
       // The DeveloperOptionsNavContributor interface only — NOT the features that implement it.
       // This is what replaced the dependency on feature:stresstest:config.

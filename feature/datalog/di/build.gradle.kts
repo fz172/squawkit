@@ -26,7 +26,6 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":feature:datalog:datamanager"))
       implementation(project(":feature:datalog:viewing"))
-      implementation(project(":feature:datalog:update"))
       implementation(libs.koin.core)
     }
   }
