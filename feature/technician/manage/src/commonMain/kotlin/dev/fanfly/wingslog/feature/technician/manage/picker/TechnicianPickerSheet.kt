@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.technician.manage.compose
+package dev.fanfly.wingslog.feature.technician.manage.picker
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,8 +20,9 @@ import dev.fanfly.wingslog.core.ui.sheet.PickerSelectableRow
 import dev.fanfly.wingslog.core.ui.sheet.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.sheet.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.certificationLines
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.short
+import dev.fanfly.wingslog.feature.technician.manage.list.TechnicianRow
+import dev.fanfly.wingslog.feature.technician.sharedassets.certification.certificationLines
+import dev.fanfly.wingslog.feature.technician.sharedassets.certification.short
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.done

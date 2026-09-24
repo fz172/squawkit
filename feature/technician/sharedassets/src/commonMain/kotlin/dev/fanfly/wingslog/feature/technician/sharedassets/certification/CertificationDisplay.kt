@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.technician.sharedassets.compose
+package dev.fanfly.wingslog.feature.technician.sharedassets.certification
 
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat

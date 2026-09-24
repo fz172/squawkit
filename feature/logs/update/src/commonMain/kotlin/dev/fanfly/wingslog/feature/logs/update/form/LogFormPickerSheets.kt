@@ -5,7 +5,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.picker.TaskPickerSheet
-import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
+import dev.fanfly.wingslog.feature.technician.manage.picker.TechnicianPickerSheet
 
 /** The technician, squawk and task pickers, each shown while its flag in [uiState] is set. */
 @Composable
