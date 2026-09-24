@@ -18,11 +18,11 @@ import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.model.countByComponent
 import dev.fanfly.wingslog.feature.search.model.countByTime
-import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
 import dev.fanfly.wingslog.feature.search.viewing.FacetOption
 import dev.fanfly.wingslog.feature.search.viewing.FacetPickerPage
-import dev.fanfly.wingslog.feature.search.viewing.FilterSection
-import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
+import dev.fanfly.wingslog.feature.search.viewing.filter.ChoiceChip
+import dev.fanfly.wingslog.feature.search.viewing.filter.FilterSection
+import dev.fanfly.wingslog.feature.search.viewing.filter.RecordFilterControls
 import dev.fanfly.wingslog.thing.ComponentType
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.first

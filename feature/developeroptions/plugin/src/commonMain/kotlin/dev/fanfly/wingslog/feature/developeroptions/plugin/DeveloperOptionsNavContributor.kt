@@ -9,7 +9,7 @@ import androidx.navigation.NavGraphBuilder
  * The counterpart to [DeveloperOptionsExtra]: that one contributes the *row*, this one contributes
  * the *page the row opens*. Without it a feature can add its section without the shell knowing, but
  * the shell still has to register the screen behind it — so `feature:shell` kept a compile
- * dependency on a developer-only module (`feature:stresstest:config`) purely to call its route
+ * dependency on a developer-only module (`feature:developeroptions:stresstest:config`) purely to call its route
  * registration.
  *
  * Resolved through Koin by `ShellNavGraph.settingsDetailRoutes`, which is a `NavGraphBuilder`

@@ -147,6 +147,6 @@ include(":feature:notifications:di")
 
 include(":feature:shell")
 
-include(":feature:stresstest")
-include(":feature:stresstest:config")
+include(":feature:developeroptions:stresstest")
+include(":feature:developeroptions:stresstest:config")
 include(":webApp")

@@ -472,7 +472,7 @@ anonymous login) and `isAdsSupported`.
 
 ### Web
 
-- `webApp` depends on `feature:stresstest:config` and registers the plugin route and Koin module the
+- `webApp` depends on `feature:developeroptions:stresstest:config` and registers the plugin route and Koin module the
   same way as Android/iOS. `isDeveloperBuild` comes from the webpack-injected `__WINGSLOG_DEBUG__`.
 - The Fake Data Generator is reachable through **Settings → Developer Options**.
 - Build: `./gradlew :webApp:jsBrowserDevelopmentWebpack`.

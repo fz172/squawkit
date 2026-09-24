@@ -39,6 +39,8 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.isFile
+import dev.fanfly.wingslog.feature.attachment.viewing.picker.AttachmentPicker
+import dev.fanfly.wingslog.feature.attachment.viewing.picker.DataLogPickerSlot
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.thing.AttachmentType

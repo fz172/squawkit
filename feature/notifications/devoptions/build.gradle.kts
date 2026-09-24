@@ -27,7 +27,7 @@ kotlin {
 
   // The notification Developer Options section — test sends, run-scan-now, reset watermarks, scan
   // diagnostics (design §11). Its own module, not folded into :engine or :settings, for the same
-  // reason feature:stresstest:config is separate from feature:stresstest: it contributes
+  // reason feature:developeroptions:stresstest:config is separate from feature:developeroptions:stresstest: it contributes
   // DeveloperOptionsExtra + DeveloperOptionsNavContributor, so it needs :engine's scanner and
   // :viewing's notifier — dependencies neither :settings nor feature:shell should carry.
   sourceSets {

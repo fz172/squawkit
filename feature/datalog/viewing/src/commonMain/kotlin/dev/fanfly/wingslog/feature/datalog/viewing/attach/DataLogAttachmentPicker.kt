@@ -37,8 +37,8 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
-import dev.fanfly.wingslog.feature.attachment.viewing.DataLogPickerSlot
 import dev.fanfly.wingslog.feature.attachment.viewing.FileDropTarget
+import dev.fanfly.wingslog.feature.attachment.viewing.picker.DataLogPickerSlot
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 import dev.fanfly.wingslog.feature.datalog.viewing.list.ImportRowCard
