@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.sharing.viewing
+package dev.fanfly.wingslog.feature.sharing.viewing.redeem
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -8,16 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
-import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.accept
 import wingslog.core.sharedassets.generated.resources.not_now
-import wingslog.core.sharedassets.generated.resources.ok
 import wingslog.feature.sharing.sharedassets.generated.resources.Res
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_already_member_body
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_already_member_title
@@ -29,35 +25,9 @@ import wingslog.feature.sharing.sharedassets.generated.resources.redeem_failed_b
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_failed_title
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_needs_signin_body
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_needs_signin_title
-import wingslog.feature.sharing.sharedassets.generated.resources.redeem_role_owner
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_body
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_title
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-
-/**
- * State of the thing-invite redemption surface. A non-member can't read the thing before
- * joining (rules deny it, and the share URL carries only id + secret), so the confirm step is
- * intentionally detail-light; the offered role is surfaced on success from the function's response.
- */
-sealed interface RedeemUiState {
-  data object Hidden : RedeemUiState
-
-  /**
-   * What you are about to join (#201). Resolved from the code by the server — the invitee holds no
-   * thing id, and the rules would (rightly) refuse to resolve one for a non-member.
-   *
-   * [preview] is null while it is still loading, or if the lookup failed: the sheet then says less
-   * rather than blocking Accept on a call that is only there to inform.
-   */
-  data class Confirm(val preview: InvitePreview? = null) : RedeemUiState
-
-  /** Signed out / guest: the invite stays parked until the user signs in with a real account. */
-  data object NeedsSignIn : RedeemUiState
-  data object Redeeming : RedeemUiState
-  data class Success(val role: ShareRole) : RedeemUiState
-  data object AlreadyMember : RedeemUiState
-  data class Failed(val message: String?) : RedeemUiState
-}
 
 @Composable
 fun RedeemConfirmationSheet(
@@ -177,28 +147,4 @@ fun RedeemConfirmationSheet(
       onDismiss = onDismiss,
     )
   }
-}
-
-@Composable
-private fun InfoDialog(title: String, body: String, onDismiss: () -> Unit) {
-  AlertDialog(
-    onDismissRequest = onDismiss,
-    title = { Text(title) },
-    text = { Text(body) },
-    confirmButton = {
-      TextButton(onClick = onDismiss) {
-        Text(
-          stringResource(
-            CoreRes.string.ok
-          )
-        )
-      }
-    },
-  )
-}
-
-@Composable
-private fun roleLabel(role: ShareRole): String = when (role) {
-  ShareRole.OWNER -> stringResource(Res.string.redeem_role_owner)
-  ShareRole.TECHNICIAN -> LexiconFormatter.withArticle(LocalThingLexicon.current.technicianNoun)
 }
