@@ -29,8 +29,9 @@ See [§ Architecture](AGENTS.md#architecture).
 **Where things live:** `app/` (Android entry) · `composeApp/` (Android/iOS host + Koin init) ·
 `webApp/` (Kotlin/JS host) · `iosApp/` (Xcode project) · `core/*` · `feature/*` (one per feature;
 `feature/shell` holds the shared nav graph both hosts render) · `backend/firebase/` (TypeScript Cloud
-Functions and security rules — not a Gradle module). Full tree in
-[§ Module Structure](AGENTS.md#module-structure).
+Functions and security rules — not a Gradle module). For the full tree, ask `graphify` — it is the
+source of truth, not a list in a doc. [§ Module Structure](AGENTS.md#module-structure) carries the
+layering and dependency rules.
 
 ## Common commands
 
