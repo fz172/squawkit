@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.datalog.update.viewer
+package dev.fanfly.wingslog.feature.datalog.viewing.viewer
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordedEvent

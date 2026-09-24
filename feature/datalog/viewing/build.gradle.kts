@@ -30,6 +30,12 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":feature:ads:model"))
+      implementation(project(":feature:ads:datamanager"))
+      implementation(project(":feature:ads:viewing"))
+      implementation(project(":core:nav"))
+      implementation(libs.androidx.navigation.compose)
+      implementation(libs.compose.ui.backhandler)
       implementation(project(":core:analytics"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:model"))
