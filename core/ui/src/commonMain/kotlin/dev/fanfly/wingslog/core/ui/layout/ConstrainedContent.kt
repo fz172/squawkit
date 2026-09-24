@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive.layout
+package dev.fanfly.wingslog.core.ui.layout
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth

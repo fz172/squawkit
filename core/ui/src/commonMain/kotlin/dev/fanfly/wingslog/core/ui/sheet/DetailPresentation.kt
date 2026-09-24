@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive.listdetail
+package dev.fanfly.wingslog.core.ui.sheet
 
 import androidx.compose.runtime.compositionLocalOf
 

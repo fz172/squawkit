@@ -20,8 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.sheet.DetailPresentation
+import dev.fanfly.wingslog.core.ui.sheet.LocalDetailPresentation
 
 /**
  * A section as list and detail side by side on the tiers with a sidebar — the third column of

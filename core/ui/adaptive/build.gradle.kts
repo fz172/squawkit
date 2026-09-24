@@ -34,7 +34,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui:theme"))
-      implementation(project(":core:ui:widget:avataricon"))
+      api(project(":core:ui"))
       implementation(project(":core:sharedassets"))
       // For AppCapability.isDataLogsSupported: the shell drops the data log section while the
       // rollout switch is off (docs/datalog/data_log_visualizer_design.md §8.3).

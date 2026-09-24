@@ -10,8 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.layout.layoutTierFor
+import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.layout.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.MotionAxis
 import dev.fanfly.wingslog.core.ui.theme.rememberSharedAxis
 

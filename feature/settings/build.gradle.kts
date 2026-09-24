@@ -39,7 +39,6 @@ kotlin {
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
       // The profile card's avatar.
-      implementation(project(":core:ui:widget:avataricon"))
       // The Subscription row's live plan line.
       implementation(project(":feature:subscription:datamanager"))
       implementation(project(":core:analytics"))

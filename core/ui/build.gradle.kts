@@ -41,7 +41,6 @@ kotlin {
       api(project(":core:datetime"))
       api(project(":core:model"))
       implementation(project(":core:sharedassets"))
-      implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
       api(libs.compose.ui)
       api(libs.material3)
@@ -50,6 +49,14 @@ kotlin {
       api(libs.components.resources)
       api(libs.kotlinx.datetime)
       api(libs.compose.ui.tooling.preview)
+
+      // Avatar images (core/ui/avatar)
+      implementation(libs.coil.compose)
+      implementation(libs.coil.network.ktor3)
+      implementation(libs.ktor.client.core)
+    }
+    androidMain.dependencies {
+      implementation(libs.ktor.client.okhttp)
     }
   }
 }

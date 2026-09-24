@@ -31,7 +31,6 @@ kotlin {
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
-      implementation(project(":core:ui:widget:avataricon"))
       implementation(project(":feature:comments:model"))
       implementation(project(":feature:comments:sharedassets"))
     }

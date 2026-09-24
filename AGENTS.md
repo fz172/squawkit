@@ -107,10 +107,12 @@ core/
                         #   SkeletonList, EmptyState), sheet/ (DetailSheet, PickerSheet), popup/ (the
                         #   selection-safe AlertDialog / ModalBottomSheet / DropdownMenu / DatePickerDialog),
                         #   swipe/ (SwipeActionCard), menu/ (ResolveBubbleMenu), bar/, badge/, hero/,
-                        #   text/ (UiText, highlight, file-size formatting), brand/
+                        #   text/ (UiText, highlight, file-size formatting), avatar/, brand/,
+                        #   layout/ (LayoutTier + LocalLayoutTier, ContentWidth, ConstrainedTopBar),
+                        #   selection/ (TextSelectionLayer)
     theme/              #   WingslogTheme, palette, Spacing, StatusColors, AppearanceController
-    adaptive/           #   AdaptiveAppShell, layout tiers, AdaptiveFormDialogFrame, ConstrainedTopBar
-    widget/avataricon/  #   AvatarIcon composable
+    adaptive/           #   AdaptiveAppShell + shell/, ListDetailSection, AdaptiveCardList,
+                        #   AdaptiveFormDialogFrame — the shell layer, on top of core:ui
   lifecycle/            # AppForegroundObserver (+ compose/ AppForegroundEffect) — foreground/session signal
   auth/                 # Firebase Auth: AuthManager, AuthProvider, email-link sign-in, account
                         #   upgrade/link/merge, AccountDeleter; platform actuals for Google/Apple
@@ -724,8 +726,8 @@ reviewable.
 
 ### Popups start their own text-selection scope (enforced)
 
-The web host wraps the app in a `SelectionContainer` (via `TextSelectionLayer`,
-`core/ui/adaptive`) so text can be selected and copied like on any web page. Compose can only
+The web host wraps the app in a `SelectionContainer` (via `TextSelectionLayer`, `core/ui/selection`)
+so text can be selected and copied like on any web page. Compose can only
 select across text that shares a layout root with that container, and every popup — dialog, sheet,
 menu — draws in a root of its own: a text inside one that inherits the outer scope crashes
 foundation on mouse-down (`layouts are not part of the same hierarchy`). So every popup boundary
@@ -739,8 +741,8 @@ starts a fresh scope:
 - Every other popup-creating API — `ui.window.Dialog` / `Popup`, `BasicAlertDialog`,
   `ExposedDropdownMenu`, the tooltips, the expanded search bars, `ModalWideNavigationRail` — wraps
   its content in `TextSelectionLayer` (content stays selectable — detail sheets) or
-  `DisableSelection` (menus). A module that cannot depend on `core/ui` imports a shadowed popup
-  under an alias (`as M3DropdownMenu`) and does the same.
+  `DisableSelection` (menus). The four shadows in `core/ui/popup` are the only files that import a
+  Material popup under an `as M3…` alias, and they follow this same rule.
 - No wildcard import of `material3`, `foundation` or `ui.window`.
 
 `scripts/check-popup-selection-scopes.sh` enforces all of it. It runs as the Gradle task
