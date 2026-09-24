@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meterForComponent
-import dev.fanfly.wingslog.core.ui.common.compose.DangerZone
+import dev.fanfly.wingslog.core.ui.form.DangerZone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.DueSummaryBanner

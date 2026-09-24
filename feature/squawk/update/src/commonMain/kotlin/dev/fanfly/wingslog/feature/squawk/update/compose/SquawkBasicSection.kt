@@ -14,12 +14,13 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
-import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
-import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
+import dev.fanfly.wingslog.core.ui.form.FormKeyboard
+import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.form.FormTextField
+import dev.fanfly.wingslog.core.ui.form.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.SquawkPriority
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -31,7 +32,6 @@ import wingslog.feature.squawk.sharedassets.generated.resources.squawk_priority_
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_reported_on
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_title_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_title_required
-import kotlin.time.Clock
 
 @Composable
 fun SquawkBasicSection(

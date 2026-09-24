@@ -71,7 +71,7 @@ These are enforced or load-bearing; the reasoning for each is in AGENTS.md.
 - No `\'` in Kotlin strings or `strings.xml` — use `’`. Also hook-enforced.
 - User-facing strings always come from `strings.xml`; reuse before adding.
 - Popups (`AlertDialog`, `ModalBottomSheet`, `DropdownMenu`, `DatePickerDialog`) are imported from
-  `core.ui.common.compose`, not Material; nav dialogs use `selectionDialog`, not `dialog`; any other
+  `core.ui.popup`, not Material; nav dialogs use `selectionDialog`, not `dialog`; any other
   popup wraps its content in `TextSelectionLayer` or `DisableSelection`. Enforced by
   `checkPopupSelectionScopes` (under `lint`) and a hook — the web SelectionContainer crashes
   otherwise. [§ Popups](AGENTS.md#popups-start-their-own-text-selection-scope-enforced).

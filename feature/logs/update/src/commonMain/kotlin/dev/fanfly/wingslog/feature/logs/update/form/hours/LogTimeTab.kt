@@ -11,7 +11,7 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meterLabelWithUnit
 import dev.fanfly.wingslog.core.template.metersLabel
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.update.form.LogSection
 import org.jetbrains.compose.resources.stringResource

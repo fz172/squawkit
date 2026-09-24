@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
-import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogSource
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager

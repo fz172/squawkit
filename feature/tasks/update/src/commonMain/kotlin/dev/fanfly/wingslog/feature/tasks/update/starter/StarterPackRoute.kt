@@ -39,10 +39,10 @@ import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedCheckboxRow
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
-import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.form.BottomButtons
+import dev.fanfly.wingslog.core.ui.grouped.GroupedCheckboxRow
+import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate

@@ -9,7 +9,7 @@ import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toClockText
 import dev.fanfly.wingslog.core.datetime.toDayOfMonth
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.compose.TimelineRow
+import dev.fanfly.wingslog.core.ui.list.TimelineRow
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import kotlinx.datetime.LocalDate

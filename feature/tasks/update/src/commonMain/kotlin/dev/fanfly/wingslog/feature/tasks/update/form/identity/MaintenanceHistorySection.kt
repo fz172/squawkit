@@ -27,7 +27,7 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource

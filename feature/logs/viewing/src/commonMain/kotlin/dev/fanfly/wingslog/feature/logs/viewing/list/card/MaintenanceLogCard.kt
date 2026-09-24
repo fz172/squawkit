@@ -17,9 +17,9 @@ import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.timelineReading
-import dev.fanfly.wingslog.core.ui.common.compose.TimelineRow
-import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
-import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
+import dev.fanfly.wingslog.core.ui.list.TimelineRow
+import dev.fanfly.wingslog.core.ui.text.highlightWords
+import dev.fanfly.wingslog.core.ui.text.searchHighlightStyle
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MeterReading

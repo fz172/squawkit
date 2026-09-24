@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeRevealController
+import dev.fanfly.wingslog.core.ui.swipe.SwipeAction
+import dev.fanfly.wingslog.core.ui.swipe.SwipeRevealController
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus

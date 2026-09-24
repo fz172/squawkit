@@ -25,7 +25,7 @@ import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.navPillAndFabClearance
-import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
+import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState

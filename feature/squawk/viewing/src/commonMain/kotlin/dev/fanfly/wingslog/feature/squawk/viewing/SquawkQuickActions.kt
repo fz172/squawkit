@@ -4,8 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
+import dev.fanfly.wingslog.core.ui.swipe.SwipeAction
+import dev.fanfly.wingslog.core.ui.swipe.SwipeActionTone
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import org.jetbrains.compose.resources.stringResource

@@ -6,7 +6,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.grouped.GroupedSection
 import dev.fanfly.wingslog.feature.settings.SettingsUiState
 import dev.fanfly.wingslog.feature.settings.row.SettingsRow
 import dev.fanfly.wingslog.feature.settings.row.SettingsRowGroup

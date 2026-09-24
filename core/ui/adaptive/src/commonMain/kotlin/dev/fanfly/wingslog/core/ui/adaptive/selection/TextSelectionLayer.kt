@@ -19,7 +19,7 @@ val LocalTextSelectionLayers = staticCompositionLocalOf { false }
  * inside one that inherits the outer scope crashes on mouse-down ("layouts are not part of the same
  * hierarchy"). So the host wraps its content in this once, and every popup starts a scope of its
  * own: this where the popup has a single content slot, or the popups in
- * `core.ui.common.compose.SelectionSafePopups` where it does not. A hook rejects raw popup imports.
+ * `core.ui.popup` where it does not. A hook rejects raw popup imports.
  */
 @Composable
 fun TextSelectionLayer(content: @Composable () -> Unit) {

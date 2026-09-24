@@ -4,8 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
+import dev.fanfly.wingslog.core.ui.grouped.GroupedLeadingIconChip
+import dev.fanfly.wingslog.core.ui.grouped.GroupedRow
 import dev.fanfly.wingslog.feature.settings.row.SettingsCard
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.settings.generated.resources.firebase_logging_subtitle

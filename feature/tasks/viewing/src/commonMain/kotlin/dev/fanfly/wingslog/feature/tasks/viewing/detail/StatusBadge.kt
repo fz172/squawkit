@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.tasks.viewing.detail
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
+import dev.fanfly.wingslog.core.ui.badge.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus

@@ -4,7 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.grouped.GroupedSection
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.feature.settings.NotificationsRowState
 import dev.fanfly.wingslog.feature.settings.SettingsUiState

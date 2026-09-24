@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.ui.common.compose.TimelineGapRow
+import dev.fanfly.wingslog.core.ui.list.TimelineGapRow
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.viewing.generated.resources.log_gap_one
 import wingslog.feature.logs.viewing.generated.resources.log_gap_plural

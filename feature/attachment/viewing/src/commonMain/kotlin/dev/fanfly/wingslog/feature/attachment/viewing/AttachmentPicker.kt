@@ -55,9 +55,9 @@ import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
-import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
+import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.form.FormTextField
+import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog

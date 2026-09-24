@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeRevealController
-import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
+import dev.fanfly.wingslog.core.ui.list.jumpTargetHighlight
+import dev.fanfly.wingslog.core.ui.swipe.SwipeActionCard
+import dev.fanfly.wingslog.core.ui.swipe.SwipeRevealController
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.search.model.FieldMatch

@@ -3,8 +3,8 @@ package dev.fanfly.wingslog.feature.logs.viewing.list
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
-import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
+import dev.fanfly.wingslog.core.ui.swipe.SwipeAction
+import dev.fanfly.wingslog.core.ui.swipe.SwipeActionTone
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes

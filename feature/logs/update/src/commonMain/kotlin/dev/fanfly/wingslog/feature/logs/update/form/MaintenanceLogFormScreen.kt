@@ -54,9 +54,9 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.DangerZone
-import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
+import dev.fanfly.wingslog.core.ui.form.BottomButtons
+import dev.fanfly.wingslog.core.ui.form.DangerZone
+import dev.fanfly.wingslog.core.ui.form.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection

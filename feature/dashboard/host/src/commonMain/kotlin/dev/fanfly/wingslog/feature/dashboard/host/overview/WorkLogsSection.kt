@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
-import dev.fanfly.wingslog.core.ui.common.compose.SectionHeader
+import dev.fanfly.wingslog.core.ui.list.ListRowDivider
+import dev.fanfly.wingslog.core.ui.list.SectionHeader
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState

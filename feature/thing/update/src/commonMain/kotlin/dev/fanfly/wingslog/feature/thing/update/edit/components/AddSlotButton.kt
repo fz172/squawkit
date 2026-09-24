@@ -11,7 +11,7 @@ import dev.fanfly.wingslog.core.template.ComponentPath
 import dev.fanfly.wingslog.core.template.ComponentRow
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.addableSlotsUnder
-import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
+import dev.fanfly.wingslog.core.ui.form.DashedButton
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
 import dev.fanfly.wingslog.thing.ComponentSlot

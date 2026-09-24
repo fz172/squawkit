@@ -8,7 +8,7 @@
 # scope:
 #
 #   1. AlertDialog / ModalBottomSheet / DropdownMenu / DatePickerDialog come from
-#      core/ui/common/compose/SelectionSafePopups.kt, never from Material directly. A module that
+#      core/ui/popup/ (AlertDialog.kt etc.), never from Material directly. A module that
 #      cannot depend on core/ui imports the Material one under an alias (`as M3DropdownMenu`) and
 #      then falls under rule 3.
 #   2. Nav dialog destinations use selectionDialog (feature/shell), never dialog(...).
@@ -56,7 +56,7 @@ for file in "${files[@]}"; do
   esac
 
   hits=$(grep -nE "^import androidx\.compose\.material3\.($SHADOWED)\$|androidx\.compose\.material3\.($SHADOWED)\(" "$file" || true)
-  [ -n "$hits" ] && fail "$file" "import this popup from dev.fanfly.wingslog.core.ui.common.compose; it resets the text-selection scope at the popup boundary" "$hits"
+  [ -n "$hits" ] && fail "$file" "import this popup from dev.fanfly.wingslog.core.ui.popup; it resets the text-selection scope at the popup boundary" "$hits"
 
   hits=$(grep -nE '^import androidx\.compose\.(material3|foundation|ui\.window)\.\*$' "$file" || true)
   [ -n "$hits" ] && fail "$file" "no wildcard import here: it can hide a popup composable from this check" "$hits"

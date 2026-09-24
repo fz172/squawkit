@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.feature.export.update.selection.setup
 
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedCheckboxRow
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
+import dev.fanfly.wingslog.core.ui.grouped.GroupedCheckboxRow
+import dev.fanfly.wingslog.core.ui.grouped.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.export.update.selection.ThingSelectionRow
 import org.jetbrains.compose.resources.stringResource

@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.update.form
 
 import dev.fanfly.wingslog.core.template.OfferedCertification
-import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.fileCount

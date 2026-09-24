@@ -23,7 +23,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.update.selection.result.ErrorResult
 import dev.fanfly.wingslog.feature.export.update.selection.result.SuccessResult

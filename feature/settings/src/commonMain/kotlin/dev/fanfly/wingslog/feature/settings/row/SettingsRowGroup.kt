@@ -7,8 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedDividerInset
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
+import dev.fanfly.wingslog.core.ui.grouped.GroupedDividerInset
+import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 
 /**

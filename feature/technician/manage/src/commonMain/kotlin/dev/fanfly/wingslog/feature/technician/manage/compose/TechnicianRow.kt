@@ -18,9 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.OfferedCertification
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedChevron
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
-import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
+import dev.fanfly.wingslog.core.ui.badge.StatusChip
+import dev.fanfly.wingslog.core.ui.grouped.GroupedChevron
+import dev.fanfly.wingslog.core.ui.grouped.GroupedRow
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon

@@ -67,10 +67,10 @@ import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.layout.layoutTierFor
 import dev.fanfly.wingslog.core.ui.adaptive.selection.TextSelectionLayer
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
-import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.badge.StatusChip
+import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.list.EmptyState
+import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
