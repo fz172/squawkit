@@ -34,7 +34,7 @@ kotlin {
       implementation(project(":feature:sharing:update"))
       implementation(project(":feature:shell"))
       implementation(project(":feature:sync:data"))
-      implementation(project(":feature:stresstest:config"))
+      implementation(project(":feature:developeroptions:stresstest:config"))
       implementation(libs.compose.foundation)
       implementation(libs.androidx.navigation.compose)
 

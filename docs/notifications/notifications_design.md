@@ -141,7 +141,7 @@ The arrows never point back.
 | `datamanager` | `core:storage`, `feature:sync:data`, `:model` | Preferences (§4.3 needs `SyncCursorStore`/`CloudSyncSetting`) and the token doc. No tasks/logs/squawks. |
 | `engine` | `core:storage`, `core:lifecycle`, `feature:{tasks,logs,squawk,fleet,sharing}:datamanager`, `feature:sync:data`, `:model`, `:permission`, `:viewing`, `:datamanager` | The wide fan-in, contained to one module. Deliberately a *consumer* of the existing managers so no computation is duplicated. |
 | `sharedassets` | `core:ui`, `:model`, `:permission` | `PermissionBanner` renders `PermissionState` |
-| `devoptions` | `core:ui`, `feature:developeroptions:plugin`, `:engine`, `:viewing` | Developer-only. Its own module so `engine` stays Compose-free and `settings` stays `engine`-free — the same reason `feature:stresstest:config` is separate from `feature:stresstest`. §11 |
+| `devoptions` | `core:ui`, `feature:developeroptions:plugin`, `:engine`, `:viewing` | Developer-only. Its own module so `engine` stays Compose-free and `settings` stays `engine`-free — the same reason `feature:developeroptions:stresstest:config` is separate from `feature:developeroptions:stresstest`. §11 |
 | `settings` | `core:ui*`, `:model`, `:permission`, `:datamanager`, `:sharedassets` | **Not `engine`, and not `viewing`.** The screen reads preferences and permission state; it neither scans nor posts. |
 
 And what the rest of the app takes on:
@@ -1543,7 +1543,7 @@ What it bought, measured after #512:
 
 | | Before | After |
 |:--|:--|:--|
-| `feature:shell` → `feature:stresstest:config` | dependency | gone |
+| `feature:shell` → `feature:developeroptions:stresstest:config` | dependency | gone |
 | `feature:shell` → `feature:developeroptions:plugin` | — | added, **interface only** |
 | `isStressTestSupported` threading | `AppEntry` → `AdaptiveShellRoute` → `SettingsSection` → `settingsDetailRoutes`, plus `shellGraph` and `WebApp` | gone from all of them |
 | Product routes | static in `ShellNavGraph` | unchanged |
@@ -1718,7 +1718,7 @@ Issue-sized below. "Blocks on" names the immediate prerequisite only.
 |:--|:--|:--|:--|
 | P0.1 | `DeveloperOptionsExtra` (`order`, `isAvailable()`, `Content(onNavigate)`); `DeveloperOptionsScreen` resolves `getAll()` sorted | new `feature/developeroptions/plugin`, `feature/settings` | ✅ #511 |
 | P0.2 | `StressTestDeveloperOptionsExtra` onto the interface, contributed by `stressTestKoinModules()`; `dogfoodContent` deleted | `feature/stresstest/config`, `feature/settings` | ✅ #511 |
-| P0.3 | `DeveloperOptionsNavContributor` for the *pages* the rows open; shell drops `feature:stresstest:config` and `isStressTestSupported` entirely | `feature/developeroptions/plugin`, `feature/stresstest/config`, `feature/shell`, both hosts | ✅ #512 |
+| P0.3 | `DeveloperOptionsNavContributor` for the *pages* the rows open; shell drops `feature:developeroptions:stresstest:config` and `isStressTestSupported` entirely | `feature/developeroptions/plugin`, `feature/stresstest/config`, `feature/shell`, both hosts | ✅ #512 |
 
 **P1 — Foundations.**
 
@@ -1821,7 +1821,7 @@ amended rather than quietly diverged from.
 | D10 | §7.5 — iOS N1 in V1 | ~~iOS Time Sensitive interruption level needs an entitlement and App Store review; sequenced into P5~~ — **reversed 2026-08-26**: AOG is not its own tier, so no class needs Time Sensitive at all; iOS never maps `highPriority` to `.timeSensitive` | §5.2, §9.4. iOS N2 ships at default interruption level always, not just in P2. |
 | D11 | §9.2 — preferences are "a new synced entity … like every other setting" | The manager must resolve *hydrated* from *never set* before any read or write. `DeveloperOptionsManagerImpl` is not the template — it never hydrates. `TechnicianManagerImpl.awaitHydratedSelfId` is. | §4.3. Reading through an unhydrated store shows the wrong toggles; **writing** through it pushes a whole-message overwrite that reverts the user's settings on every other device. |
 | D12 | §9.2 — "`feature/notifications`: canonical module set (`model` / `datamanager` / `sharedassets` / `settings`)" | Eight modules: `model`, `permission`, `viewing`, `datamanager`, `engine`, `sharedassets`, `settings`, `devoptions` — with `viewing` meaning the *notification display surface*, not the canonical read-only-UI layer | §3. One `datamanager` holding both the scanner and the display surface forces every consumer to inherit the scanner's five feature-datamanager dependencies; `feature/login` would compile against `feature:tasks:datamanager` to show one onboarding card. |
-| D13 | §9.6 — Developer Options test-send actions | Two Koin-resolved interfaces in a new `feature/developeroptions/plugin` — `DeveloperOptionsExtra` for the row, `DeveloperOptionsNavContributor` for the page — replacing the single `dogfoodContent` slot. **Done ahead of this feature in #511/#512.** | §11.1. The slot was singular and already taken, so a second section forced a signature change either way. Also removed `feature:stresstest:config` and all `isStressTestSupported` threading from `feature:shell`. **Touched three modules this feature otherwise would not.** |
+| D13 | §9.6 — Developer Options test-send actions | Two Koin-resolved interfaces in a new `feature/developeroptions/plugin` — `DeveloperOptionsExtra` for the row, `DeveloperOptionsNavContributor` for the page — replacing the single `dogfoodContent` slot. **Done ahead of this feature in #511/#512.** | §11.1. The slot was singular and already taken, so a second section forced a signature change either way. Also removed `feature:developeroptions:stresstest:config` and all `isStressTestSupported` threading from `feature:shell`. **Touched three modules this feature otherwise would not.** |
 | D14 | §9.2 — preferences as "a new synced entity" implies a domain type beside the proto | No Kotlin mirror. `NotificationSettings` is passed around directly, with extension properties supplying the positive names | §4.1. A mirror restates the all-on defaults in a second place and needs a round-trip test to stay honest; `SubscriptionManager` already rules that "never a forked Kotlin copy" for a proto the Cloud Functions also read. |
 | D15 | §5.1 — `PermissionState` is `UNDETERMINED / GRANTED / DENIED` | A fourth value, `UNSUPPORTED`, for a browser where the Notifications API is genuinely absent | §5.1, §9.3. `DENIED` would tell the settings screen to offer an "Open settings" fix that does not exist; conflating "blocked" with "cannot exist here" sends a pilot hunting through a settings page that will never fix it. Deliberately not a fourth `AppCapability` — it is a runtime property of the browser, not the build, and `NotificationPermission` already answers exactly that class of question. |
 

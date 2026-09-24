@@ -57,7 +57,7 @@ standalone `webApp` seed into a real, code-sharing web client.
   Anonymous sign-in / account upgrade on web is
   dropped (see "Web auth scope narrowed" below) — web requires a real account.
   **Verified:** webApp JS bundle plus Android and iOS simulator compilation pass.
-- **Web debug tooling (2026-05-25) — ✅ landed.** `feature:stresstest` and its config
+- **Web debug tooling (2026-05-25) — ✅ landed.** `feature:developeroptions:stresstest` and its config
   plugin now compile for JS; the web host registers the same Fake Data Generator Koin
   module, Feature Lab entry, and route used by mobile dogfood builds.
 - **Web live-update fix (2026-05-24) — ✅ landed.** On web, adding an aircraft (or hydrating
@@ -300,7 +300,7 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `feature:{logs,tasks,squawk}:update`, `feature:technician:{manage,sharedassets}`    | ✅         | M6                                    |
 | `core:appinfo`, `feature:settings`, `feature:sync:{settings,sharedassets}`          | ✅         | M6 dependency                         |
 | `feature:userprofile:{sharedassets,userprofilecard}`, `feature:export:sharedassets` | ✅         | M6 dependency                         |
-| `feature:stresstest`, `feature:stresstest:config`                                   | ✅         | web debug tooling                     |
+| `feature:developeroptions:stresstest`, `feature:developeroptions:stresstest:config`                                   | ✅         | web debug tooling                     |
 | `feature:export:{datamanager,update}`, browser attachments                          | ☐         | M6 deferred                           |
 | anonymous sign-in / account upgrade on web                                          | ✖︎        | dropped — web requires a real account |
 

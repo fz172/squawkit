@@ -48,7 +48,7 @@ kotlin {
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:settings"))
       // The DeveloperOptionsNavContributor interface only — NOT the features that implement it.
-      // This is what replaced the dependency on feature:stresstest:config.
+      // This is what replaced the dependency on feature:developeroptions:stresstest:config.
       implementation(project(":feature:developeroptions:plugin"))
       // AccountUpgradeFlow is hosted here so an upgrade email link is seen on any destination.
       implementation(project(":feature:login"))

@@ -578,51 +578,51 @@ feature/squawk/sharedassets	squawk_updated	Squawk updated
 feature/squawk/sharedassets	work_history	Work history
 feature/squawk/sharedassets	reopen_issue	Reopen issue
 feature/squawk/sharedassets	resolve_issue	Resolve
-feature/stresstest	stress_test_complete	Generation complete
-feature/stresstest	stress_test_config_blades_per_engine	Blades per engine
-feature/stresstest	stress_test_config_components	Components
-feature/stresstest	stress_test_config_engines	Engines
-feature/stresstest	stress_test_config_future_dna	Write DNA from a newer build (degraded state)
-feature/stresstest	stress_test_config_log_entries	Log entries
-feature/stresstest	stress_test_config_meters	Meters
-feature/stresstest	stress_test_config_none	None
-feature/stresstest	stress_test_config_records	Maintenance records
-feature/stresstest	stress_test_config_slot_count	%1$s ×%2$d
-feature/stresstest	stress_test_config_squawks	Squawk count
-feature/stresstest	stress_test_config_tasks	Task count
-feature/stresstest	stress_test_config_technicians	Technician count
-feature/stresstest	stress_test_config_template	Template
-feature/stresstest	stress_test_config_thing	Thing
-feature/stresstest	stress_test_decrement	−
-feature/stresstest	stress_test_description	Generates realistic records for the selected thing type, for UI stress testing. Data is written to your account.
-feature/stresstest	stress_test_error_message	Error: %1$s
-feature/stresstest	stress_test_generate	Generate fake data
-feature/stresstest	stress_test_increment	+
-feature/stresstest	stress_test_progress_count	%1$d / %2$d
-feature/stresstest	stress_test_progress_creating_log	Creating log entry…
-feature/stresstest	stress_test_progress_creating_squawk	Creating squawk: %1$s…
-feature/stresstest	stress_test_progress_creating_task	Creating task: %1$s…
-feature/stresstest	stress_test_progress_creating_technician	Creating technician %1$s…
-feature/stresstest	stress_test_progress_creating_thing	Creating %1$s…
-feature/stresstest	stress_test_progress_dismissing_squawk	Dismissing squawk…
-feature/stresstest	stress_test_progress_marking_squawk_addressed	Marking squawk addressed…
-feature/stresstest	stress_test_regenerate	Generate another
-feature/stresstest	stress_test_summary_addressed_squawks	  • %1$d addressed
-feature/stresstest	stress_test_summary_components	Components: %1$s
-feature/stresstest	stress_test_summary_dismissed_squawks	  • %1$d dismissed
-feature/stresstest	stress_test_summary_log_entries	%1$d log entries created (span: 4 years)
-feature/stresstest	stress_test_summary_log_entry_one	%1$d log entry created (span: 4 years)
-feature/stresstest	stress_test_summary_open_squawks	  • %1$d open
-feature/stresstest	stress_test_summary_spec	%1$s: %2$s
-feature/stresstest	stress_test_summary_squawks	%1$d squawk(s) created:
-feature/stresstest	stress_test_summary_tasks	%1$d task(s) created
-feature/stresstest	stress_test_summary_technicians	%1$d technician(s) created
-feature/stresstest	stress_test_summary_thing	%1$s (%2$s)
-feature/stresstest	stress_test_title	Fake data generator
-feature/stresstest	stress_test_unknown_error	Unknown error
-feature/stresstest	stress_test_working	Working…
-feature/stresstest/config	debug_tools_header	DEBUG TOOLS
-feature/stresstest/config	fake_data_generator_description	Populate fake things, logs, squawks, and tasks for UI testing
+feature/developeroptions/stresstest	stress_test_complete	Generation complete
+feature/developeroptions/stresstest	stress_test_config_blades_per_engine	Blades per engine
+feature/developeroptions/stresstest	stress_test_config_components	Components
+feature/developeroptions/stresstest	stress_test_config_engines	Engines
+feature/developeroptions/stresstest	stress_test_config_future_dna	Write DNA from a newer build (degraded state)
+feature/developeroptions/stresstest	stress_test_config_log_entries	Log entries
+feature/developeroptions/stresstest	stress_test_config_meters	Meters
+feature/developeroptions/stresstest	stress_test_config_none	None
+feature/developeroptions/stresstest	stress_test_config_records	Maintenance records
+feature/developeroptions/stresstest	stress_test_config_slot_count	%1$s ×%2$d
+feature/developeroptions/stresstest	stress_test_config_squawks	Squawk count
+feature/developeroptions/stresstest	stress_test_config_tasks	Task count
+feature/developeroptions/stresstest	stress_test_config_technicians	Technician count
+feature/developeroptions/stresstest	stress_test_config_template	Template
+feature/developeroptions/stresstest	stress_test_config_thing	Thing
+feature/developeroptions/stresstest	stress_test_decrement	−
+feature/developeroptions/stresstest	stress_test_description	Generates realistic records for the selected thing type, for UI stress testing. Data is written to your account.
+feature/developeroptions/stresstest	stress_test_error_message	Error: %1$s
+feature/developeroptions/stresstest	stress_test_generate	Generate fake data
+feature/developeroptions/stresstest	stress_test_increment	+
+feature/developeroptions/stresstest	stress_test_progress_count	%1$d / %2$d
+feature/developeroptions/stresstest	stress_test_progress_creating_log	Creating log entry…
+feature/developeroptions/stresstest	stress_test_progress_creating_squawk	Creating squawk: %1$s…
+feature/developeroptions/stresstest	stress_test_progress_creating_task	Creating task: %1$s…
+feature/developeroptions/stresstest	stress_test_progress_creating_technician	Creating technician %1$s…
+feature/developeroptions/stresstest	stress_test_progress_creating_thing	Creating %1$s…
+feature/developeroptions/stresstest	stress_test_progress_dismissing_squawk	Dismissing squawk…
+feature/developeroptions/stresstest	stress_test_progress_marking_squawk_addressed	Marking squawk addressed…
+feature/developeroptions/stresstest	stress_test_regenerate	Generate another
+feature/developeroptions/stresstest	stress_test_summary_addressed_squawks	  • %1$d addressed
+feature/developeroptions/stresstest	stress_test_summary_components	Components: %1$s
+feature/developeroptions/stresstest	stress_test_summary_dismissed_squawks	  • %1$d dismissed
+feature/developeroptions/stresstest	stress_test_summary_log_entries	%1$d log entries created (span: 4 years)
+feature/developeroptions/stresstest	stress_test_summary_log_entry_one	%1$d log entry created (span: 4 years)
+feature/developeroptions/stresstest	stress_test_summary_open_squawks	  • %1$d open
+feature/developeroptions/stresstest	stress_test_summary_spec	%1$s: %2$s
+feature/developeroptions/stresstest	stress_test_summary_squawks	%1$d squawk(s) created:
+feature/developeroptions/stresstest	stress_test_summary_tasks	%1$d task(s) created
+feature/developeroptions/stresstest	stress_test_summary_technicians	%1$d technician(s) created
+feature/developeroptions/stresstest	stress_test_summary_thing	%1$s (%2$s)
+feature/developeroptions/stresstest	stress_test_title	Fake data generator
+feature/developeroptions/stresstest	stress_test_unknown_error	Unknown error
+feature/developeroptions/stresstest	stress_test_working	Working…
+feature/developeroptions/stresstest/config	debug_tools_header	DEBUG TOOLS
+feature/developeroptions/stresstest/config	fake_data_generator_description	Populate fake things, logs, squawks, and tasks for UI testing
 feature/subscription/viewing	subscription_activating	Payment received. Activating SquawkIt Pro…
 feature/subscription/viewing	subscription_activation_recheck	Check again
 feature/subscription/viewing	subscription_activation_stalled	This is taking longer than usual. Your purchase went through and nothing is lost — Pro unlocks automatically once it completes.
