@@ -207,7 +207,8 @@ feature/
     model/              #   ShareRole, AircraftShareState, InviteLink, InvitePreview, RedeemOutcome, InviteCode
     datamanager/        #   SharingManager (+Impl), AircraftScopeResolverImpl, ThingShareDeepLinks
     sharedassets/       #   Shared strings
-    viewing/            #   ManageAccessScreen, AccessPanelViews, EnterInviteCodeScreen, RedeemConfirmationSheet
+    viewing/            #   ManageAccessScreen, panel/ (the four access panels and their rows),
+                        #   redeem/ (RedeemConfirmationSheet), invitecode/ (EnterInviteCodeScreen)
     update/             #   ManageAccessRoute/ViewModel, RedeemHost/ViewModel, LinkSharer (per-platform)
     di/                 #   sharingModule
   subscription/         # SquawkIt Pro (GA on Android + iOS; gating unconditional, no build flag)
