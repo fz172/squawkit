@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconcile
 import dev.fanfly.wingslog.feature.subscription.datamanager.PromoCodeRedeemer
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
-import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionViewModel
+import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 

@@ -41,8 +41,8 @@ import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.feature.attachment.viewing.picker.AttachmentPicker
 import dev.fanfly.wingslog.feature.attachment.viewing.picker.DataLogPickerSlot
-import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
-import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProUpsellSheet
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.UpsellTrigger
 import dev.fanfly.wingslog.thing.AttachmentType
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add

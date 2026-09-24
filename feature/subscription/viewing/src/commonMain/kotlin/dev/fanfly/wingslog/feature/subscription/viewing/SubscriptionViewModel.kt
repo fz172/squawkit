@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.subscription.viewing.viewmodel
+package dev.fanfly.wingslog.feature.subscription.viewing
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +16,8 @@ import dev.fanfly.wingslog.feature.subscription.model.BillingManager
 import dev.fanfly.wingslog.feature.subscription.model.PROMO_CODE_LENGTH
 import dev.fanfly.wingslog.feature.subscription.model.PurchasePlatform
 import dev.fanfly.wingslog.feature.subscription.model.normalizePromoCode
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +32,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Instant
 
 /** Display state for the subscription page. Dates are pre-formatted; storage is formatted in the UI. */
 data class SubscriptionUiState(

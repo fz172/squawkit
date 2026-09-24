@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.subscription.viewing
+package dev.fanfly.wingslog.feature.subscription.viewing.paywall
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.subscription.viewing.SubscribeButton
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
