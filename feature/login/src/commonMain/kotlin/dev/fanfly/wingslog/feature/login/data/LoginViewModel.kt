@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.login.data
 import androidx.lifecycle.ViewModel
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.SendLinkResult
+import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

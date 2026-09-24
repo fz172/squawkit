@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.login.onboarding
 
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

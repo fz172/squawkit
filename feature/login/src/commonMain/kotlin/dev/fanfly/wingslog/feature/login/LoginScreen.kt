@@ -1,24 +1,13 @@
 package dev.fanfly.wingslog.feature.login
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,12 +15,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.login.chrome.LoginCard
+import dev.fanfly.wingslog.feature.login.chrome.LoginLegalFooter
+import dev.fanfly.wingslog.feature.login.chrome.LoginMark
+import dev.fanfly.wingslog.feature.login.chrome.LoginRow
+import dev.fanfly.wingslog.feature.login.chrome.LoginRowDivider
+import dev.fanfly.wingslog.feature.login.chrome.LoginScaffold
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -42,9 +36,7 @@ import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.apple_logo
 import wingslog.feature.login.generated.resources.continue_as_guest
 import wingslog.feature.login.generated.resources.continuing_as_guest
-import wingslog.feature.login.generated.resources.google_logo
 import wingslog.feature.login.generated.resources.ic_apple
-import wingslog.feature.login.generated.resources.ic_google_rd_na
 import wingslog.feature.login.generated.resources.provider_apple
 import wingslog.feature.login.generated.resources.provider_email
 import wingslog.feature.login.generated.resources.provider_google
@@ -53,16 +45,6 @@ import wingslog.feature.login.generated.resources.sign_in_connecting
 import wingslog.feature.login.generated.resources.sign_in_error
 import wingslog.feature.login.generated.resources.sign_in_section_label
 import wingslog.feature.login.generated.resources.signing_in_with
-
-/**
- * Which sign-in request is awaiting a result, so only that row shows progress while the rest are
- * locked. Null means idle.
- *
- * Not the list of login methods on offer — only those that suspend *here*. The email option
- * navigates away to `EmailSignInScreen`, which owns the progress state for both legs of the link
- * flow, so it never reaches an in-flight state on this screen.
- */
-private enum class PendingSignIn { Google, Apple, Anonymous }
 
 /**
  * The sign-in card, shared by Android, iOS and web.
@@ -227,59 +209,5 @@ fun LoginScreen(
     Spacer(Modifier.height(Spacing.large))
 
     LoginLegalFooter()
-  }
-}
-
-/** Google's mark, on a white disc when the row beneath it is accented. */
-@Composable
-private fun GoogleMark(onAccent: Boolean) {
-  val mark = @Composable {
-    Icon(
-      painter = painterResource(Res.drawable.ic_google_rd_na),
-      contentDescription = stringResource(Res.string.google_logo),
-      modifier = Modifier.size(16.dp),
-      tint = Color.Unspecified,
-    )
-  }
-  if (onAccent) {
-    Box(
-      modifier = Modifier
-        .size(26.dp)
-        .background(Color.White, CircleShape),
-      contentAlignment = Alignment.Center,
-      content = { mark() },
-    )
-  } else {
-    mark()
-  }
-}
-
-/** The advisory shown under the card when a sign-in fails: an icon, then the message. */
-@Composable
-private fun LoginAdvisory(message: String) {
-  val shape = RoundedCornerShape(12.dp)
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .background(MaterialTheme.colorScheme.errorContainer, shape)
-      .border(
-        Spacing.hairline,
-        MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
-        shape
-      )
-      .padding(horizontal = 14.dp, vertical = 12.dp),
-    horizontalArrangement = Arrangement.spacedBy(10.dp),
-  ) {
-    Icon(
-      imageVector = Icons.Outlined.ErrorOutline,
-      contentDescription = null,
-      modifier = Modifier.size(18.dp),
-      tint = MaterialTheme.colorScheme.error,
-    )
-    Text(
-      text = message,
-      style = LoginErrorStyle,
-      color = MaterialTheme.colorScheme.onErrorContainer,
-    )
   }
 }
