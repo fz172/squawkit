@@ -25,8 +25,8 @@ import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
-import dev.fanfly.wingslog.feature.stresstest.StressTestScreen
 import dev.fanfly.wingslog.feature.stresstest.di.stressTestModule
+import dev.fanfly.wingslog.feature.stresstest.screen.StressTestScreen
 import org.jetbrains.compose.resources.stringResource
 import org.koin.core.module.Module
 import org.koin.dsl.bind

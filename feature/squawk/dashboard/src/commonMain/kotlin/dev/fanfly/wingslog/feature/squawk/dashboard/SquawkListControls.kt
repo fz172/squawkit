@@ -19,11 +19,11 @@ import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.model.countByTime
-import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
-import dev.fanfly.wingslog.feature.search.viewing.FilterSection
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
-import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
+import dev.fanfly.wingslog.feature.search.viewing.filter.ChoiceChip
+import dev.fanfly.wingslog.feature.search.viewing.filter.FilterSection
+import dev.fanfly.wingslog.feature.search.viewing.filter.RecordFilterControls
 import dev.fanfly.wingslog.feature.squawk.model.SquawkAdapter
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
