@@ -12,12 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
 import dev.fanfly.wingslog.core.ui.badge.ProBadge
 import dev.fanfly.wingslog.core.ui.grouped.GroupedChevron
 import dev.fanfly.wingslog.core.ui.grouped.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRow
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.settings.PlanRow
 import dev.fanfly.wingslog.feature.settings.SettingsUiState
 import dev.fanfly.wingslog.feature.settings.row.SettingsRowGroup

@@ -9,8 +9,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.export.ExportRecord
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.export.sharedassets.generated.resources.Res

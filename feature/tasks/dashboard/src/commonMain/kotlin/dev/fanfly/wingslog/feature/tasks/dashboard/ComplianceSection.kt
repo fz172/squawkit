@@ -21,9 +21,9 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.taskEmptyHint
 import dev.fanfly.wingslog.core.template.taskHistoryEmptyHint
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.widget.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.bar.DualSegmentedFilter
+import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.list.EmptyState
 import dev.fanfly.wingslog.core.ui.list.ListRowDivider
 import dev.fanfly.wingslog.core.ui.list.jumpTargetHighlight

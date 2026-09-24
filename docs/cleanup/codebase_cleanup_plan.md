@@ -367,7 +367,7 @@ Do this phase **last** so it captures the post-cleanup state, but if earlier pha
 the corrections below independently — they are wrong today regardless:
 
 - **Module tree**: add `core:nav`, `core:sharedassets`, `core:analytics`, `core:di`,
-  `core:ui:theme` / `core:ui:adaptive` / `core:ui:widget:avataricon`, and `feature:login`;
+  `core:ui:theme` / `core:ui:adaptive`, and `feature:login`;
   remove `core/attachments`, `feature/fleet/model`, `feature/userprofile` root +
   `database` (after Phase 1).
 - **DI aggregation**: central list is `core/di/CommonAppModules.kt`; `initKoin.kt` is a thin

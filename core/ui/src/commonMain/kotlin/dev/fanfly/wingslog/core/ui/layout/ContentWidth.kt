@@ -1,7 +1,7 @@
-package dev.fanfly.wingslog.core.ui.adaptive.layout
+package dev.fanfly.wingslog.core.ui.layout
 
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth.Form
+import dev.fanfly.wingslog.core.ui.layout.ContentWidth.Form
 
 /**
  * Maximum widths for single-pane content on large displays.

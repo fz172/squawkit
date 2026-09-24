@@ -16,10 +16,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.layout.layoutTierFor
+import dev.fanfly.wingslog.core.ui.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.layout.layoutTierFor
 
 /**
  * Route frame for add/edit forms presented through Navigation Compose dialog destinations.

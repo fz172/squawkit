@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.update.selection.DateRangeOption

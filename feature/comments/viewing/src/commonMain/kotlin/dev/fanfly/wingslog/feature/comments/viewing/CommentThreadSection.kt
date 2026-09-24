@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayDateTime
+import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
 import dev.fanfly.wingslog.core.ui.form.FormKeyboard
 import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.list.ListRowDivider
@@ -44,7 +45,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.comments.model.CommentEntry
 import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
 import kotlin.time.Instant

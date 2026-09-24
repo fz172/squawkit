@@ -20,11 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
+import dev.fanfly.wingslog.core.ui.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.settings

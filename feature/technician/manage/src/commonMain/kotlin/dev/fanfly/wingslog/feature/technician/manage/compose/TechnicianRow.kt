@@ -18,12 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.OfferedCertification
+import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
 import dev.fanfly.wingslog.core.ui.badge.StatusChip
 import dev.fanfly.wingslog.core.ui.grouped.GroupedChevron
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRow
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
-import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.certificationLines
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.summary
 import dev.fanfly.wingslog.thing.Technician

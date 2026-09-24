@@ -42,11 +42,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.form.BottomButtons
 import dev.fanfly.wingslog.core.ui.form.UnsavedChangesDialog
+import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.popup.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor

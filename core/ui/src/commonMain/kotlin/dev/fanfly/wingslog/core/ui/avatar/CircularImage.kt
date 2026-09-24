@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.widget.avataricon.compose
+package dev.fanfly.wingslog.core.ui.avatar
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -51,7 +52,7 @@ fun CircularImage(
 
     LaunchedEffect(retryPending) {
       if (retryPending && retryCount < MAX_REMOTE_IMAGE_RETRIES) {
-        delay(REMOTE_IMAGE_RETRY_DELAY_MS)
+        delay(REMOTE_IMAGE_RETRY_DELAY_MS.milliseconds)
         retryCount++
         retryPending = false
       }

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.adaptive.layout
+package dev.fanfly.wingslog.core.ui.layout
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp

@@ -25,8 +25,8 @@ import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.ui.adaptive.selection.LocalTextSelectionLayers
-import dev.fanfly.wingslog.core.ui.adaptive.selection.TextSelectionLayer
+import dev.fanfly.wingslog.core.ui.selection.LocalTextSelectionLayers
+import dev.fanfly.wingslog.core.ui.selection.TextSelectionLayer
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme

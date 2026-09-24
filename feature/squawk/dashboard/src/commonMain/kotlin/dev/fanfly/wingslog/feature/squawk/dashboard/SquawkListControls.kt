@@ -10,8 +10,8 @@ import androidx.compose.runtime.setValue
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.bar.DualSegmentedFilter
+import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName

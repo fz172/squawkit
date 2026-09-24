@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.layout.LayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /**

@@ -1,22 +1,17 @@
 package dev.fanfly.wingslog.core.ui.sheet
 
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.listdetail.DetailPresentation
-import dev.fanfly.wingslog.core.ui.adaptive.listdetail.LocalDetailPresentation
+import dev.fanfly.wingslog.core.ui.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
-import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /**
- * A standardized template for displaying record details, adaptive by [dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier]:
+ * A standardized template for displaying record details, adaptive by [dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier]:
  * - **COMPACT** — a [ModalBottomSheet] (the phone / legacy presentation).
  * - **MEDIUM and wider** — an end-aligned side drawer over a scrim, matching the adaptive web/tablet
  *   shell (see `docs/web/web_adaptive_layout_design.html` §4.4).

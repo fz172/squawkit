@@ -20,12 +20,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.shell.switcher.AllThingsRow
 import dev.fanfly.wingslog.core.ui.adaptive.shell.switcher.SelectedThingBlock
 import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
+import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
+import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.app_name

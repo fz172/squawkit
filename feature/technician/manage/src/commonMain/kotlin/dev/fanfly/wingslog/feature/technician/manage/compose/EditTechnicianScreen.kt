@@ -37,9 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.form.BottomButtons
 import dev.fanfly.wingslog.core.ui.form.DestructiveActionCard
@@ -47,9 +45,11 @@ import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.grouped.GroupedCard
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.grouped.GroupedSection
+import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificationInputFields
 import org.jetbrains.compose.resources.stringResource

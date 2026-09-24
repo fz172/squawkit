@@ -57,15 +57,16 @@ import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.model.formatInviteCode
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
+import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.sharing.sharedassets.generated.resources.Res
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_code_hint
@@ -95,7 +96,6 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_r
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_solo_body
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_solo_title
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_unnamed_member
-import kotlin.time.Clock
 
 @Composable
 internal fun MainView(

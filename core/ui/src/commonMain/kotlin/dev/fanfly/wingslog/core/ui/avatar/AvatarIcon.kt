@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.widget.avataricon.compose
+package dev.fanfly.wingslog.core.ui.avatar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

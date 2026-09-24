@@ -8,9 +8,9 @@
 # scope:
 #
 #   1. AlertDialog / ModalBottomSheet / DropdownMenu / DatePickerDialog come from
-#      core/ui/popup/ (AlertDialog.kt etc.), never from Material directly. A module that
-#      cannot depend on core/ui imports the Material one under an alias (`as M3DropdownMenu`) and
-#      then falls under rule 3.
+#      core/ui/popup/ (AlertDialog.kt etc.), never from Material directly. Those four shadows are
+#      the only files that import the Material original (under an `as M3…` alias), and they fall
+#      under rule 3 like any other raw popup.
 #   2. Nav dialog destinations use selectionDialog (feature/shell), never dialog(...).
 #   3. Every other popup-creating API — ui.window.Dialog / Popup, BasicAlertDialog,
 #      ExposedDropdownMenu, tooltips, expanded search bars, the modal wide rail — is only allowed in
@@ -51,8 +51,9 @@ for file in "${files[@]}"; do
     *.kt) ;;
     *) continue ;;
   esac
+  # selectionDialog is the wrapper rule 2 points at, so it may call dialog(...) itself.
   case "$file" in
-    */SelectionSafePopups.kt | */SelectionDialog.kt | */TextSelection.kt) continue ;;
+    */SelectionDialog.kt) continue ;;
   esac
 
   hits=$(grep -nE "^import androidx\.compose\.material3\.($SHADOWED)\$|androidx\.compose\.material3\.($SHADOWED)\(" "$file" || true)
@@ -67,7 +68,7 @@ for file in "${files[@]}"; do
   raw=$(grep -nE "\b($NEEDS_WRAPPER)\(|^import androidx\.compose\.material3\.($SHADOWED) as " "$file" || true)
   window=$(grep -nE '^import androidx\.compose\.ui\.window\.[A-Za-z]+$' "$file" | grep -vE "\.($WINDOW_TYPES)\$" || true)
   if [ -n "$raw$window" ] && ! grep -qE "$WRAPPER_MARK" "$file"; then
-    fail "$file" "this popup must wrap its content in TextSelectionLayer or DisableSelection (see SelectionSafePopups.kt)" "$raw${raw:+$'\n'}$window"
+    fail "$file" "this popup must wrap its content in TextSelectionLayer or DisableSelection (see core/ui/popup)" "$raw${raw:+$'\n'}$window"
   fi
 done
 

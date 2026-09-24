@@ -40,13 +40,13 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.adaptive.layout.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.form.BottomButtons
 import dev.fanfly.wingslog.core.ui.form.DangerZone
 import dev.fanfly.wingslog.core.ui.form.UnsavedChangesDialog
+import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.edit.components.ComponentTreeSection
