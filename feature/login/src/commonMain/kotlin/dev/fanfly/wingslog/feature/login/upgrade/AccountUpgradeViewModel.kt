@@ -10,9 +10,11 @@ import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.auth.upgradeProvidersFor
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
+import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.AuthCredential
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +25,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Orchestrates upgrading a guest (anonymous) session to a permanent account.

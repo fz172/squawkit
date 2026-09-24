@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
+import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseUser

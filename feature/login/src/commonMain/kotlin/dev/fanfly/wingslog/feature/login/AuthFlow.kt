@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
+import dev.fanfly.wingslog.feature.login.email.EmailSignInScreen
 import dev.fanfly.wingslog.feature.login.onboarding.AdsConsentExplainerScreen
 import dev.fanfly.wingslog.feature.login.onboarding.NameEntryScreen
 import dev.fanfly.wingslog.feature.login.onboarding.NotificationPrimerScreen
@@ -27,8 +28,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-
-private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome, NotificationPrimer, AdsConsentExplainer }
 
 /**
  * The full pre-app flow shared by every platform: sign-in → name entry → welcome → (permission

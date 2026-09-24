@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.login
+package dev.fanfly.wingslog.feature.login.chrome
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons

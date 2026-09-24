@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.login.data
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
 import io.mockk.mockk
