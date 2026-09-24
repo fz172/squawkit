@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.sharing.update
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import dev.fanfly.wingslog.feature.sharing.viewing.RedeemConfirmationSheet
+import dev.fanfly.wingslog.feature.sharing.viewing.redeem.RedeemConfirmationSheet
 import org.koin.compose.viewmodel.koinViewModel
 
 /**

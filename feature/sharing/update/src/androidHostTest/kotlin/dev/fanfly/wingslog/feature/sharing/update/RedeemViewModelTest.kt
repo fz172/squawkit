@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
-import dev.fanfly.wingslog.feature.sharing.viewing.RedeemUiState
+import dev.fanfly.wingslog.feature.sharing.viewing.redeem.RedeemUiState
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery

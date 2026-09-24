@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
-import dev.fanfly.wingslog.feature.sharing.viewing.RedeemUiState
+import dev.fanfly.wingslog.feature.sharing.viewing.redeem.RedeemUiState
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.sharing.update
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
-import dev.fanfly.wingslog.feature.sharing.viewing.EnterInviteCodeScreen
+import dev.fanfly.wingslog.feature.sharing.viewing.invitecode.EnterInviteCodeScreen
 
 /**
  * Hosts [EnterInviteCodeScreen] on the shell nav graph (#209). Submitting parks the code on the same
