@@ -108,6 +108,14 @@ SCREENS = [
     },
     {
         "num": "06",
+        "src": "data_log",
+        "feature_label": "Data Logs",
+        "l1": "Every Flight’s Data,",
+        "l2": "Charted and Archived.",
+        "object_position": "50% 0%",
+    },
+    {
+        "num": "07",
         "src": "export",
         "feature_label": "Export",
         "l1": "Your Records,",
@@ -115,7 +123,7 @@ SCREENS = [
         "object_position": "50% 0%",
     },
     {
-        "num": "07",
+        "num": "08",
         "src": "sharing",
         "feature_label": "Sharing",
         "l1": "Collaboration,",
