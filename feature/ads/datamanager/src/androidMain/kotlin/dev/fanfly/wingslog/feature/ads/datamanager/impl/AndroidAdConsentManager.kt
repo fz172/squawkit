@@ -5,7 +5,6 @@ import co.touchlab.kermit.Logger
 import com.google.android.ump.ConsentDebugSettings
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
-import com.google.android.ump.FormError
 import com.google.android.ump.UserMessagingPlatform
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
@@ -58,7 +57,7 @@ internal class AndroidAdConsentManager(
     val consentInformation = requestConsentInfoUpdateOrNull()
       ?: return AdConsentState.NON_PERSONALIZED
 
-    val formError = suspendCancellableCoroutine<FormError?> { cont ->
+    val formError = suspendCancellableCoroutine { cont ->
       UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error ->
         cont.resume(
           error
@@ -106,7 +105,7 @@ internal class AndroidAdConsentManager(
       }
       .build()
 
-    val updateError = suspendCancellableCoroutine<FormError?> { cont ->
+    val updateError = suspendCancellableCoroutine { cont ->
       consentInformation.requestConsentInfoUpdate(
         activity,
         params,
