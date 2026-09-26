@@ -111,7 +111,7 @@ SCREENS = [
         "src": "data_log",
         "feature_label": "Data Logs",
         "l1": "Every Flight’s Data,",
-        "l2": "Charted and Archived.",
+        "l2": "Charted and Kept.",
         "object_position": "50% 0%",
     },
     {
