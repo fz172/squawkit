@@ -20,22 +20,18 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.adaptive.shell.switcher.AllThingsRow
 import dev.fanfly.wingslog.core.ui.adaptive.shell.switcher.SelectedThingBlock
-import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
-import wingslog.core.sharedassets.generated.resources.switcher_switch_to
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /**
- * The sidebar tiers' nav container: brand, the selected thing, its sections, the switch list,
- * and an account footer. MEDIUM draws it narrower with abbreviated labels.
+ * The sidebar tiers' nav container: brand, the selected thing (its switcher), its sections, and
+ * an account footer. MEDIUM draws it narrower with abbreviated labels.
  */
 @Composable
 internal fun WingsSidebar(
@@ -98,57 +94,6 @@ internal fun WingsSidebar(
           onClick = { onSelectSection(section) })
       }
 
-      // Nothing here scrolls: four others at most, then the picker for the rest. The structure is
-      // the same at three things and at seventeen.
-      val others = state.things.filter { it.id != state.selectedThingId }
-      if (showSwitcher && others.isNotEmpty()) {
-        HorizontalDivider(
-          modifier = Modifier.padding(
-            horizontal = 20.dp,
-            vertical = Spacing.medium
-          )
-        )
-        Text(
-          stringResource(UiRes.string.switcher_switch_to),
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.padding(
-            horizontal = 24.dp,
-            vertical = Spacing.extraSmall
-          ),
-        )
-        others.take(QUICK_SWITCH_ROWS)
-          .forEach { thing ->
-            NavigationDrawerItem(
-              label = {
-                Text(
-                  thing.label,
-                  maxLines = 1,
-                  overflow = TextOverflow.Ellipsis
-                )
-              },
-              icon = {
-                Icon(
-                  thingIcon(thing.template?.icon.orEmpty()),
-                  contentDescription = null
-                )
-              },
-              selected = false,
-              onClick = { onSelectThing(thing.id) },
-              modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
-            )
-          }
-        if (others.size > QUICK_SWITCH_ROWS) {
-          AllThingsRow(
-            count = state.things.size,
-            state = state,
-            onSelectThing = onSelectThing,
-            onAddThing = onAddThing,
-            onEnterInviteCode = onEnterInviteCode,
-          )
-        }
-      }
-
       Spacer(Modifier.weight(1f))
       HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
       // Combined account + settings entry: the user's avatar and name; opens the Settings section.
@@ -202,6 +147,3 @@ private fun AccountLabel(state: AdaptiveShellUiState) = Text(
 )
 
 private const val DisabledSectionAlpha = 0.38f
-
-/** How many other things the sidebar offers before sending the rest to the picker. */
-private const val QUICK_SWITCH_ROWS = 4
