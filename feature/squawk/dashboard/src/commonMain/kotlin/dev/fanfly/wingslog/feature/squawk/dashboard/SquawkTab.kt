@@ -38,7 +38,6 @@ import dev.fanfly.wingslog.core.ui.list.SectionHeader
 import dev.fanfly.wingslog.core.ui.list.animateScrollToCenter
 import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
@@ -245,7 +244,7 @@ fun SquawkTab(
               val previous =
                 lines.getOrNull(index - 1) as? SquawkListLine.Records
               // One animated node per key: the rule travels with its line.
-              Column(modifier = motionItem()) {
+              Column {
                 if (previous != null) ListRowDivider()
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                   line.items.forEach { item ->

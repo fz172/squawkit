@@ -40,7 +40,6 @@ import dev.fanfly.wingslog.core.ui.swipe.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.swipe.SwipeActionTone
 import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.attachment.viewing.FileDropTarget
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
@@ -180,7 +179,7 @@ fun DataLogSectionContent(
                 onDismiss = { viewModel.dismissImport(row.key) },
                 onFileUnderOtherThing = { viewModel.fileUnderOtherThing(row.key) },
                 onKeepHere = { viewModel.keepHere(row.key) },
-                modifier = motionItem().padding(bottom = Spacing.medium),
+                modifier = Modifier.padding(bottom = Spacing.medium),
               )
             }
             state.rows.byMonth()
@@ -202,7 +201,6 @@ fun DataLogSectionContent(
                     ),
                     controller = revealController,
                     key = row.id.value_,
-                    modifier = motionItem(),
                   ) {
                     DataLogCard(
                       row = row,
