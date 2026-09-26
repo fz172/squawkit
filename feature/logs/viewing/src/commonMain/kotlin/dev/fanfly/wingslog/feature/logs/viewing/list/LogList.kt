@@ -14,7 +14,6 @@ import dev.fanfly.wingslog.core.ui.list.stickySectionHeader
 import dev.fanfly.wingslog.core.ui.swipe.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.swipe.SwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.logs.viewing.list.card.LogGapRow
@@ -65,7 +64,6 @@ internal fun LogList(
         ) {
           LogGapRow(
             omitted = line.omitted,
-            modifier = motionItem()
           )
         }
 
@@ -76,7 +74,7 @@ internal fun LogList(
           AdSlot(
             surface = AdSurface.LOGS,
             slotIndex = line.slotIndex,
-            modifier = motionItem().padding(vertical = Spacing.small),
+            modifier = Modifier.padding(vertical = Spacing.small),
           )
         }
 
@@ -97,7 +95,6 @@ internal fun LogList(
             ),
             controller = revealController,
             key = log.id,
-            modifier = motionItem(),
           ) {
             MaintenanceLogCard(
               log = log,

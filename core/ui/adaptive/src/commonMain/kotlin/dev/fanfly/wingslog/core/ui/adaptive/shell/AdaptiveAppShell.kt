@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.ui.adaptive.shell
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
@@ -12,8 +11,6 @@ import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.layout.layoutTierFor
-import dev.fanfly.wingslog.core.ui.theme.MotionAxis
-import dev.fanfly.wingslog.core.ui.theme.rememberSharedAxis
 
 /**
  * The adaptive web/tablet shell.
@@ -73,20 +70,9 @@ fun AdaptiveAppShell(
       // build by CurrentThingTemplate and provided above both NavHosts. Reading the DNA here would
       // reintroduce the frozen-at-creation lexicon on exactly the per-thing surfaces that matter.
       else thingLexicon
-    // Sections travel along the axis their nav runs on: the bottom bar is a row, the sidebar a column.
-    val sharedAxis =
-      rememberSharedAxis(if (tier.hasSideNav) MotionAxis.Y else MotionAxis.X)
     val content: @Composable () -> Unit = {
-      AnimatedContent(
-        targetState = state.section,
-        transitionSpec = { sharedAxis(targetState.ordinal > initialState.ordinal) },
-        modifier = Modifier.fillMaxSize(),
-        label = "shell-section",
-      ) { section ->
-        // The outgoing section keeps its own lexicon until it is gone.
-        CompositionLocalProvider(LocalThingLexicon provides lexiconFor(section)) {
-          sectionContent(section, state.selectedThingId)
-        }
+      CompositionLocalProvider(LocalThingLexicon provides lexiconFor(state.section)) {
+        sectionContent(state.section, state.selectedThingId)
       }
     }
     val fab: @Composable () -> Unit = {
