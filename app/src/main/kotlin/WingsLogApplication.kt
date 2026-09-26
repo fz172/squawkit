@@ -8,6 +8,7 @@ import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import dev.fanfly.wingslog.core.storage.TombstoneGc
+import dev.fanfly.wingslog.core.ui.perf.SwitchTrace
 import dev.fanfly.wingslog.di.initKoin
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +23,7 @@ class WingsLogApplication : Application() {
     super.onCreate()
     initializeFirebaseAppCheck()
     logger.d { "WingsLogApplication started" }
+    SwitchTrace.enabled = BuildConfig.BUILD_TYPE != "release"
 
     initKoin(isDeveloperBuild = BuildConfig.DEVELOPER_BUILD) {
       androidContext(this@WingsLogApplication)

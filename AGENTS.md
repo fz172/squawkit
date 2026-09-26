@@ -34,6 +34,7 @@ file/photo upload gated by the Pro subscription (links are always free). See
 ./gradlew assembleDebug                          # Android debug APK (developer tooling on)
 ./gradlew assembleRelease                        # Release APK (developer tooling off)
 ./gradlew assembleRelease -PdeveloperBuild=true  # "Dogfood-style" release APK (tooling on)
+./gradlew :app:installProfiling                  # Release code, debug-signed, profileable — judge perf here, not on debug
 ./gradlew lint                                   # Lint checks
 ./gradlew testDebugUnitTest testAndroidHostTest  # All Android unit tests (app + migrated KMP modules)
 ./gradlew :feature:fleet:datamanager:testAndroidHostTest   # One module's tests
@@ -41,6 +42,11 @@ file/photo upload gated by the Pro subscription (links are always free). See
 ./gradlew :webApp:jsBrowserDevelopmentWebpack    # Web development bundle
 ./gradlew :webApp:jsBrowserDistribution          # Web production bundle (what deploy-web ships)
 ```
+
+Debug Compose runs several times slower than release, so measure jank on the `profiling` build. Its
+logcat carries `SwitchTrace` (section-switch timings and slow frames), and after
+`adb shell am broadcast -a androidx.tracing.perfetto.action.ENABLE_TRACING dev.fanfly.wingslog/androidx.tracing.perfetto.TracingReceiver`
+a Perfetto trace with the `track_event` data source names every composable.
 
 For iOS, open `iosApp/iosApp.xcodeproj` and select the **iosAppDebug** scheme (**iosAppRelease** for
 a tooling-off build). See [Developer Builds & Capabilities](#developer-builds--capabilities).

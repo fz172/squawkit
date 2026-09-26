@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -36,6 +37,7 @@ import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.list.ListRowDivider
 import dev.fanfly.wingslog.core.ui.list.SectionHeader
 import dev.fanfly.wingslog.core.ui.list.animateScrollToCenter
+import dev.fanfly.wingslog.core.ui.perf.SwitchTrace
 import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
@@ -71,6 +73,7 @@ fun SquawkTab(
   showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
+  SwitchTrace.step("SquawkTab composing")
   var showClosed by rememberSaveable { mutableStateOf(false) }
   val analytics = LocalAnalytics.current
   val adsManager: AdsManager = koinInject()
@@ -84,6 +87,7 @@ fun SquawkTab(
         )
       },
     )
+  SwitchTrace.step("SquawkTab view model ready")
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
   val squawkFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange
@@ -120,6 +124,9 @@ fun SquawkTab(
       columns = columns,
       showAds = showAds
     )
+  }
+  SideEffect {
+    SwitchTrace.step("SquawkTab applied: ${tabState.squawks.size} squawks, ${lines.size} lines")
   }
   val currentLines by rememberUpdatedState(lines)
   // Lazy items ahead of the lines: the optional title, then the controls.
@@ -204,7 +211,7 @@ fun SquawkTab(
           )
         }
 
-        if (displayList.isEmpty()) {
+        if (tabState.loaded && displayList.isEmpty()) {
           item(key = "empty") {
             SquawkEmptyItem(
               filterActive = squawkFilter.isActive,

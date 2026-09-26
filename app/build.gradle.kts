@@ -100,6 +100,17 @@ android {
       )
       buildConfigField("boolean", "DEVELOPER_BUILD", developerBuild.toString())
     }
+    // Release code, debug-signed and profileable, for judging performance: a debug build runs
+    // Compose several times slower. `./gradlew :app:installProfiling`; the task name has no
+    // "Release" in it, so version.properties is left alone. DEVELOPER_BUILD stays false because
+    // RevenueCat closes a non-debuggable app that carries its test key.
+    create("profiling") {
+      initWith(getByName("release"))
+      signingConfig = signingConfigs.getByName("debug")
+      matchingFallbacks += listOf("release")
+      isProfileable = true
+      buildConfigField("boolean", "DEVELOPER_BUILD", "false")
+    }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -136,12 +147,16 @@ dependencies {
 
   implementation(libs.koin.android)
   implementation(libs.kermit)
+  // Composable-level sections in Perfetto traces of the profiling build.
+  "profilingImplementation"(libs.compose.runtime.tracing)
+  "profilingImplementation"(libs.androidx.tracing.perfetto.binary)
 
   implementation(project(":composeApp"))
   implementation(project(":feature:sync:data"))
   implementation(project(":feature:login"))
   // EmailLinkDeepLinks: MainActivity hands the launch intent's URL to the shared auth channel.
   implementation(project(":core:auth"))
+  implementation(project(":core:ui"))
   implementation(project(":feature:sharing:datamanager"))
   // AndroidNotificationPermissionBridge: MainActivity registers the runtime-permission launcher
   // this actual needs, since registerForActivityResult must happen before STARTED.
