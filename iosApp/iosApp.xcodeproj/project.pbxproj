@@ -427,6 +427,7 @@
 		3D25BBFD2F6FBB7600EFFADF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
