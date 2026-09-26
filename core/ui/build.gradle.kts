@@ -49,6 +49,7 @@ kotlin {
       api(libs.components.resources)
       api(libs.kotlinx.datetime)
       api(libs.compose.ui.tooling.preview)
+      implementation(libs.kermit)
 
       // Avatar images (core/ui/avatar)
       implementation(libs.coil.compose)

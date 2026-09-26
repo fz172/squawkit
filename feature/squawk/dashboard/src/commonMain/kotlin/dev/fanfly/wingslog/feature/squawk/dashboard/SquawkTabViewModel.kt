@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.analytics.RecordFilterApplied
 import dev.fanfly.wingslog.core.analytics.RecordSearch
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.perf.SwitchTrace
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
@@ -52,10 +53,14 @@ class SquawkTabViewModel(
 
   val uiState: StateFlow<SquawkTabUiState> = combine(
     squawkManager.observeSquawks(thingId)
-      .map { squawks -> squawks.map { it.toWithStatus() } }
+      .map { squawks ->
+        SwitchTrace.step("squawks loaded: ${squawks.size}")
+        squawks.map { it.toWithStatus() }
+      }
       .catch { emit(emptyList()) },
     logManager.observeLogs(thingId)
       .map { logs ->
+        SwitchTrace.step("logs loaded: ${logs.size}")
         logs.mapNotNull { log ->
           log.timestamp?.let {
             log.id to it.toLocalDate(
@@ -73,12 +78,16 @@ class SquawkTabViewModel(
       .toLocalDateTime(timeZone).date
     val adapter = SquawkAdapter(timeZone, logDates)
     // The state carries what was typed; the search runs on the debounced copy.
-    val hits = searchEngine.search(squawks, adapter, applied, today)
+    val hits = SwitchTrace.timed("squawk search over ${squawks.size}") {
+      searchEngine.search(squawks, adapter, applied, today)
+    }
     trackSearch(applied.query, hits)
     SquawkTabUiState(
-      typed,
-      hits.map { it.item },
-      hits.matchesById { it.squawk.id })
+      loaded = true,
+      filter = typed,
+      squawks = hits.map { it.item },
+      matches = hits.matchesById { it.squawk.id },
+    )
   }.flowOn(tuning.dispatcher)
     .stateIn(viewModelScope, SharingStarted.Eagerly, SquawkTabUiState())
 

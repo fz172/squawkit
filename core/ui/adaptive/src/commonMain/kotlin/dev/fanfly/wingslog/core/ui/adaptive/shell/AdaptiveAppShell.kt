@@ -11,6 +11,8 @@ import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.layout.layoutTierFor
+import dev.fanfly.wingslog.core.ui.perf.SwitchTrace
+import dev.fanfly.wingslog.core.ui.perf.TraceFrames
 
 /**
  * The adaptive web/tablet shell.
@@ -46,6 +48,10 @@ fun AdaptiveAppShell(
   // from a single instance regardless of which shell layout is currently active.
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+  val tracedSelectSection: (ShellSection) -> Unit = { section ->
+    SwitchTrace.begin("${state.section} -> $section")
+    onSelectSection(section)
+  }
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
     // Per-thing sections render in the selected thing's words. SETTINGS does not: it is a global
@@ -71,6 +77,8 @@ fun AdaptiveAppShell(
       // reintroduce the frozen-at-creation lexicon on exactly the per-thing surfaces that matter.
       else thingLexicon
     val content: @Composable () -> Unit = {
+      SwitchTrace.step("shell composing ${state.section}")
+      TraceFrames(state.section)
       CompositionLocalProvider(LocalThingLexicon provides lexiconFor(state.section)) {
         sectionContent(state.section, state.selectedThingId)
       }
@@ -86,7 +94,7 @@ fun AdaptiveAppShell(
           EmptyFleetShell(
             tier = tier,
             state = state,
-            onSelectSection = onSelectSection,
+            onSelectSection = tracedSelectSection,
             onOpenSettings = onOpenSettings,
             settingsContent = { sectionContent(ShellSection.SETTINGS, null) },
             emptyFleetContent = emptyFleetContent,
@@ -96,7 +104,7 @@ fun AdaptiveAppShell(
         tier.hasFullSidebar ->
           SidebarShell(
             state = state,
-            onSelectSection = onSelectSection,
+            onSelectSection = tracedSelectSection,
             onSelectThing = onSelectThing,
             onOpenSettings = onOpenSettings,
             onAddThing = onAddThing,
@@ -109,7 +117,7 @@ fun AdaptiveAppShell(
         else ->
           ScaffoldShell(
             state = state,
-            onSelectSection = onSelectSection,
+            onSelectSection = tracedSelectSection,
             onSelectThing = onSelectThing,
             onOpenSettings = onOpenSettings,
             onAddThing = onAddThing,
