@@ -206,13 +206,6 @@ img, svg { display: block; max-width: 100%; }
 .btn-primary { background: var(--accent); color: var(--surface); }
 .btn-primary:hover { background: var(--accent-hover); color: var(--surface); }
 
-.btn-ghost {
-  background: transparent;
-  border-color: var(--line);
-  color: var(--nav-muted);
-}
-.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-
 /* The hamburger only exists below the nav breakpoint. */
 .nav-toggle {
   display: none;
@@ -245,7 +238,6 @@ img, svg { display: block; max-width: 100%; }
   .site-nav[data-open='true'] { display: flex; }
   .site-nav a { padding: 12px 0; font-size: 16px; }
   .nav-toggle { display: inline-flex; }
-  .header-actions .btn-ghost { display: none; }
 }
 
 /* ---------------------------------------------------------------- hero */
