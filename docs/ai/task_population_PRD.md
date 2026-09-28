@@ -133,8 +133,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
   the Thing fills (Airframe; Engine: Rotax 915 iS; Propeller: Airmaster). A Thing with a single part
   shows one row. Each row offers *Upload* and *Skip*. The primary action is *Suggest*.
 - **R7 (P0). Document forms.** A PDF (with or without a text layer), photos of pages (camera or
-  library). The design doc sets page and byte limits and the copy for exceeding
-  them.
+  library). There is no page limit. The design doc sets the document-count and file-size limits
+  and the copy for exceeding them.
 - **R8 (P0). Component assignment.** Each document is assigned to a component. The app proposes the
   assignment from the document's title, and the user can change it.
 - **R9 (P0). No documents.** The user can proceed without any document. Generation then uses model
@@ -333,7 +333,7 @@ Three mechanisms, kept separate, per
     Only a run that returns suggestions counts. Failed runs (R21), low-confidence empty runs (R21a)
     and cache hits do not, so a bad upload never locks the user out until tomorrow. When the
     day's run is used, the action says when it becomes available again.
-  - Per-run limits: documents per run and pages per document.
+  - Per-run limits: documents per run and file size. No page limit.
   - A monthly cost ceiling per tier and a project-wide spend ceiling. Past a ceiling, uncached runs
     are refused, the copy says when the limit resets, and cached results keep working.
   - A server-side kill switch that turns uncached generation off without an app release.
@@ -551,7 +551,7 @@ Settled 2026-09-27.
 
 ### Still open
 
-- **Limit values** (R49): per-run document and page caps and the cost ceilings, set from phase 0's
+- **Limit values** (R49): the per-run document cap and the cost ceilings, set from phase 0's
   cost data. The daily run limit is settled (decision 16).
 - **Provider data terms.** Confirm the chosen provider's retention and training terms for this use,
   and state them in the privacy policy before phase C ships.

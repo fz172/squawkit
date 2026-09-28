@@ -34,26 +34,26 @@ Seven pieces, in dependency order. Each is one or two PRs (§15).
 
 ## 2. What exists today, verified
 
-| Area | Fact | Where |
-|---|---|---|
-| Starter pack | `Screen.StarterPack` (`starter_pack/{THING_ID}`) as a `selectionDialog`; reached from `EditThingScreen` after create and from `ComplianceSection` via `ThingOverviewAction.AddStarterPackClick` → `SectionActionHandler` | `core/nav/.../Screen.kt:49`, `feature/shell/.../ShellNavGraph.kt:77`, `feature/dashboard/host/.../SectionActionHandler.kt:68` |
-| Starter → task | `StarterTask.toMaintenanceTask(template, createdAt)` maps slot key → frozen `ComponentType` (ENGINE / PROPELLER / else AIRFRAME) | `feature/tasks/datamanager/.../StarterTasks.kt:23,76` |
-| Due engine | `TaskDueManager.computeNextDue(card, logs, allCards)`; `ForceCompliedStatus` applies when newer than the latest linked log; current meters are the max reading across logs | `feature/tasks/datamanager/.../impl/TaskDueManagerImpl.kt:30,75,253` |
-| Task component | `MaintenanceTask.component` is the frozen `ComponentType` enum. **A task cannot name a specific component instance** (engine #2) | `maintenance_task.proto` field 3 |
-| Meters | Not on the Thing proto; readings live on logs and `MaintenanceOverview.current` | `thing.proto`, `MaintenanceLogManager.observeMaintenanceOverview` |
-| Callables | `onCall({ region: FUNCTION_REGION, enforceAppCheck: true })` + `requireAuthenticatedApp` (auth + app-id allowlist). No anonymous check exists | `functions/src/shared/auth.ts:14` |
-| Secrets | `defineSecret` only; other config from `.env` read lazily | `functions/src/config/env.ts` |
-| Share ACL | `thing_shares/{hostUid}/thing/{thingId}`, roles **`owner` and `technician` only**; both may write `maintenance_task` | `sharingModels.ts:14,41`, `firestore.rules:116` |
-| Owner tier | `effectiveStatusAt(subscriptions/{uid})` → FREE / PRO; no "owner of Thing X" helper | `subscription/entitlementModel.ts:80` |
-| Member gating on client | The client never sees the owner's tier; a member's upload is refused by `getBlobUploadSession` (`attachmentsEnabled`) | `storage/getBlobUploadSession.ts`, `blobBroker.ts:70` |
-| Blob delete, client | `AttachmentManager.delete` tombstones the local row and schedules `BlobDeleteDriver`, which **deletes the remote object directly for own-tree blobs** and skips foreign (member) ones | `LocalFirstAttachmentManagerImpl.kt:165`, `feature/sync/data/.../BlobDeleteDriver.kt:51-58` |
-| Blob delete, server | `onThingRecordDeleted` (false → true edge) and the daily sweep (7-day orphan grace) both skip blobs a live record names | `storage/onRecordDeleted.ts:126`, `storage/storageSweep.ts:213` |
-| Local GC | `TombstoneGc.stillReferenced` scans `selectLivePayloadsInScopePrefix` per user root | `core/storage/.../TombstoneGc.kt:102` |
-| Rate limiting | `createAttemptLimiter` counts failures only; not a usage quota | `shared/attemptLimiter.ts:48` |
-| Push | `enabledTokensFor(uid)`, `sendPush(targets, data)` | `notifications/pushSender.ts` |
-| Non-entity client reads | `subscriptions/{uid}` read by owner, written by functions only; listened to by `SubscriptionSyncListener` in `feature/sync/data` | `firestore.rules:132`, `SubscriptionSyncListener.kt:27` |
-| Typed ids | `ThingId`, `DataLogId`, `UserId`; frozen at one field | `core/model/.../proto/id/ids.proto` |
-| AI | None: no module, proto package or provider dependency | — |
+| Area                    | Fact                                                                                                                                                                                                                     | Where                                                                                                                         |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| Starter pack            | `Screen.StarterPack` (`starter_pack/{THING_ID}`) as a `selectionDialog`; reached from `EditThingScreen` after create and from `ComplianceSection` via `ThingOverviewAction.AddStarterPackClick` → `SectionActionHandler` | `core/nav/.../Screen.kt:49`, `feature/shell/.../ShellNavGraph.kt:77`, `feature/dashboard/host/.../SectionActionHandler.kt:68` |
+| Starter → task          | `StarterTask.toMaintenanceTask(template, createdAt)` maps slot key → frozen `ComponentType` (ENGINE / PROPELLER / else AIRFRAME)                                                                                         | `feature/tasks/datamanager/.../StarterTasks.kt:23,76`                                                                         |
+| Due engine              | `TaskDueManager.computeNextDue(card, logs, allCards)`; `ForceCompliedStatus` applies when newer than the latest linked log; current meters are the max reading across logs                                               | `feature/tasks/datamanager/.../impl/TaskDueManagerImpl.kt:30,75,253`                                                          |
+| Task component          | `MaintenanceTask.component` is the frozen `ComponentType` enum. **A task cannot name a specific component instance** (engine #2)                                                                                         | `maintenance_task.proto` field 3                                                                                              |
+| Meters                  | Not on the Thing proto; readings live on logs and `MaintenanceOverview.current`                                                                                                                                          | `thing.proto`, `MaintenanceLogManager.observeMaintenanceOverview`                                                             |
+| Callables               | `onCall({ region: FUNCTION_REGION, enforceAppCheck: true })` + `requireAuthenticatedApp` (auth + app-id allowlist). No anonymous check exists                                                                            | `functions/src/shared/auth.ts:14`                                                                                             |
+| Secrets                 | `defineSecret` only; other config from `.env` read lazily                                                                                                                                                                | `functions/src/config/env.ts`                                                                                                 |
+| Share ACL               | `thing_shares/{hostUid}/thing/{thingId}`, roles **`owner` and `technician` only**; both may write `maintenance_task`                                                                                                     | `sharingModels.ts:14,41`, `firestore.rules:116`                                                                               |
+| Owner tier              | `effectiveStatusAt(subscriptions/{uid})` → FREE / PRO; no "owner of Thing X" helper                                                                                                                                      | `subscription/entitlementModel.ts:80`                                                                                         |
+| Member gating on client | The client never sees the owner's tier; a member's upload is refused by `getBlobUploadSession` (`attachmentsEnabled`)                                                                                                    | `storage/getBlobUploadSession.ts`, `blobBroker.ts:70`                                                                         |
+| Blob delete, client     | `AttachmentManager.delete` tombstones the local row and schedules `BlobDeleteDriver`, which **deletes the remote object directly for own-tree blobs** and skips foreign (member) ones                                    | `LocalFirstAttachmentManagerImpl.kt:165`, `feature/sync/data/.../BlobDeleteDriver.kt:51-58`                                   |
+| Blob delete, server     | `onThingRecordDeleted` (false → true edge) and the daily sweep (7-day orphan grace) both skip blobs a live record names                                                                                                  | `storage/onRecordDeleted.ts:126`, `storage/storageSweep.ts:213`                                                               |
+| Local GC                | `TombstoneGc.stillReferenced` scans `selectLivePayloadsInScopePrefix` per user root                                                                                                                                      | `core/storage/.../TombstoneGc.kt:102`                                                                                         |
+| Rate limiting           | `createAttemptLimiter` counts failures only; not a usage quota                                                                                                                                                           | `shared/attemptLimiter.ts:48`                                                                                                 |
+| Push                    | `enabledTokensFor(uid)`, `sendPush(targets, data)`                                                                                                                                                                       | `notifications/pushSender.ts`                                                                                                 |
+| Non-entity client reads | `subscriptions/{uid}` read by owner, written by functions only; listened to by `SubscriptionSyncListener` in `feature/sync/data`                                                                                         | `firestore.rules:132`, `SubscriptionSyncListener.kt:27`                                                                       |
+| Typed ids               | `ThingId`, `DataLogId`, `UserId`; frozen at one field                                                                                                                                                                    | `core/model/.../proto/id/ids.proto`                                                                                           |
+| AI                      | None: no module, proto package or provider dependency                                                                                                                                                                    | —                                                                                                                             |
 
 **Two PRD corrections this doc carries** (PRD updated in the same PR):
 
@@ -206,16 +206,15 @@ message TaskSuggestion {
 
 ### 4.3 Backend collections (never entities)
 
-| Path | Written by | Read by | Contents | Lifetime |
-|---|---|---|---|---|
-| `ai_jobs/{jobId}` | functions | caller (`callerUid == auth.uid`) | kind, callerUid, hostUid, thingId, status, stage, stage_arg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error | TTL on `expiresAt` (24 h, R19); deleted on close |
-| `ai_job_inputs/{jobId}` | functions | functions | base64 `SuggestTasksRequest` | deleted by the worker when it finishes (no retention, §5.8) |
-| `ai_usage/{hostUid}_{thingId}` | functions | functions | `lastSuccessAt`, `inFlightJobId` | permanent, tiny |
-| `ai_burst/{callerUid}` | functions | functions | job starts in the current hour | rolling |
-| `ai_spend/{yyyymm}` | functions | functions | spend by tier (micro-dollars) | permanent |
-| `ai_cost_log/{autoId}` | functions | team | per-call cost record (§5.6) | 13 months TTL |
-| `ai_cache/{key}` | functions | functions | derived schedule items (§6.5) | until generation version bump |
-| `ai_config/global` | team | functions | `enabled`, per-tier ceilings, limits | permanent |
+| Path                           | Written by | Read by                          | Contents                                                                                                                                  | Lifetime                                                    |
+|--------------------------------|------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| `ai_jobs/{jobId}`              | functions  | caller (`callerUid == auth.uid`) | kind, callerUid, hostUid, thingId, status, stage, stage_arg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error | TTL on `expiresAt` (24 h, R19); deleted on close            |
+| `ai_job_inputs/{jobId}`        | functions  | functions                        | base64 `SuggestTasksRequest`                                                                                                              | deleted by the worker when it finishes (no retention, §5.8) |
+| `ai_usage/{hostUid}_{thingId}` | functions  | functions                        | `lastSuccessAt`, `inFlightJobId`                                                                                                          | permanent, tiny                                             |
+| `ai_spend/{yyyymm}`            | functions  | functions                        | spend by tier (micro-dollars)                                                                                                             | permanent                                                   |
+| `ai_cost_log/{autoId}`         | functions  | team                             | per-call cost record (§5.6)                                                                                                               | 13 months TTL                                               |
+| `ai_cache/{key}`               | functions  | functions                        | derived schedule items (§6.5)                                                                                                             | until generation version bump                               |
+| `ai_config/global`             | team       | functions                        | `enabled`, per-tier ceilings, limits                                                                                                      | permanent                                                   |
 
 Rules: `ai_jobs` read-only for `resource.data.callerUid == request.auth.uid` (list queries must
 filter on `callerUid`); everything else functions-only. A composite index on
@@ -225,11 +224,11 @@ filter on `callerUid`); everything else functions-only. A composite index on
 
 ### 5.1 Callables
 
-| Callable | Does |
-|---|---|
-| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`. Called when the sources sheet opens so the UI can show the right gate before any upload. Cheap; no model call. |
-| `startAiJob({kind, request})` | Same checks, then in one transaction: if `ai_usage.inFlightJobId` is QUEUED/RUNNING, return it (idempotent join); else write `ai_job_inputs/{id}`, `ai_jobs/{id}` (QUEUED) and set `inFlightJobId`. Returns `{jobId}`. |
-| `closeAiJob({jobId})` | Caller-only. Deletes the job doc (accept, dismiss). Idempotent. |
+| Callable                                                    | Does                                                                                                                                                                                                                   |
+|-------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`. Called when the sources sheet opens so the UI can show the right gate before any upload. Cheap; no model call.                |
+| `startAiJob({kind, request})`                               | Same checks, then in one transaction: if `ai_usage.inFlightJobId` is QUEUED/RUNNING, return it (idempotent join); else write `ai_job_inputs/{id}`, `ai_jobs/{id}` (QUEUED) and set `inFlightJobId`. Returns `{jobId}`. |
+| `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc (accept, dismiss). Idempotent.                                                                                                                                                        |
 
 `request` is the kind's own proto, base64, capped at 512 KiB (Firestore's 1 MiB doc limit with
 headroom); the client builder truncates logs first (§7.2).
@@ -266,9 +265,7 @@ In order, in a shared `authorizeAiCall(request, thingId, hostUid, withDocuments)
 6. **Daily limit:** `now - ai_usage.lastSuccessAt >= 24 h` → else `resource-exhausted /
    daily_limit` with `nextAvailableAt`. Rolling 24 h rather than a calendar day: no time zone to
    agree on, and "available again at 3:10 pm" is exact.
-7. **Burst limit** (abuse backstop, since failed and empty runs are free): 10 job starts per caller
-   per hour → `resource-exhausted / burst`.
-8. **Spend ceiling:** `ai_spend/{month}` for the owner's tier under `ai_config` ceiling → else
+7. **Spend ceiling:** `ai_spend/{month}` for the owner's tier under `ai_config` ceiling → else
    `resource-exhausted / spend_ceiling`.
 
 The worker re-runs 4–5 before the first model call (a share can be revoked in between).
@@ -299,8 +296,10 @@ fails the stage (PRD §9.4 "valid output").
 runs before any provider sees the document. Page text is **always** produced, because R18's
 verbatim check and the citation check need text regardless of whether the provider reads PDFs
 natively: the PDF text layer via `pdfjs-dist`; for image-only pages and photos, the pre-processor
-the bake-off picks (§12). Limits: 5 documents per run, 400 pages and 50 MB per document, 20 photo
-pages; over-limit fails with `document_too_large` before any model spend.
+the bake-off picks (§12). Limits: 5 documents per run, each within the attachment pipeline's
+existing file-size cap, checked at pick time; over-limit fails with `document_too_large` before any
+model spend. There is **no page limit** (decided 2026-09-28): the locate stage (§6.2) sends only
+the schedule pages onward, so a long manual costs more to read, not more to extract from.
 
 ### 5.6 Cost logging
 
@@ -311,7 +310,7 @@ info-level logs; the cost log is a backend-only collection, not a log line.
 
 ### 5.7 Error codes
 
-`sign_in_required`, `disabled`, `not_member`, `owner_not_pro`, `daily_limit`, `burst`,
+`sign_in_required`, `disabled`, `not_member`, `owner_not_pro`, `daily_limit`,
 `spend_ceiling`, `document_missing` (blob not uploaded), `document_too_large`,
 `document_unreadable`, `no_schedule_found`, `provider_error`, `invalid_output`, `stale`. The client
 maps each to one string (PRD R21) and one analytics reason (R50).
@@ -683,8 +682,8 @@ cost per run.
 
 - **Functions (vitest + emulator):**
   - `authorizeAiCall`: anonymous, non-member, technician member, owner free/pro with and without
-    documents, daily limit (success counts; EMPTY/FAILED do not), burst, spend ceiling, kill
-    switch, stale job.
+    documents, daily limit (success counts; EMPTY/FAILED do not), spend ceiling, kill switch,
+    stale job.
   - `startAiJob` idempotent join; worker lifecycle with a fake provider (status, stage, input
     deletion, `lastSuccessAt`).
   - Every §6.7 validator, table-driven, including AD verbatim match and downgrade.
@@ -700,33 +699,32 @@ cost per run.
 
 ## 15. Sequencing
 
-| Phase | PRs | Exit |
-|---|---|---|
-| **0** | Eval harness + fake provider; bake-off PR fills §12.5 | §9.4 met by the chosen pair |
-| **A** | (1) protos + `ai_*` collections + rules; (2) callables, worker, provider adapters, limits; (3) `core/ai` client | Fake-provider job round-trips on all three hosts |
-| **B** | (1) server `onThingRecordBlobsReleased`; (2) client `release` + `BlobDeleteDriver` change | Shared-blob tests green; one release cycle in production |
-| **C** | (1) module move + `TaskOrigin`; (2) pipeline stages 3–5 + no-document flow; (3) UI §9.2, §9.4–9.6, analytics | No-document flow on all presets, dev builds |
-| **D** | (1) stages 1–2 + cache; (2) sources sheet, job-owned documents, paywall; (3) storage-rule delete deny | T100, Sling TSi and C172N + AD cases end to end; flag deleted |
-| **E** | R20 push, R32 report, R30 open-at-page, R4 | — |
-| **F** | #1181 backfill intake (PRD §10.1) | — |
+| Phase | PRs                                                                                                             | Exit                                                          |
+|-------|-----------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| **0** | Eval harness + fake provider; bake-off PR fills §12.5                                                           | §9.4 met by the chosen pair                                   |
+| **A** | (1) protos + `ai_*` collections + rules; (2) callables, worker, provider adapters, limits; (3) `core/ai` client | Fake-provider job round-trips on all three hosts              |
+| **B** | (1) server `onThingRecordBlobsReleased`; (2) client `release` + `BlobDeleteDriver` change                       | Shared-blob tests green; one release cycle in production      |
+| **C** | (1) module move + `TaskOrigin`; (2) pipeline stages 3–5 + no-document flow; (3) UI §9.2, §9.4–9.6, analytics    | No-document flow on all presets, dev builds                   |
+| **D** | (1) stages 1–2 + cache; (2) sources sheet, job-owned documents, paywall; (3) storage-rule delete deny           | T100, Sling TSi and C172N + AD cases end to end; flag deleted |
+| **E** | R20 push, R32 report, R30 open-at-page, R4                                                                      | —                                                             |
+| **F** | #1181 backfill intake (PRD §10.1)                                                                               | —                                                             |
 
 ## 16. Risks
 
 | Risk | Mitigation |
 |---|---|
 | Hallucinated regulation | §6.7 rule 3 is deterministic; eval hard gate; `TaskOrigin` finds affected tasks by `generation_version` |
-| Cost runaway | Daily limit, burst limit, per-tier and global spend ceilings, kill switch, cache |
+| Cost runaway | Daily limit, per-tier and global spend ceilings, kill switch, cache. No per-caller burst limit (decided 2026-09-28): failed and empty runs are free, and the spend ceilings are the backstop |
 | Old clients delete a shared document | Storage-rule deny at phase D, one release cycle after B (§8.3) |
 | Context over 1 MiB | 400 KiB client cap + 512 KiB server cap; truncation flagged |
-| Worker timeout on huge manuals | Locate stage before extract; page limits; stale-job recovery |
+| Worker timeout or cost on huge manuals (no page limit) | Locate stage before extract; text-layer reading is cheap, and OCR of image-only manuals is the slow case the bake-off must time; spend ceilings; stale-job recovery |
 | Component instance not representable | `component_hint` in the description; a task component-instance field is a separate proposal |
 | Job doc listener outside the sync engine | Confined to `core/ai`; not an entity path |
 
 ## 17. Open questions
 
 - **Provider data terms** (PRD §12): gates phase C.
-- **Limit numbers** in `ai_config` (burst 10/h and the spend ceilings are placeholders until phase
-  0 cost data).
+- **Limit numbers** in `ai_config` (the spend ceilings are placeholders until phase 0 cost data).
 - **Pre-processor** for scans and photos: decided by the bake-off.
 - **Push deep link**: whether the notification opens the review directly or the Thing's task list
   with the review on top (phase E).
