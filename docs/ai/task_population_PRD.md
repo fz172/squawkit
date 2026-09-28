@@ -58,7 +58,7 @@ program, so accuracy matters for more than convenience.
   supplied the document that states it.
 - **G6.** Nothing is written without the user's confirmation.
 - **G7.** Works on Android, iOS and web, for all seven presets (airplane, car, motorcycle, bike,
-  boat, home, custom).
+  boat, home, custom), for signed-in users only.
 
 ## 3. Non-Goals
 
@@ -74,6 +74,7 @@ program, so accuracy matters for more than convenience.
 - **Checklist sub-items.** The task model has no checklist field, and v1 does not add one
   (decision 3).
 - **On-device models.** Generation runs on the backend.
+- **Guest use.** Guests (anonymous or local-only accounts) never reach the AI backend (R47).
 - **Offline extraction queue.** Generation needs a connection in v1 (§13).
 - **Intake from the paper-logbook backfill (#1181).** The hand-off contract is defined here (§10.1)
   and built in a later phase.
@@ -88,8 +89,8 @@ program, so accuracy matters for more than convenience.
 - **Motorcycle owner.** Creates a 2025 Triumph Bonneville T100 at 1,200 mi and uploads the
   owner's handbook. Gets the first service, the 10,000 mi / 12-month service, valve clearances,
   brake fluid and coolant, each citing a page. Unticks two and taps *Add*.
-- **LSA owner with three manuals.** Adds the Sling MM, the Rotax 915 iS MM and the Airmaster
-  manual in one pick, without saying which is which, and gets a list grouped
+- **LSA owner with three manuals.** The sources sheet asks for documents per component. The owner
+  uploads the Sling MM, the Rotax 915 iS MM and the Airmaster manual, and gets a list grouped
   *Airframe / Engine / Propeller* with items like "Rotax 915 iS MM, rev 3, p. 5-12". The three PDFs
   are each stored once and shared by every task that cites them.
 - **Owner with an AD.** Uploads the PDF of an AD that applies to the engine. Gets its recurring
@@ -117,7 +118,7 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R2 (P0). Task list, any time.** A *Suggest tasks* action on a non-empty task list opens the same
   flow, filtered against existing tasks (R24).
 - **R3 (P0). Add task → from a document.** The add-task flow offers *Tasks from a document*, which
-  opens the sources sheet with the file picker already open.
+  opens the sources sheet with the upload step first.
 - **R4 (P1). From an existing attachment.** A PDF or image already attached to any record of the
   Thing offers *Find tasks in this document*. It reuses the stored blob instead of uploading it
   again.
@@ -127,25 +128,14 @@ which case it is the first follow-up; **P2** is designed for, not built.
 
 ### 5.2 Sources
 
-- **R6 (P0). Sources sheet.** One flat, optional list of documents, not one row per component.
-  *Add documents* picks one or more files at a time. Each document shows its name and a remove
-  action. The primary action is *Suggest*, and pressing it with an empty list is the no-document
-  run (R9). The sheet does not ask which component a document belongs to.
+- **R6 (P0). Sources sheet.** One row per component that the template's component tree defines and
+  the Thing fills (Airframe; Engine: Rotax 915 iS; Propeller: Airmaster). A Thing with a single part
+  shows one row. Each row offers *Upload* and *Skip*. The primary action is *Suggest*.
 - **R7 (P0). Document forms.** A PDF (with or without a text layer), photos of pages (camera or
-  library), or pasted text. The design doc sets page and byte limits and the copy for exceeding
+  library). The design doc sets page and byte limits and the copy for exceeding
   them.
-- **R8 (P0). Matching is the backend's job.** The backend identifies each document (manufacturer,
-  model, title, revision) and matches **each suggestion**, not each document, to the Thing's
-  component tree (R22). One document can therefore cover several components (a car owner's
-  manual, an SI for both engines of a twin), and an AD for the whole Thing lands at Thing level.
-  The user corrects a wrong component in review, through the pre-accept update (R28).
-- **R8a (P0). Mismatch warning.** A document that does not appear to be for this Thing (a Rotax
-  manual on a Lycoming-powered airplane, a manual for a different model year) is flagged in review
-  as *Doesn't look like it's for this {thing}*. Its suggestions are shown but not pre-selected. The
-  user can keep them.
-- **R8b (P0). Document title.** The sheet shows no inferred label per document before *Suggest*,
-  so the user never waits there. The identified title and revision appear in review, on the source
-  chips and in the review header's list of documents used.
+- **R8 (P0). Component assignment.** Each document is assigned to a component. The app proposes the
+  assignment from the document's title, and the user can change it.
 - **R9 (P0). No documents.** The user can proceed without any document. Generation then uses model
   knowledge only and is labelled per R17.
 
@@ -317,8 +307,15 @@ Three mechanisms, kept separate, per
   - **Suggestions without documents (R9): free** to every signed-in account, as an onboarding hook.
   - **Anything with a document (R3, R4, R6 uploads): Pro.** Free users see the entry points and a
     paywall sheet.
-- **R47 (P0). Account.** A signed-in, non-anonymous account. A guest sees the static pack and a
-  prompt to link an account.
+- **R47 (P0). Signed-in users only.** Every AI action (suggestions with or without documents, on
+  every entry point) needs a signed-in, non-anonymous account. The free tier in R46 means free
+  *for signed-in accounts*, not free for guests.
+  - **Client.** A guest sees the static starter pack exactly as today. *Suggest tasks* and *Tasks
+    from a document* are visible and open a sign-in / link-account prompt instead of the flow, the
+    same account-gate pattern as the data-log upload (data log PRD R40). Web has no guest mode, so
+    this state exists only on mobile.
+  - **Server.** The callable function rejects unauthenticated and anonymous callers before any
+    model call or quota check, whatever the client shows.
 - **R48 (P0). Rollout.** An `AppCapability` flag, true on developer builds only until v1 is
   complete, then deleted. No `DeveloperFlags` entry.
 - **R49 (P0). Limits and cost.**
@@ -353,13 +350,11 @@ Three mechanisms, kept separate, per
 Mocks come with the design doc. The flow in words:
 
 1. **Starter pack or task list** → *Suggest tasks* (or add task → *Tasks from a document*).
-2. **Sources sheet** (R6). An optional list of documents with *Add documents* (Pro gate for a
-   free owner) and a remove action per document. No component assignment. The primary action is
-   *Suggest*.
+2. **Sources sheet** (R6). One row per component with *Upload* and *Skip*, and the Pro gate on
+   upload for a free owner. The primary action is *Suggest*.
 3. **Working** (R19). The step being worked on is named, and the user can leave.
-4. **Review.** The starter-pack picker, grouped by component, with static cards shown first. The
-   header lists the documents used, as identified, with any mismatch warning (R8a). Cards show
-   source chips, *Already tracked* rows and first-due lines, and the disclosure (R31) appears once. The Accept button stays
+4. **Review.** The starter-pack picker, grouped by component, with static cards shown first, source
+   chips, *Already tracked* rows, first-due lines and the disclosure (R31). The Accept button stays
    usable while cards load.
 5. **Add.** Tasks are written, and the user lands on the task list.
 
@@ -485,7 +480,7 @@ non-document source kind, and none is phrased as a requirement.
 | **A — Backend**                | Shared backend (§8.1) if #1181 has not shipped it; provider abstraction, cache, limits  | Valid suggestions for every evaluation case from a test harness   |
 | **B — Reference-aware delete** | R37–R40, across client and server, independent of AI                                    | Shared-blob tests green; in production before D                   |
 | **C — Suggestions**            | R1, R2, R5, R9–R13, R15–R29, R31, R33–R36, R45–R52, `AppCapability` on developer builds | No-document flow end to end on all hosts, all seven presets       |
-| **D — Documents**              | R3, R4, R6–R8b, R14, R30, R37 wiring, R41, Pro paywall                                   | T100, Sling TSi and C172N + AD flows end to end; flag deleted; v1 |
+| **D — Documents**              | R3, R4, R6–R8, R14, R30, R37 wiring, R41, Pro paywall                                   | T100, Sling TSi and C172N + AD flows end to end; flag deleted; v1 |
 | **E — Follow-ups**             | R20, R32, anything P1 that slipped                                                      | —                                                                 |
 | **F — Backfill intake**        | §10.1 once #1181's backfill exists                                                      | #1181 recurring items open this picker                            |
 
@@ -533,6 +528,8 @@ Settled 2026-09-27.
 12. **Server-side cache, no library UI** (R42–R44).
 13. **The provider is chosen by measurement** (§9), behind a provider abstraction.
 14. **Web-located documents and #1181 intake are later phases.**
+15. **Signed-in users only.** Guests see the static pack and a sign-in prompt, and the backend
+    rejects anonymous callers (R47).
 
 ### Still open
 
