@@ -1,7 +1,7 @@
 # PRD: Suggested Tasks from the Thing and Its Documents
 
 **Epic:** [#1182](https://github.com/fz172/squawkit/issues/1182)
-**Design doc:** `task_population_design.md` (not yet written)
+**Design doc:** [`task_population_design.md`](task_population_design.md)
 **Sibling epics:** [#1181](https://github.com/fz172/squawkit/issues/1181) photo / paper logbook →
 log entries (shares the AI backend), [#1183](https://github.com/fz172/squawkit/issues/1183) data log
 anomaly detection
@@ -100,8 +100,8 @@ program, so accuracy matters for more than convenience.
 - **Owner with tasks already.** Presses *Suggest tasks* on a Thing with 12 tasks. Matches are shown
   as *Already tracked*. A suggestion with a different interval shows a note, and the existing task
   is not edited.
-- **Editor on a shared Thing.** Uploads a manual to their partner's plane. The partner's Pro
-  entitlement decides whether document extraction is available, and the editor's own plan does
+- **Technician on a shared Thing.** Uploads a manual to a plane shared with them. The owner's Pro
+  entitlement decides whether document extraction is available, and the technician's own plan does
   not.
 - **Offline in a hangar.** Sees the static pack and a note that suggestions need a connection.
 
@@ -133,8 +133,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
   the Thing fills (Airframe; Engine: Rotax 915 iS; Propeller: Airmaster). A Thing with a single part
   shows one row. Each row offers *Upload* and *Skip*. The primary action is *Suggest*.
 - **R7 (P0). Document forms.** A PDF (with or without a text layer), photos of pages (camera or
-  library). The design doc sets page and byte limits and the copy for exceeding
-  them.
+  library). There is no page limit. The design doc sets the document-count and file-size limits
+  and the copy for exceeding them.
 - **R8 (P0). Component assignment.** Each document is assigned to a component. The app proposes the
   assignment from the document's title, and the user can change it.
 - **R9 (P0). No documents.** The user can proceed without any document. Generation then uses model
@@ -267,8 +267,9 @@ which case it is the first follow-up; **P2** is designed for, not built.
 
 - **R37 (P0). One document, one blob.** A document that yields several tasks is stored **once**.
   Every task accepted from it carries an `Attachment` referencing the same blob, and no bytes are
-  copied. The document is written to the Thing's blob scope (via `ThingScopeResolver`) when its
-  first task is accepted. If no task is accepted, the document is not saved.
+  copied. The document is uploaded to the Thing's blob scope (via `ThingScopeResolver`) when the
+  run starts, and becomes referenced when its first task is accepted. If no task is accepted, it is
+  released and the orphan sweep reclaims it (design §8.1–8.2).
 - **R38 (P0). Reference-aware deletion.** Removing the document from one task, or deleting one
   task, must not tombstone the blob while another live record in the Thing still references it.
   - The server's `onRecordDeleted` (`blobsReferencedByLiveRecords`) and the device's
@@ -309,9 +310,9 @@ which case it is the first follow-up; **P2** is designed for, not built.
 Three mechanisms, kept separate, per
 [AGENTS.md § Gating](../../AGENTS.md#gating-three-mechanisms-kept-separate).
 
-- **R45 (P0). Who and whose.** Anyone who can edit tasks on the Thing (owner or editor member) can
-  run it; viewers cannot. The **Thing owner's** entitlement and quota decide access, not the
-  caller's. An editor's paywall copy names the owner's plan.
+- **R45 (P0). Who and whose.** Any member of the Thing can run it: the owner and technician
+  members, both of whom can already write tasks. The **Thing owner's** entitlement and quota decide
+  access, not the caller's. A member's paywall copy names the owner's plan.
 - **R46 (P0). Entitlement.** Through `SubscriptionManager` (`SquawkIt Pro`), no new flag system:
   - **Suggestions without documents (R9): free** to every signed-in account, as an onboarding hook.
   - **Anything with a document (R3, R4, R6 uploads): Pro.** Free users see the entry points and a
@@ -332,7 +333,7 @@ Three mechanisms, kept separate, per
     Only a run that returns suggestions counts. Failed runs (R21), low-confidence empty runs (R21a)
     and cache hits do not, so a bad upload never locks the user out until tomorrow. When the
     day's run is used, the action says when it becomes available again.
-  - Per-run limits: documents per run and pages per document.
+  - Per-run limits: documents per run and file size. No page limit.
   - A monthly cost ceiling per tier and a project-wide spend ceiling. Past a ceiling, uncached runs
     are refused, the copy says when the limit resets, and cached results keep working.
   - A server-side kill switch that turns uncached generation off without an app release.
@@ -535,7 +536,7 @@ Settled 2026-09-27.
 8. **First due uses meters and logs**, and log summaries are sent without personal data (R12,
    R29).
 9. **Gating: no-document suggestions free, documents Pro.**
-10. **Shared Things: editors can run it, on the owner's entitlement.**
+10. **Shared Things: any member can run it, on the owner's entitlement.**
 11. **Documents are kept only as the user's attachment.** One blob is shared by every task it
     produced, with reference-aware deletion (R37, R38). The backend keeps no inputs.
 12. **Server-side cache, no library UI** (R42–R44).
@@ -550,7 +551,7 @@ Settled 2026-09-27.
 
 ### Still open
 
-- **Limit values** (R49): per-run document and page caps and the cost ceilings, set from phase 0's
+- **Limit values** (R49): the per-run document cap and the cost ceilings, set from phase 0's
   cost data. The daily run limit is settled (decision 16).
 - **Provider data terms.** Confirm the chosen provider's retention and training terms for this use,
   and state them in the privacy policy before phase C ships.
