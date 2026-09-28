@@ -32,6 +32,116 @@ Seven pieces, in dependency order. Each is one or two PRs (§15).
    review, fallback, and gate states.
 7. **Provenance** (§4.1). `TaskOrigin` on `MaintenanceTask`.
 
+### 1.1 Component diagram
+
+Green is new and amber is an existing piece this design changes. Existing, unchanged pieces are
+shrunk to small dashed pills so the new work stands out. Solid edges are calls or writes, and
+dotted edges are listeners, optional paths, or later phases. A zoomable version is on the
+[artifact page](https://claude.ai/artifact/Rgp726o2ToowpcLocYkn9V).
+
+```mermaid
+flowchart TB
+  subgraph Client["Client · Android / iOS / web"]
+    direction LR
+    Entry["Entry points<br/>new: suggest, from a document"]
+    SuggestUI["Suggestions screen<br/>feature/tasks/suggestions/update"]
+    Gate["Gating<br/>new AppCapability flag"]
+    subgraph SugDM["feature/tasks/suggestions/datamanager"]
+      direction LR
+      Mgr["TaskSuggestionManager"]
+      Ctx["SuggestionContextBuilder<br/>no PII fields"]
+      Map["SuggestionMapper<br/>→ MaintenanceTask + TaskOrigin"]
+    end
+    Existing(["existing managers"])
+    AttMgr["AttachmentManager<br/>release(owner)"]
+    AiClient["core/ai · AiJobClient"]
+    Local[("core/storage<br/>new: BlobReferenceScanner,<br/>ai_job_document")]
+    Sync["feature/sync/data<br/>BlobDeleteDriver: local only"]
+  end
+
+  subgraph Backend["Cloud Functions"]
+    direction LR
+    Callables["Callables<br/>getAiEligibility · startAiJob<br/>closeAiJob"]
+    Auth["authorizeAiCall<br/>signed in · kill switch · membership<br/>owner tier · daily limit · spend ceiling"]
+    Worker["runAiJob worker<br/>onDocumentCreated(ai_jobs)"]
+    subgraph Pipeline["Task pipeline · src/ai/tasks"]
+      direction LR
+      S1["1 read<br/>text / OCR"] --> S2["2 identify<br/>+ extract"]
+      S3["3 recall<br/>common schedule"]
+      S2 --> S4["4 tailor<br/>to Thing"]
+      S3 --> S4
+      S4 --> S5["5 validate<br/>deterministic"]
+    end
+    Prov["AiProvider adapters<br/>fast / strong"]
+    Release["onThingRecordBlobsReleased<br/>delete · attachment removed"]
+    Sweep(["storage sweep"])
+    Push(["push · phase E"])
+  end
+
+  subgraph Data["Firebase data"]
+    direction LR
+    Jobs[("ai_jobs/jobId<br/>status · stage · result")]
+    AiColl[("Backend-only<br/>ai_job_inputs · ai_usage · ai_spend<br/>ai_cost_log · ai_cache · ai_config")]
+    ACL[("shares · subscriptions")]
+    Entities[("Entity docs<br/>tasks gain TaskOrigin")]
+    GCS[("Cloud Storage")]
+  end
+
+  LLM(["LLM + OCR providers"])
+  Eval["Eval harness<br/>manual · phase 0"]
+
+  Entry --> SuggestUI
+  SuggestUI --> Gate
+  SuggestUI --> Mgr
+  Mgr --> Ctx & Map
+  Ctx & Map --> Existing
+  Mgr --> AttMgr
+  Mgr --> AiClient
+  Existing --> Local
+  AttMgr --> Local
+  Local <--> Sync
+  Sync <-- entities --> Entities
+  Sync -- blob upload --> GCS
+
+  AiClient -- call --> Callables
+  AiClient -. listen .-> Jobs
+  Callables --> Auth
+  Auth --> ACL
+  Auth --> AiColl
+  Callables -- create / close --> Jobs
+  Jobs -- trigger --> Worker
+  Worker --> Pipeline
+  Worker -- result --> Jobs
+  Worker --> AiColl
+  Worker -.-> Push
+  S1 -- read document --> GCS
+  Pipeline -- cache --> AiColl
+  Pipeline --> Prov --> LLM
+  Eval -.-> Pipeline
+
+  Entities -- trigger --> Release
+  Release -- delete unreferenced --> GCS
+  Sweep -.-> GCS
+
+  classDef new fill:#E3F2E8,stroke:#276B39,stroke-width:2px,color:#10231A
+  classDef changed fill:#FFECB3,stroke:#8B5E00,stroke-width:2px,color:#2B1D05
+  classDef existing fill:transparent,stroke:#8D9AAF,stroke-width:1px,stroke-dasharray:4 3,color:#7A8699,font-size:12px
+  class SuggestUI,Mgr,Ctx,Map,AiClient,Callables,Auth,Worker,S1,S2,S3,S4,S5,Prov,Jobs,AiColl,Eval new
+  class Entry,AttMgr,Local,Sync,Release,Entities,Gate changed
+  class Existing,Sweep,ACL,GCS,Push,LLM existing
+```
+
+Two paths cross the diagram:
+
+- **A suggestion run.** The screen calls `TaskSuggestionManager`, which builds the context
+  locally and calls `startAiJob` through `AiJobClient`. The callable authorizes and writes
+  `ai_jobs`, which triggers the worker. The worker runs the pipeline, calling providers through
+  `AiProvider`, and writes the result back to `ai_jobs`, where the client's listener picks it up.
+  Accepting writes tasks through the existing managers and sync.
+- **Blob release.** Removing an attachment releases the local reference only. The entity write
+  syncs, `onThingRecordBlobsReleased` fires on it and deletes the Storage object if no live record
+  still names it, and the daily sweep is the backstop.
+
 ## 2. What exists today, verified
 
 | Area                    | Fact                                                                                                                                                                                                                     | Where                                                                                                                         |
