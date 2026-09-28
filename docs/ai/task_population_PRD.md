@@ -124,7 +124,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
   again.
 - **R5 (P0). Enough identity.** The action is offered only when the template's required spec fields
   (e.g. make and model) are filled. Otherwise it explains what is missing and links to the Thing's
-  edit screen. The custom preset, which has no required specs, is covered in §12 *Still open*.
+  edit screen. The custom preset has no required specs, so it is always offered, and a thin
+  description is handled by R21a.
 
 ### 5.2 Sources
 
@@ -185,6 +186,14 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R21 (P0).** A failed run writes nothing and says what failed: document unreadable, no schedule
   found, limit reached, or service unavailable. The static starter pack stays available with an
   inline retry.
+- **R21a (P0). Low confidence returns nothing.** On any preset, when the backend's confidence in the
+  Thing's identity or in the schedule is too low, it returns no model suggestions rather than a
+  guess. Examples are a custom Thing with only a name, or an obscure make and model. The review
+  screen then says there wasn't enough to go on and offers *Add details* (the Thing's edit screen)
+  and *Add a document*. The static pack still shows where the template has one. The custom preset
+  has none, so the fallback is the whole screen there. The design doc defines the confidence
+  signal. Weak items in an otherwise confident run are dropped individually, not shown as low
+  confidence.
 
 ### 5.5 What a suggestion contains
 
@@ -285,7 +294,7 @@ which case it is the first follow-up; **P2** is designed for, not built.
 
 - **R42 (P0).** The Thing-independent step of generation (document → schedule items, and
   identity → common schedule) is cached server-side by **document fingerprint** (content hash plus
-  revision) and by **normalised identity** (template, make, model, year, component models). A cache
+  revision) and by **normalized identity** (template, make, model, year, component models). A cache
   hit costs no model call for that step. Per-Thing tailoring (dedup, last-done matching, units)
   always runs fresh.
 - **R43 (P0).** The cache holds derived schedule items and document metadata (title, manufacturer,
@@ -319,14 +328,16 @@ Three mechanisms, kept separate, per
 - **R48 (P0). Rollout.** An `AppCapability` flag, true on developer builds only until v1 is
   complete, then deleted. No `DeveloperFlags` entry.
 - **R49 (P0). Limits and cost.**
-  - Per-owner and per-Thing rate limits: runs per day, documents per run, pages per document.
+  - **One successful run per Thing per day**, for free and Pro alike, with or without documents.
+    Only a run that returns suggestions counts. Failed runs (R21), low-confidence empty runs (R21a)
+    and cache hits do not, so a bad upload never locks the user out until tomorrow. When the
+    day's run is used, the action says when it becomes available again.
+  - Per-run limits: documents per run and pages per document.
   - A monthly cost ceiling per tier and a project-wide spend ceiling. Past a ceiling, uncached runs
     are refused, the copy says when the limit resets, and cached results keep working.
   - A server-side kill switch that turns uncached generation off without an app release.
   - Each run logs tokens, cost, latency, cache hit or miss, provider and owner tier. Prompt and
     document content are never logged.
-  - Proposed free defaults, to be set from phase 0's cost data: 3 runs per Thing per day and 20
-    per account per month.
 
 ### 5.11 Offline, lexicon, analytics
 
@@ -336,7 +347,8 @@ Three mechanisms, kept separate, per
   - `task_suggestions_shown`: count per source kind, cache hit, latency bucket, truncated-history
     flag.
   - `task_suggestions_accepted`: accepted and accepted-with-edits counts per source kind.
-  - `task_suggestions_failed`: reason.
+  - `task_suggestions_failed`: reason (offline, daily limit, entitlement, low confidence, unreadable
+    document, backend).
   - `task_origin_edited`: an AI-origin task was edited later.
 
   `StarterTasksOffered` / `StarterTasksAccepted` keep firing for the static items.
@@ -359,7 +371,7 @@ Mocks come with the design doc. The flow in words:
 5. **Add.** Tasks are written, and the user lands on the task list.
 
 The card reuses the starter-pack card. Colour and type follow `DESIGN.md`, and the source chip is
-text, not a colour code.
+text, not a color code.
 
 ## 7. Output Schema (product level)
 
@@ -404,10 +416,11 @@ Security rules deny client access.
 
 ### 8.4 Module
 
-Suggestion UI lives in `feature/tasks/update` beside the starter pack. The callable client sits
-behind a manager interface in `feature/tasks/datamanager`, or in a shared `feature/ai` module if
-#1181 has created one; the design doc decides. Nothing lands in `feature/thing` or
-`feature/dashboard/host`.
+Suggestions get their own module, `feature/tasks/suggestions`. The starter-pack UI and ViewModel
+move there from `feature/tasks/update/.../starter/`; the pack's content stays in the template
+`.textproto` files. The callable client sits behind a manager interface in
+`feature/tasks/suggestions/datamanager`, which calls a shared `feature/ai` module for common AI
+logic if #1181 has created one. The design doc decides the submodule split. Nothing lands in `feature/thing` or `feature/dashboard/host`.
 
 ## 9. Model and Provider Evaluation (design phase)
 
@@ -420,7 +433,7 @@ The design doc fills this in with measured results before phase B starts.
   and photos).
 - Locating the maintenance section: PDF outline, printed TOC, page scoring, the whole document, or
   a combination.
-- Log-history summarisation for large histories (R12).
+- Log-history summarization for large histories (R12).
 
 ### 9.2 Candidates
 
@@ -530,14 +543,17 @@ Settled 2026-09-27.
 14. **Web-located documents and #1181 intake are later phases.**
 15. **Signed-in users only.** Guests see the static pack and a sign-in prompt, and the backend
     rejects anonymous callers (R47).
+16. **One successful run per Thing per day** (R49). Failed runs, empty low-confidence runs and
+    cache hits do not count.
+17. **Low confidence returns nothing** on any preset, with a fallback that asks for details or a
+    document (R21a).
 
 ### Still open
 
-- **Limit values** (R49): quotas and ceilings, set from phase 0's cost data.
+- **Limit values** (R49): per-run document and page caps and the cost ceilings, set from phase 0's
+  cost data. The daily run limit is settled (decision 16).
 - **Provider data terms.** Confirm the chosen provider's retention and training terms for this use,
   and state them in the privacy policy before phase C ships.
-- **Custom preset.** With no required specs, how much should the model infer from the name and
-  free-form fields, and should it ask a follow-up instead of guessing?
 - **Log history cap** (R12): the size and recency cut.
 
 ## 13. Later
