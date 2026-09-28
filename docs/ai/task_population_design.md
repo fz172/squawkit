@@ -13,7 +13,7 @@
 
 ## 1. Overview
 
-Seven pieces, in dependency order. Each is one or two PRs (§15).
+Seven pieces, in dependency order. §15 sequences them and §18 breaks them into PRs.
 
 1. **Evaluation harness** (§12). Runs the generation pipeline against a fixed case set with any
    provider adapter and scores it against PRD §9.4. The bake-off result is a follow-up PR that
@@ -809,15 +809,24 @@ cost per run.
 
 ## 15. Sequencing
 
-| Phase | PRs                                                                                                             | Exit                                                          |
-|-------|-----------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
-| **0** | Eval harness + fake provider; bake-off PR fills §12.5                                                           | §9.4 met by the chosen pair                                   |
-| **A** | (1) protos + `ai_*` collections + rules; (2) callables, worker, provider adapters, limits; (3) `core/ai` client | Fake-provider job round-trips on all three hosts              |
-| **B** | (1) server `onThingRecordBlobsReleased`; (2) client `release` + `BlobDeleteDriver` change                       | Shared-blob tests green; one release cycle in production      |
-| **C** | (1) module move + `TaskOrigin`; (2) pipeline stages 3–5 + no-document flow; (3) UI §9.2, §9.4–9.6, analytics    | No-document flow on all presets, dev builds                   |
-| **D** | (1) stages 1–2 + cache; (2) sources sheet, job-owned documents, paywall; (3) storage-rule delete deny           | T100, Sling TSi and C172N + AD cases end to end; flag deleted |
-| **E** | R20 push, R32 report, R30 open-at-page, R4                                                                      | —                                                             |
-| **F** | #1181 backfill intake (PRD §10.1)                                                                               | —                                                             |
+| Phase | Board items (§18) | Exit |
+|---|---|---|
+| **0** | 1–4: provider adapters and document reading, the pipeline as a library, the eval harness, the bake-off | §9.4 met by the chosen pair; §12.5 filled in |
+| **A** | 5–10: protos, collections and rules, authorization, callables, worker, `core/ai` | An echo job round-trips on all three hosts on developer builds |
+| **B** | 11–12: server release trigger, client `release` | Shared-blob tests green; one release cycle in production before D ships |
+| **C** | 13–19: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy | No-document flow on all presets and hosts, developer builds |
+| **D** | 20–25: storage-rule deny, document pipeline wiring, sources sheet, the two P1 document items, flag removal | T100, Sling TSi and C172N + AD cases end to end; flag deleted; v1 |
+| **E** | 26–27: push, wrong-suggestion report | — |
+| **F** | 28: #1181 backfill intake (PRD §10.1) | — |
+
+Ordering rules the phases alone do not show:
+
+- The pipeline is built in phase 0 as a library with no Firebase dependency, because the bake-off
+  has to run the real stages and validators (§12.1). Phases C and D wire it into the worker; they
+  do not write it.
+- Item 20 (storage-rule deny) deploys before item 22 reaches any user, and not before phase B has
+  been in production for one release cycle (§8.3).
+- Item 19 (privacy policy) gates the phase C release, not phase C development (§17).
 
 ## 16. Risks
 
@@ -841,22 +850,97 @@ cost per run.
 
 ## 18. Task breakdown
 
-Board items, one per PR in §15:
+One board item per PR, with the PRD requirements each one closes. Items within a phase are in
+dependency order.
 
-1. Eval harness, case format, scorer, fake provider (0)
-2. Bake-off run and §12.5 results (0)
-3. Protos: `TaskOrigin`, `AttachmentId`, `ai_job`, `suggest_tasks`; TS generation list (A)
-4. Backend: `ai_*` collections, rules, indexes, `ai_config` (A)
-5. Backend: `requireSignedInApp`, `authorizeAiCall`, `ownerTierFor`, limits (A)
-6. Backend: callables + worker + provider adapters + cost log (A)
-7. `core/ai` `AiJobClient` (A)
-8. Server `onThingRecordBlobsReleased` + tests (B)
-9. Client `release`, `BlobReferenceScanner`, `BlobDeleteDriver` change (B)
-10. Module move to `feature/tasks/suggestions` + `TaskOrigin` on starter accepts (C)
-11. Pipeline stages 3–5 + validators (C)
-12. Context builder, mapper, manager (C)
-13. UI: suggest entry points, working/review/empty/failed/guest states, analytics (C)
-14. Pipeline stages 1–2 + cache (D)
-15. Sources sheet, job-owned documents, paywall, `mode=document` entry (D)
-16. Storage-rule delete deny (D)
-17. R20 push, R32 report, R30 open-at-page, R4 attachment entry (E)
+**Phase 0: evaluate**
+
+1. **Provider adapters and document reading.** The `AiProvider` interface, one adapter per
+   candidate (§9.2), `readDocument` with the PDF text layer and the OCR candidates (§5.4, §5.5).
+   Runnable outside Cloud Functions.
+2. **Pipeline as a library.** Stages 1–5 and every §6.7 validator, table-driven tests, a cache
+   interface with an in-memory implementation, `GENERATION_VERSION`. R16–R18, R21a, R22–R24,
+   R27.
+3. **Eval harness.** Case format, scorer, fake provider with recorded responses (scorer tests run
+   in CI), `eval/fetch.sh` for licensed documents (§12).
+4. **Bake-off run.** Every candidate against every case; fill in §12.5 and choose the fast/strong
+   pair and the OCR pre-processor.
+
+**Phase A: shared backend**
+
+5. **Protos.** `TaskOrigin` + `MaintenanceTask.origin`, `AttachmentId`, `ai_job`,
+   `suggest_tasks`; add them to `generate:proto` and confirm `template.proto` and
+   `meter_reading.proto` generate through imports (§4).
+6. **Collections and rules.** The `ai_*` collections, Firestore rules plus rules tests, the
+   `ai_jobs` composite index, TTL policies on `ai_jobs.expiresAt` and `ai_cost_log`, and the
+   seeded `ai_config/global` (§4.3).
+7. **Authorization.** `requireSignedInApp`, `ownerTierFor`, and `authorizeAiCall` with
+   membership, owner tier, the rolling 24 h daily limit, spend ceilings and the kill switch, each
+   with tests (§5.3). R45–R47, R49.
+8. **Callables.** `getAiEligibility`, `startAiJob` with the idempotent join, and `closeAiJob`
+   (§5.1).
+9. **Worker.** `runAiJob`, the pipeline registry, an echo pipeline for round-trip tests, stage
+   updates, stale-job recovery, input deletion, the cost log and `ai_spend`, the Firestore cache
+   implementation, and provider secrets with their Secret Manager IAM bindings (§5.2, §5.6,
+   §6.5).
+10. **`core/ai` client.** `AiJobClient` and the Firebase implementation, wired through
+    `settings.gradle.kts` and `CommonAppModules`; AGENTS.md gains the module and the AI backend
+    (§7.1).
+
+**Phase B: reference-aware release**
+
+11. **Server release trigger.** `onThingRecordDeleted` generalized into
+    `onThingRecordBlobsReleased`, with the shared-blob tests (§8.3). R38, R39.
+12. **Client release.** `BlobReferenceScanner` extracted from `TombstoneGc`,
+    `AttachmentManager.release(attachment, owner)`, the five `AttachmentFormController` call
+    sites, and `BlobDeleteDriver` no longer deleting remote objects. R38–R40.
+
+**Phase C: suggestions without documents**
+
+13. **Module move.** `feature/tasks/suggestions/{model,datamanager,update}` through the five-step
+    new-module checklist; the starter pack moves in and its tests move with it; starter accepts
+    write `TEMPLATE_STARTER` origin (§3).
+14. **Worker wiring, no documents.** Register the task pipeline (stages 3–5) in the worker, with a
+    worker test on the fake provider. R9, R15, R19, R21.
+15. **Data layer.** `SuggestionContextBuilder` (truncation, no PII by construction),
+    `SuggestionMapper` (rules, component, force-complied, origin), `TaskSuggestionManager`, and the
+    first-due preview through `TaskDueManager` (§7). R10–R13, R29, R33–R36.
+16. **Entry points.** `AppCapability.isTaskSuggestionsSupported`, the route `mode` argument,
+    `ThingOverviewAction.SuggestTasksClick`, and the guest and offline gates on every entry point
+    (§9.1, §10). R1, R2, R5, R47, R48, R51.
+17. **Screen states.** Static cards first, the merge, working, review with *Already tracked* and
+    first-due lines, empty, failed, the disclosure, strings for every §5.7 code, and every §11
+    analytics event including `TaskOriginEdited` from the task form (§9.2, §9.4–9.6). R24–R27,
+    R31, R50, R52.
+18. **Update before accepting (P1).** The task form accepts a pre-filled suggestion and returns it
+    as accepted-with-edits. R28.
+19. **Privacy policy.** State the chosen provider's retention and training terms. Not code; it
+    gates the phase C release (§17).
+
+**Phase D: documents**
+
+20. **Storage-rule delete deny.** Client `delete` on `users/{uid}/thing/{thingId}/blobs/**` is
+    denied, with a rules test. Timing per §15.
+21. **Worker wiring, documents.** Enable stages 1–2 and cache writes in the worker, and
+    `documentsAllowed` in `getAiEligibility`. R14, R18 (document path), R42–R44.
+22. **Sources sheet.** The document list, the Pro paywall worded for a member, `mode=document` from
+    add task, job-owned documents (`ai_job_document` and its app-start cleanup), and the review
+    header's identified documents with the mismatch warning (§8.1, §8.2, §9.3). R3, R6–R8b, R37,
+    R46.
+23. **From an existing attachment (P1).** The attachment-row action and `mode=document&attachmentId=`.
+    R4.
+24. **Document P1s.** Open the cited page (R30) and the "stays on N other tasks" copy when a shared
+    document is removed (R41).
+25. **Flag removal.** Delete `isTaskSuggestionsSupported` at the v1 release. R48.
+
+**Phase E: follow-ups**
+
+26. **Push when a run finishes (P1).** The worker's `onFinished` hook, with the deep link decided
+    in §17. R20.
+27. **Report a wrong suggestion (P1).** The report path and the team's cache-eviction tooling.
+    R32, R44.
+
+**Phase F: backfill intake**
+
+28. **#1181 hand-off.** The backfill opens this picker with *From your logs* suggestions (PRD
+    §10.1).

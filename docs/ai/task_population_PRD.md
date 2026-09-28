@@ -493,8 +493,8 @@ non-document source kind, and none is phrased as a requirement.
 | **0 — Evaluate**               | §9 run, provider chosen, design doc written                                             | §9.4 bar met on the evaluation set                                |
 | **A — Backend**                | Shared backend (§8.1) if #1181 has not shipped it; provider abstraction, cache, limits  | Valid suggestions for every evaluation case from a test harness   |
 | **B — Reference-aware delete** | R37–R40, across client and server, independent of AI                                    | Shared-blob tests green; in production before D                   |
-| **C — Suggestions**            | R1, R2, R5, R9–R13, R15–R29, R31, R33–R36, R45–R52, `AppCapability` on developer builds | No-document flow end to end on all hosts, all seven presets       |
-| **D — Documents**              | R3, R4, R6–R8, R14, R30, R37 wiring, R41, Pro paywall                                   | T100, Sling TSi and C172N + AD flows end to end; flag deleted; v1 |
+| **C — Suggestions**            | R1, R2, R5, R9–R13, R15–R19, R21–R29, R31, R33–R36, R45–R52, `AppCapability` on developer builds | No-document flow end to end on all hosts, all seven presets       |
+| **D — Documents**              | R3, R4, R6–R8b, R14, R30, R37 wiring, R41, Pro paywall                                   | T100, Sling TSi and C172N + AD flows end to end; flag deleted; v1 |
 | **E — Follow-ups**             | R20, R32, anything P1 that slipped                                                      | —                                                                 |
 | **F — Backfill intake**        | §10.1 once #1181's backfill exists                                                      | #1181 recurring items open this picker                            |
 
