@@ -11,6 +11,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,7 +51,8 @@ internal fun WingsSidebar(
   Surface(
     modifier = Modifier.fillMaxHeight()
       .width(LocalLayoutTier.current.sidebarWidth),
-    color = MaterialTheme.colorScheme.surface,
+    // One tonal step above the content's `surface`, so the ramp separates them without a divider.
+    color = MaterialTheme.colorScheme.surfaceContainer,
   ) {
     Column(
       modifier = Modifier.fillMaxHeight()
@@ -110,6 +112,7 @@ internal fun WingsSidebar(
         },
         selected = state.section == ShellSection.SETTINGS,
         onClick = onOpenAccount,
+        colors = sidebarItemColors(),
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
       )
     }
@@ -133,10 +136,17 @@ private fun SidebarItem(
     icon = { Icon(section.icon, contentDescription = null) },
     selected = selected,
     onClick = onClick,
+    colors = sidebarItemColors(),
     modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
       .then(if (muted) Modifier.alpha(DisabledSectionAlpha) else Modifier),
   )
 }
+
+// The default secondaryContainer pill is too faint on the surfaceContainer sidebar in light mode.
+@Composable
+private fun sidebarItemColors() = NavigationDrawerItemDefaults.colors(
+  selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+)
 
 /** The sidebar account/settings entry label: the signed-in user's name, not the current section. */
 @Composable
