@@ -34,27 +34,29 @@ Seven pieces, in dependency order. Each is one or two PRs (§15).
 
 ### 1.1 Component diagram
 
-Green is new, amber is an existing piece this design changes, and grey is existing and unchanged.
-Solid edges are calls or writes, and dotted edges are listeners, optional paths, or later phases.
+Green is new and amber is an existing piece this design changes. Existing, unchanged pieces are
+shrunk to small dashed pills so the new work stands out. Solid edges are calls or writes, and
+dotted edges are listeners, optional paths, or later phases. A zoomable version is on the
+[artifact page](https://claude.ai/artifact/Rgp726o2ToowpcLocYkn9V).
 
 ```mermaid
 flowchart TB
   subgraph Client["Client · Android / iOS / web"]
     direction LR
-    Entry["Entry points<br/>creation step 4 · task list<br/>add task · attachment row"]
+    Entry["Entry points<br/>new: suggest, from a document"]
     SuggestUI["Suggestions screen<br/>feature/tasks/suggestions/update"]
-    Gate["Gating<br/>AppCapability · SubscriptionManager<br/>isAnonymous"]
+    Gate["Gating<br/>new AppCapability flag"]
     subgraph SugDM["feature/tasks/suggestions/datamanager"]
-      direction TB
+      direction LR
       Mgr["TaskSuggestionManager"]
       Ctx["SuggestionContextBuilder<br/>no PII fields"]
       Map["SuggestionMapper<br/>→ MaintenanceTask + TaskOrigin"]
     end
-    Existing["Existing managers<br/>Fleet · TaskData · MaintenanceLog<br/>TaskDue · TemplateRegistry<br/>ThingScopeResolver"]
-    AttMgr["AttachmentManager<br/>addPickedFile · release(owner)"]
+    Existing(["existing managers"])
+    AttMgr["AttachmentManager<br/>release(owner)"]
     AiClient["core/ai · AiJobClient"]
-    Local[("core/storage<br/>EntityStore · LocalBlobStore<br/>BlobReferenceScanner<br/>ai_job_document")]
-    Sync["feature/sync/data<br/>SyncEngine · blob upload<br/>BlobDeleteDriver: local only"]
+    Local[("core/storage<br/>new: BlobReferenceScanner,<br/>ai_job_document")]
+    Sync["feature/sync/data<br/>BlobDeleteDriver: local only"]
   end
 
   subgraph Backend["Cloud Functions"]
@@ -71,22 +73,21 @@ flowchart TB
       S4 --> S5["5 validate<br/>deterministic"]
     end
     Prov["AiProvider adapters<br/>fast / strong"]
-    Upload["getBlobUploadSession<br/>members"]
     Release["onThingRecordBlobsReleased<br/>delete · attachment removed"]
-    Sweep["scheduledStorageSweep<br/>7-day orphan grace"]
-    Push["pushSender · phase E"]
+    Sweep(["storage sweep"])
+    Push(["push · phase E"])
   end
 
   subgraph Data["Firebase data"]
     direction LR
     Jobs[("ai_jobs/jobId<br/>status · stage · result")]
     AiColl[("Backend-only<br/>ai_job_inputs · ai_usage · ai_spend<br/>ai_cost_log · ai_cache · ai_config")]
-    ACL[("thing_shares<br/>subscriptions")]
-    Entities[("Entity docs<br/>users/uid/thing/id/…")]
-    GCS[("Cloud Storage<br/>…/thing/id/blobs")]
+    ACL[("shares · subscriptions")]
+    Entities[("Entity docs<br/>tasks gain TaskOrigin")]
+    GCS[("Cloud Storage")]
   end
 
-  LLM["LLM providers + OCR<br/>chosen by bake-off"]
+  LLM(["LLM + OCR providers"])
   Eval["Eval harness<br/>manual · phase 0"]
 
   Entry --> SuggestUI
@@ -100,8 +101,7 @@ flowchart TB
   AttMgr --> Local
   Local <--> Sync
   Sync <-- entities --> Entities
-  Sync -- blobs --> GCS
-  Sync -. member upload .-> Upload --> GCS
+  Sync -- blob upload --> GCS
 
   AiClient -- call --> Callables
   AiClient -. listen .-> Jobs
@@ -121,14 +121,14 @@ flowchart TB
 
   Entities -- trigger --> Release
   Release -- delete unreferenced --> GCS
-  Sweep --> GCS
+  Sweep -.-> GCS
 
-  classDef new fill:#dff3e4,stroke:#2e7d4f,color:#10231a
-  classDef changed fill:#fff1d6,stroke:#b7791f,color:#2b1d05
-  classDef existing fill:#eef1f5,stroke:#7a8699,color:#1b2330
+  classDef new fill:#E3F2E8,stroke:#276B39,stroke-width:2px,color:#10231A
+  classDef changed fill:#FFECB3,stroke:#8B5E00,stroke-width:2px,color:#2B1D05
+  classDef existing fill:transparent,stroke:#8D9AAF,stroke-width:1px,stroke-dasharray:4 3,color:#7A8699,font-size:12px
   class SuggestUI,Mgr,Ctx,Map,AiClient,Callables,Auth,Worker,S1,S2,S3,S4,S5,Prov,Jobs,AiColl,Eval new
   class Entry,AttMgr,Local,Sync,Release,Entities,Gate changed
-  class Existing,Upload,Sweep,ACL,GCS,Push,LLM existing
+  class Existing,Sweep,ACL,GCS,Push,LLM existing
 ```
 
 Two paths cross the diagram:
