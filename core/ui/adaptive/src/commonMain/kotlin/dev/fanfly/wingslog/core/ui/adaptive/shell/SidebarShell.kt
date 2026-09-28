@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
@@ -31,7 +30,6 @@ internal fun SidebarShell(
       onEnterInviteCode = onEnterInviteCode,
       onOpenAccount = onOpenSettings,
     )
-    VerticalDivider()
     Box(
       modifier = Modifier.weight(1f)
         .fillMaxHeight()
