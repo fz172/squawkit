@@ -1,0 +1,190 @@
+{
+  "id": "cessna-172n-no-docs",
+  "description": "1978 C172N, O-320-H2AD, with logs: last-done matching and routine typing without documents.",
+  "kind": "no_document",
+  "request": {
+    "thingId": "eval-cessna-172n-no-docs",
+    "context": {
+      "templateId": "airplane",
+      "templateVersion": 13,
+      "specs": [
+        {
+          "key": "make",
+          "label": "Make",
+          "value": "Cessna"
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "value": "172N"
+        },
+        {
+          "key": "serial",
+          "label": "Serial Number",
+          "value": "17270000"
+        },
+        {
+          "key": "tail_number",
+          "label": "Tail Number",
+          "value": "N4721E"
+        }
+      ],
+      "components": [
+        {
+          "slotKey": "engine",
+          "make": "Lycoming",
+          "model": "O-320-H2AD",
+          "spec": []
+        },
+        {
+          "slotKey": "propeller",
+          "make": "McCauley",
+          "model": "1C160/DTM7557",
+          "spec": []
+        }
+      ],
+      "meters": [
+        {
+          "key": "airframe_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "",
+          "current": 3412.6
+        },
+        {
+          "key": "engine_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "engine",
+          "current": 1288.3
+        },
+        {
+          "key": "prop_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "propeller",
+          "current": 1288.3
+        }
+      ],
+      "existingTasks": [],
+      "logs": [
+        {
+          "id": "log-annual",
+          "date": "2025-11-18",
+          "readings": [
+            {
+              "meterKey": "airframe_hours",
+              "value": 3361.0
+            },
+            {
+              "meterKey": "engine_hours",
+              "value": 1236.7
+            }
+          ],
+          "title": "Annual inspection",
+          "workDescription": "Annual inspection completed; compression checks within limits",
+          "componentSlotKey": ""
+        },
+        {
+          "id": "log-oil",
+          "date": "2026-07-02",
+          "readings": [
+            {
+              "meterKey": "airframe_hours",
+              "value": 3398.2
+            },
+            {
+              "meterKey": "engine_hours",
+              "value": 1273.9
+            }
+          ],
+          "title": "Oil change",
+          "workDescription": "Oil and filter changed, filter cut open, no metal",
+          "componentSlotKey": "engine"
+        },
+        {
+          "id": "log-elt",
+          "date": "2025-11-18",
+          "readings": [],
+          "title": "ELT inspection",
+          "workDescription": "ELT inspected and battery date checked",
+          "componentSlotKey": ""
+        }
+      ],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Conditional inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "100-hour inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "airframe_hours",
+              "interval": 100
+            }
+          ]
+        },
+        {
+          "title": "ELT inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Transponder test",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Altimeter & pitot-static test",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Oil change",
+          "description": "",
+          "componentSlotKey": "engine",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "engine_hours",
+              "interval": 50
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "inspection"
+    },
+    "documents": []
+  }
+}

@@ -1,0 +1,4 @@
+# Licensed manuals: fetched by fetch.sh, never committed.
+docs/
+# Runs. The bake-off PR adds its chosen report.md and results.json with `git add -f`.
+out/

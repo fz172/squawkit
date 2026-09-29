@@ -1,0 +1,160 @@
+{
+  "id": "sling-tsi-no-docs",
+  "description": "The same Sling TSi with no documents: what recall knows of an LSA and a Rotax 915 iS.",
+  "kind": "no_document",
+  "request": {
+    "thingId": "eval-sling-tsi-no-docs",
+    "context": {
+      "templateId": "airplane",
+      "templateVersion": 13,
+      "specs": [
+        {
+          "key": "make",
+          "label": "Make",
+          "value": "Sling"
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "value": "TSi"
+        },
+        {
+          "key": "tail_number",
+          "label": "Tail Number",
+          "value": "N915ST"
+        }
+      ],
+      "components": [
+        {
+          "slotKey": "engine",
+          "make": "Rotax",
+          "model": "915 iS",
+          "spec": []
+        },
+        {
+          "slotKey": "propeller",
+          "make": "Airmaster",
+          "model": "",
+          "spec": []
+        }
+      ],
+      "meters": [
+        {
+          "key": "airframe_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "",
+          "current": 312.4
+        },
+        {
+          "key": "engine_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "engine",
+          "current": 312.4
+        },
+        {
+          "key": "prop_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "propeller",
+          "current": 312.4
+        }
+      ],
+      "existingTasks": [],
+      "logs": [
+        {
+          "id": "log-100h",
+          "date": "2026-06-10",
+          "readings": [
+            {
+              "meterKey": "airframe_hours",
+              "value": 300.1
+            },
+            {
+              "meterKey": "engine_hours",
+              "value": 300.1
+            }
+          ],
+          "title": "100-hour inspection",
+          "workDescription": "100-hour inspection per the Sling and Rotax schedules; oil and filter changed",
+          "componentSlotKey": "engine"
+        }
+      ],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Conditional inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "100-hour inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "airframe_hours",
+              "interval": 100
+            }
+          ]
+        },
+        {
+          "title": "ELT inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Transponder test",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Altimeter & pitot-static test",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Oil change",
+          "description": "",
+          "componentSlotKey": "engine",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "engine_hours",
+              "interval": 50
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "inspection"
+    },
+    "documents": []
+  }
+}

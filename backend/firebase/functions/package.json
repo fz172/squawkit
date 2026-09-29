@@ -19,7 +19,11 @@
     "share-cleanup": "npm run build && node scripts/thing-share-cleanup.mjs",
     "airplane-tree": "npm run build && node scripts/airplane-tree-migration.mjs",
     "dna-refresh": "npm run build && node scripts/thing-dna-refresh.mjs",
-    "shape-probe": "npm run build && node scripts/thing-shape-probe.mjs"
+    "shape-probe": "npm run build && node scripts/thing-shape-probe.mjs",
+    "eval:tasks": "tsx eval/src/run.ts",
+    "eval:fetch": "bash eval/fetch.sh",
+    "eval:add-doc": "bash eval/add-doc.sh",
+    "eval:typecheck": "tsc -p eval"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.129.0",
@@ -40,6 +44,7 @@
     "firebase-functions-test": "^3.5.0",
     "grpc-tools": "^1.13.0",
     "ts-proto": "^2.7.7",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }

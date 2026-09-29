@@ -1,0 +1,165 @@
+{
+  "id": "toyota-sienna-hybrid-2022-no-docs",
+  "description": "The same Sienna with no guide.",
+  "kind": "no_document",
+  "request": {
+    "thingId": "eval-toyota-sienna-hybrid-2022-no-docs",
+    "context": {
+      "templateId": "automotive",
+      "templateVersion": 12,
+      "specs": [
+        {
+          "key": "make",
+          "label": "Make",
+          "value": "Toyota"
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "value": "Sienna Hybrid"
+        },
+        {
+          "key": "year",
+          "label": "Year",
+          "value": "2022"
+        },
+        {
+          "key": "vin",
+          "label": "VIN",
+          "value": "5TDYRKEC0NS000000"
+        }
+      ],
+      "components": [],
+      "meters": [
+        {
+          "key": "odometer",
+          "unitLabel": "mi",
+          "componentSlotKey": "",
+          "current": 28400
+        }
+      ],
+      "existingTasks": [],
+      "logs": [
+        {
+          "id": "log-oil",
+          "date": "2026-03-14",
+          "readings": [
+            {
+              "meterKey": "odometer",
+              "value": 25100
+            }
+          ],
+          "title": "Oil and filter change",
+          "workDescription": "0W-16 synthetic oil and filter; tire rotation",
+          "componentSlotKey": ""
+        }
+      ],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Engine oil & filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 5000
+            },
+            {
+              "kind": "time",
+              "every": 6,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Tire rotation",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 6000
+            }
+          ]
+        },
+        {
+          "title": "Engine air filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Cabin air filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Brake fluid flush",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Coolant flush",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 60,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Registration renewal",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Chain lube & adjustment",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 500
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "service"
+    },
+    "documents": []
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "custom-name-only",
+  "description": "A custom Thing with only a name: should come back empty (R21a).",
+  "kind": "no_document",
+  "request": {
+    "thingId": "eval-custom-name-only",
+    "context": {
+      "templateId": "custom",
+      "templateVersion": 11,
+      "specs": [
+        {
+          "key": "name",
+          "label": "Name",
+          "value": "The blue one"
+        }
+      ],
+      "components": [],
+      "meters": [],
+      "existingTasks": [],
+      "logs": [],
+      "logsTruncated": false,
+      "staticPack": [],
+      "lexiconTaskNoun": "task"
+    },
+    "documents": []
+  }
+}

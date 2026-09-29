@@ -1,0 +1,151 @@
+{
+  "id": "triumph-t100-2024-no-docs",
+  "description": "The same T100 with no handbook: recall for this model year.",
+  "kind": "no_document",
+  "request": {
+    "thingId": "eval-triumph-t100-2024-no-docs",
+    "context": {
+      "templateId": "automotive",
+      "templateVersion": 12,
+      "specs": [
+        {
+          "key": "make",
+          "label": "Make",
+          "value": "Triumph"
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "value": "Bonneville T100"
+        },
+        {
+          "key": "year",
+          "label": "Year",
+          "value": "2024"
+        },
+        {
+          "key": "vin",
+          "label": "VIN",
+          "value": "SMTD00000RT000000"
+        }
+      ],
+      "components": [],
+      "meters": [
+        {
+          "key": "odometer",
+          "unitLabel": "mi",
+          "componentSlotKey": "",
+          "current": 1200
+        }
+      ],
+      "existingTasks": [],
+      "logs": [],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Engine oil & filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 5000
+            },
+            {
+              "kind": "time",
+              "every": 6,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Tire rotation",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 6000
+            }
+          ]
+        },
+        {
+          "title": "Engine air filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Cabin air filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Brake fluid flush",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Coolant flush",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 60,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Registration renewal",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Chain lube & adjustment",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 500
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "service"
+    },
+    "documents": []
+  }
+}
