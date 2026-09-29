@@ -1,4 +1,1037 @@
 {
   "reviewed": false,
-  "tasks": []
+  "expectedStatus": "succeeded",
+  "tasks": [
+    {
+      "titleAliases": [
+        "airframe 100-hour / annual condition inspection",
+        "airframe 100-hour inspection",
+        "airframe annual inspection",
+        "condition inspection"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "airframe_hours",
+          "interval": 100
+        },
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            58,
+            59,
+            63,
+            83
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "Sling §2.3.3/§2.4/§3.4.8: 100 h or annually, whichever first. Battery check, brake fluid level, fuel filter/line inspection, air filter, tyres, lubrication, transponder/ELT/pitot-static tests are checklist lines of this event."
+    },
+    {
+      "titleAliases": [
+        "airframe first 25-hour inspection",
+        "airframe initial 25-hour inspection",
+        "first 25 hours airframe service"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "airframe_hours",
+          "interval": 25
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            82
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "One-time (first 25 hours only, §3.4.5). The Thing is at 312 h so it is long past."
+    },
+    {
+      "titleAliases": [
+        "airframe 2000-hour service",
+        "airframe 2000-hour inspection",
+        "2000-hour airframe checklist"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "airframe_hours",
+          "interval": 2000
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            72,
+            83
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "§3.4.9 says every 2000 h 'during engine overhaul'; it includes wing and main gear removal, spar/gear hardware replacement and trim tab horn replacement (p72). Kept as one event per convention 1."
+    },
+    {
+      "titleAliases": [
+        "throttle and heater cable lubrication",
+        "lubricate engine control cables",
+        "throttle cable lubrication"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "airframe_hours",
+          "interval": 300
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            79
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "Lubrication table items 16-18: engine throttle cable, engine choke cable, heater activation cables at 300 h. A choke cable on an injected 915 iS looks like a carry-over from the carbureted model; reviewer check. Tracked on airframe_hours since the cables are airframe-installed."
+    },
+    {
+      "titleAliases": [
+        "replace air ducting (SCAT/CAT tubing)",
+        "SCAT tubing replacement",
+        "air duct replacement"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "airframe_hours",
+          "interval": 300
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            83
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "§3.4.8 last-but-one bullet: 'Inspect for condition all air ducting (CAT tubing, SCAT tubing, etc). Replace after every 300 hours.'"
+    },
+    {
+      "titleAliases": [
+        "airframe lubrication",
+        "lubricate airframe control points",
+        "100-hour lubrication"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "airframe_hours",
+          "interval": 100
+        },
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            79,
+            83
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Lubrication table items 3-15 at 100 h / yearly, same interval as the airframe 100-hour event, which lists it as a line; ambiguous as a separate task."
+    },
+    {
+      "titleAliases": [
+        "compass swing",
+        "compass calibration",
+        "compass swing check"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            68
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "Own stated interval ('EVERY 12 MONTHS, READ WITH SA CATS 43.02.18') inside the 100 h checklist. The 12-month period comes from South African regulation; a US-registered (N) LSA reviewer may want this optional."
+    },
+    {
+      "titleAliases": [
+        "weight and balance check",
+        "mass and balance check",
+        "reweigh aircraft"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 5,
+          "unit": "years"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            68
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "'MASS & BALANCE (EVERY 5 YEARS, READ WITH SA CATS 43.02.07)'. Same SA-regulation caveat as the compass swing."
+    },
+    {
+      "titleAliases": [
+        "muffler / heat exchanger inspection",
+        "exhaust muffler disassembly and inspection",
+        "heat exchanger inspection"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 5,
+          "unit": "years"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            81
+          ]
+        }
+      ],
+      "type": "routine"
+    },
+    {
+      "titleAliases": [
+        "ballistic parachute repack",
+        "parachute canopy repack",
+        "BRS parachute repack"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "years"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            81,
+            301
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Canopy repack every 6 years for both Magnum 901 and BRS. Optional only because the parachute is 'if fitted' and the Thing context does not say; most TSi have one. Consider making required."
+    },
+    {
+      "titleAliases": [
+        "ballistic parachute rocket service",
+        "parachute rocket motor service",
+        "BRS rocket replacement"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "years"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            81
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "alternativeRules": [
+        [
+          {
+            "kind": "time",
+            "every": 12,
+            "unit": "years"
+          }
+        ]
+      ],
+      "_note": "Rocket: Magnum 901 every 6 years, BRS every 12 years. Which system is fitted is unknown; 6 years used (conservative). Optional because the interval depends on the fitted system."
+    },
+    {
+      "titleAliases": [
+        "pitot-static system test",
+        "altimeter and airspeed accuracy test",
+        "pitot static check"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            65,
+            69
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "'Pitot static test performed at annual inspection': a line of the airframe annual, not its own interval."
+    },
+    {
+      "titleAliases": [
+        "transponder test",
+        "transponder check"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            66
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Checklist line 7.8 of the 100 h / annual inspection; no own interval in the manual."
+    },
+    {
+      "titleAliases": [
+        "ELT test",
+        "ELT inspection",
+        "emergency locator transmitter test"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            66
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Checklist line 7.9 of the 100 h / annual inspection; no own interval in the manual (no ELT battery life stated)."
+    },
+    {
+      "titleAliases": [
+        "airframe battery check",
+        "battery inspection and test",
+        "battery capacity check"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "airframe_hours",
+          "interval": 100
+        },
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            80,
+            83
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Line of the 100 h / annual event; listed in the service-period-adjustment table (more often in extreme climates)."
+    },
+    {
+      "titleAliases": [
+        "engine air filter service",
+        "clean or replace air filter",
+        "air filter replacement"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 100
+        }
+      ],
+      "citations": [
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            80,
+            83
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Line of the airframe 100 h event; more often in dusty environments."
+    },
+    {
+      "titleAliases": [
+        "engine coolant replacement",
+        "replace coolant",
+        "coolant change"
+      ],
+      "rules": [],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            55
+          ]
+        },
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            81
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "No numeric interval: 'as per coolant manufacturer's instructions, at the latest during overhaul' (Rotax) / 'as recommended by coolant or engine manufacturer' (Sling)."
+    },
+    {
+      "titleAliases": [
+        "engine overhaul (TBO)",
+        "Rotax engine TBO",
+        "engine time between overhaul"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 1200
+        },
+        {
+          "kind": "time",
+          "every": 15,
+          "unit": "years"
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            52
+          ]
+        },
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            84
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "915 iS A / C24: 1200 h or 15 years. The 5% / 6-month extension allowance is not a rule."
+    },
+    {
+      "titleAliases": [
+        "engine 100-hour / annual check",
+        "Rotax 100-hour inspection",
+        "engine annual inspection",
+        "engine 100-hour check"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 100
+        },
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            55,
+            58,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "Includes oil + filter change, magnetic plug, oil filter inspection, turbo sump screen, fuel system, wastegate lube, prop shaft corrosion, pop-off valve, engine run. With leaded AVGAS >30%, compression and crankcase pressure checks are added here."
+    },
+    {
+      "titleAliases": [
+        "engine first 25-hour check",
+        "Rotax initial 25-hour inspection",
+        "engine 25-hour check"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 25
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            58,
+            64
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "One-time: 'First 25 hours only (there is no requirement for an inspection every 25 hours)'; also after overhaul."
+    },
+    {
+      "titleAliases": [
+        "engine 50-hour check",
+        "Rotax 50-hour inspection",
+        "engine 50-hour service"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 50
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            58
+          ]
+        },
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            82
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Rotax: 'recommended by the manufacturer but not essential, with the exception of oil change when operating with leaded AVGAS'. Sling §3.4.7 says every 50 h / annually perform engine and propeller requirements 'if any'."
+    },
+    {
+      "titleAliases": [
+        "engine 200-hour check",
+        "Rotax 200-hour inspection",
+        "engine differential compression check"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 200
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            58,
+            65,
+            68,
+            69
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "200 h items read from the X column positions (pdf.js x coords): differential compression check, spark plug connector pull-off check, wiring harness inspection, oil tank cleaning. Compression is every 50 h up to 400 h for S/N 9122005-10004312 with the non-coated rectangular ring 815253 (p65); every 100 h with leaded fuel."
+    },
+    {
+      "titleAliases": [
+        "engine 600-hour check",
+        "Rotax gearbox inspection",
+        "propeller gearbox inspection",
+        "engine 600-hour inspection"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 600
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            58,
+            70,
+            71,
+            72
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "600 h column: ECU and FUSE BOX mountings, AC-DC converter test (iSc C24 only), gear set pitting, overload clutch wear, intermediate shaft wear, torsion shaft change. Column assignment from x coordinates; reviewer should confirm against the PDF."
+    },
+    {
+      "titleAliases": [
+        "torsion shaft replacement",
+        "replace gearbox torsion shaft",
+        "change torsion shaft"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 600
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            72
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "A part replaced every 600 h, so its own task per convention 1, though it sits inside the 600 h gearbox check. Reviewer may prefer optional."
+    },
+    {
+      "titleAliases": [
+        "spark plug replacement",
+        "replace spark plugs",
+        "engine spark plugs"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 400
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            65
+          ]
+        }
+      ],
+      "type": "routine",
+      "alternativeRules": [
+        [
+          {
+            "kind": "meter",
+            "meterKey": "engine_hours",
+            "interval": 200
+          }
+        ]
+      ],
+      "_note": "Replace in the 400 h column (200 h with leaded AVGAS >30%). Read from x coordinates: X(1 at 200, X at 400. The README example shows 200 h for this item; the 400 h here is from the manual. A&P please confirm."
+    },
+    {
+      "titleAliases": [
+        "engine fuel filter replacement",
+        "replace Rotax fuel filter",
+        "fuel filter change"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 200
+        },
+        {
+          "kind": "time",
+          "every": 2,
+          "unit": "years"
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            70
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "Genuine Rotax fuel filter: first at 100 h, then every 200 h or 2 years. If a non-Rotax filter is fitted the aircraft maker's specs apply (Sling §3.4.8 only says inspect and replace if necessary, p83). The first-100 h replacement is not modelled."
+    },
+    {
+      "titleAliases": [
+        "engine rubber hose replacement (5-year)",
+        "replace engine rubber hoses",
+        "Rotax 5-year rubber parts replacement"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 5,
+          "unit": "years"
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            54
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "One list replaced every 5 years: cooling-system rubber hoses (not Rotax silicone), lubrication rubber hoses in the engine supply, air intake connecting hose, V-belt (optional alternator), rubber plate under expansion tank, fuel pressure regulator, turbo-to-airbox intake hose. Modelled as one task; the fuel pressure regulator is listed separately as optional in case a model splits it."
+    },
+    {
+      "titleAliases": [
+        "fuel pressure regulator replacement",
+        "replace fuel pressure regulator"
+      ],
+      "rules": [
+        {
+          "kind": "time",
+          "every": 5,
+          "unit": "years"
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            54
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Part of the 5-year list; only a separate task if a model splits it out."
+    },
+    {
+      "titleAliases": [
+        "engine oil and filter change",
+        "oil change",
+        "replace engine oil and filter"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 100
+        },
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            69
+          ]
+        },
+        {
+          "document": "sling-tsi-amm",
+          "pages": [
+            80,
+            83
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "alternativeRules": [
+        [
+          {
+            "kind": "meter",
+            "meterKey": "engine_hours",
+            "interval": 50
+          }
+        ],
+        [
+          {
+            "kind": "meter",
+            "meterKey": "engine_hours",
+            "interval": 25
+          }
+        ],
+        [
+          {
+            "kind": "meter",
+            "meterKey": "engine_hours",
+            "interval": 100
+          }
+        ]
+      ],
+      "_note": "Same interval as the engine 100 h check, which contains it. Leaded AVGAS >30%: Rotax 50 h, Sling recommends oil every 25 h and filter every 50 h (p80). The static pack's 50 h oil change is not what these manuals say for unleaded fuel."
+    },
+    {
+      "titleAliases": [
+        "retighten exhaust fixation after first 2 hours",
+        "exhaust retorque",
+        "exhaust fixation check"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 2
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            59
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "One-time, in the unscheduled-maintenance section's recommendations."
+    },
+    {
+      "titleAliases": [
+        "extreme climate 25-hour check",
+        "air filter, radiator and oil cooler 25-hour check"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 25
+        }
+      ],
+      "citations": [
+        {
+          "document": "rotax-mml-915i",
+          "pages": [
+            95
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Conditional: only for extreme climatic conditions / dusty air."
+    },
+    {
+      "titleAliases": [
+        "propeller 100-hour / annual inspection",
+        "Airmaster propeller 100-hour inspection",
+        "propeller annual inspection"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "prop_hours",
+          "interval": 100
+        },
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "airmaster-asi-7-1-1",
+          "pages": [
+            1,
+            2,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "'100-hour intervals (or annually)'. Includes hub/blade regrease, SB and firmware checks, function tests."
+    },
+    {
+      "titleAliases": [
+        "propeller initial 25-hour inspection",
+        "Airmaster propeller first 25-hour inspection"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "prop_hours",
+          "interval": 25
+        }
+      ],
+      "citations": [
+        {
+          "document": "airmaster-asi-7-1-1",
+          "pages": [
+            2
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "One-time: 'performed at the first 25, 50 and 100 hours'."
+    },
+    {
+      "titleAliases": [
+        "propeller initial 50-hour inspection",
+        "Airmaster propeller first 50-hour inspection"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "prop_hours",
+          "interval": 50
+        }
+      ],
+      "citations": [
+        {
+          "document": "airmaster-asi-7-1-1",
+          "pages": [
+            2
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "One-time, as above."
+    },
+    {
+      "titleAliases": [
+        "propeller carbon brush replacement",
+        "replace sensor-brush carbon brushes",
+        "propeller slipring brush replacement"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "prop_hours",
+          "interval": 300
+        }
+      ],
+      "citations": [
+        {
+          "document": "airmaster-asi-7-1-1",
+          "pages": [
+            9,
+            10
+          ]
+        }
+      ],
+      "type": "routine",
+      "alternativeRules": [
+        [
+          {
+            "kind": "meter",
+            "meterKey": "prop_hours",
+            "interval": 600
+          }
+        ]
+      ],
+      "_note": "300 h for standard sliprings, 600 h for mini sliprings. The slipring type on this airplane is not stated in either manual; 300 h used (conservative). A&P should confirm the fitted slipring; if mini, change to 600."
+    },
+    {
+      "titleAliases": [
+        "propeller hub regrease",
+        "lubricate propeller hub and blades",
+        "propeller greasing"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "prop_hours",
+          "interval": 100
+        },
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "airmaster-asi-7-1-1",
+          "pages": [
+            10
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Servicing step of the propeller 100 h event, same interval."
+    }
+  ]
 }

@@ -791,8 +791,8 @@ Usage is in `eval/README.md`.
 
 `eval/cases/<case>/case.json`: the request as the pipeline's JSON types (context, and document
 refs that name each file by sha256), and `expected.json`: a list of expected tasks
-`{titleAliases[], rules[], pageRefs[], type, optional?, mustNotAppear?}`, plus `reviewed` and
-an optional `expectedStatus`. `pageRefs` are PDF page numbers. Documents whose licence forbids
+`{titleAliases[], rules[], citations[{document, pages[]}], type, optional?, mustNotAppear?}`,
+plus `reviewed` and an optional `expectedStatus`. Citation pages are PDF page numbers. Documents whose licence forbids
 committing them live in a private GCS bucket and are fetched by `eval/fetch.sh` into
 `eval/docs/<sha256>.<ext>`; `eval/add-doc.sh` registers a local file. The repo holds only their
 sha256. Cases are PRD §9.3's table; the home case can say only the year built, because the home

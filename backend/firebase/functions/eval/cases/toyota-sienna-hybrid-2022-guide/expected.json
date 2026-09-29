@@ -1,4 +1,590 @@
 {
   "reviewed": false,
-  "tasks": []
+  "expectedStatus": "succeeded",
+  "tasks": [
+    {
+      "titleAliases": [
+        "replace engine oil and oil filter",
+        "engine oil and filter change",
+        "oil change"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 5000
+        },
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            40,
+            58
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "The guide allows both (p.40, p.58): 10,000 mi / 12 mo with the certified 0W-16, 5,000 mi / 6 mo otherwise or under special operating conditions. Owners don't reliably use 0W-16, so 5,000 / 6 is primary; either counts.",
+      "alternativeRules": [
+        [
+          {
+            "kind": "meter",
+            "meterKey": "odometer",
+            "interval": 10000
+          },
+          {
+            "kind": "time",
+            "every": 12,
+            "unit": "months"
+          }
+        ]
+      ]
+    },
+    {
+      "titleAliases": [
+        "rotate tires",
+        "tire rotation"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 5000
+        },
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            40,
+            59
+          ]
+        }
+      ],
+      "type": "routine"
+    },
+    {
+      "titleAliases": [
+        "5,000-mile scheduled maintenance",
+        "5,000 mi / 6 month service",
+        "5,000-mile inspection"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 5000
+        },
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            38,
+            40
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "The base checklist at every checkpoint: check driver floor mat, inspect and adjust all fluid levels, inspect HV battery cooling intake filter, inspect wiper blades, visually inspect brake linings/pads. Tire rotation and oil are their own tasks. p.38 states the 5,000 mi / 6 month cadence."
+    },
+    {
+      "titleAliases": [
+        "15,000-mile inspection",
+        "15,000 mi / 18 month inspection",
+        "multipoint inspection"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 15000
+        },
+        {
+          "kind": "time",
+          "every": 18,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            41,
+            45,
+            49,
+            53
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "'Inspect the following' list at 15k/45k/75k/105k and repeated inside 30k/60k/90k/120k: ball joints and dust covers, brake lines and hoses, cabin air filter, drive shaft boots, engine/inverter coolant, exhaust pipes and mountings, radiator/condenser, steering gear, steering linkage and boots. Treated as one inspection event."
+    },
+    {
+      "titleAliases": [
+        "30,000-mile inspection",
+        "30,000 mi / 36 month inspection",
+        "extended multipoint inspection"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 30000
+        },
+        {
+          "kind": "time",
+          "every": 36,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            43,
+            47,
+            51,
+            55
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "30k checkpoints add to the 15k list: automatic transmission leakage, fuel lines/tank band/vapor hoses, fuel tank cap gasket, rear differential oil (AWD), brake thickness and disc runout. Optional because a model may reasonably fold it into the 15k inspection."
+    },
+    {
+      "titleAliases": [
+        "replace engine air filter",
+        "engine air filter replacement",
+        "engine air filter"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 30000
+        },
+        {
+          "kind": "time",
+          "every": 36,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            43,
+            47,
+            57
+          ]
+        }
+      ],
+      "type": "routine"
+    },
+    {
+      "titleAliases": [
+        "replace cabin air filter",
+        "cabin air filter replacement",
+        "cabin air filter"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 30000
+        },
+        {
+          "kind": "time",
+          "every": 36,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            43,
+            47,
+            56
+          ]
+        }
+      ],
+      "type": "routine"
+    },
+    {
+      "titleAliases": [
+        "clean HV battery cooling intake filter",
+        "hybrid battery cooling filter cleaning",
+        "HV battery intake filter"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 20000
+        },
+        {
+          "kind": "time",
+          "every": 24,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            41,
+            42,
+            58
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "Footnote 4: clean every 20,000 miles (checkpoint 20,000 mi or 24 months); the 5,000-mile visual check is in the base checklist."
+    },
+    {
+      "titleAliases": [
+        "replace engine coolant",
+        "engine coolant replacement",
+        "coolant flush"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 50000
+        },
+        {
+          "kind": "time",
+          "every": 60,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            52,
+            53,
+            57
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "Footnote 5 (p.53): initial engine coolant at 100,000 mi/120 mo, then every 50,000 mi/60 mo. This is the recurring task; the first replacement is a separate optional one-time entry."
+    },
+    {
+      "titleAliases": [
+        "initial engine coolant replacement",
+        "first engine coolant replacement"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 100000
+        },
+        {
+          "kind": "time",
+          "every": 120,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            52,
+            53
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true
+    },
+    {
+      "titleAliases": [
+        "replace inverter coolant",
+        "inverter coolant replacement"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 50000
+        },
+        {
+          "kind": "time",
+          "every": 60,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            52,
+            53
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Footnote 5: initial inverter coolant at 150,000 mi/180 mo, then every 50,000 mi/60 mo. The log line reads 'Replace engine/inverter coolant', so a model may merge this with engine coolant; optional."
+    },
+    {
+      "titleAliases": [
+        "initial inverter coolant replacement",
+        "first inverter coolant replacement"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 150000
+        },
+        {
+          "kind": "time",
+          "every": 180,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            53
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true
+    },
+    {
+      "titleAliases": [
+        "replace spark plugs",
+        "spark plug replacement",
+        "spark plugs"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 120000
+        },
+        {
+          "kind": "time",
+          "every": 144,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            55,
+            59
+          ]
+        }
+      ],
+      "type": "routine",
+      "_note": "Only listed at the 120,000 mi / 144 month checkpoint, which is the end of the schedule; the recurring interval is inferred as 120,000 mi / 144 mo."
+    },
+    {
+      "titleAliases": [
+        "replace auxiliary battery",
+        "auxiliary battery replacement"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 10000
+        },
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            40,
+            41
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Every 10k checkpoint, but footnote says for vehicles with Autonomous Driving Kit only."
+    },
+    {
+      "titleAliases": [
+        "add Toyota EFI tank additive",
+        "fuel tank additive"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 5000
+        },
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            40
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Hawaii, Puerto Rico and Saipan only."
+    },
+    {
+      "titleAliases": [
+        "tighten chassis and body nuts and bolts",
+        "retighten chassis and body bolts"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 5000
+        },
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            40,
+            58
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Special operating conditions only (dirt/dusty roads, towing/heavy loads)."
+    },
+    {
+      "titleAliases": [
+        "dusty-road inspection",
+        "inspect ball joints, drive shaft boots, steering linkage and engine air filter (dusty roads)"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 5000
+        },
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            40
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Special operating condition (dirt or dusty roads) inspections at each 5k checkpoint."
+    },
+    {
+      "titleAliases": [
+        "replace automatic transmission fluid",
+        "transmission fluid change"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 60000
+        },
+        {
+          "kind": "time",
+          "every": 72,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            47,
+            55
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "Special operating condition only (towing, car-top carrier, heavy loading)."
+    },
+    {
+      "titleAliases": [
+        "replace rear differential oil",
+        "rear differential oil change"
+      ],
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 60000
+        },
+        {
+          "kind": "time",
+          "every": 72,
+          "unit": "months"
+        }
+      ],
+      "citations": [
+        {
+          "document": "toyota-2022-sienna-hybrid-guide",
+          "pages": [
+            47,
+            55
+          ]
+        }
+      ],
+      "type": "routine",
+      "optional": true,
+      "_note": "AWD and towing/heavy-loading special operating condition only."
+    }
+  ]
 }

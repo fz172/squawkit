@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { EvalCase, Expected } from "../../eval/src/caseFormat.js";
+import { checkExpected, type EvalCase, type Expected } from "../../eval/src/caseFormat.js";
 import { BAR, renderReport, summarize } from "../../eval/src/report.js";
 import { rulesMatch, scoreCase, titleSimilarity, type ScoreInput } from "../../eval/src/score.js";
 import type { TaskSuggestion } from "../../src/ai/tasks/model.js";
@@ -119,9 +119,14 @@ describe("matching", () => {
 describe("scoreCase", () => {
   const expected: Partial<Expected> = {
     tasks: [
-      { titleAliases: ["spark plugs"], rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }], pageRefs: [2] },
-      { titleAliases: ["coolant"], rules: [{ kind: "time", every: 24, unit: "months" }], pageRefs: [2] },
+      { titleAliases: ["spark plugs"], rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }], citations: [{ document: "blob-mm", pages: [2] }] },
+      { titleAliases: ["coolant"], rules: [{ kind: "time", every: 24, unit: "months" }], citations: [{ document: "blob-other", pages: [9] }, { document: "blob-mm", pages: [2] }] },
       { titleAliases: ["gearbox overhaul"], rules: [] },
+      {
+        titleAliases: ["oil change"],
+        rules: [{ kind: "time", every: 6, unit: "months" }],
+        alternativeRules: [[{ kind: "time", every: 12, unit: "months" }]],
+      },
       { titleAliases: ["fuel filter"], rules: [], optional: true },
       { titleAliases: ["crankcase AD"], rules: [], mustNotAppear: true },
     ],
@@ -134,17 +139,20 @@ describe("scoreCase", () => {
         suggestion({ suggestionId: "s2", title: "Check coolant", rules: [{ kind: "time", every: 12, unit: "months" }], sourcePages: [3] }),
         suggestion({ suggestionId: "s3", title: "Inspect exhaust springs", sourcePages: [3] }),
         suggestion({ suggestionId: "s4", title: "Crankcase AD inspection", sourceKind: "common_practice", sourcePages: [] }),
+        suggestion({ suggestionId: "s5", title: "Oil change", rules: [{ kind: "time", every: 1, unit: "years" }], sourcePages: [2] }),
       ],
       expected,
     );
 
-    expect(s.expected).toBe(3);
-    expect(s.matched).toBe(2);
-    expect(s.recall).toBeCloseTo(2 / 3);
+    expect(s.expected).toBe(4);
+    expect(s.matched).toBe(3);
+    expect(s.recall).toBeCloseTo(3 / 4);
     expect(s.missed).toEqual(["gearbox overhaul"]);
-    expect(s.intervalAccuracy).toBe(0.5);
-    // Coolant cites page 3; the expected page is 2.
-    expect(s.citationAccuracy).toBe(0.5);
+    // Spark plugs and the oil change's alternative interval match; coolant does not.
+    expect(s.intervalAccuracy).toBeCloseTo(2 / 3);
+    // Coolant cites page 3, not the expected 2. The oil change has no citations, so the fallback
+    // checks its cited page, which does not mention oil.
+    expect(s.citationAccuracy).toBeCloseTo(1 / 3);
     expect(s.invented).toEqual(["Inspect exhaust springs"]);
     expect(s.forbidden).toEqual(["Crankcase AD inspection"]);
     expect(s.costMicros).toBe(250);
@@ -176,7 +184,7 @@ describe("scoreCase", () => {
 describe("summary and report", () => {
   it("holds document cases to the bar and fails the gates on any violation", () => {
     const good = score([suggestion({})], {
-      tasks: [{ titleAliases: ["spark plugs"], rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }], pageRefs: [2] }],
+      tasks: [{ titleAliases: ["spark plugs"], rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }], citations: [{ document: "blob-mm", pages: [2] }] }],
     });
     const summary = summarize([good], [], new Map([["rotax", 3]]));
     expect(summary.document).toMatchObject({ recall: 1, intervalAccuracy: 1, citationAccuracy: 1, p90LatencyMs: 30_000, meetsBar: true });
@@ -193,5 +201,32 @@ describe("summary and report", () => {
     const report = renderReport({ fast: "f", strong: "s" }, bad, [badScore]);
     expect(report).toContain("## Hard gates: FAIL");
     expect(report).toContain("foreignMeterKeys: Replace spark plugs: cycles");
+  });
+});
+
+describe("checkExpected", () => {
+  it("flags unknown documents and meters, bad rules and pages", () => {
+    const withDoc: EvalCase = {
+      ...CASE,
+      request: {
+        ...CASE.request,
+        documents: [{ blobId: "blob-mm", name: "mm.pdf", mimeType: "application/pdf", sha256: "x", sizeBytes: 1 }],
+      },
+    };
+    const problems = checkExpected(withDoc, {
+      reviewed: false,
+      tasks: [
+        { titleAliases: ["ok"], rules: [{ kind: "meter", meterKey: "engine_hours", interval: 50 }], citations: [{ document: "blob-mm", pages: [3] }] },
+        { titleAliases: ["meter"], rules: [{ kind: "meter", meterKey: "odometer", interval: 50 }] },
+        { titleAliases: ["time"], rules: [], alternativeRules: [[{ kind: "time", every: 6, unit: "weeks" as "days" }]] },
+        { titleAliases: ["doc"], rules: [], citations: [{ document: "blob-nope", pages: [0] }] },
+      ],
+    });
+    expect(problems).toEqual([
+      expect.stringContaining("meter: bad rule"),
+      expect.stringContaining("time: bad rule"),
+      "doc: no document blob-nope in the case",
+      "doc: bad pages [0]",
+    ]);
   });
 });

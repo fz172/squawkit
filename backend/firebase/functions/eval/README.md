@@ -66,7 +66,7 @@ stops with "nothing recorded" and the run has to be recorded again.
     {
       "titleAliases": ["spark plug replacement", "replace spark plugs"],
       "rules": [{ "kind": "meter", "meterKey": "engine_hours", "interval": 200 }],
-      "pageRefs": [65],
+      "citations": [{ "document": "rotax-mml-915i", "pages": [65] }],
       "type": "routine"
     },
     { "titleAliases": ["fuel filter"], "rules": [], "optional": true },
@@ -79,9 +79,12 @@ stops with "nothing recorded" and the run has to be recorded again.
   alias names the task in the report.
 - `rules`: as the Thing should carry them, in its own meter keys and units. Months and years
   compare as months; meter intervals within 2%. `[]` for an on-condition item.
-- `pageRefs`: **PDF page numbers** (the viewer's page count, not the page number printed on
-  it) that state the item. Citation accuracy checks them; without them it falls back to whether
-  the cited page states the item.
+- `alternativeRules`: other rule sets the manual allows when its interval depends on something
+  the Thing does not record (a certified oil, severe service). Matching any counts as correct.
+- `citations`: where the item is stated, as the document's `blobId` (from `case.json`) and its
+  **PDF page numbers** (the viewer's page count, not the number printed on the page). A task
+  several documents state lists each; citing any one counts. Without citations, accuracy falls
+  back to whether the cited page states the item.
 - `optional`: fine if suggested, not counted as missed. `mustNotAppear`: a hard failure if
   suggested.
 - `reviewed`: flip to true once someone who knows the schedule has checked it. Aviation cases

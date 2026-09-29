@@ -98,7 +98,7 @@ async function synthetic(): Promise<{ loaded: LoadedCase; docsDir: string }> {
       },
       expected: {
         reviewed: true,
-        tasks: [{ titleAliases: ["spark plugs"], rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }], pageRefs: [2] }],
+        tasks: [{ titleAliases: ["spark plugs"], rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }], citations: [{ document: "rotax-mm", pages: [2] }] }],
       },
     },
   };
