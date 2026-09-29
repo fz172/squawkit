@@ -466,12 +466,18 @@ Thing context ──────────────────────
   inspection events, the checklist lines (PRD decision 3).
 - Output is Thing-independent, so it is cached (§6.5).
 
-### 6.3 Stage 3: recall (no-document identity, `fast` tier)
+### 6.3 Stage 3: recall (no-document identity, `fast` tier by default)
 
 Given the normalized identity (template, make, model, year, component make/models), the model lists
 a common schedule, each item tagged `MANUFACTURER_SCHEDULE` (with the publication it attributes)
-or `COMMON_PRACTICE`, plus an **identity confidence** (high / medium / low). This stage runs even
-with documents, for components no document covers. Cached by identity.
+or `COMMON_PRACTICE`, plus an **identity confidence** (high / medium / low). The model year and
+component models pin the exact variant, since schedules change between years and generations; an
+unclear generation is low confidence. This stage runs even with documents, for components no
+document covers. Cached by identity.
+
+On a run without documents, recall is the whole answer: the tailor can only fit recalled items,
+never add one. So its tier is a pipeline setting (`recallTier`), and the bake-off runs the
+no-document cases on both tiers and keeps `fast` only if it matches `strong`.
 
 ### 6.4 Stage 4: tailor (per Thing, `strong` tier, never cached)
 

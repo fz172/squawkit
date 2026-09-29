@@ -72,6 +72,11 @@ export type PipelineDeps = {
   onStage?(stage: PipelineStage, arg?: string): void;
   onCall?(record: PipelineCallRecord): void;
   locate?: LocateMethod;
+  /**
+   * The model recall runs on. Recall is the whole answer on a run without documents, so the
+   * bake-off compares both tiers there. Defaults to fast.
+   */
+  recallTier?: AiTier;
 };
 
 export type PipelineOutcome =
@@ -251,11 +256,12 @@ async function recallSchedule(request: SuggestTasksRequest, deps: PipelineDeps) 
   }
 
   deps.onStage?.("recalling_schedule");
-  const output = (await call(deps, "recall", deps.fast, {
+  const tier = deps.recallTier ?? "fast";
+  const output = (await call(deps, "recall", deps[tier], {
     system: RECALL_SYSTEM,
     parts: [{ text: recallText(identity) }],
     schema: RECALL_SCHEMA,
-    tier: "fast",
+    tier,
     maxOutputTokens: MAX_TOKENS.recall,
   })) as RecallOutput;
   return { key, output, cached: false };

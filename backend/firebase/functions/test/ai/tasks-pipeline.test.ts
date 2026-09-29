@@ -220,6 +220,18 @@ describe("task pipeline without documents", () => {
     expect(h.cache.keys()).toEqual([expect.stringMatching(/^id:[0-9a-f]{64}:tasks-1$/)]);
   });
 
+  it("recalls on the strong model when asked to", async () => {
+    const h = harness({ recall: () => RECALLED, tailor: () => ({ suggestions: [tailored({})], documents: [] }) });
+    h.deps.recallTier = "strong";
+    await runTaskPipeline(request(), h.deps);
+
+    expect(h.fast.asked).toHaveLength(0);
+    expect(h.calls.map((c) => [c.stage, c.provider, c.tier])).toEqual([
+      ["recall", "strong-model", "strong"],
+      ["tailor", "strong-model", "strong"],
+    ]);
+  });
+
   it("keeps identifying specs out of the recall prompt", async () => {
     const h = harness({ recall: () => RECALLED, tailor: () => ({ suggestions: [tailored({})], documents: [] }) });
     await runTaskPipeline(request(), h.deps);
