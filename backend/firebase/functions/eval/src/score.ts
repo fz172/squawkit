@@ -76,12 +76,16 @@ export function scoreCase(input: ScoreInput): CaseScore {
     .map((p) => ({
       expected: p.task.titleAliases[0],
       suggestion: p.suggestion.title,
-      intervalOk: rulesMatch(p.task.rules, p.suggestion.rules),
+      intervalOk: intervalMatches(p.task, p.suggestion.rules),
       citationOk:
         p.suggestion.sourceKind !== "document"
           ? null
-          : p.task.pageRefs && p.task.pageRefs.length > 0
-            ? p.suggestion.sourcePages.some((n) => p.task.pageRefs!.includes(n))
+          : p.task.citations && p.task.citations.length > 0
+            ? p.task.citations.some(
+                (c) =>
+                  c.document === p.suggestion.sourceDocument &&
+                  p.suggestion.sourcePages.some((n) => c.pages.includes(n)),
+              )
             : citedPageStates(p.suggestion, pagesText),
     }));
   const cited = matches.filter((m) => m.citationOk !== null);
@@ -149,7 +153,7 @@ function assign(tasks: ExpectedTask[], suggestions: TaskSuggestion[]) {
     suggestions.flatMap((suggestion) => {
       const title = Math.max(...task.titleAliases.map((a) => titleSimilarity(a, suggestion.title)));
       if (title < TITLE_MATCH) return [];
-      return [{ task, suggestion, score: title + (rulesMatch(task.rules, suggestion.rules) ? 1 : 0) }];
+      return [{ task, suggestion, score: title + (intervalMatches(task, suggestion.rules) ? 1 : 0) }];
     }),
   );
   candidates.sort((a, b) => b.score - a.score);
@@ -174,6 +178,10 @@ export function titleSimilarity(alias: string, title: string): number {
   const words = a.split(" ");
   const titleWords = new Set(t.split(" "));
   return words.filter((w) => titleWords.has(w)).length / words.length;
+}
+
+function intervalMatches(task: ExpectedTask, actual: SuggestedRule[]): boolean {
+  return [task.rules, ...(task.alternativeRules ?? [])].some((rules) => rulesMatch(rules, actual));
 }
 
 /** Same rules, ignoring order; months and years compare as months, meter intervals within 2%. */

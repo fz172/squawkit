@@ -1,4 +1,130 @@
 {
   "reviewed": false,
-  "tasks": []
+  "expectedStatus": "succeeded",
+  "tasks": [
+    {
+      "titleAliases": ["annual / 10,000 mile service", "scheduled service", "10,000 mile service", "annual service"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 10000},
+        {"kind": "time", "every": 12, "unit": "months"}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [97, 98, 99, 100]}],
+      "type": "routine",
+      "_note": "Pages 97-98 describe annual vs mileage-based maintenance (10,000 mi/yr threshold); the table has an Annual column plus 10,000/20,000/30,000/40,000 mi columns, so the base event is 10,000 mi or 12 months. Engine oil + filter renewal is on this event's checklist."
+    },
+    {
+      "titleAliases": ["engine oil and filter change", "engine oil change", "renew engine oil and oil filter"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 10000},
+        {"kind": "time", "every": 12, "unit": "months"}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine",
+      "optional": true,
+      "_note": "Same interval as the annual/10,000 mi service (dots in Annual and every mileage column), so per convention 1 it is part of that event; optional so a model that splits it out is not penalised."
+    },
+    {
+      "titleAliases": ["first service", "600 mile first service", "initial service"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 600},
+        {"kind": "time", "every": 6, "unit": "months"}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99, 100]}],
+      "type": "routine",
+      "optional": true,
+      "_note": "One-time: 600 mi (1,000 km) or 6 months. The Thing is already at 1,200 mi."
+    },
+    {
+      "titleAliases": ["air cleaner replacement", "renew air cleaner", "air filter replacement"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 10000}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine",
+      "_note": "Dots in the 10,000/30,000, 20,000 and 40,000 columns but NOT the Annual or first-service column, so mileage-only (no time rule). Could be argued as part of the 10,000 mi service event."
+    },
+    {
+      "titleAliases": ["fuel filter replacement", "renew fuel filter", "replace fuel filter"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 20000}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine"
+    },
+    {
+      "titleAliases": ["spark plugs", "replace spark plugs", "spark plug replacement"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 20000}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine"
+    },
+    {
+      "titleAliases": ["valve clearance check", "check valve clearances", "valve clearance inspection"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 20000}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine"
+    },
+    {
+      "titleAliases": ["camshaft timing check", "check camshaft timing", "cam timing"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 20000}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine",
+      "optional": true,
+      "_note": "Same 20,000 mi column as valve clearances; commonly done together, so a model may fold it into the valve clearance task."
+    },
+    {
+      "titleAliases": ["headstock bearing lubrication", "lubricate headstock bearings", "steering head bearing lubrication"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 20000}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine"
+    },
+    {
+      "titleAliases": ["fork oil change", "renew fork oil", "front fork oil replacement"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 40000}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine",
+      "_note": "Single dot in the 40,000 mi column only; treated as recurring every 40,000 mi."
+    },
+    {
+      "titleAliases": ["coolant replacement", "renew coolant", "coolant change"],
+      "rules": [
+        {"kind": "time", "every": 3, "unit": "years"}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [99]}],
+      "type": "routine"
+    },
+    {
+      "titleAliases": ["brake fluid replacement", "renew brake fluid", "brake fluid change"],
+      "rules": [
+        {"kind": "time", "every": 2, "unit": "years"}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [100]}],
+      "type": "routine"
+    },
+    {
+      "titleAliases": ["drive chain lubrication", "lubricate drive chain", "chain lube"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 200}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [100]}],
+      "type": "routine"
+    },
+    {
+      "titleAliases": ["drive chain wear check", "check drive chain wear", "chain and sprocket wear inspection"],
+      "rules": [
+        {"kind": "meter", "meterKey": "odometer", "interval": 500}
+      ],
+      "citations": [{"document": "triumph-modern-classics-handbook", "pages": [100]}],
+      "type": "routine"
+    }
+  ]
 }

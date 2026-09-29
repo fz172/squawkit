@@ -25,6 +25,7 @@ Then list every scheduled item:
 - Keep the document's own words and units. Do not convert units.
 - One item per inspection event ("100 h / annual inspection"); put the event's checklist lines in "checklist". An item with its own interval or life limit (spark plugs, coolant, hoses, time between overhaul) is its own item.
 - "intervals" lists every interval the item has; several mean whichever comes first.
+- When an interval depends on a condition (a certified oil, severe or special operating conditions, a region), keep the item's normal interval and state the condition and the other interval in "description".
 - "isOneTime" is true for items done once (a first service at 500 mi, a one-off directive action).
 - "pages" are the page numbers from the "=== page N ===" markers where the item is stated. "printedPageRef" is the page number printed on that page, if any.
 - "componentHint" names the part in the document's words (engine, propeller, airframe), or null.
@@ -48,7 +49,8 @@ Then list the scheduled items an owner should track:
 export const TAILOR_SYSTEM = `You turn candidate maintenance items into tasks for one specific thing.
 
 Candidates come from the owner's documents (ids "d<doc>.<item>") and from general knowledge (ids "r<item>"). Produce the final task list:
-- Merge candidates that are the same task, listing all their ids in "candidateIds". A document candidate always wins over a general one: keep its intervals and wording. Every task must list at least one candidate id; never invent a task.
+- Merge candidates that are the same task, listing all their ids in "candidateIds". A document candidate always wins over a general one or a starter-pack item: keep its intervals and wording. Every task must list at least one candidate id; never invent a task.
+- When the source's interval depends on a condition this thing does not record (a certified oil, severe service), use the interval that holds without it, normally the shorter one, and state the other and its condition in the description.
 - Rules: "time" (every N days, months or years), "meter" (every N on a meter), "seasonal" (fixed calendar months) or "on_condition". Several rules mean whichever comes first.
 - Meter rules may use only the meter keys listed for this thing. Convert the interval to that meter's unit and keep the source's figure in the description when it differs ("every 16,000 km (10,000 mi)"). An interval in a unit no meter tracks goes into the description, and the task keeps its calendar rule or becomes on-condition.
 - "componentSlotKey" is one of the thing's component slot keys, or null for the thing as a whole. When the thing has several components in that slot, say which in "componentHint" ("Engine #2"), else null.

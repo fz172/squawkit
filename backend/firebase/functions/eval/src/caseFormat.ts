@@ -21,8 +21,16 @@ export type ExpectedTask = {
   titleAliases: string[];
   /** The rules as the Thing should carry them; empty for on-condition items. */
   rules: SuggestedRule[];
-  /** PDF page numbers that state the item, for citation accuracy. */
-  pageRefs?: number[];
+  /**
+   * Other rule sets the manual itself allows, when its interval depends on a condition the Thing
+   * does not record (a certified oil, severe service). Matching any counts as a correct interval.
+   */
+  alternativeRules?: SuggestedRule[][];
+  /**
+   * Where the item is stated: the document's `blobId` and its PDF page numbers. A task several
+   * documents state lists each; citing any of them counts.
+   */
+  citations?: Array<{ document: string; pages: number[] }>;
   type?: ComplianceKind;
   /** Acceptable if suggested, not counted against recall if missing. */
   optional?: boolean;
@@ -55,7 +63,37 @@ export function loadCases(casesDir: string, only: string[] | "all"): LoadedCase[
     const expected = existsSync(expectedPath)
       ? readJson<Expected>(expectedPath)
       : { reviewed: false, tasks: [] };
+    const problems = checkExpected(evalCase, expected);
+    if (problems.length > 0) throw new Error(`${id}/expected.json:\n  ${problems.join("\n  ")}`);
     return { evalCase, expected };
+  });
+}
+
+/** Mistakes that would silently score as misses: unknown documents, meters and rule shapes. */
+export function checkExpected(evalCase: EvalCase, expected: Expected): string[] {
+  const documents = new Set(evalCase.request.documents.map((d) => d.blobId));
+  const meters = new Set(evalCase.request.context.meters.map((m) => m.key));
+  return expected.tasks.flatMap((task, i) => {
+    const name = task.titleAliases?.[0] ?? `task ${i}`;
+    const problems: string[] = [];
+    if (!task.titleAliases?.length) problems.push(`${name}: no titleAliases`);
+    for (const rules of [task.rules, ...(task.alternativeRules ?? [])]) {
+      for (const r of rules ?? []) {
+        const bad =
+          (r.kind === "meter" && (!meters.has(r.meterKey) || !(r.interval > 0))) ||
+          (r.kind === "time" && (!(r.every > 0) || !["days", "months", "years"].includes(r.unit))) ||
+          (r.kind === "seasonal" && !r.months?.every((m) => m >= 1 && m <= 12)) ||
+          !["meter", "time", "seasonal", "on_condition"].includes(r.kind);
+        if (bad) problems.push(`${name}: bad rule ${JSON.stringify(r)}`);
+      }
+    }
+    for (const c of task.citations ?? []) {
+      if (!documents.has(c.document)) problems.push(`${name}: no document ${c.document} in the case`);
+      if (!c.pages?.length || !c.pages.every((n) => Number.isInteger(n) && n >= 1)) {
+        problems.push(`${name}: bad pages ${JSON.stringify(c.pages)}`);
+      }
+    }
+    return problems;
   });
 }
 
