@@ -398,12 +398,15 @@ interface AiProvider {
 Adapters per candidate live in `src/ai/providers/`. The chosen pair (fast, strong) is config in
 `ai_config/global`, so switching provider is a config write once both adapters are deployed. JSON
 that fails schema validation is retried once with the validation error appended; a second failure
-fails the stage (PRD §9.4 "valid output").
+fails the stage (PRD §9.4 "valid output"). Schemas stay inside the subset all three vendors accept
+(OpenAI strict mode is the narrowest): every object closed, every property required, optional
+values as `null` unions. `assertPortableSchema` checks it.
 
 ### 5.5 Document reading
 
-`readDocument(blobPath, mime) → { pages: Array<{ n: number; text: string; image?: Uint8Array }> }`
-runs before any provider sees the document. Page text is **always** produced, because R18's
+`readDocument({ bytes, mime }, { ocr }) → { pages: Array<{ n: number; text: string; image?: Uint8Array }> }`
+runs before any provider sees the document. It takes bytes, not a blob path: the worker loads them
+from Storage and the eval harness from disk. Page text is **always** produced, because R18's
 verbatim check and the citation check need text regardless of whether the provider reads PDFs
 natively: the PDF text layer via `pdfjs-dist`; for image-only pages and photos, the pre-processor
 the bake-off picks (§12). Limits: 5 documents per run, each within the attachment pipeline's
