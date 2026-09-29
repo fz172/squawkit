@@ -456,8 +456,12 @@ Thing context ──────────────────────
 - **Identify:** manufacturer, model(s), document title, revision, `doc_type` (MAINTENANCE_MANUAL,
   OWNERS_MANUAL, SERVICE_BULLETIN, SERVICE_INSTRUCTION, AIRWORTHINESS_DIRECTIVE, APPLIANCE_MANUAL,
   OTHER), and for SB/AD the reference number as printed.
-- **Locate:** the schedule pages (outline, printed TOC, keyword scoring), then extract only from
-  those pages plus any page the schedule references. The bake-off decides the locating method.
+- **Locate:** the schedule pages, then extract only from those pages, their neighbours and the
+  first two (title, revision). Three methods, chosen by the bake-off: keyword scoring (the
+  default: pages over an absolute score floor, because a schedule's table pages score far below
+  its introduction), a `fast` model reading a one-line digest per page, or the whole document.
+  A document under 30 pages is read whole. Pages are marked `=== page N ===`, and items cite
+  those numbers, so the citation check runs on the same text.
 - **Extract:** schedule items in the **source's** units and words, each with page refs and, for
   inspection events, the checklist lines (PRD decision 3).
 - Output is Thing-independent, so it is cached (§6.5).
@@ -483,12 +487,20 @@ Input: the candidate items from 2 and 3, the `SuggestionContext`. The model:
 - finds `last_done` evidence in the log summaries (R29), citing the log id;
 - sets `matches_thing` per document (R8a).
 
+Each suggestion lists the candidate ids it merges (`d<doc>.<item>`, `r<item>`). Source kind,
+citation, pages and AD/SB typing are copied from the named candidate, never written by the tailor,
+so the validators check what the source said. A suggestion naming no known candidate is dropped
+as invented. When stage 3's identity confidence is low, its items are not offered to the tailor
+even on a document run.
+
 ### 6.5 Cache
 
 - Keys: `doc:{sha256}:{generation_version}` for stage 2 (the revision is inside the content, so
   the hash already distinguishes revisions) and `id:{sha256(normalized identity)}:{generation_version}`
   for stage 3.
-- Written only after the whole job succeeds, so a failed tailor never caches a bad extraction.
+- Written only when the job is SUCCEEDED (not EMPTY or FAILED), so a failed tailor never caches a
+  bad extraction. Page text is never cached, so a stage-2 hit still runs stage 1 (cheap for a text
+  layer) for the validators.
 - Holds derived items and document metadata only (PRD R43). The identity cache is written from
   model knowledge only, never from a user document, so one user's document cannot change another
   user's no-document suggestions. A stage-2 entry is served only for byte-identical documents.
@@ -525,6 +537,11 @@ Each rule is a pure function with its own tests (§14). In order:
 7. **Confidence (R21a):** the job is EMPTY when there are no documents and stage 3's identity
    confidence is low, or when nothing survives 1–6. Individual low-confidence items are dropped,
    never shown as such.
+
+Two more checks run with them: rule 1 files a suggestion whose slot the Thing does not fill at
+Thing level (R22), and `last_done` must name a log in `context.logs`, whose date and reading are
+copied from that log (R29). A document run in which no document yields any item fails
+`no_schedule_found` rather than falling back to recall alone.
 
 ## 7. Client data layer
 
