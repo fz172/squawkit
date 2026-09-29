@@ -27,16 +27,24 @@ export type ExpectedTask = {
    */
   alternativeRules?: SuggestedRule[][];
   /**
-   * Where the item is stated: the document's `blobId` and its PDF page numbers. A task several
-   * documents state lists each; citing any of them counts.
+   * For a one-time item, the reading it first falls due at, counted from new. Checked with the
+   * interval (within 2%). A date is not, since it depends on the day of the run.
    */
-  citations?: Array<{ document: string; pages: number[] }>;
+  firstDueMeter?: { meterKey: string; value: number };
+  /**
+   * Where the item is stated: a document's `blobId` and its PDF page numbers, or a regulation the
+   * interval comes from instead of the documents ("14 CFR § 91.413"). A task several sources
+   * state lists each; citing any document one counts. Regulation citations are for the reader.
+   */
+  citations?: ExpectedCitation[];
   type?: ComplianceKind;
   /** Acceptable if suggested, not counted against recall if missing. */
   optional?: boolean;
   /** A hard failure if suggested, e.g. an AD the run was never given. */
   mustNotAppear?: boolean;
 };
+
+export type ExpectedCitation = { document: string; pages: number[] } | { regulation: string };
 
 export type Expected = {
   /** False until someone who knows the schedule has checked the list. */
@@ -87,7 +95,14 @@ export function checkExpected(evalCase: EvalCase, expected: Expected): string[] 
         if (bad) problems.push(`${name}: bad rule ${JSON.stringify(r)}`);
       }
     }
+    if (task.firstDueMeter && (!meters.has(task.firstDueMeter.meterKey) || !(task.firstDueMeter.value > 0))) {
+      problems.push(`${name}: bad firstDueMeter ${JSON.stringify(task.firstDueMeter)}`);
+    }
     for (const c of task.citations ?? []) {
+      if ("regulation" in c) {
+        if (!c.regulation?.trim()) problems.push(`${name}: empty regulation citation`);
+        continue;
+      }
       if (!documents.has(c.document)) problems.push(`${name}: no document ${c.document} in the case`);
       if (!c.pages?.length || !c.pages.every((n) => Number.isInteger(n) && n >= 1)) {
         problems.push(`${name}: bad pages ${JSON.stringify(c.pages)}`);

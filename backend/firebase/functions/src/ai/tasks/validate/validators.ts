@@ -1,4 +1,4 @@
-import type { SuggestedRule } from "../model.js";
+import type { MeterReadingValue, SuggestedRule } from "../model.js";
 import type { FlatRule } from "../stageTypes.js";
 import type { Draft, ValidationInput, Validator } from "./types.js";
 
@@ -98,12 +98,40 @@ export const lastDoneRule: Validator = (drafts, { context }) =>
     return { ...d, lastDone: { logId: log.id, date: log.date, reading } };
   });
 
+/**
+ * First due (R22): a one-time item's anchors made absolute from the Thing's current readings and
+ * today, keeping the earliest date and the earliest reading. Recurring items carry none.
+ */
+export const firstDueRule: Validator = (drafts, { context, today }) =>
+  drafts.map((d) => {
+    if (!d.isOneTime) return { ...d, firstDue: null };
+    let date: string | null = null;
+    let meter: MeterReadingValue | null = null;
+    for (const a of d.rawFirstDue) {
+      if (!(a.value > 0)) continue;
+      if (a.anchor === "time_from_now") {
+        if (!a.unit) continue;
+        const due = addToDate(today, Math.round(a.value), a.unit);
+        if (date === null || due < date) date = due;
+        continue;
+      }
+      const m = context.meters.find((x) => x.key === a.meterKey);
+      if (!m) continue;
+      const reading = a.anchor === "meter_reading" ? a.value : (m.current ?? 0) + a.value;
+      if (meter === null || reading < meter.value) meter = { meterKey: m.key, value: reading };
+    }
+    return { ...d, firstDue: date || meter ? { date, meter } : null };
+  });
+
 /** 6. Pre-selection (R27). */
 export const preselectRule: Validator = (drafts, { context, documents }) =>
   drafts.map((d) => {
     const doc = d.evidence.documentIndex === null ? undefined : documents[d.evidence.documentIndex];
     let preselect: boolean;
     if (d.matchesExistingTaskId) preselect = false;
+    // A one-time item the Thing has already passed (a first service at 600 mi on a bike at
+    // 1,200) is shown, since it may not have been done, but not ticked.
+    else if (alreadyPassed(d, context)) preselect = false;
     else if (doc && !doc.matchesThing) preselect = false;
     else if (d.sourceKind === "document" || d.sourceKind === "logs") preselect = true;
     else preselect = context.templateId !== "airplane";
@@ -120,6 +148,7 @@ export const VALIDATORS: Validator[] = [
   citationRule,
   dedupIdsRule,
   lastDoneRule,
+  firstDueRule,
   preselectRule,
   confidenceRule,
 ];
@@ -175,6 +204,24 @@ function typeRule(r: FlatRule): SuggestedRule | null {
     case "on_condition":
       return { kind: "on_condition", description: r.description ?? "" };
   }
+}
+
+function alreadyPassed(d: Draft, context: ValidationInput["context"]): boolean {
+  const due = d.firstDue?.meter;
+  if (!due) return false;
+  const current = context.meters.find((m) => m.key === due.meterKey)?.current;
+  return current !== null && current !== undefined && current > due.value;
+}
+
+/** `YYYY-MM-DD` plus a whole number of days, months or years; month ends clamp (Jan 31 + 1 month = Feb 28). */
+function addToDate(iso: string, n: number, unit: "days" | "months" | "years"): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (unit === "days") return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+  const months = unit === "years" ? n * 12 : n;
+  const target = new Date(Date.UTC(y, m - 1 + months, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(d, lastDay));
+  return target.toISOString().slice(0, 10);
 }
 
 /** "10,000" and "10 000" read as 10000. */

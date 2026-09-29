@@ -81,6 +81,20 @@ export type FlatRule = {
   description: string | null;
 };
 
+/**
+ * Where a one-time item falls due, as the source anchors it. The validator turns each into an
+ * absolute reading or date from the context, so the model never does the arithmetic.
+ * - `meter_reading`: at this reading ("first service at 600 mi" is odometer 600).
+ * - `meter_from_now`: this far past the current reading ("within 25 hours").
+ * - `time_from_now`: this long from today ("within 3 months").
+ */
+export type FlatFirstDue = {
+  anchor: "meter_reading" | "meter_from_now" | "time_from_now";
+  meterKey: string | null;
+  value: number;
+  unit: "days" | "months" | "years" | null;
+};
+
 export type TailoredSuggestion = {
   /** The candidates this merges: `d<doc>.<item>` for document items, `r<item>` for recalled. */
   candidateIds: string[];
@@ -91,6 +105,8 @@ export type TailoredSuggestion = {
   componentHint: string | null;
   rules: FlatRule[];
   isOneTime: boolean;
+  /** For a one-time item: where it first falls due. Empty otherwise. */
+  firstDue: FlatFirstDue[];
   lastDoneLogId: string | null;
   matchesExistingTaskId: string | null;
   intervalDifferenceNote: string | null;

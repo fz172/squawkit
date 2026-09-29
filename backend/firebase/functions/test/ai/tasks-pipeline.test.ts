@@ -79,6 +79,7 @@ function tailored(over: Partial<TailoredSuggestion>): TailoredSuggestion {
     componentHint: null,
     rules: [RULE],
     isOneTime: false,
+    firstDue: [],
     lastDoneLogId: null,
     matchesExistingTaskId: null,
     intervalDifferenceNote: null,

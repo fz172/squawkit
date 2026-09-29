@@ -297,6 +297,7 @@ message TaskSuggestion {
   string title = 2; string rationale = 3; string description = 4;
   string component_slot_key = 5; string component_hint = 6; // "Engine #2" in words, see §7.4
   repeated InspectionRule rules = 7; bool is_one_time = 8;
+  FirstDue first_due = 21;                    // one-time items: absolute date and/or reading
   ComplianceType type = 9; string reference_number = 10; string compliance_authority = 11;
   TaskSourceKind source_kind = 12; string citation = 13; string page_ref = 14;
   AttachmentId source_document = 15;
@@ -539,14 +540,20 @@ Each rule is a pure function with its own tests (§14). In order:
 5. **Dedup ids:** `matches_existing_task_id` must be an id in `context.existing_tasks`, else
    cleared; `merges_static_index` must be in range, else −1.
 6. **Pre-selection (R27):** DOCUMENT and LOGS → true; others → true except on template `airplane`;
-   `matches_thing = false` documents → false; Already tracked → false.
+   `matches_thing = false` documents → false; Already tracked → false; a one-time item whose
+   first-due reading the Thing has already passed → false (shown, since it may not have been
+   done, but not ticked).
 7. **Confidence (R21a):** the job is EMPTY when there are no documents and stage 3's identity
    confidence is low, or when nothing survives 1–6. Individual low-confidence items are dropped,
    never shown as such.
 
-Two more checks run with them: rule 1 files a suggestion whose slot the Thing does not fill at
-Thing level (R22), and `last_done` must name a log in `context.logs`, whose date and reading are
-copied from that log (R29). A document run in which no document yields any item fails
+Three more checks run with them: rule 1 files a suggestion whose slot the Thing does not fill at
+Thing level (R22); `last_done` must name a log in `context.logs`, whose date and reading are
+copied from that log (R29); and a one-time item's first due (R22) is made absolute. The tailor
+anchors it as a reading counted from new ("first service at 600 mi"), a meter distance from now
+("within 25 h") or a time from today ("within 3 months"); the validator resolves each against
+`context.meters` and today, keeping the earliest date and the earliest reading, and drops anchors on
+meters the Thing lacks. A due point counted from an unrecorded date (delivery) is left out. A document run in which no document yields any item fails
 `no_schedule_found` rather than falling back to recall alone.
 
 ## 7. Client data layer
@@ -599,6 +606,7 @@ the job and releases unaccepted documents (§8.2).
 - `component`: `component_slot_key` → `ComponentType` via the function extracted from
   `StarterTasks.kt`. **Gap:** a task cannot name engine #2 (§2); the hint in the description is
   the v1 answer, and a component-instance field on tasks is out of scope.
+- `first_due` → `force_due_date` and/or `force_due_meter` on a one-time task (PRD §7).
 - `TimeRule.creation_date` = accept time; `due_on_anniversary` from template capabilities, as
   `toMaintenanceTask` does.
 - `last_done` → `force_complied_status { complied_date, complied_meter }`. The due engine applies

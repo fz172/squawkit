@@ -8,6 +8,7 @@ import {
   confidenceRule,
   containsVerbatim,
   dedupIdsRule,
+  firstDueRule,
   lastDoneRule,
   meterRule,
   preselectRule,
@@ -176,6 +177,36 @@ describe("last-done rule", () => {
   });
 });
 
+describe("first-due rule", () => {
+  const due = (anchor: "meter_reading" | "meter_from_now" | "time_from_now", value: number, meterKey: string | null = null, unit: "days" | "months" | "years" | null = null) => ({
+    anchor,
+    meterKey,
+    value,
+    unit,
+  });
+
+  it.each([
+    ["an absolute reading", [due("meter_reading", 25, "engine_hours")], { date: null, meter: { meterKey: "engine_hours", value: 25 } }],
+    ["a reading from now adds the current meter", [due("meter_from_now", 50, "engine_hours")], { date: null, meter: { meterKey: "engine_hours", value: 460 } }],
+    ["months from today", [due("time_from_now", 3, null, "months")], { date: "2026-12-29", meter: null }],
+    ["a month end clamps", [due("time_from_now", 5, null, "months")], { date: "2027-02-28", meter: null }],
+    ["whichever first", [due("meter_from_now", 50, "engine_hours"), due("meter_reading", 420, "engine_hours"), due("time_from_now", 30, null, "days"), due("time_from_now", 1, null, "years")], { date: "2026-10-29", meter: { meterKey: "engine_hours", value: 420 } }],
+    ["an unknown meter is dropped", [due("meter_reading", 600, "odometer")], null],
+    ["a time anchor with no unit is dropped", [due("time_from_now", 3)], null],
+  ] as const)("%s", (_name, anchors, expected) => {
+    const out = firstDueRule([draft({ isOneTime: true, rawFirstDue: [...anchors] })], {
+      ...input(),
+      context: airplaneContext({ meters: airplaneContext().meters.map((m) => (m.key === "engine_hours" ? { ...m, current: 410 } : m)) }),
+    })[0];
+    expect(out.firstDue).toEqual(expected);
+  });
+
+  it("gives recurring items no first due", () => {
+    const out = firstDueRule([draft({ rawFirstDue: [due("meter_reading", 25, "engine_hours")] })], input())[0];
+    expect(out.firstDue).toBeNull();
+  });
+});
+
 describe("6. pre-selection rule", () => {
   const home = input({ context: airplaneContext({ templateId: "home" }) });
   const recall = { sourceKind: "common_practice" as const, evidence: { documentIndex: null, pages: [], sourceFigures: [] } };
@@ -186,6 +217,8 @@ describe("6. pre-selection rule", () => {
     ["common practice on a home", draft(recall), home, true],
     ["a document for a different Thing", draft(), input({ documents: [doc({ matchesThing: false })] }), false],
     ["already tracked", draft({ matchesExistingTaskId: "task-annual" }), input(), false],
+    ["a one-time item the Thing has passed", draft({ isOneTime: true, firstDue: { date: null, meter: { meterKey: "engine_hours", value: 25 } } }), input(), false],
+    ["a one-time item still ahead", draft({ isOneTime: true, firstDue: { date: null, meter: { meterKey: "engine_hours", value: 600 } } }), input(), true],
   ] as const)("%s → %s", (_name, d, inp, expected) => {
     expect(preselectRule([d], inp)[0].preselect).toBe(expected);
   });

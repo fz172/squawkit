@@ -81,10 +81,14 @@ stops with "nothing recorded" and the run has to be recorded again.
   compare as months; meter intervals within 2%. `[]` for an on-condition item.
 - `alternativeRules`: other rule sets the manual allows when its interval depends on something
   the Thing does not record (a certified oil, severe service). Matching any counts as correct.
+- `firstDueMeter`: for a one-time item, the reading it first falls due at, counted from new
+  (`{ "meterKey": "odometer", "value": 600 }`). Its `rules` stay `[]` unless it also recurs.
 - `citations`: where the item is stated, as the document's `blobId` (from `case.json`) and its
   **PDF page numbers** (the viewer's page count, not the number printed on the page). A task
   several documents state lists each; citing any one counts. Without citations, accuracy falls
-  back to whether the cited page states the item.
+  back to whether the cited page states the item. When the interval comes from a regulation
+  rather than the documents, cite it as `{ "regulation": "14 CFR § 91.413" }`; that is for the
+  reader and is not scored.
 - `optional`: fine if suggested, not counted as missed. `mustNotAppear`: a hard failure if
   suggested.
 - `reviewed`: flip to true once someone who knows the schedule has checked it. Aviation cases

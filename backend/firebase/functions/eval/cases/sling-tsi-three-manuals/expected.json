@@ -1,5 +1,5 @@
 {
-  "reviewed": false,
+  "reviewed": true,
   "expectedStatus": "succeeded",
   "tasks": [
     {
@@ -41,13 +41,7 @@
         "airframe initial 25-hour inspection",
         "first 25 hours airframe service"
       ],
-      "rules": [
-        {
-          "kind": "meter",
-          "meterKey": "airframe_hours",
-          "interval": 25
-        }
-      ],
+      "rules": [],
       "citations": [
         {
           "document": "sling-tsi-amm",
@@ -58,7 +52,11 @@
       ],
       "type": "routine",
       "optional": true,
-      "_note": "One-time (first 25 hours only, §3.4.5). The Thing is at 312 h so it is long past."
+      "_note": "One-time (first 25 hours only, §3.4.5). The Thing is at 312 h so it is long past.",
+      "firstDueMeter": {
+        "meterKey": "airframe_hours",
+        "value": 25
+      }
     },
     {
       "titleAliases": [
@@ -304,22 +302,18 @@
       "rules": [
         {
           "kind": "time",
-          "every": 12,
+          "every": 24,
           "unit": "months"
         }
       ],
       "citations": [
         {
-          "document": "sling-tsi-amm",
-          "pages": [
-            65,
-            69
-          ]
+          "regulation": "14 CFR § 91.411"
         }
       ],
       "type": "routine",
       "optional": true,
-      "_note": "'Pitot static test performed at annual inspection': a line of the airframe annual, not its own interval."
+      "_note": "'Pitot static test performed at annual inspection': a line of the airframe annual, not its own interval. Interval is the FAR's 24 calendar months (reviewer), not the annual's 12."
     },
     {
       "titleAliases": [
@@ -329,21 +323,18 @@
       "rules": [
         {
           "kind": "time",
-          "every": 12,
+          "every": 24,
           "unit": "months"
         }
       ],
       "citations": [
         {
-          "document": "sling-tsi-amm",
-          "pages": [
-            66
-          ]
+          "regulation": "14 CFR § 91.413"
         }
       ],
       "type": "routine",
       "optional": true,
-      "_note": "Checklist line 7.8 of the 100 h / annual inspection; no own interval in the manual."
+      "_note": "Checklist line 7.8 of the 100 h / annual inspection; no own interval in the manual. Interval is the FAR's 24 calendar months (reviewer), not the annual's 12."
     },
     {
       "titleAliases": [
@@ -534,13 +525,7 @@
         "Rotax initial 25-hour inspection",
         "engine 25-hour check"
       ],
-      "rules": [
-        {
-          "kind": "meter",
-          "meterKey": "engine_hours",
-          "interval": 25
-        }
-      ],
+      "rules": [],
       "citations": [
         {
           "document": "rotax-mml-915i",
@@ -552,7 +537,11 @@
       ],
       "type": "routine",
       "optional": true,
-      "_note": "One-time: 'First 25 hours only (there is no requirement for an inspection every 25 hours)'; also after overhaul."
+      "_note": "One-time: 'First 25 hours only (there is no requirement for an inspection every 25 hours)'; also after overhaul.",
+      "firstDueMeter": {
+        "meterKey": "engine_hours",
+        "value": 25
+      }
     },
     {
       "titleAliases": [
@@ -840,13 +829,7 @@
         "exhaust retorque",
         "exhaust fixation check"
       ],
-      "rules": [
-        {
-          "kind": "meter",
-          "meterKey": "engine_hours",
-          "interval": 2
-        }
-      ],
+      "rules": [],
       "citations": [
         {
           "document": "rotax-mml-915i",
@@ -857,7 +840,11 @@
       ],
       "type": "routine",
       "optional": true,
-      "_note": "One-time, in the unscheduled-maintenance section's recommendations."
+      "_note": "One-time, in the unscheduled-maintenance section's recommendations.",
+      "firstDueMeter": {
+        "meterKey": "engine_hours",
+        "value": 2
+      }
     },
     {
       "titleAliases": [
@@ -926,13 +913,7 @@
         "propeller initial 25-hour inspection",
         "Airmaster propeller first 25-hour inspection"
       ],
-      "rules": [
-        {
-          "kind": "meter",
-          "meterKey": "prop_hours",
-          "interval": 25
-        }
-      ],
+      "rules": [],
       "citations": [
         {
           "document": "airmaster-asi-7-1-1",
@@ -943,20 +924,18 @@
       ],
       "type": "routine",
       "optional": true,
-      "_note": "One-time: 'performed at the first 25, 50 and 100 hours'."
+      "_note": "One-time: 'performed at the first 25, 50 and 100 hours'.",
+      "firstDueMeter": {
+        "meterKey": "prop_hours",
+        "value": 25
+      }
     },
     {
       "titleAliases": [
         "propeller initial 50-hour inspection",
         "Airmaster propeller first 50-hour inspection"
       ],
-      "rules": [
-        {
-          "kind": "meter",
-          "meterKey": "prop_hours",
-          "interval": 50
-        }
-      ],
+      "rules": [],
       "citations": [
         {
           "document": "airmaster-asi-7-1-1",
@@ -967,7 +946,11 @@
       ],
       "type": "routine",
       "optional": true,
-      "_note": "One-time, as above."
+      "_note": "One-time, as above.",
+      "firstDueMeter": {
+        "meterKey": "prop_hours",
+        "value": 50
+      }
     },
     {
       "titleAliases": [

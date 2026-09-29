@@ -76,12 +76,12 @@ export function scoreCase(input: ScoreInput): CaseScore {
     .map((p) => ({
       expected: p.task.titleAliases[0],
       suggestion: p.suggestion.title,
-      intervalOk: intervalMatches(p.task, p.suggestion.rules),
+      intervalOk: intervalMatches(p.task, p.suggestion),
       citationOk:
         p.suggestion.sourceKind !== "document"
           ? null
-          : p.task.citations && p.task.citations.length > 0
-            ? p.task.citations.some(
+          : documentCitations(p.task).length > 0
+            ? documentCitations(p.task).some(
                 (c) =>
                   c.document === p.suggestion.sourceDocument &&
                   p.suggestion.sourcePages.some((n) => c.pages.includes(n)),
@@ -153,7 +153,7 @@ function assign(tasks: ExpectedTask[], suggestions: TaskSuggestion[]) {
     suggestions.flatMap((suggestion) => {
       const title = Math.max(...task.titleAliases.map((a) => titleSimilarity(a, suggestion.title)));
       if (title < TITLE_MATCH) return [];
-      return [{ task, suggestion, score: title + (intervalMatches(task, suggestion.rules) ? 1 : 0) }];
+      return [{ task, suggestion, score: title + (intervalMatches(task, suggestion) ? 1 : 0) }];
     }),
   );
   candidates.sort((a, b) => b.score - a.score);
@@ -180,8 +180,16 @@ export function titleSimilarity(alias: string, title: string): number {
   return words.filter((w) => titleWords.has(w)).length / words.length;
 }
 
-function intervalMatches(task: ExpectedTask, actual: SuggestedRule[]): boolean {
-  return [task.rules, ...(task.alternativeRules ?? [])].some((rules) => rulesMatch(rules, actual));
+function documentCitations(task: ExpectedTask) {
+  return (task.citations ?? []).flatMap((c) => ("document" in c ? [c] : []));
+}
+
+function intervalMatches(task: ExpectedTask, s: TaskSuggestion): boolean {
+  const rules = [task.rules, ...(task.alternativeRules ?? [])].some((r) => rulesMatch(r, s.rules));
+  if (!task.firstDueMeter) return rules;
+  const due = s.firstDue?.meter;
+  const want = task.firstDueMeter;
+  return rules && !!due && due.meterKey === want.meterKey && Math.abs(due.value - want.value) <= want.value * 0.02;
 }
 
 /** Same rules, ignoring order; months and years compare as months, meter intervals within 2%. */
