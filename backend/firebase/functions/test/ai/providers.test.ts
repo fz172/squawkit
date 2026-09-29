@@ -1,10 +1,11 @@
 import type Anthropic from "@anthropic-ai/sdk";
+import type { AnthropicVertex } from "@anthropic-ai/vertex-sdk";
 import { FinishReason, type GoogleGenAI } from "@google/genai";
 import type OpenAI from "openai";
 import { describe, expect, it } from "vitest";
 
 import { AiError } from "../../src/ai/errors.js";
-import { createAnthropicProvider } from "../../src/ai/providers/anthropicProvider.js";
+import { createClaudeVertexProvider } from "../../src/ai/providers/claudeVertexProvider.js";
 import { createGeminiProvider } from "../../src/ai/providers/geminiProvider.js";
 import { generateValidated } from "../../src/ai/providers/generateValidated.js";
 import { createOpenAiProvider } from "../../src/ai/providers/openAiProvider.js";
@@ -44,36 +45,34 @@ async function rejection(p: Promise<unknown>): Promise<unknown> {
   );
 }
 
-describe("anthropic provider", () => {
-  function fakeClient(message: Partial<Anthropic.Beta.BetaMessage> | Error) {
+describe("claude on vertex provider", () => {
+  function fakeClient(message: Partial<Anthropic.Message> | Error) {
     const calls: Record<string, unknown>[] = [];
     const client = {
-      beta: {
-        messages: {
-          stream(params: Record<string, unknown>) {
-            calls.push(params);
-            return {
-              finalMessage: async () => {
-                if (message instanceof Error) throw message;
-                return {
-                  model: params.model,
-                  stop_reason: "end_turn",
-                  usage: { input_tokens: 1000, output_tokens: 200 },
-                  content: [{ type: "text", text: '{"title":"Oil","hours":50}' }],
-                  ...message,
-                };
-              },
-            };
-          },
+      messages: {
+        stream(params: Record<string, unknown>) {
+          calls.push(params);
+          return {
+            finalMessage: async () => {
+              if (message instanceof Error) throw message;
+              return {
+                model: params.model,
+                stop_reason: "end_turn",
+                usage: { input_tokens: 1000, output_tokens: 200 },
+                content: [{ type: "text", text: '{"title":"Oil","hours":50}' }],
+                ...message,
+              };
+            },
+          };
         },
       },
     };
-    return { client: client as unknown as Anthropic, calls };
+    return { client: client as unknown as AnthropicVertex, calls };
   }
 
   it("sends parts, schema and tier effort, and prices the usage", async () => {
     const { client, calls } = fakeClient({});
-    const provider = createAnthropicProvider({ model: "claude-sonnet-5-5", client });
+    const provider = createClaudeVertexProvider({ model: "claude-sonnet-5-5", client });
 
     const out = await provider.generate(request("fast"));
 
@@ -85,8 +84,7 @@ describe("anthropic provider", () => {
       format: { type: "json_schema", schema: SCHEMA },
       effort: "low",
     });
-    expect(params.fallbacks).toBe("default");
-    expect(params.betas).toEqual(["server-side-fallback-2026-07-01"]);
+    expect(params.model).toBe("claude-sonnet-5-5");
     const content = (params.messages as Array<{ content: Array<Record<string, unknown>> }>)[0].content;
     expect(content.map((c) => c.type)).toEqual(["document", "image", "text"]);
     expect(content[0].source).toEqual({
@@ -96,27 +94,22 @@ describe("anthropic provider", () => {
     });
   });
 
-  it("sends no effort or fallbacks to Haiku", async () => {
+  it("asks Vertex for the Haiku snapshot, with no effort", async () => {
     const { client, calls } = fakeClient({});
-    await createAnthropicProvider({ model: "claude-haiku-4-5", client }).generate(request());
-
-    expect(calls[0].output_config).toEqual({ format: { type: "json_schema", schema: SCHEMA } });
-    expect(calls[0].fallbacks).toBeUndefined();
-  });
-
-  it("bills a fallback turn at the model that served it", async () => {
-    const { client } = fakeClient({ model: "claude-opus-5-5" });
-    const out = await createAnthropicProvider({ model: "claude-sonnet-5-5", client }).generate(
+    const out = await createClaudeVertexProvider({ model: "claude-haiku-4-5", client }).generate(
       request(),
     );
-    // $4 / $20 per MTok.
-    expect(out.usage.costMicros).toBe(8000);
+
+    expect(calls[0].model).toBe("claude-haiku-4-5@20251001");
+    expect(calls[0].output_config).toEqual({ format: { type: "json_schema", schema: SCHEMA } });
+    // $1 / $5 per MTok.
+    expect(out.usage.costMicros).toBe(2000);
   });
 
   it("reports a refusal as a provider error that keeps its usage", async () => {
     const { client } = fakeClient({ stop_reason: "refusal", content: [] });
     const e = await rejection(
-      createAnthropicProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
+      createClaudeVertexProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
     );
     expect(e).toBeInstanceOf(AiError);
     expect((e as AiError).code).toBe("provider_error");
@@ -128,7 +121,7 @@ describe("anthropic provider", () => {
     const prose = fakeClient({ content: [{ type: "text", text: "Sure! Here", citations: null }] });
     for (const { client } of [truncated, prose]) {
       const e = await rejection(
-        createAnthropicProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
+        createClaudeVertexProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
       );
       expect(e).toBeInstanceOf(AiOutputParseError);
     }
@@ -137,7 +130,7 @@ describe("anthropic provider", () => {
   it("wraps an SDK error as a provider error", async () => {
     const { client } = fakeClient(new Error("overloaded"));
     const e = await rejection(
-      createAnthropicProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
+      createClaudeVertexProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
     );
     expect((e as AiError).code).toBe("provider_error");
   });
@@ -338,7 +331,7 @@ describe("assertPortableSchema", () => {
 
 describe("registry", () => {
   it("constructs every candidate", () => {
-    const credentials = { anthropicApiKey: "k", openAiApiKey: "k", gemini: { apiKey: "k" } };
+    const credentials = { vertex: { project: "p", location: "global" }, openAiApiKey: "k" };
     for (const candidate of PROVIDER_CANDIDATES) {
       expect(createProvider(candidate.id, credentials).id).toBe(candidate.id);
     }
@@ -347,5 +340,6 @@ describe("registry", () => {
   it("refuses a model with no price", () => {
     expect(() => createGeminiProvider({ model: "gemini-9", apiKey: "k" })).toThrow(/No price/);
     expect(() => createProvider("gpt-unknown")).toThrow(/Unknown provider/);
+    expect(() => createProvider("claude-sonnet-5-5")).toThrow(/Vertex project/);
   });
 });

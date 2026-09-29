@@ -2,7 +2,6 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 
 import { createDocumentAiOcr } from "../../src/ai/document/ocr/documentAiOcr.js";
-import { createMistralOcr } from "../../src/ai/document/ocr/mistralOcr.js";
 import type { OcrInput, OcrProvider } from "../../src/ai/document/ocr/types.js";
 import { readDocument } from "../../src/ai/document/readDocument.js";
 import { AiError } from "../../src/ai/errors.js";
@@ -100,57 +99,6 @@ describe("readDocument", () => {
       "document_unreadable",
       "document_unreadable",
     ]);
-  });
-});
-
-describe("mistral OCR", () => {
-  function fakeFetch(status = 200) {
-    const bodies: Array<Record<string, unknown>> = [];
-    const fetchImpl = (async (_url: string, init: RequestInit) => {
-      bodies.push(JSON.parse(init.body as string));
-      return new Response(
-        JSON.stringify({
-          pages: [
-            { index: 1, markdown: "page two" },
-            { index: 4, markdown: "page five" },
-          ],
-          usage_info: { pages_processed: 2 },
-        }),
-        { status },
-      );
-    }) as typeof fetch;
-    return { fetchImpl, bodies };
-  }
-
-  it("asks for 0-based pages of a PDF and maps them back", async () => {
-    const { fetchImpl, bodies } = fakeFetch();
-    const out = await createMistralOcr({ apiKey: "k", fetchImpl }).ocr(
-      { bytes: new Uint8Array([1]), mime: "application/pdf" },
-      [2, 5],
-    );
-
-    expect(bodies[0].pages).toEqual([1, 4]);
-    expect((bodies[0].document as Record<string, string>).type).toBe("document_url");
-    expect(out.pages).toEqual([
-      { n: 2, text: "page two" },
-      { n: 5, text: "page five" },
-    ]);
-    expect(out).toMatchObject({ pagesBilled: 2, costMicros: 8000 });
-  });
-
-  it("sends a photo as an image with no page list", async () => {
-    const { fetchImpl, bodies } = fakeFetch();
-    await createMistralOcr({ apiKey: "k", fetchImpl }).ocr({ bytes: new Uint8Array([1]), mime: "image/png" }, [1]);
-    expect((bodies[0].document as Record<string, string>).image_url).toMatch(/^data:image\/png;base64,/);
-    expect(bodies[0].pages).toBeUndefined();
-  });
-
-  it("wraps an HTTP failure as a provider error", async () => {
-    const { fetchImpl } = fakeFetch(500);
-    const e = await rejection(
-      createMistralOcr({ apiKey: "k", fetchImpl }).ocr({ bytes: new Uint8Array([1]), mime: "image/png" }, [1]),
-    );
-    expect(e.code).toBe("provider_error");
   });
 });
 
