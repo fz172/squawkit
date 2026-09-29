@@ -86,7 +86,9 @@ stops with "nothing recorded" and the run has to be recorded again.
 - `citations`: where the item is stated, as the document's `blobId` (from `case.json`) and its
   **PDF page numbers** (the viewer's page count, not the number printed on the page). A task
   several documents state lists each; citing any one counts. Without citations, accuracy falls
-  back to whether the cited page states the item.
+  back to whether the cited page states the item. When the interval comes from a regulation
+  rather than the documents, cite it as `{ "regulation": "14 CFR § 91.413" }`; that is for the
+  reader and is not scored.
 - `optional`: fine if suggested, not counted as missed. `mustNotAppear`: a hard failure if
   suggested.
 - `reviewed`: flip to true once someone who knows the schedule has checked it. Aviation cases

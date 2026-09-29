@@ -1,5 +1,5 @@
 {
-  "reviewed": false,
+  "reviewed": true,
   "expectedStatus": "succeeded",
   "tasks": [
     {
@@ -302,22 +302,18 @@
       "rules": [
         {
           "kind": "time",
-          "every": 12,
+          "every": 24,
           "unit": "months"
         }
       ],
       "citations": [
         {
-          "document": "sling-tsi-amm",
-          "pages": [
-            65,
-            69
-          ]
+          "regulation": "14 CFR § 91.411"
         }
       ],
       "type": "routine",
       "optional": true,
-      "_note": "'Pitot static test performed at annual inspection': a line of the airframe annual, not its own interval."
+      "_note": "'Pitot static test performed at annual inspection': a line of the airframe annual, not its own interval. Interval is the FAR's 24 calendar months (reviewer), not the annual's 12."
     },
     {
       "titleAliases": [
@@ -327,21 +323,18 @@
       "rules": [
         {
           "kind": "time",
-          "every": 12,
+          "every": 24,
           "unit": "months"
         }
       ],
       "citations": [
         {
-          "document": "sling-tsi-amm",
-          "pages": [
-            66
-          ]
+          "regulation": "14 CFR § 91.413"
         }
       ],
       "type": "routine",
       "optional": true,
-      "_note": "Checklist line 7.8 of the 100 h / annual inspection; no own interval in the manual."
+      "_note": "Checklist line 7.8 of the 100 h / annual inspection; no own interval in the manual. Interval is the FAR's 24 calendar months (reviewer), not the annual's 12."
     },
     {
       "titleAliases": [

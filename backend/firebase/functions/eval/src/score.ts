@@ -80,8 +80,8 @@ export function scoreCase(input: ScoreInput): CaseScore {
       citationOk:
         p.suggestion.sourceKind !== "document"
           ? null
-          : p.task.citations && p.task.citations.length > 0
-            ? p.task.citations.some(
+          : documentCitations(p.task).length > 0
+            ? documentCitations(p.task).some(
                 (c) =>
                   c.document === p.suggestion.sourceDocument &&
                   p.suggestion.sourcePages.some((n) => c.pages.includes(n)),
@@ -178,6 +178,10 @@ export function titleSimilarity(alias: string, title: string): number {
   const words = a.split(" ");
   const titleWords = new Set(t.split(" "));
   return words.filter((w) => titleWords.has(w)).length / words.length;
+}
+
+function documentCitations(task: ExpectedTask) {
+  return (task.citations ?? []).flatMap((c) => ("document" in c ? [c] : []));
 }
 
 function intervalMatches(task: ExpectedTask, s: TaskSuggestion): boolean {

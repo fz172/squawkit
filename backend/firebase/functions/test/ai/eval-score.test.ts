@@ -182,6 +182,17 @@ describe("scoreCase", () => {
     expect(at(null)).toBe(0);
   });
 
+  it("scores a regulation-only task's citation by the cited page", () => {
+    const s = score([suggestion({ title: "Transponder test", rules: [{ kind: "time", every: 24, unit: "months" }] })], {
+      tasks: [
+        { titleAliases: ["transponder test"], rules: [{ kind: "time", every: 24, unit: "months" }], citations: [{ regulation: "14 CFR § 91.413" }] },
+      ],
+    });
+    expect(s.intervalAccuracy).toBe(1);
+    // Page 2 does not mention a transponder, so the fallback check fails the citation.
+    expect(s.citationAccuracy).toBe(0);
+  });
+
   it("finds each hard-gate violation", () => {
     const s = score([
       suggestion({ suggestionId: "a", type: "airworthiness_directive", referenceNumber: "AD 2024-05-07" }),
@@ -243,6 +254,8 @@ describe("checkExpected", () => {
         { titleAliases: ["meter"], rules: [{ kind: "meter", meterKey: "odometer", interval: 50 }] },
         { titleAliases: ["time"], rules: [], alternativeRules: [[{ kind: "time", every: 6, unit: "weeks" as "days" }]] },
         { titleAliases: ["doc"], rules: [], citations: [{ document: "blob-nope", pages: [0] }] },
+        { titleAliases: ["far"], rules: [], citations: [{ regulation: "14 CFR § 91.413" }] },
+        { titleAliases: ["blank"], rules: [], citations: [{ regulation: " " }] },
       ],
     });
     expect(problems).toEqual([
@@ -250,6 +263,7 @@ describe("checkExpected", () => {
       expect.stringContaining("time: bad rule"),
       "doc: no document blob-nope in the case",
       "doc: bad pages [0]",
+      "blank: empty regulation citation",
     ]);
   });
 });
