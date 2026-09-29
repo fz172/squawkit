@@ -48,13 +48,17 @@ export function createClaudeVertexProvider(options: ClaudeVertexProviderOptions)
   const traits = TRAITS[options.model];
   if (!traits) throw new Error(`Unknown Claude model ${options.model}`);
   priceFor(options.model);
-  const client = options.client ?? newClient(options);
+  if (!options.client && !options.vertex) throw new Error("Claude needs a Vertex project");
+  // Built on first use: AnthropicVertex starts resolving ADC in its constructor, and that promise
+  // rejects unhandled where there are no credentials.
+  let client = options.client;
 
   return {
     id: options.model,
     async generate(req: AiGenerateRequest): Promise<AiGenerateResponse> {
       let message: Anthropic.Message;
       try {
+        client ??= newClient(options.vertex!);
         message = await client.messages
           .stream({
             model: traits.vertexModel,
@@ -91,9 +95,8 @@ export function createClaudeVertexProvider(options: ClaudeVertexProviderOptions)
   };
 }
 
-function newClient(options: ClaudeVertexProviderOptions): AnthropicVertex {
-  if (!options.vertex) throw new Error("Claude needs a Vertex project");
-  return new AnthropicVertex({ projectId: options.vertex.project, region: options.vertex.location });
+function newClient(vertex: { project: string; location: string }): AnthropicVertex {
+  return new AnthropicVertex({ projectId: vertex.project, region: vertex.location });
 }
 
 function toContent(parts: AiPart[]): Anthropic.ContentBlockParam[] {
