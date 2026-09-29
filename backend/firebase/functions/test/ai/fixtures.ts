@@ -74,6 +74,7 @@ export function draft(overrides: Partial<Draft> = {}): Draft {
     sourceKind: "document",
     citation: "Rotax 915 iS MM, rev 3",
     pageRef: "p. 5-12",
+    sourcePages: [2],
     sourceDocument: "blob-mm",
     lastDone: null,
     lastDoneLogId: null,

@@ -1,0 +1,182 @@
+{
+  "id": "sling-tsi-three-manuals",
+  "description": "Sling TSi with the airframe, Rotax 915 iS and Airmaster manuals: multi-document merge, citations, hours (PRD \u00a79.3).",
+  "kind": "document",
+  "request": {
+    "thingId": "eval-sling-tsi-three-manuals",
+    "context": {
+      "templateId": "airplane",
+      "templateVersion": 13,
+      "specs": [
+        {
+          "key": "make",
+          "label": "Make",
+          "value": "Sling"
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "value": "TSi"
+        },
+        {
+          "key": "tail_number",
+          "label": "Tail Number",
+          "value": "N915ST"
+        }
+      ],
+      "components": [
+        {
+          "slotKey": "engine",
+          "make": "Rotax",
+          "model": "915 iS",
+          "spec": []
+        },
+        {
+          "slotKey": "propeller",
+          "make": "Airmaster",
+          "model": "",
+          "spec": []
+        }
+      ],
+      "meters": [
+        {
+          "key": "airframe_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "",
+          "current": 312.4
+        },
+        {
+          "key": "engine_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "engine",
+          "current": 312.4
+        },
+        {
+          "key": "prop_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "propeller",
+          "current": 312.4
+        }
+      ],
+      "existingTasks": [],
+      "logs": [
+        {
+          "id": "log-100h",
+          "date": "2026-06-10",
+          "readings": [
+            {
+              "meterKey": "airframe_hours",
+              "value": 300.1
+            },
+            {
+              "meterKey": "engine_hours",
+              "value": 300.1
+            }
+          ],
+          "title": "100-hour inspection",
+          "workDescription": "100-hour inspection per the Sling and Rotax schedules; oil and filter changed",
+          "componentSlotKey": "engine"
+        }
+      ],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Conditional inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "100-hour inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "airframe_hours",
+              "interval": 100
+            }
+          ]
+        },
+        {
+          "title": "ELT inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Transponder test",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Altimeter & pitot-static test",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Oil change",
+          "description": "",
+          "componentSlotKey": "engine",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "engine_hours",
+              "interval": 50
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "inspection"
+    },
+    "documents": [
+      {
+        "blobId": "sling-tsi-amm",
+        "name": "Sling-4-TSi-Maintenance-Manual-Rev-1.3.pdf",
+        "mimeType": "application/pdf",
+        "sha256": "8591f84cac3c137dee8995196653349231143ca76e8f14ccc3c6b0fc8fee6fd9",
+        "sizeBytes": 14344892
+      },
+      {
+        "blobId": "rotax-mml-915i",
+        "name": "MML_915i_Ed0_Rev3.pdf",
+        "mimeType": "application/pdf",
+        "sha256": "8d42a66606c0212281b1de20194730e0036654e25042c329bb1a64713f8307a4",
+        "sizeBytes": 5845492
+      },
+      {
+        "blobId": "airmaster-asi-7-1-1",
+        "name": "ASI-7-1-1 Periodic (100hr-Annual) Inspection & Service Checklist - R1.pdf",
+        "mimeType": "application/pdf",
+        "sha256": "d365f9c6aab487048b29c4d067687a68ec52780fb9a9b0525e2b3fe9fa2b8920",
+        "sizeBytes": 729840
+      }
+    ]
+  }
+}

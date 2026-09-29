@@ -71,6 +71,8 @@ export type PipelineDeps = {
   loadDocument(ref: SourceDocumentRef): Promise<Uint8Array>;
   onStage?(stage: PipelineStage, arg?: string): void;
   onCall?(record: PipelineCallRecord): void;
+  /** Each document's page text once read, so the eval checks against the same text. */
+  onDocumentRead?(ref: SourceDocumentRef, pages: DocumentPage[]): void;
   locate?: LocateMethod;
   /**
    * The model recall runs on. Recall is the whole answer on a run without documents, so the
@@ -179,6 +181,7 @@ async function readAndExtract(
   }
   const started = Date.now();
   const read = await readDocument({ bytes, mime: ref.mimeType }, { ocr: deps.ocr });
+  deps.onDocumentRead?.(ref, read.pages);
   if (read.ocr.pagesBilled > 0 && deps.ocr) {
     deps.onCall?.({
       stage: "ocr",

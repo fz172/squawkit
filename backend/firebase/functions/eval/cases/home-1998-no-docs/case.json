@@ -1,0 +1,161 @@
+{
+  "id": "home-1998-no-docs",
+  "description": "A 1998 home: calendar and seasonal rules only, Common practice labelling, no meters.",
+  "kind": "no_document",
+  "request": {
+    "thingId": "eval-home-1998-no-docs",
+    "context": {
+      "templateId": "home",
+      "templateVersion": 14,
+      "specs": [
+        {
+          "key": "address",
+          "label": "Address",
+          "value": "12 Example Lane"
+        },
+        {
+          "key": "year_built",
+          "label": "Year Built",
+          "value": "1998"
+        }
+      ],
+      "components": [],
+      "meters": [],
+      "existingTasks": [],
+      "logs": [],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Replace HVAC filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 3,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "HVAC service",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "seasonal",
+              "months": [
+                4,
+                10
+              ],
+              "dayOfMonth": 0
+            }
+          ]
+        },
+        {
+          "title": "Clean gutters",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "seasonal",
+              "months": [
+                4,
+                10
+              ],
+              "dayOfMonth": 0
+            }
+          ]
+        },
+        {
+          "title": "Smoke & CO detector batteries",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Flush water heater",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Clean dryer vent",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Refrigerator water filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 6,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Sprinkler blowout",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "seasonal",
+              "months": [
+                10
+              ],
+              "dayOfMonth": 0
+            }
+          ]
+        },
+        {
+          "title": "Chimney sweep & inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Septic pump-out",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 36,
+              "unit": "months"
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "chore"
+    },
+    "documents": []
+  }
+}

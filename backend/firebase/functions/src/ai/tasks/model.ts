@@ -121,6 +121,8 @@ export type TaskSuggestion = {
   sourceKind: TaskSourceKind;
   citation: string;
   pageRef: string;
+  /** The document's pages it cites, 1-based PDF page numbers, for opening it there (R30). */
+  sourcePages: number[];
   /** The document's blob id, for a document source. */
   sourceDocument: string;
   lastDone: LastDoneEvidence | null;

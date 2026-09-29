@@ -1,0 +1,158 @@
+{
+  "id": "boat-montauk-170-no-docs",
+  "description": "A 2016 Boston Whaler Montauk 170 with a Mercury 90 outboard.",
+  "kind": "no_document",
+  "request": {
+    "thingId": "eval-boat-montauk-170-no-docs",
+    "context": {
+      "templateId": "boat",
+      "templateVersion": 14,
+      "specs": [
+        {
+          "key": "make",
+          "label": "Make",
+          "value": "Boston Whaler"
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "value": "Montauk 170"
+        },
+        {
+          "key": "year",
+          "label": "Year",
+          "value": "2016"
+        },
+        {
+          "key": "hull_id",
+          "label": "Hull ID",
+          "value": "BWCE0000A616"
+        }
+      ],
+      "components": [
+        {
+          "slotKey": "propulsion",
+          "make": "Mercury",
+          "model": "90 FourStroke",
+          "spec": []
+        }
+      ],
+      "meters": [
+        {
+          "key": "engine_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "propulsion",
+          "current": 214
+        }
+      ],
+      "existingTasks": [],
+      "logs": [],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Engine oil & filter",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "engine_hours",
+              "interval": 100
+            },
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Raw-water pump impeller",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Lower unit / gear oil",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Winterize",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Sacrificial anodes",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Bottom paint & hull inspection",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Safety gear check",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Registration renewal",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "task"
+    },
+    "documents": []
+  }
+}

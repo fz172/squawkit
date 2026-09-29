@@ -1,0 +1,130 @@
+{
+  "id": "bike-stumpjumper-no-docs",
+  "description": "A mountain bike with odometer and ride-hours meters.",
+  "kind": "no_document",
+  "request": {
+    "thingId": "eval-bike-stumpjumper-no-docs",
+    "context": {
+      "templateId": "bike",
+      "templateVersion": 11,
+      "specs": [
+        {
+          "key": "make",
+          "label": "Make",
+          "value": "Specialized"
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "value": "Stumpjumper Comp 2023"
+        },
+        {
+          "key": "frame_number",
+          "label": "Frame Number",
+          "value": "WSBC000000000"
+        }
+      ],
+      "components": [
+        {
+          "slotKey": "drivetrain",
+          "make": "Shimano",
+          "model": "Deore XT M8100",
+          "spec": []
+        }
+      ],
+      "meters": [
+        {
+          "key": "odometer",
+          "unitLabel": "mi",
+          "componentSlotKey": "",
+          "current": 640
+        },
+        {
+          "key": "ride_hours",
+          "unitLabel": "hrs",
+          "componentSlotKey": "",
+          "current": 58
+        }
+      ],
+      "existingTasks": [],
+      "logs": [],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Lube the chain",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 150
+            }
+          ]
+        },
+        {
+          "title": "Check chain wear",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 6,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Check brake pads & cables",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 6,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Full tune-up",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Refresh tubeless sealant",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 6,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Suspension service",
+          "description": "",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "ride_hours",
+              "interval": 50
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "job"
+    },
+    "documents": []
+  }
+}

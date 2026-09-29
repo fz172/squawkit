@@ -783,14 +783,21 @@ form when a task with an AI origin is saved changed. `StarterTasksOffered` / `Ac
 
 `backend/firebase/functions/eval/` imports the real pipeline (§6) with a chosen provider pair and
 runs it outside Cloud Functions: `npm run eval:tasks -- --fast=<id> --strong=<id> --cases=all`.
+Flags choose the locating method, the recall tier, OCR, repeats for p90 and a warm-cache re-run
+for R19. Every case runs on its own empty cache, since the cache key does not name the provider.
+Usage is in `eval/README.md`.
 
 ### 12.2 Cases
 
-`eval/cases/<case>/case.json`: a `SuggestTasksRequest` in proto-JSON (context, document refs to
-local files), and `expected.json`: a list of expected tasks `{titleAliases[], rules[], pageRefs[],
-type, mustNotAppear?}`. Documents whose licence forbids committing them live in a private GCS
-bucket and are fetched by `eval/fetch.sh`; the repo holds only their sha256. Cases are PRD §9.3's
-table.
+`eval/cases/<case>/case.json`: the request as the pipeline's JSON types (context, and document
+refs that name each file by sha256), and `expected.json`: a list of expected tasks
+`{titleAliases[], rules[], pageRefs[], type, optional?, mustNotAppear?}`, plus `reviewed` and
+an optional `expectedStatus`. `pageRefs` are PDF page numbers. Documents whose licence forbids
+committing them live in a private GCS bucket and are fetched by `eval/fetch.sh` into
+`eval/docs/<sha256>.<ext>`; `eval/add-doc.sh` registers a local file. The repo holds only their
+sha256. Cases are PRD §9.3's table; the home case can say only the year built, because the home
+template declares no components or custom spec fields, so "gas water heater + septic" cannot be
+expressed.
 
 ### 12.3 Scoring
 
@@ -801,8 +808,10 @@ accuracy, citation accuracy (the cited page contains the item, checked by the sa
 
 ### 12.4 Not in CI
 
-Runs cost money and need provider keys; it is manual, like the functions deploy. A fake provider
-replays recorded responses so the scorer itself is unit-tested in CI.
+Runs cost money and need provider keys; it is manual, like the functions deploy. Every run records
+each provider answer keyed by its request, and `--replay=<run>` re-runs the pipeline on those
+answers with no provider: free re-scoring after an `expected.json` or scorer change. CI tests the
+scorer, and a record-then-replay round trip on a synthetic document.
 
 ### 12.5 Results
 

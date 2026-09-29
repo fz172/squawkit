@@ -12,3 +12,5 @@ node_modules/
 !package.json
 !package-lock.json
 !tsconfig.json
+# Eval cases are source (fictitious Things, no real uids).
+!eval/cases/*/*.json
