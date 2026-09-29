@@ -112,6 +112,13 @@ const FLAT_RULE = object({
   description: NULLABLE_STRING,
 });
 
+const FIRST_DUE = object({
+  anchor: oneOf(["meter_reading", "meter_from_now", "time_from_now"]),
+  meterKey: NULLABLE_STRING,
+  value: NUMBER,
+  unit: nullable(oneOf(["days", "months", "years"])),
+});
+
 export const TAILOR_SCHEMA = object({
   suggestions: array(
     object({
@@ -123,6 +130,7 @@ export const TAILOR_SCHEMA = object({
       componentHint: NULLABLE_STRING,
       rules: array(FLAT_RULE),
       isOneTime: BOOLEAN,
+      firstDue: array(FIRST_DUE),
       lastDoneLogId: NULLABLE_STRING,
       matchesExistingTaskId: NULLABLE_STRING,
       intervalDifferenceNote: NULLABLE_STRING,

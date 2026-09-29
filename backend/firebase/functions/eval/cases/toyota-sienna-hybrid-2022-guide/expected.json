@@ -296,18 +296,7 @@
         "initial engine coolant replacement",
         "first engine coolant replacement"
       ],
-      "rules": [
-        {
-          "kind": "meter",
-          "meterKey": "odometer",
-          "interval": 100000
-        },
-        {
-          "kind": "time",
-          "every": 120,
-          "unit": "months"
-        }
-      ],
+      "rules": [],
       "citations": [
         {
           "document": "toyota-2022-sienna-hybrid-guide",
@@ -318,7 +307,12 @@
         }
       ],
       "type": "routine",
-      "optional": true
+      "optional": true,
+      "firstDueMeter": {
+        "meterKey": "odometer",
+        "value": 100000
+      },
+      "_note": "The months limit counts from delivery, which the Thing does not record, so only the reading is checked."
     },
     {
       "titleAliases": [
@@ -355,18 +349,7 @@
         "initial inverter coolant replacement",
         "first inverter coolant replacement"
       ],
-      "rules": [
-        {
-          "kind": "meter",
-          "meterKey": "odometer",
-          "interval": 150000
-        },
-        {
-          "kind": "time",
-          "every": 180,
-          "unit": "months"
-        }
-      ],
+      "rules": [],
       "citations": [
         {
           "document": "toyota-2022-sienna-hybrid-guide",
@@ -376,7 +359,12 @@
         }
       ],
       "type": "routine",
-      "optional": true
+      "optional": true,
+      "firstDueMeter": {
+        "meterKey": "odometer",
+        "value": 150000
+      },
+      "_note": "The months limit counts from delivery, which the Thing does not record, so only the reading is checked."
     },
     {
       "titleAliases": [

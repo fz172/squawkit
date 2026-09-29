@@ -68,6 +68,8 @@ export function draft(overrides: Partial<Draft> = {}): Draft {
       },
     ],
     isOneTime: false,
+    firstDue: null,
+    rawFirstDue: [],
     type: "routine",
     referenceNumber: "",
     complianceAuthority: "",
@@ -106,5 +108,5 @@ export function doc(overrides: Partial<ValidatedDocument> = {}): ValidatedDocume
 }
 
 export function input(overrides: Partial<ValidationInput> = {}): ValidationInput {
-  return { context: airplaneContext(), documents: [doc()], ...overrides };
+  return { context: airplaneContext(), documents: [doc()], today: "2026-09-29", ...overrides };
 }

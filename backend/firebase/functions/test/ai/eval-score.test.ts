@@ -17,6 +17,7 @@ function suggestion(over: Partial<TaskSuggestion>): TaskSuggestion {
     componentHint: "",
     rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }],
     isOneTime: false,
+    firstDue: null,
     type: "routine",
     referenceNumber: "",
     complianceAuthority: "",
@@ -157,6 +158,28 @@ describe("scoreCase", () => {
     expect(s.forbidden).toEqual(["Crankcase AD inspection"]);
     expect(s.costMicros).toBe(250);
     expect(s.retries).toBe(1);
+  });
+
+  it("checks a one-time item's first-due reading with its interval", () => {
+    const firstService = {
+      tasks: [{ titleAliases: ["first service"], rules: [], firstDueMeter: { meterKey: "engine_hours", value: 25 } }],
+    };
+    const at = (value: number | null) =>
+      score(
+        [
+          suggestion({
+            title: "First service",
+            rules: [],
+            isOneTime: true,
+            firstDue: value === null ? null : { date: null, meter: { meterKey: "engine_hours", value } },
+            sourceKind: "common_practice",
+          }),
+        ],
+        firstService,
+      ).intervalAccuracy;
+    expect(at(25)).toBe(1);
+    expect(at(50)).toBe(0);
+    expect(at(null)).toBe(0);
   });
 
   it("finds each hard-gate violation", () => {

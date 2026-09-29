@@ -31,6 +31,8 @@ export function buildDrafts(
       rules: [],
       rawRules: s.rules,
       isOneTime: s.isOneTime,
+      firstDue: null,
+      rawFirstDue: s.firstDue,
       lastDone: null,
       lastDoneLogId: s.lastDoneLogId,
       matchesExistingTaskId: s.matchesExistingTaskId ?? "",

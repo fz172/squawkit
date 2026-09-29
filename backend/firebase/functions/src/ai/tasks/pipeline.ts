@@ -74,6 +74,8 @@ export type PipelineDeps = {
   /** Each document's page text once read, so the eval checks against the same text. */
   onDocumentRead?(ref: SourceDocumentRef, pages: DocumentPage[]): void;
   locate?: LocateMethod;
+  /** Today, for first-due dates relative to now. Defaults to the clock. */
+  now?: () => Date;
   /**
    * The model recall runs on. Recall is the whole answer on a run without documents, so the
    * bake-off compares both tiers there. Defaults to fast.
@@ -135,6 +137,7 @@ export async function runTaskPipeline(
       pages: d.pages,
       matchesThing: matches(d.index),
     })),
+    today: (deps.now?.() ?? new Date()).toISOString().slice(0, 10),
   });
 
   const identified: IdentifiedDocument[] = documents.map((d) => ({
@@ -159,7 +162,7 @@ export async function runTaskPipeline(
   ]);
 
   const suggestions: TaskSuggestion[] = drafts.map(
-    ({ rawRules: _raw, lastDoneLogId: _log, confidence: _c, evidence: _e, ...s }, i) => ({
+    ({ rawRules: _raw, rawFirstDue: _due, lastDoneLogId: _log, confidence: _c, evidence: _e, ...s }, i) => ({
       suggestionId: `s${i + 1}`,
       ...s,
     }),

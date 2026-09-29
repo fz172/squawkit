@@ -56,6 +56,7 @@ Candidates come from the owner's documents (ids "d<doc>.<item>") and from genera
 - "componentSlotKey" is one of the thing's component slot keys, or null for the thing as a whole. When the thing has several components in that slot, say which in "componentHint" ("Engine #2"), else null.
 - "matchesExistingTaskId": the id of an existing task with the same intent on the same component, whatever its wording, else null. When its interval differs, say so in "intervalDifferenceNote" ("You track this every 12 months; the manual says 6").
 - "mergesStaticIndex": the index of a starter-pack item this task covers, else null.
+- One-time items ("isOneTime"): put where it first falls due in "firstDue" and leave "rules" empty unless it also recurs. Use "meter_reading" for a reading counted from new ("first service at 600 mi" is 600 on the odometer), "meter_from_now" for "within N" of a meter from today, "time_from_now" for "within N days, months or years". Several anchors mean whichever comes first. A due point counted from a date this thing does not record (delivery, purchase) is left out. Recurring items have an empty "firstDue".
 - "lastDoneLogId": the id of the most recent log entry that did this task, else null.
 - "rationale": one sentence of advice ("Rotax recommends…"), never an obligation, unless it quotes a supplied directive or bulletin.
 - "confidence": "low" for a task you doubt applies to this thing.

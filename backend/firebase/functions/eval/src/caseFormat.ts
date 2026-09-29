@@ -27,6 +27,11 @@ export type ExpectedTask = {
    */
   alternativeRules?: SuggestedRule[][];
   /**
+   * For a one-time item, the reading it first falls due at, counted from new. Checked with the
+   * interval (within 2%). A date is not, since it depends on the day of the run.
+   */
+  firstDueMeter?: { meterKey: string; value: number };
+  /**
    * Where the item is stated: the document's `blobId` and its PDF page numbers. A task several
    * documents state lists each; citing any of them counts.
    */
@@ -86,6 +91,9 @@ export function checkExpected(evalCase: EvalCase, expected: Expected): string[] 
           !["meter", "time", "seasonal", "on_condition"].includes(r.kind);
         if (bad) problems.push(`${name}: bad rule ${JSON.stringify(r)}`);
       }
+    }
+    if (task.firstDueMeter && (!meters.has(task.firstDueMeter.meterKey) || !(task.firstDueMeter.value > 0))) {
+      problems.push(`${name}: bad firstDueMeter ${JSON.stringify(task.firstDueMeter)}`);
     }
     for (const c of task.citations ?? []) {
       if (!documents.has(c.document)) problems.push(`${name}: no document ${c.document} in the case`);

@@ -102,6 +102,12 @@ export type IdentifiedDocument = {
   matchesThing: boolean;
 };
 
+/**
+ * When a one-time item first falls due, absolute, whichever comes first. The client writes it to
+ * `force_due_date` / `force_due_meter` (PRD §7).
+ */
+export type FirstDue = { date: string | null; meter: MeterReadingValue | null };
+
 export type LastDoneEvidence = { logId: string; date: string; reading: MeterReadingValue | null };
 
 export type TaskSuggestion = {
@@ -115,6 +121,8 @@ export type TaskSuggestion = {
   componentHint: string;
   rules: SuggestedRule[];
   isOneTime: boolean;
+  /** Set only on a one-time item that states when it is due. */
+  firstDue: FirstDue | null;
   type: ComplianceKind;
   referenceNumber: string;
   complianceAuthority: string;

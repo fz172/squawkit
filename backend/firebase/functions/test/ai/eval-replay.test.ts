@@ -55,6 +55,7 @@ const TAILOR: TailorOutput = {
         { kind: "meter", every: null, unit: null, meterKey: "engine_hours", interval: 200, months: null, dayOfMonth: null, description: null },
       ],
       isOneTime: false,
+      firstDue: [],
       lastDoneLogId: null,
       matchesExistingTaskId: null,
       intervalDifferenceNote: null,
