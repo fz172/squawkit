@@ -395,18 +395,25 @@ interface AiProvider {
 }
 ```
 
-Adapters per candidate live in `src/ai/providers/`. The chosen pair (fast, strong) is config in
+Adapters per candidate live in `src/ai/providers/`. Claude and Gemini run on Vertex AI in the
+project's `global` endpoint, authenticated by ADC, so their billing, IAM and data terms stay in
+GCP; OpenAI is not on Vertex and uses its own API key. Vertex has no server-side refusal fallback,
+so a Claude refusal is a `provider_error`. The chosen pair (fast, strong) is config in
 `ai_config/global`, so switching provider is a config write once both adapters are deployed. JSON
 that fails schema validation is retried once with the validation error appended; a second failure
-fails the stage (PRD §9.4 "valid output").
+fails the stage (PRD §9.4 "valid output"). Schemas stay inside the subset all three vendors accept
+(OpenAI strict mode is the narrowest): every object closed, every property required, optional
+values as `null` unions. `assertPortableSchema` checks it.
 
 ### 5.5 Document reading
 
-`readDocument(blobPath, mime) → { pages: Array<{ n: number; text: string; image?: Uint8Array }> }`
-runs before any provider sees the document. Page text is **always** produced, because R18's
+`readDocument({ bytes, mime }, { ocr }) → { pages: Array<{ n: number; text: string; image?: Uint8Array }> }`
+runs before any provider sees the document. It takes bytes, not a blob path: the worker loads them
+from Storage and the eval harness from disk. Page text is **always** produced, because R18's
 verbatim check and the citation check need text regardless of whether the provider reads PDFs
-natively: the PDF text layer via `pdfjs-dist`; for image-only pages and photos, the pre-processor
-the bake-off picks (§12). Limits: 5 documents per run, each within the attachment pipeline's
+natively: the PDF text layer via `pdfjs-dist`; for image-only pages and photos, Document AI's
+Enterprise OCR (Mistral OCR was dropped from the bake-off on 2026-09-28; the bake-off measures
+Document AI's quality and time on the scanned case, §12). Limits: 5 documents per run, each within the attachment pipeline's
 existing file-size cap, checked at pick time; over-limit fails with `document_too_large` before any
 model spend. There is **no page limit** (decided 2026-09-28): the locate stage (§6.2) sends only
 the schedule pages onward, so a long manual costs more to read, not more to extract from.
@@ -844,7 +851,6 @@ Ordering rules the phases alone do not show:
 
 - **Provider data terms** (PRD §12): gates phase C.
 - **Limit numbers** in `ai_config` (the spend ceilings are placeholders until phase 0 cost data).
-- **Pre-processor** for scans and photos: decided by the bake-off.
 - **Push deep link**: whether the notification opens the review directly or the Thing's task list
   with the review on top (phase E).
 
@@ -864,7 +870,7 @@ dependency order.
 3. **Eval harness.** Case format, scorer, fake provider with recorded responses (scorer tests run
    in CI), `eval/fetch.sh` for licensed documents (§12).
 4. **Bake-off run.** Every candidate against every case; fill in §12.5 and choose the fast/strong
-   pair and the OCR pre-processor.
+   pair, and confirm Document AI on the scanned case.
 
 **Phase A: shared backend**
 
