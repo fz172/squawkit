@@ -46,12 +46,18 @@ export const meterRule: Validator = (drafts, { context }) => {
  * rule needs a stated time interval, a meter rule a stated usage interval in a unit that converts
  * to the meter's; a calendar limit the tailor adds on its own ("100 h or 12 months" where the
  * manual says 100 h) is removed. Seasonal and on-condition rules pass.
+ *
+ * A rule is also backed by the starter-pack item the suggestion merges: the template states the
+ * owner's own regulatory interval (14 CFR 91.411's 24 months), which a manual written under
+ * another country's rules must not replace.
  */
 export const sourceRule: Validator = (drafts, { context }) =>
   drafts.map((d) => {
     if (d.sourceKind !== "document") return d;
     const stated = d.evidence.sourceIntervals;
+    const packRules = context.staticPack[d.mergesStaticIndex]?.rules ?? [];
     const kept = d.rules.filter((r) => {
+      if (packRules.some((p) => sameRule(p, r))) return true;
       if (r.kind === "time") return stated.some((i) => timeMatches(r.every, r.unit, i));
       if (r.kind === "meter") {
         const unit = meterUnit(context.meters.find((m) => m.key === r.meterKey)?.unitLabel ?? "");
@@ -245,6 +251,12 @@ function alreadyPassed(d: Draft, context: ValidationInput["context"]): boolean {
 }
 
 const DAYS: Record<string, number> = { days: 1, weeks: 7, months: 30.4375, years: 365.25 };
+
+function sameRule(a: SuggestedRule, b: SuggestedRule): boolean {
+  if (a.kind === "time" && b.kind === "time") return close(a.every * DAYS[a.unit], b.every * DAYS[b.unit]);
+  if (a.kind === "meter" && b.kind === "meter") return a.meterKey === b.meterKey && close(a.interval, b.interval);
+  return false;
+}
 
 function timeMatches(every: number, unit: "days" | "months" | "years", stated: SourceInterval): boolean {
   const per = DAYS[stated.unit];

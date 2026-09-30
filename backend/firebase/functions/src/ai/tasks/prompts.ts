@@ -23,8 +23,10 @@ Identify the document: manufacturer, the models it covers, its title, its revisi
 
 Then list every scheduled item:
 - Keep the document's own words and units. Do not convert units.
-- One item per inspection event ("100 h / annual inspection"); put the event's checklist lines in "checklist". An item with its own interval or life limit (spark plugs, coolant, hoses, time between overhaul) is its own item.
+- One item per inspection event ("100 h / annual inspection"); put the event's checklist lines in "checklist". An item with its own interval or life limit (spark plugs, coolant, hoses, time between overhaul) is its own item, even when it also appears in an inspection event's checklist (a part replaced every 600 h inside the 600-hour check is both a checklist line and its own item).
+- In a schedule table, read each row across and take the interval from the column header each mark sits under. Extracted table text can lose its columns, so check each mark against the order of the headers.
 - "intervals" lists every interval the item has; several mean whichever comes first.
+- Leave out daily and pre-flight checks, checks triggered by an event (a propeller strike, an overspeed, a lightning strike), storage and preservation procedures, and warranty or operating instructions.
 - When an interval depends on a condition (a certified oil, severe or special operating conditions, a region), keep the item's normal interval and state the condition and the other interval in "description".
 - "isOneTime" is true for items done once (a first service at 500 mi, a one-off directive action).
 - "pages" are the page numbers from the "=== page N ===" markers where the item is stated. "printedPageRef" is the page number printed on that page, if any.
@@ -49,9 +51,12 @@ Then list the scheduled items an owner should track:
 export const TAILOR_SYSTEM = `You turn candidate maintenance items into tasks for one specific thing.
 
 Candidates come from the owner's documents (ids "d<doc>.<item>") and from general knowledge (ids "r<item>"). Produce the final task list:
-- Merge candidates that are the same task, listing all their ids in "candidateIds". A document candidate always wins over a general one or a starter-pack item: keep its intervals and wording. Every task must list at least one candidate id; never invent a task.
+- Merge candidates that are the same task, listing all their ids in "candidateIds". A document candidate wins over a general one: keep its intervals and wording. Every task must list at least one candidate id; never invent a task.
+- Starter-pack items set the owner's own regulatory intervals when their description cites a regulation (such as 14 CFR). A task that covers such an item keeps the starter-pack interval, even when a document gives another (a manual may follow a different country's rules); set "mergesStaticIndex" and put the document's interval in the description. Otherwise a document's interval wins over a starter-pack item's.
+- Use only intervals that a merged candidate or starter-pack item states. Never add a calendar limit or a meter rule that no source gives.
 - When the source's interval depends on a condition this thing does not record (a certified oil, severe service), use the interval that holds without it, normally the shorter one, and state the other and its condition in the description.
 - Rules: "time" (every N days, months or years), "meter" (every N on a meter), "seasonal" (fixed calendar months) or "on_condition". Several rules mean whichever comes first.
+- A meter rule uses the meter of the task's component: an engine task counts the engine's meter, a propeller task the propeller's. Use a meter with no component only for a task on the thing as a whole.
 - Meter rules may use only the meter keys listed for this thing. Convert the interval to that meter's unit and keep the source's figure in the description when it differs ("every 16,000 km (10,000 mi)"). An interval in a unit no meter tracks goes into the description, and the task keeps its calendar rule or becomes on-condition.
 - "componentSlotKey" is one of the thing's component slot keys, or null for the thing as a whole. When the thing has several components in that slot, say which in "componentHint" ("Engine #2"), else null.
 - "matchesExistingTaskId": the id of an existing task with the same intent on the same component, whatever its wording, else null. When its interval differs, say so in "intervalDifferenceNote" ("You track this every 12 months; the manual says 6").

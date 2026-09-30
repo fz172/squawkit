@@ -27,7 +27,7 @@
       "staticPack": [
         {
           "title": "Replace HVAC filter",
-          "description": "",
+          "description": "Every season, sooner with pets. A clogged filter is the most common cause of a struggling system.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -39,7 +39,7 @@
         },
         {
           "title": "HVAC service",
-          "description": "",
+          "description": "Spring and fall — before the cooling and heating seasons.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -54,7 +54,7 @@
         },
         {
           "title": "Clean gutters",
-          "description": "",
+          "description": "Spring and fall. Overflowing gutters send water into the foundation.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -69,7 +69,7 @@
         },
         {
           "title": "Smoke & CO detector batteries",
-          "description": "",
+          "description": "Replace the batteries and press the test button on every unit.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -81,7 +81,7 @@
         },
         {
           "title": "Flush water heater",
-          "description": "",
+          "description": "Drains the sediment that shortens the tank's life and its efficiency.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -93,7 +93,7 @@
         },
         {
           "title": "Clean dryer vent",
-          "description": "",
+          "description": "Lint in the duct is a fire risk, not just a slow dryer.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -105,7 +105,7 @@
         },
         {
           "title": "Refrigerator water filter",
-          "description": "",
+          "description": "Or per the fridge's own indicator.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -117,7 +117,7 @@
         },
         {
           "title": "Sprinkler blowout",
-          "description": "",
+          "description": "Before the first freeze, if the house has an irrigation system.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -131,7 +131,7 @@
         },
         {
           "title": "Chimney sweep & inspection",
-          "description": "",
+          "description": "If the house has a wood-burning fireplace or stove. Creosote is a fire risk.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -143,7 +143,7 @@
         },
         {
           "title": "Septic pump-out",
-          "description": "",
+          "description": "If the house is on septic. Every three to five years depending on household size.",
           "componentSlotKey": "",
           "rules": [
             {

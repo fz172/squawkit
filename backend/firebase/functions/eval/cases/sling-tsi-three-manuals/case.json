@@ -1,6 +1,6 @@
 {
   "id": "sling-tsi-three-manuals",
-  "description": "Sling TSi with the airframe, Rotax 915 iS and Airmaster manuals: multi-document merge, citations, hours (PRD \u00a79.3).",
+  "description": "Sling TSi with the airframe, Rotax 915 iS and Airmaster manuals: multi-document merge, citations, hours (PRD §9.3).",
   "kind": "document",
   "request": {
     "thingId": "eval-sling-tsi-three-manuals",
@@ -82,7 +82,7 @@
       "staticPack": [
         {
           "title": "Conditional inspection",
-          "description": "",
+          "description": "Experimental aircraft: the operating limitations require a condition inspection within the preceding 12 calendar months, to the scope of 14 CFR Part 43 Appendix D, by the holder of the repairman certificate or an A&P.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -94,7 +94,7 @@
         },
         {
           "title": "100-hour inspection",
-          "description": "",
+          "description": "Only if operated for hire or used for flight instruction for hire (14 CFR 91.409(b)).",
           "componentSlotKey": "",
           "rules": [
             {
@@ -106,7 +106,7 @@
         },
         {
           "title": "ELT inspection",
-          "description": "",
+          "description": "Emergency locator transmitter inspected within the preceding 12 calendar months (14 CFR 91.207(d)).",
           "componentSlotKey": "",
           "rules": [
             {
@@ -118,7 +118,7 @@
         },
         {
           "title": "Transponder test",
-          "description": "",
+          "description": "Tested and inspected within the preceding 24 calendar months (14 CFR 91.413).",
           "componentSlotKey": "",
           "rules": [
             {
@@ -130,7 +130,7 @@
         },
         {
           "title": "Altimeter & pitot-static test",
-          "description": "",
+          "description": "Required for IFR operations; within the preceding 24 calendar months (14 CFR 91.411).",
           "componentSlotKey": "",
           "rules": [
             {
@@ -142,7 +142,7 @@
         },
         {
           "title": "Oil change",
-          "description": "",
+          "description": "Oil and filter every 50 engine hours. Sooner if the engine manual says so, or if the airplane sits between flights.",
           "componentSlotKey": "engine",
           "rules": [
             {
