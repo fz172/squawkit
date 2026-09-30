@@ -398,7 +398,7 @@ interface AiProvider {
 
 Adapters per candidate live in `src/ai/providers/`. Claude and Gemini run on Vertex AI in the
 project's `global` endpoint, authenticated by ADC, so their billing, IAM and data terms stay in
-GCP; OpenAI is not on Vertex and uses its own API key. Vertex has no server-side refusal fallback,
+GCP. OpenAI was dropped from the bake-off on 2026-09-30. Vertex has no server-side refusal fallback,
 so a Claude refusal is a `provider_error`. The Claude adapter can also call Anthropic's API
 directly (`channel: "direct"`, eval flag `--claude=direct`): same models, same list price, no
 refusal fallback on either route. The eval uses it while the project has no Vertex quota for
@@ -406,7 +406,7 @@ Claude; production stays on Vertex. The chosen pair (fast, strong) is config in
 `ai_config/global`, so switching provider is a config write once both adapters are deployed. JSON
 that fails schema validation is retried once with the validation error appended; a second failure
 fails the stage (PRD §9.4 "valid output"). Schemas stay inside the subset all three vendors accept
-(OpenAI strict mode is the narrowest): every object closed, every property required, optional
+(kept to the strictest common form): every object closed, every property required, optional
 values as `null` unions. `assertPortableSchema` checks it.
 
 ### 5.5 Document reading

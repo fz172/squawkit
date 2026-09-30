@@ -1,9 +1,9 @@
 import type { JsonSchema } from "./types.js";
 
 /**
- * The JSON Schema subset all three providers accept as structured output. OpenAI's strict mode is
- * the narrowest: every object closed, every property required. An optional value is written as a
- * `null` union (`type: ["string", "null"]`) instead of being left out of `required`.
+ * The JSON Schema subset every provider accepts as structured output: every object closed, every
+ * property required. An optional value is written as a `null` union (`type: ["string", "null"]`)
+ * instead of being left out of `required`. Strict enough that adding a vendor needs no schema work.
  */
 const ALLOWED_KEYWORDS = new Set([
   "type",

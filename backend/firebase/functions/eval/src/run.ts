@@ -56,7 +56,6 @@ async function main() {
       project: process.env.VERTEX_PROJECT ?? "wingslog-9ca4e",
       location: process.env.VERTEX_LOCATION ?? "global",
     },
-    openAiApiKey: process.env.OPENAI_API_KEY,
     claudeChannel,
   };
   const processor = process.env.DOCUMENT_AI_PROCESSOR;
