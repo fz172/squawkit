@@ -1,4 +1,4 @@
-import { createClaudeVertexProvider } from "./claudeVertexProvider.js";
+import { createClaudeProvider, type ClaudeChannel } from "./claudeProvider.js";
 import { createGeminiProvider } from "./geminiProvider.js";
 import { createOpenAiProvider } from "./openAiProvider.js";
 import type { AiProvider } from "./types.js";
@@ -21,11 +21,15 @@ export const PROVIDER_CANDIDATES: ProviderCandidate[] = [
 ];
 
 /**
- * Claude and Gemini run on Vertex AI in `vertex.project`, authenticated by ADC. Gemini can use
- * `geminiApiKey` instead for local runs; OpenAI is not on Vertex and defaults to `OPENAI_API_KEY`.
+ * Claude and Gemini run on Vertex AI in `vertex.project`, authenticated by ADC. Claude can use
+ * Anthropic's API instead (`claudeChannel: "direct"`, `ANTHROPIC_API_KEY`), and Gemini an API key,
+ * for local runs; OpenAI is not on Vertex and defaults to `OPENAI_API_KEY`.
  */
 export type ProviderCredentials = {
   vertex?: { project: string; location: string };
+  /** Defaults to `vertex`, the production route. */
+  claudeChannel?: ClaudeChannel;
+  anthropicApiKey?: string;
   geminiApiKey?: string;
   openAiApiKey?: string;
 };
@@ -35,7 +39,12 @@ export function createProvider(id: string, credentials: ProviderCredentials = {}
   if (!candidate) throw new Error(`Unknown provider ${id}`);
   switch (candidate.vendor) {
     case "anthropic":
-      return createClaudeVertexProvider({ model: id, vertex: credentials.vertex });
+      return createClaudeProvider({
+        model: id,
+        channel: credentials.claudeChannel ?? "vertex",
+        vertex: credentials.vertex,
+        apiKey: credentials.anthropicApiKey,
+      });
     case "google":
       return createGeminiProvider({ model: id, vertex: credentials.vertex, apiKey: credentials.geminiApiKey });
     case "openai":

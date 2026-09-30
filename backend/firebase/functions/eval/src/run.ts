@@ -16,7 +16,7 @@ import type { CaseScore } from "./score.js";
 /**
  * `npm run eval:tasks -- --fast=<id> --strong=<id> [--cases=a,b] [--locate=keywords|model|all]
  *   [--recall-tier=fast|strong] [--ocr=document-ai|none] [--repeat=N] [--warm]
- *   [--replay=<run dir>]`
+ *   [--claude=vertex|direct] [--replay=<run dir>]`
  *
  * Costs money unless --replay is given. See eval/README.md.
  */
@@ -34,6 +34,7 @@ async function main() {
       repeat: { type: "string", default: "1" },
       warm: { type: "boolean", default: false },
       replay: { type: "string" },
+      claude: { type: "string", default: "vertex" },
     },
   });
 
@@ -47,6 +48,7 @@ async function main() {
   const locate = oneOf<LocateMethod>(values.locate, ["keywords", "model", "all"], "--locate");
   const recallTier = oneOf<AiTier>(values["recall-tier"], ["fast", "strong"], "--recall-tier");
   const repeat = replayDir ? 1 : Math.max(1, Number(values.repeat));
+  const claudeChannel = oneOf<"vertex" | "direct">(values.claude, ["vertex", "direct"], "--claude");
 
   const cases = loadCases(path.join(EVAL_DIR, "cases"), values.cases === "all" ? "all" : values.cases!.split(","));
   const credentials = {
@@ -55,6 +57,7 @@ async function main() {
       location: process.env.VERTEX_LOCATION ?? "global",
     },
     openAiApiKey: process.env.OPENAI_API_KEY,
+    claudeChannel,
   };
   const processor = process.env.DOCUMENT_AI_PROCESSOR;
   if (values.ocr === "document-ai" && !processor && !replayDir) {
@@ -101,6 +104,7 @@ async function main() {
     strong: strongId,
     locate,
     recallTier,
+    claude: claudeChannel,
     ocr: ocrLabel(values.ocr, processor),
     repeat,
     generationVersion: GENERATION_VERSION,

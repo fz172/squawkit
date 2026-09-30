@@ -5,7 +5,7 @@ import type OpenAI from "openai";
 import { describe, expect, it } from "vitest";
 
 import { AiError } from "../../src/ai/errors.js";
-import { createClaudeVertexProvider } from "../../src/ai/providers/claudeVertexProvider.js";
+import { createClaudeProvider } from "../../src/ai/providers/claudeProvider.js";
 import { createGeminiProvider } from "../../src/ai/providers/geminiProvider.js";
 import { generateValidated } from "../../src/ai/providers/generateValidated.js";
 import { createOpenAiProvider } from "../../src/ai/providers/openAiProvider.js";
@@ -45,7 +45,7 @@ async function rejection(p: Promise<unknown>): Promise<unknown> {
   );
 }
 
-describe("claude on vertex provider", () => {
+describe("claude provider", () => {
   function fakeClient(message: Partial<Anthropic.Message> | Error) {
     const calls: Record<string, unknown>[] = [];
     const client = {
@@ -72,7 +72,7 @@ describe("claude on vertex provider", () => {
 
   it("sends parts, schema and tier effort, and prices the usage", async () => {
     const { client, calls } = fakeClient({});
-    const provider = createClaudeVertexProvider({ model: "claude-sonnet-5-5", client });
+    const provider = createClaudeProvider({ model: "claude-sonnet-5-5", channel: "vertex", client });
 
     const out = await provider.generate(request("fast"));
 
@@ -94,9 +94,15 @@ describe("claude on vertex provider", () => {
     });
   });
 
+  it("asks the direct API for Haiku by its plain id", async () => {
+    const { client, calls } = fakeClient({});
+    await createClaudeProvider({ model: "claude-haiku-4-5", channel: "direct", client }).generate(request());
+    expect(calls[0].model).toBe("claude-haiku-4-5");
+  });
+
   it("asks Vertex for the Haiku snapshot, with no effort", async () => {
     const { client, calls } = fakeClient({});
-    const out = await createClaudeVertexProvider({ model: "claude-haiku-4-5", client }).generate(
+    const out = await createClaudeProvider({ model: "claude-haiku-4-5", channel: "vertex", client }).generate(
       request(),
     );
 
@@ -109,7 +115,7 @@ describe("claude on vertex provider", () => {
   it("reports a refusal as a provider error that keeps its usage", async () => {
     const { client } = fakeClient({ stop_reason: "refusal", content: [] });
     const e = await rejection(
-      createClaudeVertexProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
+      createClaudeProvider({ model: "claude-sonnet-5-5", channel: "vertex", client }).generate(request()),
     );
     expect(e).toBeInstanceOf(AiError);
     expect((e as AiError).code).toBe("provider_error");
@@ -121,7 +127,7 @@ describe("claude on vertex provider", () => {
     const prose = fakeClient({ content: [{ type: "text", text: "Sure! Here", citations: null }] });
     for (const { client } of [truncated, prose]) {
       const e = await rejection(
-        createClaudeVertexProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
+        createClaudeProvider({ model: "claude-sonnet-5-5", channel: "vertex", client }).generate(request()),
       );
       expect(e).toBeInstanceOf(AiOutputParseError);
     }
@@ -130,7 +136,7 @@ describe("claude on vertex provider", () => {
   it("wraps an SDK error as a provider error", async () => {
     const { client } = fakeClient(new Error("overloaded"));
     const e = await rejection(
-      createClaudeVertexProvider({ model: "claude-sonnet-5-5", client }).generate(request()),
+      createClaudeProvider({ model: "claude-sonnet-5-5", channel: "vertex", client }).generate(request()),
     );
     expect((e as AiError).code).toBe("provider_error");
   });
@@ -340,6 +346,7 @@ describe("registry", () => {
   it("refuses a model with no price", () => {
     expect(() => createGeminiProvider({ model: "gemini-9", apiKey: "k" })).toThrow(/No price/);
     expect(() => createProvider("gpt-unknown")).toThrow(/Unknown provider/);
-    expect(() => createProvider("claude-sonnet-5-5")).toThrow(/Vertex project/);
+    expect(() => createProvider("claude-sonnet-5-5")).toThrow(/Vertex needs a project/);
+    expect(createProvider("claude-sonnet-5-5", { claudeChannel: "direct", anthropicApiKey: "k" }).id).toBe("claude-sonnet-5-5");
   });
 });
