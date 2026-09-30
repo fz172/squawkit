@@ -489,6 +489,10 @@ Input: the candidate items from 2 and 3, the `SuggestionContext`. The model:
 
 - merges duplicates across sources (document beats recall, R16) and folds inspection-event items
   into one task (decision 3);
+- keeps the interval of a starter-pack item whose description cites the owner's regulations
+  (the airplane template's 14 CFR 91.411 and 91.413 items at 24 months) even when a manual gives
+  another, since a manual may follow a different country's rules (the Sling manual follows South
+  Africa's); otherwise a document's interval beats a starter-pack item's;
 - maps each to the template: meter keys from `context.meters` only, unit conversion with the source
   figure kept in the description (R23), a `component_slot_key` from the template's tree, and a
   `component_hint` in words when the Thing has several instances of the slot;
@@ -549,6 +553,12 @@ Each rule is a pure function with its own tests (§14). In order:
 7. **Confidence (R21a):** the job is EMPTY when there are no documents and stage 3's identity
    confidence is low, or when nothing survives 1–6. Individual low-confidence items are dropped,
    never shown as such.
+
+A **source-backed rule** check runs after rule 2: a `DOCUMENT` suggestion keeps a time or meter
+rule only when one of its document candidates states a matching interval (days, months and years,
+and miles and kilometres, converted, within 3%) or the starter-pack item it merges has that rule.
+It removes calendar limits the tailor adds on its own ("100 h or 12 months" where the manual says
+100 h).
 
 Three more checks run with them: rule 1 files a suggestion whose slot the Thing does not fill at
 Thing level (R22); `last_done` must name a log in `context.logs`, whose date and reading are

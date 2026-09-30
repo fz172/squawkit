@@ -52,7 +52,7 @@
       "staticPack": [
         {
           "title": "Lube the chain",
-          "description": "",
+          "description": "More often in wet or dusty conditions. A dry chain wears the whole drivetrain.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -64,7 +64,7 @@
         },
         {
           "title": "Check chain wear",
-          "description": "",
+          "description": "Replace at 0.5% stretch before it takes the cassette and chainrings with it.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -76,7 +76,7 @@
         },
         {
           "title": "Check brake pads & cables",
-          "description": "",
+          "description": "Pad thickness, cable fray, hydraulic feel.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -88,7 +88,7 @@
         },
         {
           "title": "Full tune-up",
-          "description": "",
+          "description": "Bearings, derailleur adjustment, wheel true, bolt torque.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -100,7 +100,7 @@
         },
         {
           "title": "Refresh tubeless sealant",
-          "description": "",
+          "description": "Tubeless tires only. Sealant dries out whether or not you ride.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -112,7 +112,7 @@
         },
         {
           "title": "Suspension service",
-          "description": "",
+          "description": "Fork and shock, per the manufacturer's hour interval.",
           "componentSlotKey": "",
           "rules": [
             {

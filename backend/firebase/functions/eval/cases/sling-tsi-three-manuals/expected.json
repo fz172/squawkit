@@ -92,7 +92,7 @@
       "rules": [
         {
           "kind": "meter",
-          "meterKey": "airframe_hours",
+          "meterKey": "engine_hours",
           "interval": 300
         }
       ],
@@ -105,7 +105,7 @@
         }
       ],
       "type": "routine",
-      "_note": "Lubrication table items 16-18: engine throttle cable, engine choke cable, heater activation cables at 300 h. A choke cable on an injected 915 iS looks like a carry-over from the carbureted model; reviewer check. Tracked on airframe_hours since the cables are airframe-installed."
+      "_note": "Lubrication table items 16-18: engine throttle cable, engine choke cable, heater activation cables at 300 h. A choke cable on an injected 915 iS looks like a carry-over from the carbureted model; reviewer check. Tracked on airframe_hours since the cables are airframe-installed. Engine hours (reviewer): the cables are engine controls."
     },
     {
       "titleAliases": [

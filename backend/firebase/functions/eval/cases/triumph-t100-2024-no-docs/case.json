@@ -44,7 +44,7 @@
       "staticPack": [
         {
           "title": "Engine oil & filter",
-          "description": "",
+          "description": "Whichever comes first. Check the manual for the oil grade and the interval that applies to your engine.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -61,7 +61,7 @@
         },
         {
           "title": "Tire rotation",
-          "description": "",
+          "description": "Evens out wear across all four tires. Cars and trucks only.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -73,7 +73,7 @@
         },
         {
           "title": "Engine air filter",
-          "description": "",
+          "description": "Sooner on dusty roads; a clogged filter costs power and fuel.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -85,7 +85,7 @@
         },
         {
           "title": "Cabin air filter",
-          "description": "",
+          "description": "Keeps the ventilation clean. Cars and trucks only.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -97,7 +97,7 @@
         },
         {
           "title": "Brake fluid flush",
-          "description": "",
+          "description": "Brake fluid absorbs water over time and loses its boiling point.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -109,7 +109,7 @@
         },
         {
           "title": "Coolant flush",
-          "description": "",
+          "description": "Long-life coolants run further — confirm the interval in the manual.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -121,7 +121,7 @@
         },
         {
           "title": "Registration renewal",
-          "description": "",
+          "description": "Annual in most places; adjust to your state or province.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -133,7 +133,7 @@
         },
         {
           "title": "Chain lube & adjustment",
-          "description": "",
+          "description": "Motorcycles with a chain final drive. Sooner after rain.",
           "componentSlotKey": "",
           "rules": [
             {

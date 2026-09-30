@@ -51,7 +51,7 @@
       "staticPack": [
         {
           "title": "Engine oil & filter",
-          "description": "",
+          "description": "Whichever comes first. Check the manual for the interval that applies to your engine.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -68,7 +68,7 @@
         },
         {
           "title": "Raw-water pump impeller",
-          "description": "",
+          "description": "Rubber vanes fail without warning and take the engine's cooling with them.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -80,7 +80,7 @@
         },
         {
           "title": "Lower unit / gear oil",
-          "description": "",
+          "description": "Milky oil means a failed seal — check the drained oil before refilling.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -92,7 +92,7 @@
         },
         {
           "title": "Winterize",
-          "description": "",
+          "description": "Before the first freeze: drain or antifreeze the raw-water side, fog the engine, stabilize the fuel.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -104,7 +104,7 @@
         },
         {
           "title": "Sacrificial anodes",
-          "description": "",
+          "description": "Replace at half gone. Sooner in a marina with stray current.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -116,7 +116,7 @@
         },
         {
           "title": "Bottom paint & hull inspection",
-          "description": "",
+          "description": "Antifouling, through-hulls, and a look at the running gear while it is out.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -128,7 +128,7 @@
         },
         {
           "title": "Safety gear check",
-          "description": "",
+          "description": "Fire extinguisher gauge, flare expiry dates, life jacket condition.",
           "componentSlotKey": "",
           "rules": [
             {
@@ -140,7 +140,7 @@
         },
         {
           "title": "Registration renewal",
-          "description": "",
+          "description": "Annual in most places; some states register for two or three years.",
           "componentSlotKey": "",
           "rules": [
             {

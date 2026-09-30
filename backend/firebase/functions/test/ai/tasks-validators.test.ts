@@ -117,6 +117,15 @@ describe("source-backed rules", () => {
     expect(sourceRule([withSource([rule], [...stated])], input())[0].rules).toEqual([]);
   });
 
+  it("keeps a rule the merged starter-pack item states", () => {
+    const pitot = airplaneContext({
+      staticPack: [{ title: "Altimeter & pitot-static test", description: "", componentSlotKey: "", rules: [{ kind: "time", every: 24, unit: "months" }] }],
+    });
+    const d = withSource([{ kind: "time", every: 2, unit: "years" }], [{ value: 12, unit: "months" }], { mergesStaticIndex: 0 });
+    expect(sourceRule([d], input({ context: pitot }))[0].rules).toEqual([{ kind: "time", every: 2, unit: "years" }]);
+    expect(sourceRule([{ ...d, mergesStaticIndex: -1 }], input({ context: pitot }))[0].rules).toEqual([]);
+  });
+
   it("leaves general-knowledge suggestions and seasonal rules alone", () => {
     const recalled = withSource([{ kind: "time", every: 12, unit: "months" }], [], { sourceKind: "common_practice" });
     const seasonal = withSource([{ kind: "seasonal", months: [4, 10], dayOfMonth: 0 }], []);
