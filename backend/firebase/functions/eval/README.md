@@ -18,7 +18,6 @@ only the scorer and a record-and-replay round trip (`test/ai/eval-*.test.ts`).
    (`gcloud auth application-default login`), with Claude enabled in Model Garden.
    - `VERTEX_PROJECT` (default `wingslog-9ca4e`), `VERTEX_LOCATION` (default `global`)
    - `ANTHROPIC_API_KEY` for `--claude=direct`, while the project has no Vertex quota for Claude
-   - `OPENAI_API_KEY` for the OpenAI candidates
    - `DOCUMENT_AI_PROCESSOR=projects/…/locations/us/processors/…` (an Enterprise Document OCR
      processor) for image-only pages. Without it, those pages are not read.
 
