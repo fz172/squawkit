@@ -209,8 +209,13 @@ function intervalMatches(task: ExpectedTask, s: TaskSuggestion): boolean {
   return rules && !!due && due.meterKey === want.meterKey && Math.abs(due.value - want.value) <= want.value * 0.02;
 }
 
-/** Same rules, ignoring order; months and years compare as months, meter intervals within 2%. */
-export function rulesMatch(expected: SuggestedRule[], actual: SuggestedRule[]): boolean {
+/**
+ * Same rules, ignoring order and on-condition entries (no rules and "on condition" are equal).
+ * Months and years compare as months; meter intervals within 2%.
+ */
+export function rulesMatch(expectedRules: SuggestedRule[], actualRules: SuggestedRule[]): boolean {
+  const expected = expectedRules.filter((r) => r.kind !== "on_condition");
+  const actual = actualRules.filter((r) => r.kind !== "on_condition");
   if (expected.length !== actual.length) return false;
   const remaining = [...actual];
   for (const e of expected) {
@@ -235,11 +240,16 @@ function timeKey(r: Extract<SuggestedRule, { kind: "time" }>): string {
   return `${r.unit === "years" ? r.every * 12 : r.every}m`;
 }
 
+/** Lowercase words, with "hr"/"hrs"/"h" read as "hour" and plurals as singular. */
 function normalizeTitle(s: string): string {
   return s
     .toLowerCase()
+    .replace(/(\d)([a-z])/g, "$1 $2")
     .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+    .trim()
+    .split(" ")
+    .map((w) => (/^(h|hr|hrs|hours)$/.test(w) ? "hour" : w.length > 3 && /[^s]s$/.test(w) ? w.slice(0, -1) : w))
+    .join(" ");
 }
 
 function ratio(n: number, d: number): number | null {

@@ -96,7 +96,9 @@ function score(suggestions: TaskSuggestion[], expected: Partial<Expected> = {}, 
 describe("matching", () => {
   it.each([
     ["spark plugs", "Replace spark plugs", 1],
-    ["Replace spark plugs", "Spark plug replacement", 1 / 3],
+    ["Replace spark plugs", "Spark plug replacement", 2 / 3],
+    ["engine 200-hour check", "Engine 200 hr additional checks", 1],
+    ["engine 600-hour check", "600h engine checks", 1],
     ["coolant change", "Replace coolant", 0.5],
     ["", "anything", 0],
   ])("titleSimilarity(%s, %s) = %f", (alias, title, expected) => {
@@ -114,6 +116,7 @@ describe("matching", () => {
     ).toBe(true);
     expect(rulesMatch([{ kind: "meter", meterKey: "odometer", interval: 10000 }], [{ kind: "meter", meterKey: "odometer", interval: 9000 }])).toBe(false);
     expect(rulesMatch([], [{ kind: "time", every: 12, unit: "months" }])).toBe(false);
+    expect(rulesMatch([], [{ kind: "on_condition", description: "as needed" }])).toBe(true);
   });
 });
 

@@ -57,7 +57,12 @@ export function buildDrafts(
           pageRef: pageRef(item),
           sourcePages: item.pages,
           sourceDocument: primary.doc.ref.blobId,
-          evidence: { documentIndex: primary.doc.index, pages: item.pages, sourceFigures: figures },
+          evidence: {
+            documentIndex: primary.doc.index,
+            pages: item.pages,
+            sourceFigures: figures,
+            sourceIntervals: docItems.flatMap((c) => c.item.intervals),
+          },
         },
       ];
     }
@@ -74,7 +79,7 @@ export function buildDrafts(
         pageRef: "",
         sourcePages: [],
         sourceDocument: "",
-        evidence: { documentIndex: null, pages: [], sourceFigures: figures },
+        evidence: { documentIndex: null, pages: [], sourceFigures: figures, sourceIntervals: [] },
       },
     ];
   });

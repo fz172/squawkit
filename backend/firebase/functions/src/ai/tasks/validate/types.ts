@@ -1,6 +1,6 @@
 import type { DocumentPage } from "../../document/readDocument.js";
 import type { DocType, SuggestionContext, TaskSuggestion } from "../model.js";
-import type { Confidence, FlatFirstDue, FlatRule } from "../stageTypes.js";
+import type { Confidence, FlatFirstDue, FlatRule, SourceInterval } from "../stageTypes.js";
 
 /** A suggestion between the tailor and the result, carrying what the validators check it against. */
 export type Draft = Omit<TaskSuggestion, "suggestionId"> & {
@@ -16,6 +16,8 @@ export type Draft = Omit<TaskSuggestion, "suggestionId"> & {
     pages: number[];
     /** Interval figures as the sources state them, for the citation check. */
     sourceFigures: number[];
+    /** For a document source: the intervals its document candidates state, with units. */
+    sourceIntervals: SourceInterval[];
   };
 };
 
