@@ -85,7 +85,7 @@ export function draft(overrides: Partial<Draft> = {}): Draft {
     mergesStaticIndex: -1,
     preselect: false,
     confidence: "high",
-    evidence: { documentIndex: 0, pages: [2], sourceFigures: [200] },
+    evidence: { documentIndex: 0, pages: [2], sourceFigures: [200], sourceIntervals: [{ value: 200, unit: "hours" }] },
     ...overrides,
   };
 }

@@ -1,5 +1,5 @@
 import type { MeterReadingValue, SuggestedRule } from "../model.js";
-import type { FlatRule } from "../stageTypes.js";
+import type { FlatRule, SourceInterval } from "../stageTypes.js";
 import type { Draft, ValidationInput, Validator } from "./types.js";
 
 /**
@@ -40,6 +40,27 @@ export const meterRule: Validator = (drafts, { context }) => {
     return { ...d, rules: [{ kind: "on_condition", description: capitalize(untracked) }] };
   });
 };
+
+/**
+ * Source-backed rules (R16): a document suggestion keeps only rules its document states. A time
+ * rule needs a stated time interval, a meter rule a stated usage interval in a unit that converts
+ * to the meter's; a calendar limit the tailor adds on its own ("100 h or 12 months" where the
+ * manual says 100 h) is removed. Seasonal and on-condition rules pass.
+ */
+export const sourceRule: Validator = (drafts, { context }) =>
+  drafts.map((d) => {
+    if (d.sourceKind !== "document") return d;
+    const stated = d.evidence.sourceIntervals;
+    const kept = d.rules.filter((r) => {
+      if (r.kind === "time") return stated.some((i) => timeMatches(r.every, r.unit, i));
+      if (r.kind === "meter") {
+        const unit = meterUnit(context.meters.find((m) => m.key === r.meterKey)?.unitLabel ?? "");
+        return stated.some((i) => usageMatches(r.interval, unit, i));
+      }
+      return true;
+    });
+    return kept.length === d.rules.length ? d : { ...d, rules: kept };
+  });
 
 /**
  * 3. Regulatory typing (R18). Without documents everything is routine. With them, AD or SB typing
@@ -144,6 +165,7 @@ export const confidenceRule: Validator = (drafts) => drafts.filter((d) => d.conf
 export const VALIDATORS: Validator[] = [
   schemaRule,
   meterRule,
+  sourceRule,
   regulatoryRule,
   citationRule,
   dedupIdsRule,
@@ -220,6 +242,43 @@ function alreadyPassed(d: Draft, context: ValidationInput["context"]): boolean {
   if (!due) return false;
   const current = context.meters.find((m) => m.key === due.meterKey)?.current;
   return current !== null && current !== undefined && current > due.value;
+}
+
+const DAYS: Record<string, number> = { days: 1, weeks: 7, months: 30.4375, years: 365.25 };
+
+function timeMatches(every: number, unit: "days" | "months" | "years", stated: SourceInterval): boolean {
+  const per = DAYS[stated.unit];
+  return per !== undefined && close(every * DAYS[unit], stated.value * per);
+}
+
+type UsageUnit = "hours" | "miles" | "kilometers" | "cycles" | "landings" | "starts" | null;
+
+/** A meter's unit label ("hrs", "mi", "km") as an interval unit; null when it names none. */
+function meterUnit(label: string): UsageUnit {
+  const l = label.trim().toLowerCase();
+  if (/^(h|hr|hrs|hour|hours)$/.test(l)) return "hours";
+  if (/^(mi|mile|miles)$/.test(l)) return "miles";
+  if (/^(km|kms|kilometers|kilometres)$/.test(l)) return "kilometers";
+  if (/^cycles?$/.test(l)) return "cycles";
+  if (/^landings?$/.test(l)) return "landings";
+  if (/^starts?$/.test(l)) return "starts";
+  return null;
+}
+
+const KM_PER_MILE = 1.609344;
+
+function usageMatches(interval: number, unit: UsageUnit, stated: SourceInterval): boolean {
+  if (DAYS[stated.unit] !== undefined || stated.unit === "other") return false;
+  if (unit === null) return close(interval, stated.value);
+  if (unit === stated.unit) return close(interval, stated.value);
+  if (unit === "miles" && stated.unit === "kilometers") return close(interval, stated.value / KM_PER_MILE);
+  if (unit === "kilometers" && stated.unit === "miles") return close(interval, stated.value * KM_PER_MILE);
+  return false;
+}
+
+/** Within 3%, for rounding in conversions ("16,000 km" as 10,000 mi). */
+function close(a: number, b: number): boolean {
+  return Math.abs(a - b) <= Math.max(a, b) * 0.03;
 }
 
 /** `YYYY-MM-DD` plus a whole number of days, months or years; month ends clamp (Jan 31 + 1 month = Feb 28). */

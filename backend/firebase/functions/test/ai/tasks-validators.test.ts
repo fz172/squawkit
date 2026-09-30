@@ -9,6 +9,7 @@ import {
   containsVerbatim,
   dedupIdsRule,
   firstDueRule,
+  sourceRule,
   lastDoneRule,
   meterRule,
   preselectRule,
@@ -87,6 +88,43 @@ describe("2. meter rule", () => {
   });
 });
 
+describe("source-backed rules", () => {
+  const withSource = (rules: Draft["rules"], sourceIntervals: Draft["evidence"]["sourceIntervals"], over: Partial<Draft> = {}) =>
+    draft({ rules, evidence: { documentIndex: 0, pages: [2], sourceFigures: [], sourceIntervals }, ...over });
+  const miles = airplaneContext({ meters: [{ key: "odometer", unitLabel: "mi", componentSlotKey: "", current: 1200 }] });
+
+  it("removes a calendar limit the document does not state", () => {
+    const d = withSource(
+      [{ kind: "meter", meterKey: "engine_hours", interval: 100 }, { kind: "time", every: 12, unit: "months" }],
+      [{ value: 100, unit: "hours" }],
+    );
+    expect(sourceRule([d], input())[0].rules).toEqual([{ kind: "meter", meterKey: "engine_hours", interval: 100 }]);
+  });
+
+  it.each([
+    ["years stated as months", { kind: "time", every: 24, unit: "months" }, [{ value: 2, unit: "years" }], input()],
+    ["a km interval converted to miles", { kind: "meter", meterKey: "odometer", interval: 10000 }, [{ value: 16000, unit: "kilometers" }], input({ context: miles })],
+    ["hours on an hours meter", { kind: "meter", meterKey: "engine_hours", interval: 200 }, [{ value: 200, unit: "hours" }], input()],
+  ] as const)("keeps %s", (_name, rule, stated, inp) => {
+    expect(sourceRule([withSource([rule], [...stated])], inp)[0].rules).toEqual([rule]);
+  });
+
+  it.each([
+    ["a figure the document does not give", { kind: "meter", meterKey: "engine_hours", interval: 400 }, [{ value: 200, unit: "hours" }]],
+    ["a meter rule backed only by a time interval", { kind: "meter", meterKey: "engine_hours", interval: 12 }, [{ value: 12, unit: "months" }]],
+    ["any rule when the document states no interval", { kind: "time", every: 12, unit: "months" }, []],
+  ] as const)("removes %s", (_name, rule, stated) => {
+    expect(sourceRule([withSource([rule], [...stated])], input())[0].rules).toEqual([]);
+  });
+
+  it("leaves general-knowledge suggestions and seasonal rules alone", () => {
+    const recalled = withSource([{ kind: "time", every: 12, unit: "months" }], [], { sourceKind: "common_practice" });
+    const seasonal = withSource([{ kind: "seasonal", months: [4, 10], dayOfMonth: 0 }], []);
+    expect(sourceRule([recalled], input())[0].rules).toHaveLength(1);
+    expect(sourceRule([seasonal], input())[0].rules).toHaveLength(1);
+  });
+});
+
 describe("3. regulatory rule", () => {
   const ad = (over: Partial<Draft> = {}) =>
     draft({
@@ -105,7 +143,7 @@ describe("3. regulatory rule", () => {
     ["the cited document is not a directive", ad(), input(), "routine"],
     ["the number is not in the document", ad({ referenceNumber: "AD 2023-01-01" }), input({ documents: [adDoc] }), "routine"],
     ["the directive prints the number (whitespace and case differ)", ad({ referenceNumber: "ad 2024-05-07" }), input({ documents: [adDoc] }), "airworthiness_directive"],
-    ["a manufacturer-schedule item claims a bulletin", ad({ type: "service_bulletin", sourceKind: "manufacturer_schedule", evidence: { documentIndex: null, pages: [], sourceFigures: [] } }), input({ documents: [adDoc] }), "routine"],
+    ["a manufacturer-schedule item claims a bulletin", ad({ type: "service_bulletin", sourceKind: "manufacturer_schedule", evidence: { documentIndex: null, pages: [], sourceFigures: [], sourceIntervals: [] } }), input({ documents: [adDoc] }), "routine"],
   ] as const)("%s → %s", (_name, d, inp, expected) => {
     const out = regulatoryRule([d], inp)[0];
     expect(out.type).toBe(expected);
@@ -124,10 +162,10 @@ describe("3. regulatory rule", () => {
 describe("4. citation rule", () => {
   it.each([
     ["the cited page states it", draft(), true],
-    ["the cited page is another page", draft({ evidence: { documentIndex: 0, pages: [1], sourceFigures: [200] } }), false],
-    ["no pages cited", draft({ evidence: { documentIndex: 0, pages: [], sourceFigures: [200] } }), false],
-    ["no document", draft({ evidence: { documentIndex: 3, pages: [2], sourceFigures: [200] } }), false],
-    ["a common-practice item needs no page", draft({ sourceKind: "common_practice", evidence: { documentIndex: null, pages: [], sourceFigures: [] } }), true],
+    ["the cited page is another page", draft({ evidence: { documentIndex: 0, pages: [1], sourceFigures: [200], sourceIntervals: [] } }), false],
+    ["no pages cited", draft({ evidence: { documentIndex: 0, pages: [], sourceFigures: [200], sourceIntervals: [] } }), false],
+    ["no document", draft({ evidence: { documentIndex: 3, pages: [2], sourceFigures: [200], sourceIntervals: [] } }), false],
+    ["a common-practice item needs no page", draft({ sourceKind: "common_practice", evidence: { documentIndex: null, pages: [], sourceFigures: [], sourceIntervals: [] } }), true],
   ] as const)("%s → kept %s", (_name, d, kept) => {
     expect(citationRule([d], input())).toHaveLength(kept ? 1 : 0);
   });
@@ -212,10 +250,10 @@ describe("first-due rule", () => {
 
 describe("6. pre-selection rule", () => {
   const home = input({ context: airplaneContext({ templateId: "home" }) });
-  const recall = { sourceKind: "common_practice" as const, evidence: { documentIndex: null, pages: [], sourceFigures: [] } };
+  const recall = { sourceKind: "common_practice" as const, evidence: { documentIndex: null, pages: [], sourceFigures: [], sourceIntervals: [] } };
   it.each([
     ["document", draft(), input(), true],
-    ["logs", draft({ sourceKind: "logs", evidence: { documentIndex: null, pages: [], sourceFigures: [] } }), input(), true],
+    ["logs", draft({ sourceKind: "logs", evidence: { documentIndex: null, pages: [], sourceFigures: [], sourceIntervals: [] } }), input(), true],
     ["common practice on an airplane", draft(recall), input(), false],
     ["common practice on a home", draft(recall), home, true],
     ["a document for a different Thing", draft(), input({ documents: [doc({ matchesThing: false })] }), false],
@@ -239,7 +277,7 @@ describe("validate", () => {
     const out = validate(
       [
         draft({ lastDoneLogId: "log-1" }),
-        draft({ title: "Invented item", evidence: { documentIndex: 0, pages: [1], sourceFigures: [7] } }),
+        draft({ title: "Invented item", evidence: { documentIndex: 0, pages: [1], sourceFigures: [7], sourceIntervals: [] } }),
       ],
       input(),
     );
