@@ -164,9 +164,16 @@ export function containsVerbatim(text: string, needle: string): boolean {
   return n.length > 0 && squash(text).includes(n);
 }
 
+/**
+ * Words that say nothing about which item a page states. The maintenance verbs are here because
+ * every schedule page has them: "check" plus a column-header figure once passed a page that never
+ * named the part.
+ */
 const STOPWORDS = new Set([
   "the", "and", "for", "with", "from", "into", "every", "each", "after", "before", "per", "all",
   "any", "its", "not", "are", "was", "has", "have", "this", "that", "your",
+  "check", "inspect", "inspection", "replace", "lubricate", "service", "adjust", "clean", "test",
+  "change", "renew",
 ]);
 
 /**

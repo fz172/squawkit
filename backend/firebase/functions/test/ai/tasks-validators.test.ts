@@ -139,6 +139,7 @@ describe("4. citation rule", () => {
     ["neither", "Valve clearance check", "lubricate the throttle cable", [200], false],
     ["one word plus a figure", "Valve clearance adjustment check", "valve at 200 h", [200], true],
     ["a figure inside a longer number is not a match", "Valve clearance adjustment check", "valve at 1200 h", [200], false],
+    ["a maintenance verb and a column figure are not evidence", "Headstock bearings check and lubrication", "Brake pads - check   20,000", [20000], false],
   ] as const)("citationHolds: %s", (_name, title, text, figures, holds) => {
     expect(citationHolds(text, title, [...figures])).toBe(holds);
   });
