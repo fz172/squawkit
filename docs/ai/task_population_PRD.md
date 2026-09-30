@@ -179,7 +179,7 @@ which case it is the first follow-up; **P2** is designed for, not built.
     typed routine.
 - **R19 (P0). Progress.** A progress state appears within one second, naming the current step
   ("Reading Rotax 915 iS manual…"). A cache hit returns in under 5 seconds, and an uncached run with
-  three documents in under two minutes at p90. The user can leave the screen. The result is held
+  three documents in under three minutes at p90. The user can leave the screen. The result is held
   server-side for that caller and Thing for up to 24 hours and deleted when fetched or accepted.
 - **R20 (P1).** When an uncached run finishes after the user has left, a notification brings them
   back to the review screen.
@@ -479,7 +479,7 @@ before the airplane preset is enabled.
 - Recall of ≥ 90% of the manual's scheduled items.
 - ≥ 95% of the items present have the correct interval(s) and units.
 - ≥ 95% of citations point to the page containing the item.
-- An uncached three-document run finishes in under two minutes at p90.
+- An uncached three-document run finishes in under three minutes at p90 (raised from two on 2026-09-30, after the first bake-off round).
 
 **Cost:** reported per document and per run, with a guide of under about $1 for an uncached
 three-document airplane. This is a guide, not a gate, and quality wins a tie.
