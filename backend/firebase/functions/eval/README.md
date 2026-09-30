@@ -17,6 +17,7 @@ only the scorer and a record-and-replay round trip (`test/ai/eval-*.test.ts`).
 2. **Credentials.** Claude and Gemini run on Vertex AI through ADC
    (`gcloud auth application-default login`), with Claude enabled in Model Garden.
    - `VERTEX_PROJECT` (default `wingslog-9ca4e`), `VERTEX_LOCATION` (default `global`)
+   - `ANTHROPIC_API_KEY` for `--claude=direct`, while the project has no Vertex quota for Claude
    - `OPENAI_API_KEY` for the OpenAI candidates
    - `DOCUMENT_AI_PROCESSOR=projects/…/locations/us/processors/…` (an Enterprise Document OCR
      processor) for image-only pages. Without it, those pages are not read.
@@ -37,6 +38,7 @@ npm run eval:tasks -- --replay=eval/out/<run>                    # re-score a ru
 | `--locate` | `keywords` | How schedule pages are found: `keywords`, `model` or `all` |
 | `--recall-tier` | `fast` | Which model recalls the common schedule (design §6.3) |
 | `--ocr` | `document-ai` | `none` to skip OCR |
+| `--claude` | `vertex` | `direct` calls Claude on Anthropic's API with `ANTHROPIC_API_KEY`; same models, same list price |
 | `--repeat` | `1` | Runs per case, for p90 latency |
 | `--warm` | off | Re-runs each succeeded case on its warm cache, for R19's cache-hit time |
 | `--replay` | — | Replays a run's recorded answers: no provider calls, no cost |

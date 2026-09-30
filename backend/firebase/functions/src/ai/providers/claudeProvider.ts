@@ -1,4 +1,4 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import { AnthropicVertex } from "@anthropic-ai/vertex-sdk";
 
 import { AiError } from "../errors.js";
@@ -30,25 +30,45 @@ const TRAITS: Record<string, ModelTraits> = {
 
 const EFFORT_BY_TIER: Record<AiTier, Effort> = { fast: "low", strong: "high" };
 
-export type ClaudeVertexProviderOptions = {
-  model: string;
-  /**
-   * The GCP project, authenticated by ADC. `global` is priced as Anthropic's list price; a
-   * regional endpoint costs 10% more, which the price table does not reflect.
-   */
-  vertex?: { project: string; location: string };
-  client?: AnthropicVertex;
+/** The one call the adapter makes, which both SDK clients provide. */
+type ClaudeClient = {
+  messages: {
+    stream(params: Anthropic.MessageStreamParams): { finalMessage(): Promise<Anthropic.Message> };
+  };
 };
 
 /**
- * Claude through Vertex AI, so billing, IAM and data terms stay in the GCP project. Vertex has no
- * server-side refusal fallback; a refusal is a provider error.
+ * Where Claude is called. `vertex` is the production route: billing, IAM and data terms stay in
+ * the GCP project. `direct` is Anthropic's own API, for the eval while Vertex has no Claude quota.
+ * Both charge list price (Vertex on its `global` endpoint), so the price table serves both.
  */
-export function createClaudeVertexProvider(options: ClaudeVertexProviderOptions): AiProvider {
+export type ClaudeChannel = "vertex" | "direct";
+
+export type ClaudeProviderOptions = {
+  model: string;
+  channel: ClaudeChannel;
+  /**
+   * The GCP project, authenticated by ADC, for `vertex`. A regional endpoint costs 10% more than
+   * `global`, which the price table does not reflect.
+   */
+  vertex?: { project: string; location: string };
+  /** For `direct`. Defaults to `ANTHROPIC_API_KEY`. */
+  apiKey?: string;
+  client?: ClaudeClient;
+};
+
+/**
+ * Claude on either channel. Neither sends the server-side refusal fallback, which Vertex lacks, so
+ * both behave as production would; a refusal is a provider error.
+ */
+export function createClaudeProvider(options: ClaudeProviderOptions): AiProvider {
   const traits = TRAITS[options.model];
   if (!traits) throw new Error(`Unknown Claude model ${options.model}`);
   priceFor(options.model);
-  if (!options.client && !options.vertex) throw new Error("Claude needs a Vertex project");
+  if (options.channel === "vertex" && !options.client && !options.vertex) {
+    throw new Error("Claude on Vertex needs a project");
+  }
+  const model = options.channel === "vertex" ? traits.vertexModel : options.model;
   // Built on first use: AnthropicVertex starts resolving ADC in its constructor, and that promise
   // rejects unhandled where there are no credentials.
   let client = options.client;
@@ -58,10 +78,10 @@ export function createClaudeVertexProvider(options: ClaudeVertexProviderOptions)
     async generate(req: AiGenerateRequest): Promise<AiGenerateResponse> {
       let message: Anthropic.Message;
       try {
-        client ??= newClient(options.vertex!);
+        client ??= newClient(options);
         message = await client.messages
           .stream({
-            model: traits.vertexModel,
+            model,
             max_tokens: req.maxOutputTokens,
             system: req.system,
             messages: [{ role: "user", content: toContent(req.parts) }],
@@ -95,7 +115,11 @@ export function createClaudeVertexProvider(options: ClaudeVertexProviderOptions)
   };
 }
 
-function newClient(vertex: { project: string; location: string }): AnthropicVertex {
+function newClient(options: ClaudeProviderOptions): ClaudeClient {
+  if (options.channel === "direct") {
+    return new Anthropic(options.apiKey ? { apiKey: options.apiKey } : {});
+  }
+  const vertex = options.vertex!;
   return new AnthropicVertex({ projectId: vertex.project, region: vertex.location });
 }
 
