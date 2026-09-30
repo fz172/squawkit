@@ -23,7 +23,8 @@
     "eval:tasks": "tsx eval/src/run.ts",
     "eval:fetch": "bash eval/fetch.sh",
     "eval:add-doc": "bash eval/add-doc.sh",
-    "eval:typecheck": "tsc -p eval"
+    "eval:typecheck": "tsc -p eval",
+    "eval:review": "tsx eval/src/review.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.129.0",

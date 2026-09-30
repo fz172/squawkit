@@ -164,9 +164,16 @@ export function containsVerbatim(text: string, needle: string): boolean {
   return n.length > 0 && squash(text).includes(n);
 }
 
+/**
+ * Words that say nothing about which item a page states. The maintenance verbs are here because
+ * every schedule page has them: "check" plus a column-header figure once passed a page that never
+ * named the part.
+ */
 const STOPWORDS = new Set([
   "the", "and", "for", "with", "from", "into", "every", "each", "after", "before", "per", "all",
   "any", "its", "not", "are", "was", "has", "have", "this", "that", "your",
+  "check", "inspect", "inspection", "replace", "lubricate", "service", "adjust", "clean", "test",
+  "change", "renew",
 ]);
 
 /**
@@ -187,12 +194,14 @@ export function citationHolds(pageText: string, title: string, figures: number[]
 
 function typeRule(r: FlatRule): SuggestedRule | null {
   switch (r.kind) {
+    // Models put a rule's figure in either number field whatever its kind (a meter's 10,000 mi
+    // arrives as `every: 10000`), so each kind reads its own field first and the other second.
     case "time": {
-      const every = Math.round(r.every ?? 0);
+      const every = Math.round(r.every ?? r.interval ?? 0);
       return every > 0 && r.unit ? { kind: "time", every, unit: r.unit } : null;
     }
     case "meter": {
-      const interval = r.interval ?? 0;
+      const interval = r.interval ?? r.every ?? 0;
       return r.meterKey && interval > 0 ? { kind: "meter", meterKey: r.meterKey, interval } : null;
     }
     case "seasonal": {

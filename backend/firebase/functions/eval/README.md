@@ -50,6 +50,10 @@ A run writes `eval/out/<timestamp>_<fast>_<strong>/`: `report.md`, `results.json
 `result.json`, `score.json` and `recording.json`. `out/` is git-ignored; the bake-off PR adds the
 chosen run's `report.md` and `results.json` with `git add -f`.
 
+`npm run eval:review -- eval/out/<run> [eval/out/<run>...] [--index=eval/out/<name>.md]` writes a
+readable `suggestions.md` into each run (every case's suggestions with schedule, first due,
+source and what they matched), and with `--index` one page linking and comparing the runs.
+
 `--replay` is the way to iterate on `expected.json` or the scorer: it re-runs the pipeline on the
 recorded answers. A change to a prompt, schema or case context changes the requests, so the replay
 stops with "nothing recorded" and the run has to be recorded again.

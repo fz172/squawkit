@@ -155,6 +155,10 @@ describe("scoreCase", () => {
     // checks its cited page, which does not mention oil.
     expect(s.citationAccuracy).toBeCloseTo(1 / 3);
     expect(s.invented).toEqual(["Inspect exhaust springs"]);
+    // Four document suggestions (s1, s2, s3, s5); s1, s2 and s5 match, s3 does not.
+    expect(s.documentSuggestions).toBe(4);
+    expect(s.precision).toBeCloseTo(3 / 4);
+    expect(s.duplicates).toEqual([]);
     expect(s.forbidden).toEqual(["Crankcase AD inspection"]);
     expect(s.costMicros).toBe(250);
     expect(s.retries).toBe(1);
@@ -191,6 +195,20 @@ describe("scoreCase", () => {
     expect(s.intervalAccuracy).toBe(1);
     // Page 2 does not mention a transponder, so the fallback check fails the citation.
     expect(s.citationAccuracy).toBe(0);
+  });
+
+  it("tells a duplicate of a matched task from an extra", () => {
+    const s = score(
+      [
+        suggestion({ suggestionId: "a", title: "Replace spark plugs" }),
+        suggestion({ suggestionId: "b", title: "Spark plugs replacement" }),
+        suggestion({ suggestionId: "c", title: "Inspect exhaust springs" }),
+      ],
+      { tasks: [{ titleAliases: ["spark plugs"], rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }] }] },
+    );
+    expect(s.precision).toBeCloseTo(1 / 3);
+    expect(s.duplicates).toEqual(["Spark plugs replacement"]);
+    expect(s.invented).toEqual(["Inspect exhaust springs"]);
   });
 
   it("finds each hard-gate violation", () => {

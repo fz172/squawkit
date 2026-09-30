@@ -40,6 +40,8 @@ describe("1. schema rule", () => {
     ["meter", { kind: "meter", meterKey: "engine_hours", interval: 50 }, { kind: "meter", meterKey: "engine_hours", interval: 50 }],
     ["seasonal sorts and dedups", { kind: "seasonal", months: [10, 4, 4] }, { kind: "seasonal", months: [4, 10], dayOfMonth: 0 }],
     ["on condition", { kind: "on_condition", description: "When worn" }, { kind: "on_condition", description: "When worn" }],
+    ["meter with its figure in every", { kind: "meter", meterKey: "odometer", every: 10000, unit: "days" }, { kind: "meter", meterKey: "odometer", interval: 10000 }],
+    ["time with its figure in interval", { kind: "time", interval: 12, unit: "months" }, { kind: "time", every: 12, unit: "months" }],
   ] as const)("types a %s rule", (_name, raw, expected) => {
     expect(typed([raw as Partial<FlatRule>]).rules).toEqual([expected]);
   });
@@ -137,6 +139,7 @@ describe("4. citation rule", () => {
     ["neither", "Valve clearance check", "lubricate the throttle cable", [200], false],
     ["one word plus a figure", "Valve clearance adjustment check", "valve at 200 h", [200], true],
     ["a figure inside a longer number is not a match", "Valve clearance adjustment check", "valve at 1200 h", [200], false],
+    ["a maintenance verb and a column figure are not evidence", "Headstock bearings check and lubrication", "Brake pads - check   20,000", [20000], false],
   ] as const)("citationHolds: %s", (_name, title, text, figures, holds) => {
     expect(citationHolds(text, title, [...figures])).toBe(holds);
   });
