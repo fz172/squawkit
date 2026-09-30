@@ -438,11 +438,10 @@ The design doc fills this in with measured results before phase B starts.
 
 ### 9.2 Candidates
 
-At least three providers at the same tier, plus a document pre-processor:
+Two providers at the same tier, plus a document pre-processor (OpenAI was dropped on 2026-09-30):
 
 - Google Gemini (e.g. 3.5 Flash), on Vertex AI in the existing GCP project.
 - Anthropic Claude (e.g. Sonnet 5.5, Haiku 4.5), on Vertex AI in the same project.
-- OpenAI (a mini-class model).
 - For scans and photos: Google Document AI in front of a text model. Mistral OCR was dropped
   from the bake-off (2026-09-28).
 

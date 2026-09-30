@@ -1,14 +1,12 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { AnthropicVertex } from "@anthropic-ai/vertex-sdk";
 import { FinishReason, type GoogleGenAI } from "@google/genai";
-import type OpenAI from "openai";
 import { describe, expect, it } from "vitest";
 
 import { AiError } from "../../src/ai/errors.js";
 import { createClaudeProvider } from "../../src/ai/providers/claudeProvider.js";
 import { createGeminiProvider } from "../../src/ai/providers/geminiProvider.js";
 import { generateValidated } from "../../src/ai/providers/generateValidated.js";
-import { createOpenAiProvider } from "../../src/ai/providers/openAiProvider.js";
 import { assertPortableSchema } from "../../src/ai/providers/portableSchema.js";
 import { createProvider, PROVIDER_CANDIDATES } from "../../src/ai/providers/registry.js";
 import {
@@ -194,61 +192,6 @@ describe("gemini provider", () => {
   });
 });
 
-describe("openai provider", () => {
-  function fakeClient(response: Record<string, unknown>) {
-    const calls: Record<string, unknown>[] = [];
-    const client = {
-      responses: {
-        async create(params: Record<string, unknown>) {
-          calls.push(params);
-          return {
-            status: "completed",
-            output: [],
-            output_text: '{"title":"Oil","hours":50}',
-            usage: { input_tokens: 1000, output_tokens: 200 },
-            ...response,
-          };
-        },
-      },
-    };
-    return { client: client as unknown as OpenAI, calls };
-  }
-
-  it("sends a strict schema, files as data URLs, and the tier effort", async () => {
-    const { client, calls } = fakeClient({});
-    const out = await createOpenAiProvider({ model: "gpt-6-sol", client }).generate(request("fast"));
-
-    expect(out.json).toEqual({ title: "Oil", hours: 50 });
-    expect(out.usage.costMicros).toBe(4000);
-    expect(calls[0].text).toEqual({
-      format: { type: "json_schema", name: "output", schema: SCHEMA, strict: true },
-    });
-    expect(calls[0].reasoning).toEqual({ effort: "low" });
-    const content = (calls[0].input as Array<{ content: Array<Record<string, unknown>> }>)[0].content;
-    expect(content[0]).toEqual({
-      type: "input_file",
-      filename: "document-1.pdf",
-      file_data: `data:application/pdf;base64,${Buffer.from(PDF).toString("base64")}`,
-    });
-    expect(content[1].type).toBe("input_image");
-  });
-
-  it("treats an incomplete response as a parse error and a refusal as a provider error", async () => {
-    const incomplete = fakeClient({ status: "incomplete", incomplete_details: { reason: "max_output_tokens" } });
-    expect(
-      await rejection(createOpenAiProvider({ model: "gpt-6-sol", client: incomplete.client }).generate(request())),
-    ).toBeInstanceOf(AiOutputParseError);
-
-    const refused = fakeClient({
-      output: [{ type: "message", content: [{ type: "refusal", refusal: "no" }] }],
-    });
-    const e = await rejection(
-      createOpenAiProvider({ model: "gpt-6-sol", client: refused.client }).generate(request()),
-    );
-    expect((e as AiError).code).toBe("provider_error");
-  });
-});
-
 describe("generateValidated", () => {
   const usage = { inputTokens: 10, outputTokens: 5, costMicros: 100 };
 
@@ -337,7 +280,7 @@ describe("assertPortableSchema", () => {
 
 describe("registry", () => {
   it("constructs every candidate", () => {
-    const credentials = { vertex: { project: "p", location: "global" }, openAiApiKey: "k" };
+    const credentials = { vertex: { project: "p", location: "global" } };
     for (const candidate of PROVIDER_CANDIDATES) {
       expect(createProvider(candidate.id, credentials).id).toBe(candidate.id);
     }
@@ -345,7 +288,7 @@ describe("registry", () => {
 
   it("refuses a model with no price", () => {
     expect(() => createGeminiProvider({ model: "gemini-9", apiKey: "k" })).toThrow(/No price/);
-    expect(() => createProvider("gpt-unknown")).toThrow(/Unknown provider/);
+    expect(() => createProvider("gpt-6-sol")).toThrow(/Unknown provider/);
     expect(() => createProvider("claude-sonnet-5-5")).toThrow(/Vertex needs a project/);
     expect(createProvider("claude-sonnet-5-5", { claudeChannel: "direct", anthropicApiKey: "k" }).id).toBe("claude-sonnet-5-5");
   });
