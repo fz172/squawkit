@@ -3,6 +3,9 @@ import type { CaseScore } from "./score.js";
 /** PRD §9.4's numbers for document cases. */
 export const BAR = { recall: 0.9, intervalAccuracy: 0.95, citationAccuracy: 0.95, p90LatencyMs: 120_000 };
 
+/** Not a PRD gate: a soft target, since every document suggestion is pre-selected (R27). */
+export const PRECISION_TARGET = 0.7;
+
 export type RunSummary = {
   gates: {
     unsupportedRegulatory: number;
@@ -18,6 +21,8 @@ export type RunSummary = {
     recall: number | null;
     intervalAccuracy: number | null;
     citationAccuracy: number | null;
+    precision: number | null;
+    duplicates: number;
     /** Over runs with three or more documents, the PRD's timing case. */
     p90LatencyMs: number | null;
     meetsBar: boolean;
@@ -49,6 +54,11 @@ export function summarize(scores: CaseScore[], warmScores: CaseScore[], document
     recall: ratio(doc.reduce((acc, s) => acc + s.matched, 0), expected),
     intervalAccuracy: ratio(matches.filter((m) => m.intervalOk).length, matches.length),
     citationAccuracy: ratio(cited.filter((m) => m.citationOk).length, cited.length),
+    precision: ratio(
+      doc.reduce((acc, s) => acc + (s.precision === null ? 0 : s.documentMatched), 0),
+      doc.reduce((acc, s) => acc + (s.precision === null ? 0 : s.documentSuggestions), 0),
+    ),
+    duplicates: doc.reduce((acc, s) => acc + s.duplicates.length, 0),
     p90LatencyMs: p90(doc.filter((s) => (documentCounts.get(s.caseId) ?? 0) >= 3).map((s) => s.latencyMs)),
   };
 
@@ -95,7 +105,9 @@ export function renderReport(config: ReportConfig, summary: RunSummary, scores: 
   lines.push(`| Recall | ${pct(d.recall)} | ≥ ${pct(BAR.recall)} |`);
   lines.push(`| Interval accuracy | ${pct(d.intervalAccuracy)} | ≥ ${pct(BAR.intervalAccuracy)} |`);
   lines.push(`| Citation accuracy | ${pct(d.citationAccuracy)} | ≥ ${pct(BAR.citationAccuracy)} |`);
-  lines.push(`| p90 latency, 3+ documents | ${secs(d.p90LatencyMs)} | < ${secs(BAR.p90LatencyMs)} |`, "");
+  lines.push(`| p90 latency, 3+ documents | ${secs(d.p90LatencyMs)} | < ${secs(BAR.p90LatencyMs)} |`);
+  lines.push(`| Precision (soft target, not a gate) | ${pct(d.precision)} | ≥ ${pct(PRECISION_TARGET)} |`, "");
+  lines.push(`${d.duplicates} document suggestions duplicate a task another suggestion matched.`, "");
 
   lines.push(`## Cost and speed`, "");
   lines.push(`- ${summary.runs} runs, ${summary.failedRuns} failed`);
@@ -105,13 +117,13 @@ export function renderReport(config: ReportConfig, summary: RunSummary, scores: 
 
   lines.push(`## Cases`, "");
   lines.push(
-    "| Case | Status | Suggestions | Recall | Intervals | Citations | Invented | Cost | Time | Reviewed |",
-    "|---|---|---|---|---|---|---|---|---|---|",
+    "| Case | Status | Suggestions | Recall | Intervals | Citations | Precision | Duplicates | Not in key | Cost | Time | Reviewed |",
+    "|---|---|---|---|---|---|---|---|---|---|---|---|",
   );
   for (const s of scores) {
     const status = s.status === "failed" ? `failed: ${s.errorCode}` : s.status;
     lines.push(
-      `| ${s.caseId} | ${status} | ${s.suggestions} ${sources(s)} | ${pct(s.recall)} | ${pct(s.intervalAccuracy)} | ${pct(s.citationAccuracy)} | ${s.invented.length} | ${dollars(s.costMicros)} | ${secs(s.latencyMs)} | ${s.reviewed ? "yes" : "no"} |`,
+      `| ${s.caseId} | ${status} | ${s.suggestions} ${sources(s)} | ${pct(s.recall)} | ${pct(s.intervalAccuracy)} | ${pct(s.citationAccuracy)} | ${pct(s.precision)} | ${s.duplicates.length} | ${s.invented.length} | ${dollars(s.costMicros)} | ${secs(s.latencyMs)} | ${s.reviewed ? "yes" : "no"} |`,
     );
   }
   lines.push("");
@@ -122,7 +134,8 @@ export function renderReport(config: ReportConfig, summary: RunSummary, scores: 
       ...s.missed.map((t) => `missed: ${t}`),
       ...s.matches.filter((m) => !m.intervalOk).map((m) => `interval differs: ${m.expected} ↔ ${m.suggestion}`),
       ...s.matches.filter((m) => m.citationOk === false).map((m) => `wrong page: ${m.suggestion}`),
-      ...s.invented.map((t) => `invented: ${t}`),
+      ...s.duplicates.map((t) => `duplicate: ${t}`),
+      ...s.invented.map((t) => `not in the answer key: ${t}`),
       ...s.forbidden.map((t) => `must not appear: ${t}`),
       ...Object.entries(s.gates).flatMap(([gate, v]) => (Array.isArray(v) ? v.map((x) => `${gate}: ${x}`) : [])),
     ];

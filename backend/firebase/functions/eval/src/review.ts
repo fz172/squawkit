@@ -17,7 +17,12 @@ type RunResults = {
   config: Record<string, string | number | boolean>;
   summary: {
     gates: { passed: boolean };
-    document: { recall: number | null; intervalAccuracy: number | null; citationAccuracy: number | null };
+    document: {
+      recall: number | null;
+      intervalAccuracy: number | null;
+      citationAccuracy: number | null;
+      precision?: number | null;
+    };
     runs: number;
     failedRuns: number;
     meanCostMicros: number;
@@ -77,7 +82,7 @@ function renderRun(run: string): string {
     ...(results.partial ? [`> **Run still in progress:** ${results.scores.length} cases so far. Re-run eval:review when it finishes for the full scoring.`, ""] : []),
     Object.entries(c).map(([k, v]) => `\`${k}=${v}\``).join(" · "),
     "",
-    `Hard gates: **${results.summary.gates.passed ? "pass" : "FAIL"}** · document recall ${pct(results.summary.document.recall)} · intervals ${pct(results.summary.document.intervalAccuracy)} · citations ${pct(results.summary.document.citationAccuracy)} · mean cost ${dollars(results.summary.meanCostMicros)} per run · full scoring in [report.md](report.md)`,
+    `Hard gates: **${results.summary.gates.passed ? "pass" : "FAIL"}** · document recall ${pct(results.summary.document.recall)} · intervals ${pct(results.summary.document.intervalAccuracy)} · citations ${pct(results.summary.document.citationAccuracy)} · precision ${pct(results.summary.document.precision ?? null)} · mean cost ${dollars(results.summary.meanCostMicros)} per run · full scoring in [report.md](report.md)`,
     "",
   ];
 
@@ -90,7 +95,7 @@ function renderRun(run: string): string {
     const status = score.status === "failed" ? `failed: ${score.errorCode}` : score.status;
     const measures =
       score.kind === "document"
-        ? ` · recall ${pct(score.recall)} (${score.matched}/${score.expected}) · intervals ${pct(score.intervalAccuracy)} · citations ${pct(score.citationAccuracy)}`
+        ? ` · recall ${pct(score.recall)} (${score.matched}/${score.expected}) · intervals ${pct(score.intervalAccuracy)} · citations ${pct(score.citationAccuracy)} · precision ${pct(score.precision ?? null)}`
         : "";
     lines.push(`**${status}** · ${score.suggestions} suggestions${measures} · ${dollars(score.costMicros)} · ${(score.latencyMs / 1000).toFixed(1)} s`, "");
 
@@ -132,6 +137,7 @@ function renderRun(run: string): string {
 
     const notes = [
       ...score.missed.map((t) => `Missed: ${t}`),
+      ...(score.duplicates ?? []).map((t) => `Duplicate of a matched task: ${t}`),
       ...score.invented.map((t) => `Not in the answer key: ${t}`),
       ...score.forbidden.map((t) => `Must not appear: ${t}`),
       ...(score.statusOk === false ? [`Ended ${score.status}, which the case does not expect`] : []),
@@ -142,14 +148,14 @@ function renderRun(run: string): string {
 }
 
 function renderIndex(runs: string[], from: string): string {
-  const lines = ["# Bake-off runs", "", "| Run | Gates | Doc recall | Intervals | Citations | Failed | Mean cost |", "|---|---|---|---|---|---|---|"];
+  const lines = ["# Bake-off runs", "", "| Run | Gates | Doc recall | Intervals | Citations | Precision | Failed | Mean cost |", "|---|---|---|---|---|---|---|---|"];
   for (const run of runs) {
     const r = loadRun(run);
     const name = `${r.config.fast} + ${r.config.strong}, recall ${r.config.recallTier}`;
     const link = path.relative(from, path.join(run, "suggestions.md"));
     const d = r.summary.document;
     lines.push(
-      `| [${name}](${link}) | ${r.summary.gates.passed ? "pass" : "FAIL"} | ${pct(d.recall)} | ${pct(d.intervalAccuracy)} | ${pct(d.citationAccuracy)} | ${r.summary.failedRuns}/${r.summary.runs} | ${dollars(r.summary.meanCostMicros)} |`,
+      `| [${name}](${link}) | ${r.summary.gates.passed ? "pass" : "FAIL"} | ${pct(d.recall)} | ${pct(d.intervalAccuracy)} | ${pct(d.citationAccuracy)} | ${pct(d.precision ?? null)} | ${r.summary.failedRuns}/${r.summary.runs} | ${dollars(r.summary.meanCostMicros)} |`,
     );
   }
   return lines.join("\n") + "\n";

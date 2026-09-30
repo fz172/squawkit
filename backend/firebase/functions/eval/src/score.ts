@@ -24,6 +24,15 @@ export type CaseScore = {
   matched: number;
   matches: Array<{ expected: string; suggestion: string; intervalOk: boolean; citationOk: boolean | null }>;
   missed: string[];
+  /**
+   * Of the document-sourced suggestions, the share matching an expected task (required or
+   * optional), each task counted once. Null without an answer key or document suggestions.
+   */
+  precision: number | null;
+  documentSuggestions: number;
+  documentMatched: number;
+  /** Document suggestions for a task another suggestion already matched. */
+  duplicates: string[];
   /** Document-sourced suggestions matching no expected task. */
   invented: string[];
   /** Suggestions matching a `mustNotAppear` task. */
@@ -89,7 +98,13 @@ export function scoreCase(input: ScoreInput): CaseScore {
             : citedPageStates(p.suggestion, pagesText),
     }));
   const cited = matches.filter((m) => m.citationOk !== null);
-  const matchedTitles = new Set(pairs.map((p) => p.suggestion.suggestionId));
+  const matchedIds = new Set(pairs.map((p) => p.suggestion.suggestionId));
+  const listed = expected.tasks.filter((t) => !t.mustNotAppear);
+  const documentSuggestions = suggestions.filter((s) => s.sourceKind === "document");
+  const unmatched = documentSuggestions.filter((s) => !matchedIds.has(s.suggestionId));
+  const isDuplicate = (s: TaskSuggestion) =>
+    listed.some((t) => t.titleAliases.some((a) => titleSimilarity(a, s.title) >= TITLE_MATCH));
+  const matchedDocument = pairs.filter((p) => !p.task.mustNotAppear && p.suggestion.sourceKind === "document");
 
   const bySource: CaseScore["bySource"] = {};
   for (const s of suggestions) bySource[s.sourceKind] = (bySource[s.sourceKind] ?? 0) + 1;
@@ -110,9 +125,11 @@ export function scoreCase(input: ScoreInput): CaseScore {
     matched: matchedRequired.length,
     matches,
     missed: required.filter((t) => !pairs.some((p) => p.task === t)).map((t) => t.titleAliases[0]),
-    invented: suggestions
-      .filter((s) => s.sourceKind === "document" && !matchedTitles.has(s.suggestionId))
-      .map((s) => s.title),
+    precision: listed.length === 0 ? null : ratio(matchedDocument.length, documentSuggestions.length),
+    documentSuggestions: documentSuggestions.length,
+    documentMatched: matchedDocument.length,
+    duplicates: unmatched.filter(isDuplicate).map((s) => s.title),
+    invented: unmatched.filter((s) => !isDuplicate(s)).map((s) => s.title),
     forbidden: pairs.filter((p) => p.task.mustNotAppear).map((p) => p.suggestion.title),
     gates: {
       unsupportedRegulatory: suggestions
