@@ -860,19 +860,21 @@ MEDIUM for `strong`. Locating is `keywords` (§6.2). A manual's table pages go t
 sliced PDF next to the text (`attachPdf`, §6.2). Image-only pages use Document AI (§5.5). Prompts are
 `tasks-4`.
 
-Flash + Sonnet 5.5 scored higher and ran faster. Gemini alone won on price. Every uncached run
+Flash + Sonnet 5.5 read intervals more accurately, added fewer extras and ran faster. Recall was
+the same. Gemini alone won on price. Every uncached run
 takes minutes either way, so the user leaves the screen whichever pair runs (PRD R19 was relaxed
 to match), and the extra 3–5 minutes are worth halving the cost. It also needs no Claude quota on
 Vertex, which was refused twice.
 
-Document cases, 3 repeats each, the same prompts and settings (selective PDF):
+Document cases, 3 repeats each, the same prompts and settings (selective PDF). Scores are the mean
+over runs that finished, rescored after the Triumph key accepted folded inspection names:
 
 | | Gemini 3.8 Flash only | Flash + Sonnet 5.5 |
 |---|---|---|
-| Recall (runs that finished) | 94% | 96% |
-| Interval accuracy | 89% | 93% |
-| Citation accuracy | 96% | 97% |
-| Precision | 75% | 87% |
+| Recall | 98% | 97% |
+| Interval accuracy | 92% | 96% |
+| Citation accuracy | 98% | 97% |
+| Precision | 84% | 92% |
 | Mean cost per document run | $0.23 | $0.44 |
 | Sling, three manuals | 344–505 s, $0.32 | 168–191 s, $0.73 |
 | Sienna guide / Triumph handbook | 194–326 s, $0.18 | 88–105 s, $0.30 |
@@ -882,16 +884,17 @@ Document cases, 3 repeats each, the same prompts and settings (selective PDF):
 |---|---|---|---|---|
 | Sling TSi, three manuals | 94% | 78% | 90% | 62% |
 | Toyota Sienna, owner's guide | 100% | 100% | 100% | 100% |
-| Triumph T100, handbook | 88% | 91% | 100% | 73% |
+| Triumph T100, handbook | 100% | 92% | 100% | 82% |
 
 - **Sling is the weak case.** Across two runs Gemini misread 4–7 intervals (airframe 100-hour,
   engine 50-hour, coolant, propeller first inspection) and added 12–13 replacement items and up to
   4 duplicates the key does not list. The A&P review before the airplane preset ships (PRD §9.3)
   covers these.
-- **Triumph's misses are mostly scoring.** Gemini folds valve clearances and camshaft timing into
-  one "20,000-mile inspection", which §6.2's folding rule asks for and the key does not accept, and
-  it lists two handbook items the key leaves out (throttle body plate, side stand pivot). It also
-  read the air cleaner as every 20,000 miles in two runs; the handbook says 10,000.
+- **Triumph.** Gemini folds valve clearances and camshaft timing into one "20,000-mile
+  inspection", and the chain wear check into a "500-mile inspection", as §6.2's folding rule asks.
+  The key now accepts both names. It read the air cleaner as every 20,000 miles in two runs; the
+  handbook says 10,000. Its extras include two handbook items the key leaves out (throttle body
+  plate, side stand pivot).
 - **No-document cases** all succeeded (bike, boat, Cessna, custom, home, and the Sling, Sienna and
   Triumph without documents) in 55–358 s. Home returns nothing in 2 of 3 runs, since its template
   cannot name the appliances (§12.2).
@@ -913,7 +916,7 @@ Sonnet at twice the cost), Gemini 3.1 Pro (dropped for Flash 3.8), OpenAI and Mi
 before testing). The runs, with every suggestion, are committed under `eval/out/`:
 `2026-10-01T17-03-10-977Z_gemini-3.8-flash_gemini-3.8-flash` (chosen), with the five cases it
 reuses in `2026-10-01T16-13-12-456Z_…`, and `2026-10-01T06-47-56-563Z_gemini-3.8-flash_claude-sonnet-5-5`
-for comparison.
+for comparison. Their committed reports predate the Triumph key change.
 
 ## 13. Security and privacy
 
