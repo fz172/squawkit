@@ -487,7 +487,9 @@ before the airplane preset is enabled.
 **Document-sourced cases:**
 
 - Recall of ≥ 90% of the manual's scheduled items.
-- ≥ 95% of the items present have the correct interval(s) and units.
+- ≥ 95% of the items present have the correct interval(s) and units. Phase 0 closed at 92%
+  (2026-10-01): the misses are almost all on the multi-manual airplane, and the A&P review (§9.3)
+  checks aviation intervals before the airplane preset ships.
 - ≥ 95% of citations point to the page containing the item.
 - An uncached three-document run finishes in under 10 minutes at p90. This was two minutes, then
   three (2026-09-30), and became 10 on 2026-10-01: past a minute the user leaves the screen
