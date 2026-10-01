@@ -13,10 +13,20 @@ import {
   type AiTier,
 } from "./types.js";
 
+/**
+ * MEDIUM, not HIGH, for the strong tier: at HIGH the tailor spent 20–32k thinking tokens on a
+ * no-document bike, hit the output cap and failed with 500s on 3 of 4 attempts (bake-off round 2).
+ */
 const THINKING_BY_TIER: Record<AiTier, ThinkingLevel> = {
   fast: ThinkingLevel.LOW,
-  strong: ThinkingLevel.HIGH,
+  strong: ThinkingLevel.MEDIUM,
 };
+
+/**
+ * The SDK retries 408, 429 and 5xx with exponential backoff when asked; three attempts matches
+ * the Anthropic SDK's default of two retries. Vertex returns transient 500s under load.
+ */
+export const GEMINI_HTTP_OPTIONS = { retryOptions: { attempts: 3, initialDelay: 2 } };
 
 export type GeminiProviderOptions = {
   model: string;
@@ -79,9 +89,10 @@ function newClient(options: GeminiProviderOptions): GoogleGenAI {
       vertexai: true,
       project: options.vertex.project,
       location: options.vertex.location,
+      httpOptions: GEMINI_HTTP_OPTIONS,
     });
   }
-  if (options.apiKey) return new GoogleGenAI({ apiKey: options.apiKey });
+  if (options.apiKey) return new GoogleGenAI({ apiKey: options.apiKey, httpOptions: GEMINI_HTTP_OPTIONS });
   throw new Error("Gemini needs either vertex or apiKey");
 }
 

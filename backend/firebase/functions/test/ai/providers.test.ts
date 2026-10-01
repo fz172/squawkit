@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { AiError } from "../../src/ai/errors.js";
 import { createClaudeProvider } from "../../src/ai/providers/claudeProvider.js";
-import { createGeminiProvider } from "../../src/ai/providers/geminiProvider.js";
+import { createGeminiProvider, GEMINI_HTTP_OPTIONS } from "../../src/ai/providers/geminiProvider.js";
 import { generateValidated } from "../../src/ai/providers/generateValidated.js";
 import { assertPortableSchema } from "../../src/ai/providers/portableSchema.js";
 import { createProvider, PROVIDER_CANDIDATES } from "../../src/ai/providers/registry.js";
@@ -159,7 +159,7 @@ describe("gemini provider", () => {
     return { client: client as unknown as GoogleGenAI, calls };
   }
 
-  it("sends the schema and thinking level, and bills thoughts as output", async () => {
+  it("sends the schema and a medium thinking level for the strong tier, and bills thoughts as output", async () => {
     const { client, calls } = fakeClient({});
     const out = await createGeminiProvider({ model: "gemini-3.8-flash", client }).generate(
       request("strong"),
@@ -171,11 +171,15 @@ describe("gemini provider", () => {
     const config = calls[0].config as Record<string, unknown>;
     expect(config.responseJsonSchema).toBe(SCHEMA);
     expect(config.responseMimeType).toBe("application/json");
-    expect(config.thinkingConfig).toEqual({ thinkingLevel: "HIGH" });
+    expect(config.thinkingConfig).toEqual({ thinkingLevel: "MEDIUM" });
     const parts = (calls[0].contents as Array<{ parts: Array<Record<string, unknown>> }>)[0].parts;
     expect(parts[0]).toEqual({
       inlineData: { mimeType: "application/pdf", data: Buffer.from(PDF).toString("base64") },
     });
+  });
+
+  it("asks the SDK to retry transient failures", () => {
+    expect(GEMINI_HTTP_OPTIONS.retryOptions.attempts).toBeGreaterThan(1);
   });
 
   it("treats MAX_TOKENS as a parse error and SAFETY as a provider error", async () => {
