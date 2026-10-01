@@ -373,6 +373,41 @@ describe("task pipeline with documents", () => {
     expect((await rejection(runTaskPipeline(request([ref("blob-gone")]), h.deps))).code).toBe("document_missing");
   });
 
+  it("attaches the located pages as a PDF when asked, and says which pages they are", async () => {
+    const pages = Array.from({ length: 60 }, (_, i) =>
+      i === 44 ? "Maintenance schedule: replace spark plugs every 200 hours" : `Chapter text page ${i + 1}`,
+    );
+    const h = harness(
+      {
+        recall: () => RECALLED,
+        extract: () => ({ ...adExtraction(), items: [{ ...adExtraction().items[0], pages: [45] }] }),
+        tailor: () => ({ suggestions: [tailored({ candidateIds: ["d0.0"] })], documents: [] }),
+      },
+      { "blob-mm": await pdf(pages) },
+    );
+    h.deps.attachPdf = true;
+
+    await runTaskPipeline(request([ref("blob-mm")]), h.deps);
+
+    const parts = h.strong.asked.find((a) => a.stage === "extract")!.req.parts;
+    const attached = parts.find((p): p is { pdfBytes: Uint8Array } => "pdfBytes" in p);
+    expect(attached).toBeDefined();
+    const sliced = await PDFDocument.load(attached!.pdfBytes);
+    const text = parts.find((p): p is { text: string } => "text" in p)!.text;
+    const markers = [...text.matchAll(/=== page (\d+) ===/g)].map((m) => Number(m[1]));
+    expect(sliced.getPageCount()).toBe(markers.length);
+    expect(text).toContain(`document pages ${markers.join(", ")}`);
+  });
+
+  it("sends no PDF unless asked", async () => {
+    const h = harness(
+      { recall: () => RECALLED, extract: () => adExtraction(), tailor: () => ({ suggestions: [], documents: [] }) },
+      { "blob-ad": await pdf(AD_PAGES) },
+    );
+    await runTaskPipeline(request([ref("blob-ad")]), h.deps);
+    expect(h.strong.asked.find((a) => a.stage === "extract")!.req.parts.some((p) => "pdfBytes" in p)).toBe(false);
+  });
+
   it("sends a long document's located pages only, with the model locator", async () => {
     const pages = Array.from({ length: 60 }, (_, i) =>
       i === 44 ? "Maintenance schedule: replace spark plugs every 200 hours" : `Chapter text page ${i + 1}`,

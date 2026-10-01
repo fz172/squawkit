@@ -37,6 +37,7 @@ npm run eval:tasks -- --replay=eval/out/<run>                    # re-score a ru
 | `--locate` | `keywords` | How schedule pages are found: `keywords`, `model` or `all` |
 | `--recall-tier` | `fast` | Which model recalls the common schedule (design §6.3) |
 | `--ocr` | `document-ai` | `none` to skip OCR |
+| `--attach-pdf` | off | Also send extraction the located pages as a PDF, for table layout |
 | `--claude` | `vertex` | `direct` calls Claude on Anthropic's API with `ANTHROPIC_API_KEY`; same models, same list price |
 | `--repeat` | `1` | Runs per case, for p90 latency |
 | `--warm` | off | Re-runs each succeeded case on its warm cache, for R19's cache-hit time |

@@ -1,9 +1,10 @@
 import type { OcrProvider } from "../document/ocr/types.js";
+import { slicePdf } from "../document/pdfSlice.js";
 import { readDocument, type DocumentPage } from "../document/readDocument.js";
 import { AiError } from "../errors.js";
 import { generateValidated } from "../providers/generateValidated.js";
 import { describe } from "../providers/json.js";
-import type { AiPart, AiProvider, AiTier, AiUsage, JsonSchema } from "../providers/types.js";
+import { MIME_PDF, type AiPart, type AiProvider, type AiTier, type AiUsage, type JsonSchema } from "../providers/types.js";
 import {
   documentCacheKey,
   identityCacheKey,
@@ -81,6 +82,11 @@ export type PipelineDeps = {
    * bake-off compares both tiers there. Defaults to fast.
    */
   recallTier?: AiTier;
+  /**
+   * Also send extraction the located pages as a PDF, so the model sees table layout the text
+   * layer loses (which column a mark sits under). Off until the bake-off settles it.
+   */
+  attachPdf?: boolean;
 };
 
 export type PipelineOutcome =
@@ -211,13 +217,15 @@ async function readAndExtract(
 
   deps.onStage?.("extracting_schedule", ref.name);
   const images: AiPart[] = pages.flatMap((p) => (p.image ? [{ image: p.image, mime: ref.mimeType }] : []));
+  const pdf: AiPart[] =
+    deps.attachPdf && ref.mimeType === MIME_PDF ? [{ pdfBytes: await slicePdf(bytes, wanted) }] : [];
   const extraction = (await call(
     deps,
     "extract",
     deps.strong,
     {
       system: EXTRACT_SYSTEM,
-      parts: [...images, { text: documentText(ref, pages) }],
+      parts: [...pdf, ...images, { text: documentText(ref, pages, pdf.length > 0) }],
       schema: EXTRACT_SCHEMA,
       tier: "strong",
       maxOutputTokens: MAX_TOKENS.extract,
