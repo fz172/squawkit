@@ -75,7 +75,7 @@ flowchart TB
     Prov["AiProvider adapters<br/>fast / strong"]
     Release["onThingRecordBlobsReleased<br/>delete · attachment removed"]
     Sweep(["storage sweep"])
-    Push(["push · phase E"])
+    Push(["push · R20"])
   end
 
   subgraph Data["Firebase data"]
@@ -337,8 +337,8 @@ filter on `callerUid`); everything else functions-only. A composite index on
 
 | Callable                                                    | Does                                                                                                                                                                                                                   |
 |-------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`. Called when the sources sheet opens so the UI can show the right gate before any upload. Cheap; no model call.                |
-| `startAiJob({kind, request})`                               | Same checks, then in one transaction: if `ai_usage.inFlightJobId` is QUEUED/RUNNING, return it (idempotent join); else write `ai_job_inputs/{id}`, `ai_jobs/{id}` (QUEUED) and set `inFlightJobId`. Returns `{jobId}`. |
+| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`; `reason` is `run_in_progress` while another caller's run is in flight (R19a). Called when an entry point opens so the UI can show the right gate before any upload. Cheap; no model call. |
+| `startAiJob({kind, request})`                               | Same checks, then in one transaction: if `ai_usage.inFlightJobId` is QUEUED/RUNNING, return it when the caller started it (idempotent join) or fail with `run_in_progress` when someone else did; else write `ai_job_inputs/{id}`, `ai_jobs/{id}` (QUEUED) and set `inFlightJobId`. Returns `{jobId}`. |
 | `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc (accept, dismiss). Idempotent.                                                                                                                                                        |
 
 `request` is the kind's own proto, base64, capped at 512 KiB (Firestore's 1 MiB doc limit with
@@ -356,7 +356,8 @@ pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggestionPipeline
    document name) for the R19 progress text.
 2. On return, writes SUCCEEDED / EMPTY + result, or FAILED + error; clears `inFlightJobId`; sets
    `lastSuccessAt` only on SUCCEEDED (PRD decision 16); deletes `ai_job_inputs/{id}`.
-3. Calls the pipeline's `onFinished` hook; the task pipeline sends the R20 push there in phase E
+3. Calls the pipeline's `onFinished` hook; the task pipeline sends the R20 push there for every
+   outcome, SUCCEEDED, EMPTY or FAILED (phase C)
    (`enabledTokensFor(callerUid)` → `sendPush`, deep link to the suggestions route).
 
 A crashed worker leaves a job RUNNING. Eligibility and `startAiJob` treat a RUNNING job older than
@@ -436,7 +437,7 @@ info-level logs; the cost log is a backend-only collection, not a log line.
 ### 5.7 Error codes
 
 `sign_in_required`, `disabled`, `not_member`, `owner_not_pro`, `daily_limit`,
-`spend_ceiling`, `document_missing` (blob not uploaded), `document_too_large`,
+`run_in_progress`, `spend_ceiling`, `document_missing` (blob not uploaded), `document_too_large`,
 `document_unreadable`, `no_schedule_found`, `provider_error`, `invalid_output`, `stale`. The client
 maps each to one string (PRD R21) and one analytics reason (R50).
 
@@ -707,6 +708,19 @@ All states are one route: `Screen.StarterPack` gains an optional `mode` query ar
   picker).
 - **Attachment row → Find tasks in this document** (R4, P1): `mode=document&attachmentId=`.
 
+While a run is in flight for the Thing, no entry point opens the sources sheet (PRD R19a):
+
+- **The caller's own run.** `observeRun(thingId)` reports `Working` from `observeLatest`, and every
+  entry point opens the working state (§9.4). It survives leaving, an app restart and a web reload,
+  on any of the caller's devices.
+- **Another member's run.** The caller cannot read that job (§4.3). `getAiEligibility` reports
+  `run_in_progress` from `ai_usage.inFlightJobId`, and the entry point shows "Suggestions are
+  already being prepared for this plane" with no document controls.
+
+`startAiJob` is the server-side backstop: a second start by the same caller returns the running
+job, and a start by another member fails with `run_in_progress` instead of joining a job it cannot
+read.
+
 ### 9.2 Starter pack with suggestions
 
 ```
@@ -746,7 +760,8 @@ at 3:10 pm". A member whose owner is free sees "Documents need the owner’s Pro
 ┌ Suggest tasks ─────────────────────────────────┐
 │  ◌ Reading Rotax 915 iS manual…                │
 │    This can take a few minutes.                │
-│    You can leave; your suggestions will wait.  │
+│    You can leave; we’ll notify you when        │
+│    your suggestions are ready.                 │
 │  ☑ Annual inspection  (static cards stay)      │
 └────────────────────────────────────────────────┘
 ```
@@ -915,7 +930,7 @@ for comparison.
   - `authorizeAiCall`: anonymous, non-member, technician member, owner free/pro with and without
     documents, daily limit (success counts; EMPTY/FAILED do not), spend ceiling, kill switch,
     stale job.
-  - `startAiJob` idempotent join; worker lifecycle with a fake provider (status, stage, input
+  - `startAiJob` idempotent join for the same caller and `run_in_progress` for another member; worker lifecycle with a fake provider (status, stage, input
     deletion, `lastSuccessAt`).
   - Every §6.7 validator, table-driven, including AD verbatim match and downgrade.
   - `onThingRecordBlobsReleased`: two tasks share a blob, one drops it (kept), both drop it
@@ -935,9 +950,9 @@ for comparison.
 | **0** | 1–4: provider adapters and document reading, the pipeline as a library, the eval harness, the bake-off | §9.4 met by the chosen pair; §12.5 filled in |
 | **A** | 5–10: protos, collections and rules, authorization, callables, worker, `core/ai` | An echo job round-trips on all three hosts on developer builds |
 | **B** | 11–12: server release trigger, client `release` | Shared-blob tests green; one release cycle in production before D ships |
-| **C** | 13–19: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy | No-document flow on all presets and hosts, developer builds |
+| **C** | 13–19 and 26: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy, push when a run finishes | No-document flow on all presets and hosts, developer builds |
 | **D** | 20–25: storage-rule deny, document pipeline wiring, sources sheet, the two P1 document items, flag removal | T100, Sling TSi and C172N + AD cases end to end; flag deleted; v1 |
-| **E** | 26–27: push, wrong-suggestion report | — |
+| **E** | 27: wrong-suggestion report | — |
 | **F** | 28: #1181 backfill intake (PRD §10.1) | — |
 
 Ordering rules the phases alone do not show:
@@ -968,7 +983,7 @@ Ordering rules the phases alone do not show:
 - **Provider data terms** (PRD §12): gates phase C.
 - **Limit numbers** in `ai_config` (the spend ceilings are placeholders until phase 0 cost data).
 - **Push deep link**: whether the notification opens the review directly or the Thing's task list
-  with the review on top (phase E).
+  with the review on top (phase C, T26).
 
 ## 18. Task breakdown
 
@@ -1032,12 +1047,15 @@ dependency order.
     (§9.1, §10). R1, R2, R5, R47, R48, R51.
 17. **Screen states.** Static cards first, the merge, working, review with *Already tracked* and
     first-due lines, empty, failed, the disclosure, strings for every §5.7 code, and every §11
-    analytics event including `TaskOriginEdited` from the task form (§9.2, §9.4–9.6). R24–R27,
-    R31, R50, R52.
+    analytics event including `TaskOriginEdited` from the task form, and the in-flight run opening
+    the working state from every entry point (§9.1, §9.2, §9.4–9.6). R19a, R24–R27, R31, R50, R52.
 18. **Update before accepting (P1).** The task form accepts a pre-filled suggestion and returns it
     as accepted-with-edits. R28.
 19. **Privacy policy.** State the chosen provider's retention and training terms. Not code; it
     gates the phase C release (§17).
+26. **Push when a run finishes (P0).** Moved here from phase E on 2026-10-01 and kept its number.
+    The worker's `onFinished` hook sends it for every outcome, with the deep link decided in §17;
+    the app drops it while that run's screen is open. R20.
 
 **Phase D: documents**
 
@@ -1057,8 +1075,6 @@ dependency order.
 
 **Phase E: follow-ups**
 
-26. **Push when a run finishes (P1).** The worker's `onFinished` hook, with the deep link decided
-    in §17. R20.
 27. **Report a wrong suggestion (P1).** The report path and the team's cache-eviction tooling.
     R32, R44.
 
