@@ -22,6 +22,7 @@ export type RunConfig = {
   ocr?: OcrProvider;
   locate: LocateMethod;
   recallTier: AiTier;
+  attachPdf?: boolean;
   docsDir: string;
   /** Run the case a second time on the warm cache, for the R19 cache-hit latency. */
   warm: boolean;
@@ -57,6 +58,7 @@ export async function runCase(loaded: LoadedCase, config: RunConfig): Promise<Ca
         cache,
         locate: config.locate,
         recallTier: config.recallTier,
+        attachPdf: config.attachPdf,
         loadDocument: async (ref) => {
           const bytes = new Uint8Array(await readFile(documentPath(config.docsDir, ref)));
           const actual = createHash("sha256").update(bytes).digest("hex");

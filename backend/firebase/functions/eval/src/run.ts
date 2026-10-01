@@ -16,7 +16,7 @@ import type { CaseScore } from "./score.js";
 /**
  * `npm run eval:tasks -- --fast=<id> --strong=<id> [--cases=a,b] [--locate=keywords|model|all]
  *   [--recall-tier=fast|strong] [--ocr=document-ai|none] [--repeat=N] [--warm]
- *   [--claude=vertex|direct] [--replay=<run dir>]`
+ *   [--claude=vertex|direct] [--attach-pdf] [--replay=<run dir>]`
  *
  * Costs money unless --replay is given. See eval/README.md.
  */
@@ -35,6 +35,7 @@ async function main() {
       warm: { type: "boolean", default: false },
       replay: { type: "string" },
       claude: { type: "string", default: "vertex" },
+      "attach-pdf": { type: "boolean", default: false },
     },
   });
 
@@ -78,6 +79,7 @@ async function main() {
       ocr: values.ocr === "document-ai" && processor ? createDocumentAiOcr({ processorName: processor }) : undefined,
       locate,
       recallTier,
+      attachPdf: values["attach-pdf"],
       docsDir: path.join(EVAL_DIR, "docs"),
       warm: values.warm && !replayDir,
     };
@@ -104,6 +106,7 @@ async function main() {
     locate,
     recallTier,
     claude: claudeChannel,
+    attachPdf: values["attach-pdf"],
     ocr: ocrLabel(values.ocr, processor),
     repeat,
     generationVersion: GENERATION_VERSION,

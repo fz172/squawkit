@@ -6,7 +6,7 @@ import type { AiGenerateRequest, AiProvider, JsonSchema } from "../../src/ai/pro
 import { assertPortableSchema } from "../../src/ai/providers/portableSchema.js";
 import { InMemoryPipelineCache } from "../../src/ai/tasks/cache.js";
 import { identityHash, normalizeIdentity } from "../../src/ai/tasks/identity.js";
-import { locateByKeywords, withContext } from "../../src/ai/tasks/locate.js";
+import { locateByKeywords, looksTabular, withContext } from "../../src/ai/tasks/locate.js";
 import type { SourceDocumentRef, SuggestTasksRequest } from "../../src/ai/tasks/model.js";
 import {
   runTaskPipeline,
@@ -373,6 +373,57 @@ describe("task pipeline with documents", () => {
     expect((await rejection(runTaskPipeline(request([ref("blob-gone")]), h.deps))).code).toBe("document_missing");
   });
 
+  it("attaches only the located pages that look like tables, and says which", async () => {
+    const pages = Array.from({ length: 60 }, (_, i) =>
+      i === 44
+        ? "Maintenance schedule: spark plugs X X X X replace every 200 hours"
+        : i === 45
+          ? "Maintenance schedule continued: coolant every 2 years"
+          : `Chapter text page ${i + 1}`,
+    );
+    const h = harness(
+      {
+        locate: () => ({ pages: [45] }),
+        recall: () => RECALLED,
+        extract: () => ({ ...adExtraction(), items: [{ ...adExtraction().items[0], pages: [45] }] }),
+        tailor: () => ({ suggestions: [tailored({ candidateIds: ["d0.0"] })], documents: [] }),
+      },
+      { "blob-mm": await pdf(pages) },
+    );
+    h.deps.attachPdf = true;
+    h.deps.locate = "model";
+
+    await runTaskPipeline(request([ref("blob-mm")]), h.deps);
+
+    const parts = h.strong.asked.find((a) => a.stage === "extract")!.req.parts;
+    const attached = parts.find((p): p is { pdfBytes: Uint8Array } => "pdfBytes" in p);
+    expect(attached).toBeDefined();
+    expect((await PDFDocument.load(attached!.pdfBytes)).getPageCount()).toBe(1);
+    const text = parts.find((p): p is { text: string } => "text" in p)!.text;
+    expect(text).toContain("document pages 45.");
+    // Every located page still goes as text.
+    expect(text).toContain("=== page 46 ===");
+  });
+
+  it("attaches no PDF when no located page looks like a table", async () => {
+    const h = harness(
+      { recall: () => RECALLED, extract: () => adExtraction(), tailor: () => ({ suggestions: [], documents: [] }) },
+      { "blob-ad": await pdf(AD_PAGES) },
+    );
+    h.deps.attachPdf = true;
+    await runTaskPipeline(request([ref("blob-ad")]), h.deps);
+    expect(h.strong.asked.find((a) => a.stage === "extract")!.req.parts.some((p) => "pdfBytes" in p)).toBe(false);
+  });
+
+  it("sends no PDF unless asked", async () => {
+    const h = harness(
+      { recall: () => RECALLED, extract: () => adExtraction(), tailor: () => ({ suggestions: [], documents: [] }) },
+      { "blob-ad": await pdf(AD_PAGES) },
+    );
+    await runTaskPipeline(request([ref("blob-ad")]), h.deps);
+    expect(h.strong.asked.find((a) => a.stage === "extract")!.req.parts.some((p) => "pdfBytes" in p)).toBe(false);
+  });
+
   it("sends a long document's located pages only, with the model locator", async () => {
     const pages = Array.from({ length: 60 }, (_, i) =>
       i === 44 ? "Maintenance schedule: replace spark plugs every 200 hours" : `Chapter text page ${i + 1}`,
@@ -418,6 +469,12 @@ describe("pipeline support", () => {
       { key: "model", value: "tsi" },
     ]);
     expect(identityHash(normalizeIdentity(a))).toBe(identityHash(normalizeIdentity(b)));
+  });
+
+  it("tells a flattened table from a list", () => {
+    expect(looksTabular("Spark plugs X X X(1 X  Coolant • • •")).toBe(true);
+    expect(looksTabular("Inspect brake pads. Inspect wiper blades. Rotate tires.")).toBe(false);
+    expect(looksTabular("Exhaust X-ray, Xenon lamp, box, x86")).toBe(false);
   });
 
   it("locates schedule pages by keywords and adds context pages", () => {

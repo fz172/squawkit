@@ -1,9 +1,10 @@
 import type { OcrProvider } from "../document/ocr/types.js";
+import { slicePdf } from "../document/pdfSlice.js";
 import { readDocument, type DocumentPage } from "../document/readDocument.js";
 import { AiError } from "../errors.js";
 import { generateValidated } from "../providers/generateValidated.js";
 import { describe } from "../providers/json.js";
-import type { AiPart, AiProvider, AiTier, AiUsage, JsonSchema } from "../providers/types.js";
+import { MIME_PDF, type AiPart, type AiProvider, type AiTier, type AiUsage, type JsonSchema } from "../providers/types.js";
 import {
   documentCacheKey,
   identityCacheKey,
@@ -15,6 +16,7 @@ import { buildDrafts, type CandidateDocument } from "./drafts.js";
 import { identityHash, normalizeIdentity } from "./identity.js";
 import {
   locateByKeywords,
+  looksTabular,
   pageDigest,
   READ_WHOLE_BELOW_PAGES,
   withContext,
@@ -81,13 +83,24 @@ export type PipelineDeps = {
    * bake-off compares both tiers there. Defaults to fast.
    */
   recallTier?: AiTier;
+  /**
+   * Also send extraction the located pages that look like tables (looksTabular) as a PDF, so the
+   * model sees which column a mark sits under, which the text layer loses. Pages without a table
+   * go as text only, which keeps the cost where the PDF helps.
+   */
+  attachPdf?: boolean;
 };
 
 export type PipelineOutcome =
   | { status: "succeeded"; result: SuggestTasksResult }
   | { status: "empty"; reason: "low_identity_confidence" | "nothing_survived"; result: SuggestTasksResult };
 
-const MAX_TOKENS = { locate: 2000, extract: 32000, recall: 16000, tailor: 32000 };
+/**
+ * Per-stage output caps. Extract and tailor sit at Gemini 3.8 Flash's 65,536-token maximum: its
+ * thinking counts toward the cap, and at 32,000 the tailor was cut off and re-asked on every
+ * three-manual run. Claude allows more and streams, so the cap is safe for it too.
+ */
+const MAX_TOKENS = { locate: 2000, extract: 65536, recall: 16000, tailor: 65536 };
 
 type ReadDocument = CandidateDocument & { pages: DocumentPage[]; cached: boolean };
 
@@ -211,13 +224,16 @@ async function readAndExtract(
 
   deps.onStage?.("extracting_schedule", ref.name);
   const images: AiPart[] = pages.flatMap((p) => (p.image ? [{ image: p.image, mime: ref.mimeType }] : []));
+  const tablePages =
+    deps.attachPdf && ref.mimeType === MIME_PDF ? pages.filter((p) => looksTabular(p.text)).map((p) => p.n) : [];
+  const pdf: AiPart[] = tablePages.length > 0 ? [{ pdfBytes: await slicePdf(bytes, tablePages) }] : [];
   const extraction = (await call(
     deps,
     "extract",
     deps.strong,
     {
       system: EXTRACT_SYSTEM,
-      parts: [...images, { text: documentText(ref, pages) }],
+      parts: [...pdf, ...images, { text: documentText(ref, pages, tablePages) }],
       schema: EXTRACT_SCHEMA,
       tier: "strong",
       maxOutputTokens: MAX_TOKENS.extract,
