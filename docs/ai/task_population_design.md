@@ -19,7 +19,7 @@ Seven pieces, in dependency order. §15 sequences them and §18 breaks them into
    provider adapter and scores it against PRD §9.4. The bake-off result is a follow-up PR that
    fills in §12.5.
 2. **Shared AI backend** (§5). A job model: `startAiJob` callable → `ai_jobs/{jobId}` doc →
-   Firestore-triggered worker → result on the same doc, which the client listens to. Provider
+   task-queue worker → result on the same doc, which the client listens to. Provider
    abstraction, limits, kill switch, cost log.
 3. **Reference-aware blob release** (§8.3). The client stops deleting remote blobs; a server
    trigger collects a blob when the last live record naming it drops it. Independent of AI; ships
@@ -63,7 +63,7 @@ flowchart TB
     direction LR
     Callables["Callables<br/>getAiEligibility · startAiJob<br/>closeAiJob"]
     Auth["authorizeAiCall<br/>signed in · kill switch · membership<br/>owner tier · daily limit · spend ceiling"]
-    Worker["runAiJob worker<br/>onDocumentCreated(ai_jobs)"]
+    Worker["runAiJob worker<br/>onTaskDispatched"]
     subgraph Pipeline["Task pipeline · src/ai/tasks"]
       direction LR
       S1["1 read<br/>text / OCR"] --> S2["2 identify<br/>+ extract"]
@@ -134,8 +134,8 @@ flowchart TB
 Two paths cross the diagram:
 
 - **A suggestion run.** The screen calls `TaskSuggestionManager`, which builds the context
-  locally and calls `startAiJob` through `AiJobClient`. The callable authorizes and writes
-  `ai_jobs`, which triggers the worker. The worker runs the pipeline, calling providers through
+  locally and calls `startAiJob` through `AiJobClient`. The callable authorizes, writes
+  `ai_jobs` and enqueues the worker. The worker runs the pipeline, calling providers through
   `AiProvider`, and writes the result back to `ai_jobs`, where the client's listener picks it up.
   Accepting writes tasks through the existing managers and sync.
 - **Blob release.** Removing an attachment releases the local reference only. The entity write
@@ -346,8 +346,10 @@ headroom); the client builder truncates logs first (§7.2).
 
 ### 5.2 Worker
 
-`runAiJob`: `onDocumentCreated("ai_jobs/{jobId}")`, `timeoutSeconds: 540`, `memory: "2GiB"`,
-`retry: false`, secrets for every configured provider. It dispatches on `kind` to a registered
+`runAiJob`: a task-queue function (`onTaskDispatched`), `timeoutSeconds: 1800`, `memory: "2GiB"`,
+no queue retries, secrets for every configured provider. `startAiJob` enqueues it with the job id
+after writing `ai_jobs/{jobId}`. A Firestore trigger was the first plan, but event functions stop at
+540 s and a Gemini three-document run reached 505 s in the bake-off (§12.5). It dispatches on `kind` to a registered
 pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggestionPipeline)`), and:
 
 1. Marks RUNNING, writes `stage` updates as the pipeline reports them ("reading_document", arg =
@@ -358,7 +360,7 @@ pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggestionPipeline
    (`enabledTokensFor(callerUid)` → `sendPush`, deep link to the suggestions route).
 
 A crashed worker leaves a job RUNNING. Eligibility and `startAiJob` treat a RUNNING job older than
-12 minutes as FAILED (`stale`) and clear it.
+35 minutes (the worker timeout plus margin) as FAILED (`stale`) and clear it.
 
 ### 5.3 Authorization
 
@@ -403,7 +405,9 @@ so a Claude refusal is a `provider_error`. The Claude adapter can also call Anth
 directly (`channel: "direct"`, eval flag `--claude=direct`): same models, same list price, no
 refusal fallback on either route. The eval uses it while the project has no Vertex quota for
 Claude; production stays on Vertex. The chosen pair (fast, strong) is config in
-`ai_config/global`, so switching provider is a config write once both adapters are deployed. JSON
+`ai_config/global`, so switching provider is a config write once both adapters are deployed. The
+bake-off chose Gemini 3.8 Flash for both (§12.5); the Claude adapter stays for the eval and as a
+fallback. JSON
 that fails schema validation is retried once with the validation error appended; a second failure
 fails the stage (PRD §9.4 "valid output"). Schemas stay inside the subset all three vendors accept
 (kept to the strictest common form): every object closed, every property required, optional
@@ -741,7 +745,7 @@ at 3:10 pm". A member whose owner is free sees "Documents need the owner’s Pro
 ```
 ┌ Suggest tasks ─────────────────────────────────┐
 │  ◌ Reading Rotax 915 iS manual…                │
-│    This can take a couple of minutes.          │
+│    This can take a few minutes.                │
 │    You can leave; your suggestions will wait.  │
 │  ☑ Annual inspection  (static cards stay)      │
 └────────────────────────────────────────────────┘
@@ -836,8 +840,65 @@ scorer, and a record-then-replay round trip on a synthetic document.
 
 ### 12.5 Results
 
-To be filled in by the bake-off PR: provider pair, locating method, OCR choice, per-case scores,
-cost per run.
+**Chosen (2026-10-01): Gemini 3.8 Flash for both tiers**, on Vertex AI: LOW thinking for `fast`,
+MEDIUM for `strong`. Locating is `keywords` (§6.2). A manual's table pages go to extraction as a
+sliced PDF next to the text (`attachPdf`, §6.2). Image-only pages use Document AI (§5.5). Prompts are
+`tasks-4`.
+
+Flash + Sonnet 5.5 scored higher and ran faster. Gemini alone won on price. Every uncached run
+takes minutes either way, so the user leaves the screen whichever pair runs (PRD R19 was relaxed
+to match), and the extra 3–5 minutes are worth halving the cost. It also needs no Claude quota on
+Vertex, which was refused twice.
+
+Document cases, 3 repeats each, the same prompts and settings (selective PDF):
+
+| | Gemini 3.8 Flash only | Flash + Sonnet 5.5 |
+|---|---|---|
+| Recall (runs that finished) | 94% | 96% |
+| Interval accuracy | 89% | 93% |
+| Citation accuracy | 96% | 97% |
+| Precision | 75% | 87% |
+| Mean cost per document run | $0.23 | $0.44 |
+| Sling, three manuals | 344–505 s, $0.32 | 168–191 s, $0.73 |
+| Sienna guide / Triumph handbook | 194–326 s, $0.18 | 88–105 s, $0.30 |
+| Failed runs | 1 of 9 (Vertex 429) | 0 of 9 |
+
+| Case (Gemini only) | Recall | Intervals | Citations | Precision |
+|---|---|---|---|---|
+| Sling TSi, three manuals | 94% | 78% | 90% | 62% |
+| Toyota Sienna, owner's guide | 100% | 100% | 100% | 100% |
+| Triumph T100, handbook | 88% | 91% | 100% | 73% |
+
+- **Sling is the weak case.** Across two runs Gemini misread 4–7 intervals (airframe 100-hour,
+  engine 50-hour, coolant, propeller first inspection) and added 12–13 replacement items and up to
+  4 duplicates the key does not list. The A&P review before the airplane preset ships (PRD §9.3)
+  covers these.
+- **Triumph's misses are mostly scoring.** Gemini folds valve clearances and camshaft timing into
+  one "20,000-mile inspection", which §6.2's folding rule asks for and the key does not accept, and
+  it lists two handbook items the key leaves out (throttle body plate, side stand pivot). It also
+  read the air cleaner as every 20,000 miles in two runs; the handbook says 10,000.
+- **No-document cases** all succeeded (bike, boat, Cessna, custom, home, and the Sling, Sienna and
+  Triumph without documents) in 55–358 s. Home returns nothing in 2 of 3 runs, since its template
+  cannot name the appliances (§12.2).
+- **Hard gates** pass on every run.
+
+What the bake-off changed in the pipeline:
+
+- Gemini's `strong` tier thinks at MEDIUM. At HIGH it spent the output budget thinking and failed
+  with 500s.
+- Extract and tailor may write 65,536 tokens. At 32k the Sling tailor answer was cut off and asked
+  again, which doubled its time.
+- Gemini calls wait 10 minutes for an answer (Node's default is 5) and retry dropped connections
+  and 429s with backoff.
+- Gemini-only three-document runs reach 505 s, close to an event trigger's 540 s ceiling, so the
+  worker moves to a task-queue function (§5.2).
+
+Rejected along the way: Flash-Lite + Haiku 4.5 (recall too low), Opus 5.5 as `strong` (worse than
+Sonnet at twice the cost), Gemini 3.1 Pro (dropped for Flash 3.8), OpenAI and Mistral OCR (dropped
+before testing). The runs, with every suggestion, are committed under `eval/out/`:
+`2026-10-01T17-03-10-977Z_gemini-3.8-flash_gemini-3.8-flash` (chosen), with the five cases it
+reuses in `2026-10-01T16-13-12-456Z_…`, and `2026-10-01T06-47-56-563Z_gemini-3.8-flash_claude-sonnet-5-5`
+for comparison.
 
 ## 13. Security and privacy
 
@@ -899,6 +960,8 @@ Ordering rules the phases alone do not show:
 | Worker timeout or cost on huge manuals (no page limit) | Locate stage before extract; text-layer reading is cheap, and OCR of image-only manuals is the slow case the bake-off must time; spend ceilings; stale-job recovery |
 | Component instance not representable | `component_hint` in the description; a task component-instance field is a separate proposal |
 | Job doc listener outside the sync engine | Confined to `core/ai`; not an entity path |
+| Vertex capacity (429) on Gemini | The adapter backs off and retries; a run that still fails is free and says "service unavailable" (PRD R21). Provisioned throughput if launch traffic needs it |
+| Gemini latency swings 2–5x between identical runs | The user can leave (R19); the worker allows 30 minutes |
 
 ## 17. Open questions
 
@@ -938,7 +1001,7 @@ dependency order.
    with tests (§5.3). R45–R47, R49.
 8. **Callables.** `getAiEligibility`, `startAiJob` with the idempotent join, and `closeAiJob`
    (§5.1).
-9. **Worker.** `runAiJob`, the pipeline registry, an echo pipeline for round-trip tests, stage
+9. **Worker.** `runAiJob` as a task-queue function, the pipeline registry, an echo pipeline for round-trip tests, stage
    updates, stale-job recovery, input deletion, the cost log and `ai_spend`, the Firestore cache
    implementation, and provider secrets with their Secret Manager IAM bindings (§5.2, §5.6,
    §6.5).

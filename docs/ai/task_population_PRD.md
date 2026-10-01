@@ -178,8 +178,9 @@ which case it is the first follow-up; **P2** is designed for, not built.
   - Domain-inherent rules (the annual, 14 CFR 91.409) may be named in rationale text but are still
     typed routine.
 - **R19 (P0). Progress.** A progress state appears within one second, naming the current step
-  ("Reading Rotax 915 iS manual…"). A cache hit returns in under 5 seconds, and an uncached run with
-  three documents in under three minutes at p90. The user can leave the screen. The result is held
+  ("Reading Rotax 915 iS manual…"). A cache hit returns in under 5 seconds. An uncached run takes minutes and
+  carries on after the user leaves the screen; with three documents it finishes in under 10
+  minutes at p90. The result is held
   server-side for that caller and Thing for up to 24 hours and deleted when fetched or accepted.
 - **R20 (P1).** When an uncached run finishes after the user has left, a notification brings them
   back to the review screen.
@@ -438,7 +439,8 @@ The design doc fills this in with measured results before phase B starts.
 
 ### 9.2 Candidates
 
-Two providers at the same tier, plus a document pre-processor (OpenAI was dropped on 2026-09-30):
+Two providers at the same tier, plus a document pre-processor (OpenAI was dropped on 2026-09-30).
+The bake-off chose Gemini 3.8 Flash for both tiers (decision 18):
 
 - Google Gemini (e.g. 3.5 Flash), on Vertex AI in the existing GCP project.
 - Anthropic Claude (e.g. Sonnet 5.5, Haiku 4.5), on Vertex AI in the same project.
@@ -478,7 +480,9 @@ before the airplane preset is enabled.
 - Recall of ≥ 90% of the manual's scheduled items.
 - ≥ 95% of the items present have the correct interval(s) and units.
 - ≥ 95% of citations point to the page containing the item.
-- An uncached three-document run finishes in under three minutes at p90 (raised from two on 2026-09-30, after the first bake-off round).
+- An uncached three-document run finishes in under 10 minutes at p90. This was two minutes, then
+  three (2026-09-30), and became 10 on 2026-10-01: past a minute the user leaves the screen
+  anyway, so a cheaper, slower model costs them nothing.
 
 **Cost:** reported per document and per run, with a guide of under about $1 for an uncached
 three-document airplane. This is a guide, not a gate, and quality wins a tie.
@@ -548,12 +552,15 @@ Settled 2026-09-27.
     cache hits do not count.
 17. **Low confidence returns nothing** on any preset, with a fallback that asks for details or a
     document (R21a).
+18. **Gemini 3.8 Flash for both tiers, on Vertex AI** (2026-10-01). Flash + Sonnet 5.5 scored a
+    little higher and ran in half the time, but cost twice as much, and both take minutes. Results
+    are in the design doc §12.5.
 
 ### Still open
 
 - **Limit values** (R49): the per-run document cap and the cost ceilings, set from phase 0's
   cost data. The daily run limit is settled (decision 16).
-- **Provider data terms.** Confirm the chosen provider's retention and training terms for this use,
+- **Provider data terms.** Confirm Vertex AI's retention and training terms for Gemini in this use,
   and state them in the privacy policy before phase C ships.
 - **Log history cap** (R12): the size and recency cut.
 

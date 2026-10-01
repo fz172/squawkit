@@ -1,7 +1,7 @@
 import type { CaseScore } from "./score.js";
 
 /** PRD §9.4's numbers for document cases. */
-export const BAR = { recall: 0.9, intervalAccuracy: 0.95, citationAccuracy: 0.95, p90LatencyMs: 180_000 };
+export const BAR = { recall: 0.9, intervalAccuracy: 0.95, citationAccuracy: 0.95, p90LatencyMs: 600_000 };
 
 /** Not a PRD gate: a soft target, since every document suggestion is pre-selected (R27). */
 export const PRECISION_TARGET = 0.7;
