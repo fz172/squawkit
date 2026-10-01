@@ -95,7 +95,12 @@ export type PipelineOutcome =
   | { status: "succeeded"; result: SuggestTasksResult }
   | { status: "empty"; reason: "low_identity_confidence" | "nothing_survived"; result: SuggestTasksResult };
 
-const MAX_TOKENS = { locate: 2000, extract: 32000, recall: 16000, tailor: 32000 };
+/**
+ * Per-stage output caps. Extract and tailor sit at Gemini 3.8 Flash's 65,536-token maximum: its
+ * thinking counts toward the cap, and at 32,000 the tailor was cut off and re-asked on every
+ * three-manual run. Claude allows more and streams, so the cap is safe for it too.
+ */
+const MAX_TOKENS = { locate: 2000, extract: 65536, recall: 16000, tailor: 65536 };
 
 type ReadDocument = CandidateDocument & { pages: DocumentPage[]; cached: boolean };
 
