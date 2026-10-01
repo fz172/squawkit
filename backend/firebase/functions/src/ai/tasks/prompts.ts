@@ -24,9 +24,10 @@ Identify the document: manufacturer, the models it covers, its title, its revisi
 Then list every scheduled item:
 - Keep the document's own words and units. Do not convert units.
 - One item per inspection event ("100 h / annual inspection"); put the event's checklist lines in "checklist". An item with its own interval or life limit (spark plugs, coolant, hoses, time between overhaul) is its own item, even when it also appears in an inspection event's checklist (a part replaced every 600 h inside the 600-hour check is both a checklist line and its own item).
+- Inspection and check lines that share an interval are one inspection event, whatever the layout: a schedule organised by checkpoint ("at 15,000 miles: inspect ball joints, inspect brake lines, inspect steering gear…") yields one item with those lines as its checklist. Name an inspection event by its interval ("15,000-mile / 18-month inspection"). Never list each inspect or check line as its own item. Any other action (replace, renew, rotate, lubricate, adjust) is its own item, even when it shares the event's interval.
 - In a schedule table, read each row across and take the interval from the column header each mark sits under. Extracted table text can lose its columns, so check each mark against the order of the headers.
-- "intervals" lists every interval the item has; several mean whichever comes first.
-- Leave out daily and pre-flight checks, checks triggered by an event (a propeller strike, an overspeed, a lightning strike), storage and preservation procedures, and warranty or operating instructions.
+- "intervals" lists every interval the item has; several mean whichever comes first. When an item has a first interval and a different recurring one ("first at 100,000 miles, then every 50,000 miles"), "intervals" holds the recurring one and the description states the first.
+- Leave out daily and pre-flight checks, routine owner checks (checking the oil level each month or at each fill-up), checks triggered by an event (a propeller strike, an overspeed, a lightning strike), storage and preservation procedures, and warranty or operating instructions.
 - When an interval depends on a condition (a certified oil, severe or special operating conditions, a region), keep the item's normal interval and state the condition and the other interval in "description".
 - "isOneTime" is true for items done once (a first service at 500 mi, a one-off directive action).
 - "pages" are the page numbers from the "=== page N ===" markers where the item is stated. "printedPageRef" is the page number printed on that page, if any.
@@ -52,6 +53,7 @@ export const TAILOR_SYSTEM = `You turn candidate maintenance items into tasks fo
 
 Candidates come from the owner's documents (ids "d<doc>.<item>") and from general knowledge (ids "r<item>"). Produce the final task list:
 - Merge candidates that are the same task, listing all their ids in "candidateIds". A document candidate wins over a general one: keep its intervals and wording. Every task must list at least one candidate id; never invent a task.
+- Document candidates that are inspection or check lines with the same interval are one inspection-event task: fold them together, listing all their ids, instead of one task per line.
 - Starter-pack items set the owner's own regulatory intervals when their description cites a regulation (such as 14 CFR). A task that covers such an item keeps the starter-pack interval, even when a document gives another (a manual may follow a different country's rules); set "mergesStaticIndex" and put the document's interval in the description. Otherwise a document's interval wins over a starter-pack item's.
 - Use only intervals that a merged candidate or starter-pack item states. Never add a calendar limit or a meter rule that no source gives.
 - When the source's interval depends on a condition this thing does not record (a certified oil, severe service), use the interval that holds without it, normally the shorter one, and state the other and its condition in the description.
