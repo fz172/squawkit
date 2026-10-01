@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { AiError } from "../../src/ai/errors.js";
 import { createClaudeProvider } from "../../src/ai/providers/claudeProvider.js";
-import { createGeminiProvider, GEMINI_HTTP_OPTIONS } from "../../src/ai/providers/geminiProvider.js";
+import { createGeminiProvider, GEMINI_HTTP_OPTIONS, GEMINI_TIMEOUT_MS, isDroppedConnection } from "../../src/ai/providers/geminiProvider.js";
 import { generateValidated } from "../../src/ai/providers/generateValidated.js";
 import { assertPortableSchema } from "../../src/ai/providers/portableSchema.js";
 import { createProvider, PROVIDER_CANDIDATES } from "../../src/ai/providers/registry.js";
@@ -180,6 +180,19 @@ describe("gemini provider", () => {
 
   it("asks the SDK to retry transient failures", () => {
     expect(GEMINI_HTTP_OPTIONS.retryOptions.attempts).toBeGreaterThan(1);
+  });
+
+  it("waits longer than Node's 5-minute default for a slow answer", () => {
+    expect(GEMINI_HTTP_OPTIONS.timeout).toBe(GEMINI_TIMEOUT_MS);
+    expect(GEMINI_TIMEOUT_MS).toBeGreaterThan(5 * 60 * 1000);
+  });
+
+  it("retries a dropped connection but not a timeout", () => {
+    const fetchFailed = (code: string) => Object.assign(new TypeError("fetch failed"), { cause: { code } });
+    expect(isDroppedConnection(fetchFailed("UND_ERR_SOCKET"))).toBe(true);
+    expect(isDroppedConnection(fetchFailed("ECONNRESET"))).toBe(true);
+    expect(isDroppedConnection(fetchFailed("UND_ERR_HEADERS_TIMEOUT"))).toBe(false);
+    expect(isDroppedConnection(new Error("boom"))).toBe(false);
   });
 
   it("treats MAX_TOKENS as a parse error and SAFETY as a provider error", async () => {
