@@ -16,6 +16,7 @@ import { buildDrafts, type CandidateDocument } from "./drafts.js";
 import { identityHash, normalizeIdentity } from "./identity.js";
 import {
   locateByKeywords,
+  looksTabular,
   pageDigest,
   READ_WHOLE_BELOW_PAGES,
   withContext,
@@ -83,8 +84,9 @@ export type PipelineDeps = {
    */
   recallTier?: AiTier;
   /**
-   * Also send extraction the located pages as a PDF, so the model sees table layout the text
-   * layer loses (which column a mark sits under). Off until the bake-off settles it.
+   * Also send extraction the located pages that look like tables (looksTabular) as a PDF, so the
+   * model sees which column a mark sits under, which the text layer loses. Pages without a table
+   * go as text only, which keeps the cost where the PDF helps.
    */
   attachPdf?: boolean;
 };
@@ -217,15 +219,16 @@ async function readAndExtract(
 
   deps.onStage?.("extracting_schedule", ref.name);
   const images: AiPart[] = pages.flatMap((p) => (p.image ? [{ image: p.image, mime: ref.mimeType }] : []));
-  const pdf: AiPart[] =
-    deps.attachPdf && ref.mimeType === MIME_PDF ? [{ pdfBytes: await slicePdf(bytes, wanted) }] : [];
+  const tablePages =
+    deps.attachPdf && ref.mimeType === MIME_PDF ? pages.filter((p) => looksTabular(p.text)).map((p) => p.n) : [];
+  const pdf: AiPart[] = tablePages.length > 0 ? [{ pdfBytes: await slicePdf(bytes, tablePages) }] : [];
   const extraction = (await call(
     deps,
     "extract",
     deps.strong,
     {
       system: EXTRACT_SYSTEM,
-      parts: [...pdf, ...images, { text: documentText(ref, pages, pdf.length > 0) }],
+      parts: [...pdf, ...images, { text: documentText(ref, pages, tablePages) }],
       schema: EXTRACT_SCHEMA,
       tier: "strong",
       maxOutputTokens: MAX_TOKENS.extract,

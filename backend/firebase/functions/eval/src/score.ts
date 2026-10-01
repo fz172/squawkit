@@ -157,7 +157,10 @@ export function scoreCase(input: ScoreInput): CaseScore {
 /** Whether a document suggestion's cited pages state it: the §6.7 rule 4 check. */
 function citedPageStates(s: TaskSuggestion, pagesText: (blobId: string, pages?: number[]) => string): boolean {
   if (s.sourcePages.length === 0) return false;
-  const figures = s.rules.flatMap((r) => (r.kind === "meter" ? [r.interval] : r.kind === "time" ? [r.every] : []));
+  const figures = [
+    ...s.rules.flatMap((r) => (r.kind === "meter" ? [r.interval] : r.kind === "time" ? [r.every] : [])),
+    ...(s.firstDue?.meter ? [s.firstDue.meter.value] : []),
+  ];
   return citationHolds(pagesText(s.sourceDocument, s.sourcePages), s.title, figures);
 }
 

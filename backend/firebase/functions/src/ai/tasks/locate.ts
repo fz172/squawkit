@@ -40,6 +40,19 @@ export function locateByKeywords(pages: DocumentPage[]): number[] {
     .map((p) => p.n);
 }
 
+/**
+ * Check marks the text layer keeps when it loses a table's columns: "X", "•", "●", "✓". A schedule
+ * grid (the Rotax maintenance table, the T100's service chart) has many; a list layout has almost
+ * none. Measured on the eval manuals: table pages 4–101, other schedule pages 0–3.
+ */
+const TABLE_MARK = /(?<![A-Za-z])(?:X|x|•|●|✓|✔)(?![A-Za-z])/g;
+export const TABLE_MARKS_PER_PAGE = 4;
+
+/** Whether a page's text looks like a flattened table, whose layout only the PDF still shows. */
+export function looksTabular(text: string): boolean {
+  return (text.match(TABLE_MARK)?.length ?? 0) >= TABLE_MARKS_PER_PAGE;
+}
+
 /** One line per page for the model locator: the page number and its opening words. */
 export function pageDigest(pages: DocumentPage[], charsPerPage = 240): string {
   return pages

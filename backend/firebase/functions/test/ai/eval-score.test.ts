@@ -214,6 +214,18 @@ describe("scoreCase", () => {
     expect(s.invented).toEqual(["Inspect exhaust springs"]);
   });
 
+  it("counts a one-time item's first-due reading as a figure on its cited page", () => {
+    const s = score([
+      suggestion({
+        title: "25-hr. check",
+        rules: [],
+        isOneTime: true,
+        firstDue: { date: null, meter: { meterKey: "engine_hours", value: 200 } },
+      }),
+    ]);
+    expect(s.gates.uncitedDocumentItems).toEqual([]);
+  });
+
   it("finds each hard-gate violation", () => {
     const s = score([
       suggestion({ suggestionId: "a", type: "airworthiness_directive", referenceNumber: "AD 2024-05-07" }),
