@@ -19,7 +19,7 @@ Seven pieces, in dependency order. §15 sequences them and §18 breaks them into
    provider adapter and scores it against PRD §9.4. The bake-off result is a follow-up PR that
    fills in §12.5.
 2. **Shared AI backend** (§5). A job model: `startAiJob` callable → `ai_jobs/{jobId}` doc →
-   Firestore-triggered worker → result on the same doc, which the client listens to. Provider
+   task-queue worker → result on the same doc, which the client listens to. Provider
    abstraction, limits, kill switch, cost log.
 3. **Reference-aware blob release** (§8.3). The client stops deleting remote blobs; a server
    trigger collects a blob when the last live record naming it drops it. Independent of AI; ships
@@ -63,7 +63,7 @@ flowchart TB
     direction LR
     Callables["Callables<br/>getAiEligibility · startAiJob<br/>closeAiJob"]
     Auth["authorizeAiCall<br/>signed in · kill switch · membership<br/>owner tier · daily limit · spend ceiling"]
-    Worker["runAiJob worker<br/>onDocumentCreated(ai_jobs)"]
+    Worker["runAiJob worker<br/>onTaskDispatched"]
     subgraph Pipeline["Task pipeline · src/ai/tasks"]
       direction LR
       S1["1 read<br/>text / OCR"] --> S2["2 identify<br/>+ extract"]
@@ -75,7 +75,7 @@ flowchart TB
     Prov["AiProvider adapters<br/>fast / strong"]
     Release["onThingRecordBlobsReleased<br/>delete · attachment removed"]
     Sweep(["storage sweep"])
-    Push(["push · phase E"])
+    Push(["push · R20"])
   end
 
   subgraph Data["Firebase data"]
@@ -134,8 +134,8 @@ flowchart TB
 Two paths cross the diagram:
 
 - **A suggestion run.** The screen calls `TaskSuggestionManager`, which builds the context
-  locally and calls `startAiJob` through `AiJobClient`. The callable authorizes and writes
-  `ai_jobs`, which triggers the worker. The worker runs the pipeline, calling providers through
+  locally and calls `startAiJob` through `AiJobClient`. The callable authorizes, writes
+  `ai_jobs` and enqueues the worker. The worker runs the pipeline, calling providers through
   `AiProvider`, and writes the result back to `ai_jobs`, where the client's listener picks it up.
   Accepting writes tasks through the existing managers and sync.
 - **Blob release.** Removing an attachment releases the local reference only. The entity write
@@ -337,8 +337,8 @@ filter on `callerUid`); everything else functions-only. A composite index on
 
 | Callable                                                    | Does                                                                                                                                                                                                                   |
 |-------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`. Called when the sources sheet opens so the UI can show the right gate before any upload. Cheap; no model call.                |
-| `startAiJob({kind, request})`                               | Same checks, then in one transaction: if `ai_usage.inFlightJobId` is QUEUED/RUNNING, return it (idempotent join); else write `ai_job_inputs/{id}`, `ai_jobs/{id}` (QUEUED) and set `inFlightJobId`. Returns `{jobId}`. |
+| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`; `reason` is `run_in_progress` while another caller's run is in flight (R19a). Called when an entry point opens so the UI can show the right gate before any upload. Cheap; no model call. |
+| `startAiJob({kind, request})`                               | Same checks, then in one transaction: if `ai_usage.inFlightJobId` is QUEUED/RUNNING, return it when the caller started it (idempotent join) or fail with `run_in_progress` when someone else did; else write `ai_job_inputs/{id}`, `ai_jobs/{id}` (QUEUED) and set `inFlightJobId`. Returns `{jobId}`. |
 | `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc (accept, dismiss). Idempotent.                                                                                                                                                        |
 
 `request` is the kind's own proto, base64, capped at 512 KiB (Firestore's 1 MiB doc limit with
@@ -346,19 +346,22 @@ headroom); the client builder truncates logs first (§7.2).
 
 ### 5.2 Worker
 
-`runAiJob`: `onDocumentCreated("ai_jobs/{jobId}")`, `timeoutSeconds: 540`, `memory: "2GiB"`,
-`retry: false`, secrets for every configured provider. It dispatches on `kind` to a registered
+`runAiJob`: a task-queue function (`onTaskDispatched`), `timeoutSeconds: 1800`, `memory: "2GiB"`,
+no queue retries, secrets for every configured provider. `startAiJob` enqueues it with the job id
+after writing `ai_jobs/{jobId}`. A Firestore trigger was the first plan, but event functions stop at
+540 s and a Gemini three-document run reached 505 s in the bake-off (§12.5). It dispatches on `kind` to a registered
 pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggestionPipeline)`), and:
 
 1. Marks RUNNING, writes `stage` updates as the pipeline reports them ("reading_document", arg =
    document name) for the R19 progress text.
 2. On return, writes SUCCEEDED / EMPTY + result, or FAILED + error; clears `inFlightJobId`; sets
    `lastSuccessAt` only on SUCCEEDED (PRD decision 16); deletes `ai_job_inputs/{id}`.
-3. Calls the pipeline's `onFinished` hook; the task pipeline sends the R20 push there in phase E
+3. Calls the pipeline's `onFinished` hook; the task pipeline sends the R20 push there for every
+   outcome, SUCCEEDED, EMPTY or FAILED (phase C)
    (`enabledTokensFor(callerUid)` → `sendPush`, deep link to the suggestions route).
 
 A crashed worker leaves a job RUNNING. Eligibility and `startAiJob` treat a RUNNING job older than
-12 minutes as FAILED (`stale`) and clear it.
+35 minutes (the worker timeout plus margin) as FAILED (`stale`) and clear it.
 
 ### 5.3 Authorization
 
@@ -403,7 +406,9 @@ so a Claude refusal is a `provider_error`. The Claude adapter can also call Anth
 directly (`channel: "direct"`, eval flag `--claude=direct`): same models, same list price, no
 refusal fallback on either route. The eval uses it while the project has no Vertex quota for
 Claude; production stays on Vertex. The chosen pair (fast, strong) is config in
-`ai_config/global`, so switching provider is a config write once both adapters are deployed. JSON
+`ai_config/global`, so switching provider is a config write once both adapters are deployed. The
+bake-off chose Gemini 3.8 Flash for both (§12.5); the Claude adapter stays for the eval and as a
+fallback. JSON
 that fails schema validation is retried once with the validation error appended; a second failure
 fails the stage (PRD §9.4 "valid output"). Schemas stay inside the subset all three vendors accept
 (kept to the strictest common form): every object closed, every property required, optional
@@ -432,7 +437,7 @@ info-level logs; the cost log is a backend-only collection, not a log line.
 ### 5.7 Error codes
 
 `sign_in_required`, `disabled`, `not_member`, `owner_not_pro`, `daily_limit`,
-`spend_ceiling`, `document_missing` (blob not uploaded), `document_too_large`,
+`run_in_progress`, `spend_ceiling`, `document_missing` (blob not uploaded), `document_too_large`,
 `document_unreadable`, `no_schedule_found`, `provider_error`, `invalid_output`, `stale`. The client
 maps each to one string (PRD R21) and one analytics reason (R50).
 
@@ -703,6 +708,19 @@ All states are one route: `Screen.StarterPack` gains an optional `mode` query ar
   picker).
 - **Attachment row → Find tasks in this document** (R4, P1): `mode=document&attachmentId=`.
 
+While a run is in flight for the Thing, no entry point opens the sources sheet (PRD R19a):
+
+- **The caller's own run.** `observeRun(thingId)` reports `Working` from `observeLatest`, and every
+  entry point opens the working state (§9.4). It survives leaving, an app restart and a web reload,
+  on any of the caller's devices.
+- **Another member's run.** The caller cannot read that job (§4.3). `getAiEligibility` reports
+  `run_in_progress` from `ai_usage.inFlightJobId`, and the entry point shows "Suggestions are
+  already being prepared for this plane" with no document controls.
+
+`startAiJob` is the server-side backstop: a second start by the same caller returns the running
+job, and a start by another member fails with `run_in_progress` instead of joining a job it cannot
+read.
+
 ### 9.2 Starter pack with suggestions
 
 ```
@@ -741,8 +759,9 @@ at 3:10 pm". A member whose owner is free sees "Documents need the owner’s Pro
 ```
 ┌ Suggest tasks ─────────────────────────────────┐
 │  ◌ Reading Rotax 915 iS manual…                │
-│    This can take a couple of minutes.          │
-│    You can leave; your suggestions will wait.  │
+│    This can take a few minutes.                │
+│    You can leave; we’ll notify you when        │
+│    your suggestions are ready.                 │
 │  ☑ Annual inspection  (static cards stay)      │
 └────────────────────────────────────────────────┘
 ```
@@ -836,8 +855,68 @@ scorer, and a record-then-replay round trip on a synthetic document.
 
 ### 12.5 Results
 
-To be filled in by the bake-off PR: provider pair, locating method, OCR choice, per-case scores,
-cost per run.
+**Chosen (2026-10-01): Gemini 3.8 Flash for both tiers**, on Vertex AI: LOW thinking for `fast`,
+MEDIUM for `strong`. Locating is `keywords` (§6.2). A manual's table pages go to extraction as a
+sliced PDF next to the text (`attachPdf`, §6.2). Image-only pages use Document AI (§5.5). Prompts are
+`tasks-4`.
+
+Flash + Sonnet 5.5 read intervals more accurately, added fewer extras and ran faster. Recall was
+the same. Gemini alone won on price. Every uncached run
+takes minutes either way, so the user leaves the screen whichever pair runs (PRD R19 was relaxed
+to match), and the extra 3–5 minutes are worth halving the cost. It also needs no Claude quota on
+Vertex, which was refused twice.
+
+Document cases, 3 repeats each, the same prompts and settings (selective PDF). Scores are the mean
+over runs that finished, rescored after the Triumph key accepted folded inspection names:
+
+| | Gemini 3.8 Flash only | Flash + Sonnet 5.5 |
+|---|---|---|
+| Recall | 98% | 97% |
+| Interval accuracy | 92% | 96% |
+| Citation accuracy | 98% | 97% |
+| Precision | 84% | 92% |
+| Mean cost per document run | $0.23 | $0.44 |
+| Sling, three manuals | 344–505 s, $0.32 | 168–191 s, $0.73 |
+| Sienna guide / Triumph handbook | 194–326 s, $0.18 | 88–105 s, $0.30 |
+| Failed runs | 1 of 9 (Vertex 429) | 0 of 9 |
+
+| Case (Gemini only) | Recall | Intervals | Citations | Precision |
+|---|---|---|---|---|
+| Sling TSi, three manuals | 94% | 78% | 90% | 62% |
+| Toyota Sienna, owner's guide | 100% | 100% | 100% | 100% |
+| Triumph T100, handbook | 100% | 92% | 100% | 82% |
+
+- **Sling is the weak case.** Across two runs Gemini misread 4–7 intervals (airframe 100-hour,
+  engine 50-hour, coolant, propeller first inspection) and added 12–13 replacement items and up to
+  4 duplicates the key does not list. The A&P review before the airplane preset ships (PRD §9.3)
+  covers these.
+- **Triumph.** Gemini folds valve clearances and camshaft timing into one "20,000-mile
+  inspection", and the chain wear check into a "500-mile inspection", as §6.2's folding rule asks.
+  The key now accepts both names. It read the air cleaner as every 20,000 miles in two runs; the
+  handbook says 10,000. Its extras include two handbook items the key leaves out (throttle body
+  plate, side stand pivot).
+- **No-document cases** all succeeded (bike, boat, Cessna, custom, home, and the Sling, Sienna and
+  Triumph without documents) in 55–358 s. Home returns nothing in 2 of 3 runs, since its template
+  cannot name the appliances (§12.2).
+- **Hard gates** pass on every run.
+
+What the bake-off changed in the pipeline:
+
+- Gemini's `strong` tier thinks at MEDIUM. At HIGH it spent the output budget thinking and failed
+  with 500s.
+- Extract and tailor may write 65,536 tokens. At 32k the Sling tailor answer was cut off and asked
+  again, which doubled its time.
+- Gemini calls wait 10 minutes for an answer (Node's default is 5) and retry dropped connections
+  and 429s with backoff.
+- Gemini-only three-document runs reach 505 s, close to an event trigger's 540 s ceiling, so the
+  worker moves to a task-queue function (§5.2).
+
+Rejected along the way: Flash-Lite + Haiku 4.5 (recall too low), Opus 5.5 as `strong` (worse than
+Sonnet at twice the cost), Gemini 3.1 Pro (dropped for Flash 3.8), OpenAI and Mistral OCR (dropped
+before testing). The runs, with every suggestion, are committed under `eval/out/`:
+`2026-10-01T17-03-10-977Z_gemini-3.8-flash_gemini-3.8-flash` (chosen), with the five cases it
+reuses in `2026-10-01T16-13-12-456Z_…`, and `2026-10-01T06-47-56-563Z_gemini-3.8-flash_claude-sonnet-5-5`
+for comparison. Their committed reports predate the Triumph key change.
 
 ## 13. Security and privacy
 
@@ -854,7 +933,7 @@ cost per run.
   - `authorizeAiCall`: anonymous, non-member, technician member, owner free/pro with and without
     documents, daily limit (success counts; EMPTY/FAILED do not), spend ceiling, kill switch,
     stale job.
-  - `startAiJob` idempotent join; worker lifecycle with a fake provider (status, stage, input
+  - `startAiJob` idempotent join for the same caller and `run_in_progress` for another member; worker lifecycle with a fake provider (status, stage, input
     deletion, `lastSuccessAt`).
   - Every §6.7 validator, table-driven, including AD verbatim match and downgrade.
   - `onThingRecordBlobsReleased`: two tasks share a blob, one drops it (kept), both drop it
@@ -874,9 +953,9 @@ cost per run.
 | **0** | 1–4: provider adapters and document reading, the pipeline as a library, the eval harness, the bake-off | §9.4 met by the chosen pair; §12.5 filled in |
 | **A** | 5–10: protos, collections and rules, authorization, callables, worker, `core/ai` | An echo job round-trips on all three hosts on developer builds |
 | **B** | 11–12: server release trigger, client `release` | Shared-blob tests green; one release cycle in production before D ships |
-| **C** | 13–19: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy | No-document flow on all presets and hosts, developer builds |
+| **C** | 13–19 and 26: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy, push when a run finishes | No-document flow on all presets and hosts, developer builds |
 | **D** | 20–25: storage-rule deny, document pipeline wiring, sources sheet, the two P1 document items, flag removal | T100, Sling TSi and C172N + AD cases end to end; flag deleted; v1 |
-| **E** | 26–27: push, wrong-suggestion report | — |
+| **E** | 27: wrong-suggestion report | — |
 | **F** | 28: #1181 backfill intake (PRD §10.1) | — |
 
 Ordering rules the phases alone do not show:
@@ -899,13 +978,15 @@ Ordering rules the phases alone do not show:
 | Worker timeout or cost on huge manuals (no page limit) | Locate stage before extract; text-layer reading is cheap, and OCR of image-only manuals is the slow case the bake-off must time; spend ceilings; stale-job recovery |
 | Component instance not representable | `component_hint` in the description; a task component-instance field is a separate proposal |
 | Job doc listener outside the sync engine | Confined to `core/ai`; not an entity path |
+| Vertex capacity (429) on Gemini | The adapter backs off and retries; a run that still fails is free and says "service unavailable" (PRD R21). Provisioned throughput if launch traffic needs it |
+| Gemini latency swings 2–5x between identical runs | The user can leave (R19); the worker allows 30 minutes |
 
 ## 17. Open questions
 
 - **Provider data terms** (PRD §12): gates phase C.
 - **Limit numbers** in `ai_config` (the spend ceilings are placeholders until phase 0 cost data).
 - **Push deep link**: whether the notification opens the review directly or the Thing's task list
-  with the review on top (phase E).
+  with the review on top (phase C, T26).
 
 ## 18. Task breakdown
 
@@ -938,7 +1019,7 @@ dependency order.
    with tests (§5.3). R45–R47, R49.
 8. **Callables.** `getAiEligibility`, `startAiJob` with the idempotent join, and `closeAiJob`
    (§5.1).
-9. **Worker.** `runAiJob`, the pipeline registry, an echo pipeline for round-trip tests, stage
+9. **Worker.** `runAiJob` as a task-queue function, the pipeline registry, an echo pipeline for round-trip tests, stage
    updates, stale-job recovery, input deletion, the cost log and `ai_spend`, the Firestore cache
    implementation, and provider secrets with their Secret Manager IAM bindings (§5.2, §5.6,
    §6.5).
@@ -969,12 +1050,15 @@ dependency order.
     (§9.1, §10). R1, R2, R5, R47, R48, R51.
 17. **Screen states.** Static cards first, the merge, working, review with *Already tracked* and
     first-due lines, empty, failed, the disclosure, strings for every §5.7 code, and every §11
-    analytics event including `TaskOriginEdited` from the task form (§9.2, §9.4–9.6). R24–R27,
-    R31, R50, R52.
+    analytics event including `TaskOriginEdited` from the task form, and the in-flight run opening
+    the working state from every entry point (§9.1, §9.2, §9.4–9.6). R19a, R24–R27, R31, R50, R52.
 18. **Update before accepting (P1).** The task form accepts a pre-filled suggestion and returns it
     as accepted-with-edits. R28.
 19. **Privacy policy.** State the chosen provider's retention and training terms. Not code; it
     gates the phase C release (§17).
+26. **Push when a run finishes (P0).** Moved here from phase E on 2026-10-01 and kept its number.
+    The worker's `onFinished` hook sends it for every outcome, with the deep link decided in §17;
+    the app drops it while that run's screen is open. R20.
 
 **Phase D: documents**
 
@@ -994,8 +1078,6 @@ dependency order.
 
 **Phase E: follow-ups**
 
-26. **Push when a run finishes (P1).** The worker's `onFinished` hook, with the deep link decided
-    in §17. R20.
 27. **Report a wrong suggestion (P1).** The report path and the team's cache-eviction tooling.
     R32, R44.
 

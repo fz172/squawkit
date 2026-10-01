@@ -54,11 +54,12 @@ export function isDroppedConnection(e: unknown): boolean {
 }
 
 /**
- * The SDK retries 408, 429 and 5xx with exponential backoff when asked; three attempts matches
- * the Anthropic SDK's default of two retries. Vertex returns transient 500s under load.
+ * The SDK retries 408, 429 and 5xx with exponential backoff. Vertex returns 500s and 429s under
+ * load, and three attempts 2 s apart lost a Sling run to a 429 (bake-off round 3). Runs happen in
+ * the background, so waiting about a minute and a half across five attempts is cheap.
  */
 export const GEMINI_HTTP_OPTIONS = {
-  retryOptions: { attempts: 3, initialDelay: 2 },
+  retryOptions: { attempts: 5, initialDelay: 5, maxDelay: 60 },
   timeout: GEMINI_TIMEOUT_MS,
   fetch: geminiFetch,
 };

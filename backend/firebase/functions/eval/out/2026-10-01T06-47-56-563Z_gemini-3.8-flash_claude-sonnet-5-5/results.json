@@ -1,0 +1,1350 @@
+{
+  "config": {
+    "fast": "gemini-3.8-flash",
+    "strong": "claude-sonnet-5-5",
+    "locate": "keywords",
+    "recallTier": "fast",
+    "claude": "direct",
+    "attachPdf": true,
+    "ocr": "none",
+    "repeat": 3,
+    "generationVersion": "tasks-4"
+  },
+  "summary": {
+    "gates": {
+      "unsupportedRegulatory": 0,
+      "unverbatimReferences": 0,
+      "uncitedDocumentItems": 0,
+      "foreignMeterKeys": 0,
+      "invalidOutputRuns": 0,
+      "forbidden": 0,
+      "passed": true
+    },
+    "document": {
+      "runs": 9,
+      "recall": 0.963963963963964,
+      "intervalAccuracy": 0.9294871794871795,
+      "citationAccuracy": 0.967948717948718,
+      "precision": 0.8715083798882681,
+      "duplicates": 4,
+      "p90LatencyMs": 191931,
+      "meetsBar": false
+    },
+    "runs": 9,
+    "failedRuns": 0,
+    "meanCostMicros": 443623.22222222225,
+    "meanCostPerDocumentMicros": 266173.93333333335,
+    "warmP90LatencyMs": null
+  },
+  "scores": [
+    {
+      "caseId": "sling-tsi-three-manuals",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 36,
+      "bySource": {
+        "document": 36
+      },
+      "recall": 1,
+      "intervalAccuracy": 0.9,
+      "citationAccuracy": 0.9666666666666667,
+      "expected": 17,
+      "matched": 17,
+      "matches": [
+        {
+          "expected": "airframe 100-hour / annual condition inspection",
+          "suggestion": "100-hour / annual condition inspection (airframe)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "airframe first 25-hour inspection",
+          "suggestion": "Airframe 25-hour inspection (first only)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "airframe 2000-hour service",
+          "suggestion": "2000-hour airframe service checklist",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace air ducting (SCAT/CAT tubing)",
+          "suggestion": "Replace air ducting",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "airframe lubrication",
+          "suggestion": "Lubrication of airframe points (100 hours / yearly)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "compass swing",
+          "suggestion": "Compass swing",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "weight and balance check",
+          "suggestion": "Mass and balance check",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "ballistic parachute repack",
+          "suggestion": "Ballistic parachute canopy repack",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "ballistic parachute rocket service",
+          "suggestion": "Ballistic parachute rocket service",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "pitot-static system test",
+          "suggestion": "Altimeter & pitot-static system test",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine coolant replacement",
+          "suggestion": "Replace engine coolant",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine overhaul (TBO)",
+          "suggestion": "Engine general overhaul (TBO)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 200-hour check",
+          "suggestion": "Engine 200-hour inspection (additional checks)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 600-hour check",
+          "suggestion": "Engine 600-hour inspection (additional checks)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "torsion shaft replacement",
+          "suggestion": "Change torsion shaft",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "spark plug replacement",
+          "suggestion": "Replace spark plugs",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine rubber hose replacement (5-year)",
+          "suggestion": "Replace engine rubber hoses",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fuel pressure regulator replacement",
+          "suggestion": "Replace fuel pressure regulator assembly",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine oil and filter change",
+          "suggestion": "Engine oil and filter change",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller 100-hour / annual inspection",
+          "suggestion": "Propeller 100-hour / annual inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller carbon brush replacement",
+          "suggestion": "Replace carbon brushes in sensor-brush assembly",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller hub regrease",
+          "suggestion": "Lubricate propeller hub and blade assemblies",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine first 25-hour check",
+          "suggestion": "Engine 25-hour inspection (first only)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "muffler / heat exchanger inspection",
+          "suggestion": "Muffler / heat exchanger disassemble and inspect",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 100-hour / annual check",
+          "suggestion": "Engine 100-hour / 12-month inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 50-hour check",
+          "suggestion": "Engine 50-hour inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine fuel filter replacement",
+          "suggestion": "Replace fuel filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine air filter service",
+          "suggestion": "Air filter remove and clean or replace",
+          "intervalOk": false,
+          "citationOk": true
+        },
+        {
+          "expected": "throttle and heater cable lubrication",
+          "suggestion": "Lubricate throttle, choke and heater cables (300 hours)",
+          "intervalOk": false,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller initial 50-hour inspection",
+          "suggestion": "First 50 hours engine and propeller service",
+          "intervalOk": false,
+          "citationOk": false
+        }
+      ],
+      "missed": [],
+      "precision": 0.8333333333333334,
+      "documentSuggestions": 36,
+      "documentMatched": 30,
+      "duplicates": [
+        "Engine and propeller service (50 hours / annual)",
+        "Engine oil change after first 25 hours"
+      ],
+      "invented": [
+        "Lubricate wastegate lever",
+        "Engine cleaning",
+        "Coat propeller shaft with corrosion inhibitor",
+        "Replace rubber plate under expansion tank"
+      ],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 717088,
+      "latencyMs": 168707,
+      "retries": 0,
+      "cacheHits": 0
+    },
+    {
+      "caseId": "sling-tsi-three-manuals",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 33,
+      "bySource": {
+        "document": 33
+      },
+      "recall": 1,
+      "intervalAccuracy": 0.8148148148148148,
+      "citationAccuracy": 0.9629629629629629,
+      "expected": 17,
+      "matched": 17,
+      "matches": [
+        {
+          "expected": "airframe 100-hour / annual condition inspection",
+          "suggestion": "100-hour / annual airframe inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "airframe 2000-hour service",
+          "suggestion": "2000-hour airframe service checklist",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "airframe lubrication",
+          "suggestion": "Lubrication of airframe items",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "compass swing",
+          "suggestion": "Compass swing",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "weight and balance check",
+          "suggestion": "Mass and balance check",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "ballistic parachute repack",
+          "suggestion": "Ballistic parachute canopy repack",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine coolant replacement",
+          "suggestion": "Engine coolant replacement",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine overhaul (TBO)",
+          "suggestion": "Engine general overhaul (TBO)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 600-hour check",
+          "suggestion": "Engine 600-hour inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "torsion shaft replacement",
+          "suggestion": "Change torsion shaft",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine fuel filter replacement",
+          "suggestion": "Fuel filter replacement",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine rubber hose replacement (5-year)",
+          "suggestion": "Replace engine cooling and lubrication rubber hoses",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fuel pressure regulator replacement",
+          "suggestion": "Replace fuel pressure regulator assembly",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller 100-hour / annual inspection",
+          "suggestion": "Propeller 100-hour / annual inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller carbon brush replacement",
+          "suggestion": "Replace carbon brushes in sensor-brush assembly",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller hub regrease",
+          "suggestion": "Lubricate propeller hub and blade assemblies",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "throttle and heater cable lubrication",
+          "suggestion": "Lubricate engine throttle, choke and heater cables",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "muffler / heat exchanger inspection",
+          "suggestion": "Muffler / heat exchanger disassemble and inspect",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "pitot-static system test",
+          "suggestion": "Altimeter & pitot-static test",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 100-hour / annual check",
+          "suggestion": "Engine 100-hour / 12-month inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 200-hour check",
+          "suggestion": "Engine 200-hour inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace air ducting (SCAT/CAT tubing)",
+          "suggestion": "Air ducting replacement",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine air filter service",
+          "suggestion": "Air filter cleaning or replacement",
+          "intervalOk": false,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 50-hour check",
+          "suggestion": "Engine 50-hour / annual service",
+          "intervalOk": false,
+          "citationOk": true
+        },
+        {
+          "expected": "spark plug replacement",
+          "suggestion": "Spark plug replacement",
+          "intervalOk": false,
+          "citationOk": true
+        },
+        {
+          "expected": "engine oil and filter change",
+          "suggestion": "Engine oil and filter change",
+          "intervalOk": false,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller initial 50-hour inspection",
+          "suggestion": "Propeller 50-hour / annual service",
+          "intervalOk": false,
+          "citationOk": false
+        }
+      ],
+      "missed": [],
+      "precision": 0.8181818181818182,
+      "documentSuggestions": 33,
+      "documentMatched": 27,
+      "duplicates": [],
+      "invented": [
+        "Fire extinguisher service",
+        "Lubricate the wastegate lever",
+        "Coat propeller shaft with corrosion inhibitor",
+        "Engine cleaning",
+        "Replace air intake hoses",
+        "Replace rubber plate under expansion tank"
+      ],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 723194,
+      "latencyMs": 172059,
+      "retries": 0,
+      "cacheHits": 0
+    },
+    {
+      "caseId": "sling-tsi-three-manuals",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 37,
+      "bySource": {
+        "document": 37
+      },
+      "recall": 0.9411764705882353,
+      "intervalAccuracy": 0.9,
+      "citationAccuracy": 0.9666666666666667,
+      "expected": 17,
+      "matched": 16,
+      "matches": [
+        {
+          "expected": "airframe 100-hour / annual condition inspection",
+          "suggestion": "100-hour / annual condition inspection (airframe)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "airframe first 25-hour inspection",
+          "suggestion": "First 25-hour airframe inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "airframe lubrication",
+          "suggestion": "Lubrication - 100 hour / yearly points",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "compass swing",
+          "suggestion": "Compass swing",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "weight and balance check",
+          "suggestion": "Mass and balance check",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "ballistic parachute repack",
+          "suggestion": "Ballistic parachute canopy repack",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "ballistic parachute rocket service",
+          "suggestion": "Ballistic parachute rocket service",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "pitot-static system test",
+          "suggestion": "Altimeter & pitot-static system test",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine coolant replacement",
+          "suggestion": "Replace coolant and flush cooling system",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine overhaul (TBO)",
+          "suggestion": "Engine general overhaul (TBO)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 100-hour / annual check",
+          "suggestion": "Engine 100-hour / annual inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 600-hour check",
+          "suggestion": "Engine 600-hour inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "torsion shaft replacement",
+          "suggestion": "Change torsion shaft",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "spark plug replacement",
+          "suggestion": "Replace spark plugs",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fuel pressure regulator replacement",
+          "suggestion": "Replace fuel pressure regulator assembly",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine oil and filter change",
+          "suggestion": "Engine oil and filter change",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller 100-hour / annual inspection",
+          "suggestion": "Propeller 100-hour / annual inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller carbon brush replacement",
+          "suggestion": "Replace carbon brushes in sensor-brush assembly",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller hub regrease",
+          "suggestion": "Lubricate propeller hub and blade assemblies",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine first 25-hour check",
+          "suggestion": "First 25-hour engine inspection and oil change",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "airframe 2000-hour service",
+          "suggestion": "2000-hour service checklist",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "muffler / heat exchanger inspection",
+          "suggestion": "Muffler / heat exchanger disassemble and inspect",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 200-hour check",
+          "suggestion": "Engine 200-hour inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine fuel filter replacement",
+          "suggestion": "Replace fuel filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine rubber hose replacement (5-year)",
+          "suggestion": "Replace rubber hoses of the cooling system",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace air ducting (SCAT/CAT tubing)",
+          "suggestion": "Air ducting replacement",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "retighten exhaust fixation after first 2 hours",
+          "suggestion": "Re-tighten exhaust fixation on cylinder head",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine air filter service",
+          "suggestion": "Air filter removal and cleaning or replacement",
+          "intervalOk": false,
+          "citationOk": true
+        },
+        {
+          "expected": "engine 50-hour check",
+          "suggestion": "First 50-hour engine and propeller service",
+          "intervalOk": false,
+          "citationOk": true
+        },
+        {
+          "expected": "propeller initial 50-hour inspection",
+          "suggestion": "50-hour / annual engine and propeller service",
+          "intervalOk": false,
+          "citationOk": false
+        }
+      ],
+      "missed": [
+        "throttle and heater cable lubrication"
+      ],
+      "precision": 0.8108108108108109,
+      "documentSuggestions": 37,
+      "documentMatched": 30,
+      "duplicates": [
+        "Replace rubber hoses of the lubrication system",
+        "Lubrication - 300 hour points"
+      ],
+      "invented": [
+        "Lubricate the wastegate lever",
+        "Coat propeller shaft with corrosion inhibitor",
+        "Replace connecting hose of the air intake system",
+        "Replace rubber plate under expansion tank",
+        "Replace air intake hose (turbocharger to airbox)"
+      ],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 756501,
+      "latencyMs": 191931,
+      "retries": 0,
+      "cacheHits": 0
+    },
+    {
+      "caseId": "toyota-sienna-hybrid-2022-guide",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 11,
+      "bySource": {
+        "document": 10,
+        "common_practice": 1
+      },
+      "recall": 0.8888888888888888,
+      "intervalAccuracy": 1,
+      "citationAccuracy": 0.9,
+      "expected": 9,
+      "matched": 8,
+      "matches": [
+        {
+          "expected": "replace engine oil and oil filter",
+          "suggestion": "Replace engine oil and oil filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "rotate tires",
+          "suggestion": "Rotate tires",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "5,000-mile scheduled maintenance",
+          "suggestion": "5,000-mile / 6-month inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "30,000-mile inspection",
+          "suggestion": "30,000-mile / 36-month inspection",
+          "intervalOk": true,
+          "citationOk": false
+        },
+        {
+          "expected": "replace engine air filter",
+          "suggestion": "Replace engine air filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace cabin air filter",
+          "suggestion": "Replace cabin air filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "clean HV battery cooling intake filter",
+          "suggestion": "Clean HV battery cooling intake filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace engine coolant",
+          "suggestion": "Replace engine coolant",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace inverter coolant",
+          "suggestion": "Replace inverter coolant",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace spark plugs",
+          "suggestion": "Replace spark plugs",
+          "intervalOk": true,
+          "citationOk": true
+        }
+      ],
+      "missed": [
+        "15,000-mile inspection"
+      ],
+      "precision": 1,
+      "documentSuggestions": 10,
+      "documentMatched": 10,
+      "duplicates": [],
+      "invented": [],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 293869,
+      "latencyMs": 93284,
+      "retries": 0,
+      "cacheHits": 0
+    },
+    {
+      "caseId": "toyota-sienna-hybrid-2022-guide",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 10,
+      "bySource": {
+        "document": 10
+      },
+      "recall": 0.8888888888888888,
+      "intervalAccuracy": 1,
+      "citationAccuracy": 0.9,
+      "expected": 9,
+      "matched": 8,
+      "matches": [
+        {
+          "expected": "replace engine oil and oil filter",
+          "suggestion": "Replace engine oil and oil filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "rotate tires",
+          "suggestion": "Rotate tires",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "5,000-mile scheduled maintenance",
+          "suggestion": "5,000-mile / 6-month inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "30,000-mile inspection",
+          "suggestion": "30,000-mile / 36-month inspection",
+          "intervalOk": true,
+          "citationOk": false
+        },
+        {
+          "expected": "replace engine air filter",
+          "suggestion": "Replace engine air filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace cabin air filter",
+          "suggestion": "Replace cabin air filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "clean HV battery cooling intake filter",
+          "suggestion": "Clean HV battery cooling intake filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace engine coolant",
+          "suggestion": "Replace engine coolant",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace inverter coolant",
+          "suggestion": "Replace inverter coolant",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace spark plugs",
+          "suggestion": "Replace spark plugs",
+          "intervalOk": true,
+          "citationOk": true
+        }
+      ],
+      "missed": [
+        "15,000-mile inspection"
+      ],
+      "precision": 1,
+      "documentSuggestions": 10,
+      "documentMatched": 10,
+      "duplicates": [],
+      "invented": [],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 313127,
+      "latencyMs": 105825,
+      "retries": 0,
+      "cacheHits": 0
+    },
+    {
+      "caseId": "toyota-sienna-hybrid-2022-guide",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 11,
+      "bySource": {
+        "document": 11
+      },
+      "recall": 1,
+      "intervalAccuracy": 1,
+      "citationAccuracy": 1,
+      "expected": 9,
+      "matched": 9,
+      "matches": [
+        {
+          "expected": "replace engine oil and oil filter",
+          "suggestion": "Replace engine oil and oil filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "rotate tires",
+          "suggestion": "Rotate tires",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "5,000-mile scheduled maintenance",
+          "suggestion": "5,000-mile / 6-month inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "15,000-mile inspection",
+          "suggestion": "15,000-mile / 18-month inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "30,000-mile inspection",
+          "suggestion": "30,000-mile / 36-month inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace engine air filter",
+          "suggestion": "Replace engine air filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace cabin air filter",
+          "suggestion": "Replace cabin air filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "clean HV battery cooling intake filter",
+          "suggestion": "Clean HV battery cooling intake filter",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace engine coolant",
+          "suggestion": "Replace engine coolant",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace inverter coolant",
+          "suggestion": "Replace inverter coolant",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "replace spark plugs",
+          "suggestion": "Replace spark plugs",
+          "intervalOk": true,
+          "citationOk": true
+        }
+      ],
+      "missed": [],
+      "precision": 1,
+      "documentSuggestions": 11,
+      "documentMatched": 11,
+      "duplicates": [],
+      "invented": [],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 289470,
+      "latencyMs": 88916,
+      "retries": 0,
+      "cacheHits": 0
+    },
+    {
+      "caseId": "triumph-t100-2024-handbook",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 14,
+      "bySource": {
+        "document": 14
+      },
+      "recall": 1,
+      "intervalAccuracy": 1,
+      "citationAccuracy": 1,
+      "expected": 11,
+      "matched": 11,
+      "matches": [
+        {
+          "expected": "first service",
+          "suggestion": "First service inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "air cleaner replacement",
+          "suggestion": "Air cleaner - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fuel filter replacement",
+          "suggestion": "Fuel filter - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "spark plugs",
+          "suggestion": "Spark plugs - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "valve clearance check",
+          "suggestion": "20,000-mile inspection (valve clearances, camshaft timing)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "headstock bearing lubrication",
+          "suggestion": "Headstock bearings - lubricate",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fork oil change",
+          "suggestion": "Fork oil - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "coolant replacement",
+          "suggestion": "Coolant - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "brake fluid replacement",
+          "suggestion": "Brake fluid - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "drive chain lubrication",
+          "suggestion": "Drive chain - lubricate",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "drive chain wear check",
+          "suggestion": "Drive chain - wear check & adjustment",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "annual / 10,000 mile service",
+          "suggestion": "Annual / 10,000-mile inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine oil and filter change",
+          "suggestion": "Engine oil & filter",
+          "intervalOk": true,
+          "citationOk": true
+        }
+      ],
+      "missed": [],
+      "precision": 0.9285714285714286,
+      "documentSuggestions": 14,
+      "documentMatched": 13,
+      "duplicates": [],
+      "invented": [
+        "Side stand pivot pin - clean/grease"
+      ],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 294100,
+      "latencyMs": 92503,
+      "retries": 0,
+      "cacheHits": 0
+    },
+    {
+      "caseId": "triumph-t100-2024-handbook",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 14,
+      "bySource": {
+        "document": 14
+      },
+      "recall": 0.9090909090909091,
+      "intervalAccuracy": 1,
+      "citationAccuracy": 1,
+      "expected": 11,
+      "matched": 10,
+      "matches": [
+        {
+          "expected": "annual / 10,000 mile service",
+          "suggestion": "Annual / 10,000-mile service",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "first service",
+          "suggestion": "First service (600 mi)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "air cleaner replacement",
+          "suggestion": "Air cleaner - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fuel filter replacement",
+          "suggestion": "Fuel filter - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "spark plugs",
+          "suggestion": "Spark plugs - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "headstock bearing lubrication",
+          "suggestion": "Headstock bearings - lubricate",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fork oil change",
+          "suggestion": "Fork oil - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "coolant replacement",
+          "suggestion": "Coolant - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "brake fluid replacement",
+          "suggestion": "Brake fluid - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "drive chain lubrication",
+          "suggestion": "Drive chain - clean & lubricate",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "drive chain wear check",
+          "suggestion": "Drive chain - wear check",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine oil and filter change",
+          "suggestion": "Engine oil & filter",
+          "intervalOk": true,
+          "citationOk": true
+        }
+      ],
+      "missed": [
+        "valve clearance check"
+      ],
+      "precision": 0.8571428571428571,
+      "documentSuggestions": 14,
+      "documentMatched": 12,
+      "duplicates": [],
+      "invented": [
+        "20,000-mile major inspection",
+        "Side stand pivot pin - clean/grease"
+      ],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 300733,
+      "latencyMs": 90839,
+      "retries": 0,
+      "cacheHits": 0
+    },
+    {
+      "caseId": "triumph-t100-2024-handbook",
+      "kind": "document",
+      "reviewed": true,
+      "status": "succeeded",
+      "errorCode": null,
+      "statusOk": true,
+      "suggestions": 14,
+      "bySource": {
+        "document": 14
+      },
+      "recall": 1,
+      "intervalAccuracy": 1,
+      "citationAccuracy": 1,
+      "expected": 11,
+      "matched": 11,
+      "matches": [
+        {
+          "expected": "first service",
+          "suggestion": "First service inspection (600 mi)",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "air cleaner replacement",
+          "suggestion": "Air cleaner - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fuel filter replacement",
+          "suggestion": "Fuel filter - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "spark plugs",
+          "suggestion": "Spark plugs - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "valve clearance check",
+          "suggestion": "Valve clearance & camshaft timing check",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "headstock bearing lubrication",
+          "suggestion": "Headstock bearings - lubricate",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "fork oil change",
+          "suggestion": "Fork oil - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "coolant replacement",
+          "suggestion": "Coolant - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "brake fluid replacement",
+          "suggestion": "Brake fluid - renew",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "drive chain lubrication",
+          "suggestion": "Drive chain - lubricate",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "drive chain wear check",
+          "suggestion": "Drive chain - wear check",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "annual / 10,000 mile service",
+          "suggestion": "Annual / 10,000-mile inspection",
+          "intervalOk": true,
+          "citationOk": true
+        },
+        {
+          "expected": "engine oil and filter change",
+          "suggestion": "Engine oil & filter",
+          "intervalOk": true,
+          "citationOk": true
+        }
+      ],
+      "missed": [],
+      "precision": 0.9285714285714286,
+      "documentSuggestions": 14,
+      "documentMatched": 13,
+      "duplicates": [],
+      "invented": [
+        "Side stand pivot pin - clean/grease"
+      ],
+      "forbidden": [],
+      "gates": {
+        "unsupportedRegulatory": [],
+        "unverbatimReferences": [],
+        "uncitedDocumentItems": [],
+        "foreignMeterKeys": [],
+        "validOutput": true
+      },
+      "costMicros": 304527,
+      "latencyMs": 96031,
+      "retries": 0,
+      "cacheHits": 0
+    }
+  ]
+}

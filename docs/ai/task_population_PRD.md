@@ -178,11 +178,19 @@ which case it is the first follow-up; **P2** is designed for, not built.
   - Domain-inherent rules (the annual, 14 CFR 91.409) may be named in rationale text but are still
     typed routine.
 - **R19 (P0). Progress.** A progress state appears within one second, naming the current step
-  ("Reading Rotax 915 iS manual…"). A cache hit returns in under 5 seconds, and an uncached run with
-  three documents in under three minutes at p90. The user can leave the screen. The result is held
+  ("Reading Rotax 915 iS manual…"). A cache hit returns in under 5 seconds. An uncached run takes minutes and
+  carries on after the user leaves the screen; with three documents it finishes in under 10
+  minutes at p90. The result is held
   server-side for that caller and Thing for up to 24 hours and deleted when fetched or accepted.
-- **R20 (P1).** When an uncached run finishes after the user has left, a notification brings them
-  back to the review screen.
+- **R19a (P0). One run at a time, shown wherever it is opened.** While a run is in flight for a
+  Thing, no entry point (R1–R4) opens the sources sheet, so documents cannot be added, removed or
+  uploaded again until the run finishes or fails. The person who started it sees its working screen
+  on any of their devices. Leaving and coming back, restarting the app or reloading the web page
+  returns to that screen and never starts a second run. Another member sees that suggestions are
+  already being prepared for this Thing and can try again when the run ends.
+- **R20 (P0). Push when a run finishes.** When an uncached run ends, whether it succeeded, came back
+  empty or failed, the person who started it gets a push notification that opens the result for that
+  Thing. It is not shown while that person is already looking at the run's screen.
 - **R21 (P0).** A failed run writes nothing and says what failed: document unreadable, no schedule
   found, limit reached, or service unavailable. The static starter pack stays available with an
   inline retry.
@@ -365,7 +373,9 @@ Mocks come with the design doc. The flow in words:
 1. **Starter pack or task list** → *Suggest tasks* (or add task → *Tasks from a document*).
 2. **Sources sheet** (R6). One row per component with *Upload* and *Skip*, and the Pro gate on
    upload for a free owner. The primary action is *Suggest*.
-3. **Working** (R19). The step being worked on is named, and the user can leave.
+3. **Working** (R19, R19a). The step being worked on is named, and the user can leave. Any entry
+   point opens this screen while the run is in flight, and a push brings the user back when it
+   ends (R20).
 4. **Review.** The starter-pack picker, grouped by component, with static cards shown first, source
    chips, *Already tracked* rows, first-due lines and the disclosure (R31). The Accept button stays
    usable while cards load.
@@ -438,7 +448,8 @@ The design doc fills this in with measured results before phase B starts.
 
 ### 9.2 Candidates
 
-Two providers at the same tier, plus a document pre-processor (OpenAI was dropped on 2026-09-30):
+Two providers at the same tier, plus a document pre-processor (OpenAI was dropped on 2026-09-30).
+The bake-off chose Gemini 3.8 Flash for both tiers (decision 18):
 
 - Google Gemini (e.g. 3.5 Flash), on Vertex AI in the existing GCP project.
 - Anthropic Claude (e.g. Sonnet 5.5, Haiku 4.5), on Vertex AI in the same project.
@@ -478,7 +489,9 @@ before the airplane preset is enabled.
 - Recall of ≥ 90% of the manual's scheduled items.
 - ≥ 95% of the items present have the correct interval(s) and units.
 - ≥ 95% of citations point to the page containing the item.
-- An uncached three-document run finishes in under three minutes at p90 (raised from two on 2026-09-30, after the first bake-off round).
+- An uncached three-document run finishes in under 10 minutes at p90. This was two minutes, then
+  three (2026-09-30), and became 10 on 2026-10-01: past a minute the user leaves the screen
+  anyway, so a cheaper, slower model costs them nothing.
 
 **Cost:** reported per document and per run, with a guide of under about $1 for an uncached
 three-document airplane. This is a guide, not a gate, and quality wins a tie.
@@ -493,9 +506,9 @@ non-document source kind, and none is phrased as a requirement.
 | **0 — Evaluate**               | §9 run, provider chosen, design doc written                                             | §9.4 bar met on the evaluation set                                |
 | **A — Backend**                | Shared backend (§8.1) if #1181 has not shipped it; provider abstraction, cache, limits  | Valid suggestions for every evaluation case from a test harness   |
 | **B — Reference-aware delete** | R37–R40, across client and server, independent of AI                                    | Shared-blob tests green; in production before D                   |
-| **C — Suggestions**            | R1, R2, R5, R9–R13, R15–R19, R21–R29, R31, R33–R36, R45–R52, `AppCapability` on developer builds | No-document flow end to end on all hosts, all seven presets       |
+| **C — Suggestions**            | R1, R2, R5, R9–R13, R15–R19a, R20, R21–R29, R31, R33–R36, R45–R52, `AppCapability` on developer builds | No-document flow end to end on all hosts, all seven presets       |
 | **D — Documents**              | R3, R4, R6–R8b, R14, R30, R37 wiring, R41, Pro paywall                                   | T100, Sling TSi and C172N + AD flows end to end; flag deleted; v1 |
-| **E — Follow-ups**             | R20, R32, anything P1 that slipped                                                      | —                                                                 |
+| **E — Follow-ups**             | R32, anything P1 that slipped                                                           | —                                                                 |
 | **F — Backfill intake**        | §10.1 once #1181's backfill exists                                                      | #1181 recurring items open this picker                            |
 
 Phase B comes before any document code. It fixes a latent risk for every shared blob, and the
@@ -548,12 +561,15 @@ Settled 2026-09-27.
     cache hits do not count.
 17. **Low confidence returns nothing** on any preset, with a fallback that asks for details or a
     document (R21a).
+18. **Gemini 3.8 Flash for both tiers, on Vertex AI** (2026-10-01). Flash + Sonnet 5.5 scored a
+    little higher and ran in half the time, but cost twice as much, and both take minutes. Results
+    are in the design doc §12.5.
 
 ### Still open
 
 - **Limit values** (R49): the per-run document cap and the cost ceilings, set from phase 0's
   cost data. The daily run limit is settled (decision 16).
-- **Provider data terms.** Confirm the chosen provider's retention and training terms for this use,
+- **Provider data terms.** Confirm Vertex AI's retention and training terms for Gemini in this use,
   and state them in the privacy policy before phase C ships.
 - **Log history cap** (R12): the size and recency cut.
 
