@@ -1,4 +1,5 @@
 import { FinishReason, GoogleGenAI, ThinkingLevel, type Part } from "@google/genai";
+import { Agent, fetch as undiciFetch } from "undici";
 
 import { AiError } from "../errors.js";
 import { describe, parseJson } from "./json.js";
@@ -23,10 +24,44 @@ const THINKING_BY_TIER: Record<AiTier, ThinkingLevel> = {
 };
 
 /**
+ * A tailor call at MEDIUM thinking can run past Node's default 5-minute headers timeout, which
+ * surfaces as "fetch failed" (bake-off round 3). Gemini gets its own pool that waits 10 minutes.
+ */
+export const GEMINI_TIMEOUT_MS = 10 * 60 * 1000;
+const dispatcher = new Agent({ headersTimeout: GEMINI_TIMEOUT_MS, bodyTimeout: GEMINI_TIMEOUT_MS });
+
+/** Connection failures worth another try. A timeout is not one: the model is just slow. */
+const DROPPED_CONNECTION = new Set(["UND_ERR_SOCKET", "ECONNRESET", "EPIPE", "UND_ERR_CONNECT_TIMEOUT", "ECONNREFUSED"]);
+const FETCH_ATTEMPTS = 3;
+
+export async function geminiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return (await undiciFetch(input as Parameters<typeof undiciFetch>[0], {
+        ...(init as Parameters<typeof undiciFetch>[1]),
+        dispatcher,
+      })) as unknown as Response;
+    } catch (e) {
+      if (attempt >= FETCH_ATTEMPTS || init?.signal?.aborted || !isDroppedConnection(e)) throw e;
+      await new Promise((r) => setTimeout(r, 2000 * attempt));
+    }
+  }
+}
+
+export function isDroppedConnection(e: unknown): boolean {
+  const code = (e as { cause?: { code?: string } })?.cause?.code;
+  return code !== undefined && DROPPED_CONNECTION.has(code);
+}
+
+/**
  * The SDK retries 408, 429 and 5xx with exponential backoff when asked; three attempts matches
  * the Anthropic SDK's default of two retries. Vertex returns transient 500s under load.
  */
-export const GEMINI_HTTP_OPTIONS = { retryOptions: { attempts: 3, initialDelay: 2 } };
+export const GEMINI_HTTP_OPTIONS = {
+  retryOptions: { attempts: 3, initialDelay: 2 },
+  timeout: GEMINI_TIMEOUT_MS,
+  fetch: geminiFetch,
+};
 
 export type GeminiProviderOptions = {
   model: string;
