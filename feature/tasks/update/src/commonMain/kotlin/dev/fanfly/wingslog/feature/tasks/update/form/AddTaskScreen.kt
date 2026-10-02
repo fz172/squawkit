@@ -60,9 +60,9 @@ import dev.fanfly.wingslog.feature.tasks.update.form.identity.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.InitialDueControls
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.TaskScheduleTab
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource

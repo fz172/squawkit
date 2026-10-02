@@ -4,8 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.thing.Capabilities
-import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate

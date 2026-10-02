@@ -14,7 +14,7 @@ import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
-import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify

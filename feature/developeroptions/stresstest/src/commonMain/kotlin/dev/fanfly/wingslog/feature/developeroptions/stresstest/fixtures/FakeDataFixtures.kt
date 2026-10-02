@@ -1,13 +1,13 @@
 package dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures
 
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.MeterRule
+import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.InspectionRule
-import dev.fanfly.wingslog.thing.MeterRule
 import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.thing.ThingTemplate
-import dev.fanfly.wingslog.thing.TimeRule
 
 /**
  * The sample records one preset's fake data is drawn from. Each canonical template has its own

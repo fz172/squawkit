@@ -17,14 +17,14 @@ import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.FakeData
 import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.FakeDataPools
 import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.LogTemplate
 import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.SampleNames
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.SpecField

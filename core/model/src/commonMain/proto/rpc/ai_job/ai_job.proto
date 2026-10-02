@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package dev.fanfly.wingslog.rpc.ai_job;
+
+option java_package = "dev.fanfly.wingslog.rpc.aijob";
+option java_multiple_files = true;
+
+// The job every AI feature runs through: one `ai_jobs/{jobId}` document the caller listens to.
+// Design docs/ai/task_population_design.md §4.2, §5. Shared with #1181 and #1183, which add kinds.
+//
+// Wire only, never an entity: the job document is written by functions and read by `core/ai`, and
+// the sync engine never sees it.
+
+enum AiJobKind {
+    AI_JOB_KIND_UNSPECIFIED = 0;
+    // Request `SuggestTasksRequest`, result `SuggestTasksResult`.
+    AI_JOB_KIND_TASK_SUGGESTIONS = 1;
+}
+
+enum AiJobStatus {
+    AI_JOB_STATUS_UNSPECIFIED = 0;
+    AI_JOB_STATUS_QUEUED = 1;
+    AI_JOB_STATUS_RUNNING = 2;
+    AI_JOB_STATUS_SUCCEEDED = 3;
+    // Ran, and had nothing confident to say (PRD R21a). Not a failure, and not counted against the
+    // daily limit.
+    AI_JOB_STATUS_EMPTY = 4;
+    AI_JOB_STATUS_FAILED = 5;
+}
+
+message AiJobError {
+    // One of design §5.7's codes ("daily_limit", "provider_error", …). A string rather than an enum
+    // so an old client meets a new code as unknown and shows the generic failure.
+    string code = 1;
+    // Which string the client shows, when one code has more than one. Never user text.
+    string detail_key = 2;
+}

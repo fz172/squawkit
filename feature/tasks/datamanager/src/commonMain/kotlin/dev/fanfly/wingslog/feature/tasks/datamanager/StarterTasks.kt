@@ -2,15 +2,15 @@ package dev.fanfly.wingslog.feature.tasks.datamanager
 
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.usesComponentTypes
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.MeterRule
+import dev.fanfly.wingslog.task.SeasonalRule
+import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.InspectionRule
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.MeterRule
-import dev.fanfly.wingslog.thing.SeasonalRule
 import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate
-import dev.fanfly.wingslog.thing.TimeRule
 import com.squareup.wire.Instant as WireInstant
 
 /**

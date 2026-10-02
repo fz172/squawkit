@@ -2,11 +2,11 @@ package dev.fanfly.wingslog.feature.tasks.datamanager
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.InspectionRule
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
-import dev.fanfly.wingslog.thing.MeterRule
 import org.junit.Test
 
 /**
@@ -71,7 +71,10 @@ class MeterRulesTest {
     )
 
     assertThat(card.rules.mapNotNull { card.meterIntervalFor(it) })
-      .containsExactly(MeterAmount(MeterKeys.ENGINE_HOURS, 100f), MeterAmount("odometer", 5000f))
+      .containsExactly(
+        MeterAmount(MeterKeys.ENGINE_HOURS, 100f),
+        MeterAmount("odometer", 5000f)
+      )
       .inOrder()
   }
 
@@ -114,7 +117,12 @@ class MeterRulesTest {
     // what an empty one has always meant.
     val card = task().copy(force_due_meter = MeterReading("", value_ = 250.0))
 
-    assertThat(card.forcedDueMeter()).isEqualTo(MeterAmount(MeterKeys.ENGINE_HOURS, 250f))
+    assertThat(card.forcedDueMeter()).isEqualTo(
+      MeterAmount(
+        MeterKeys.ENGINE_HOURS,
+        250f
+      )
+    )
   }
 
   @Test

@@ -2,8 +2,7 @@
 
 **PRD:** [`task_population_PRD.md`](task_population_PRD.md)
 **Epic:** [#1182](https://github.com/fz172/squawkit/issues/1182)
-**Status:** 📋 Proposed
-**Last updated:** 2026-09-27
+**Status:** 📋 Proposed **Last updated:** 2026-09-27
 
 > **Scope.** This doc also designs the **shared AI backend** (§5), because #1182 is the first AI
 > epic to ship. §5 is written so it can be split out into `ai_backend_design.md` when #1181 starts;
@@ -16,14 +15,13 @@
 Seven pieces, in dependency order. §15 sequences them and §18 breaks them into PRs.
 
 1. **Evaluation harness** (§12). Runs the generation pipeline against a fixed case set with any
-   provider adapter and scores it against PRD §9.4. The bake-off result is a follow-up PR that
-   fills in §12.5.
+   provider adapter and scores it against PRD §9.4. The bake-off result is a follow-up PR that fills
+   in §12.5.
 2. **Shared AI backend** (§5). A job model: `startAiJob` callable → `ai_jobs/{jobId}` doc →
-   task-queue worker → result on the same doc, which the client listens to. Provider
-   abstraction, limits, kill switch, cost log.
-3. **Reference-aware blob release** (§8.3). The client stops deleting remote blobs; a server
-   trigger collects a blob when the last live record naming it drops it. Independent of AI; ships
-   first.
+   task-queue worker → result on the same doc, which the client listens to. Provider abstraction,
+   limits, kill switch, cost log.
+3. **Reference-aware blob release** (§8.3). The client stops deleting remote blobs; a server trigger
+   collects a blob when the last live record naming it drops it. Independent of AI; ships first.
 4. **Task suggestion pipeline** (§6). Identify and extract per document, recall a common schedule
    for the identity, tailor to the Thing, then validate deterministically.
 5. **Client data layer** (§7). `core/ai` (`AiJobClient`), `feature/tasks/suggestions` (context
@@ -35,8 +33,8 @@ Seven pieces, in dependency order. §15 sequences them and §18 breaks them into
 ### 1.1 Component diagram
 
 Green is new and amber is an existing piece this design changes. Existing, unchanged pieces are
-shrunk to small dashed pills so the new work stands out. Solid edges are calls or writes, and
-dotted edges are listeners, optional paths, or later phases. A zoomable version is on the
+shrunk to small dashed pills so the new work stands out. Solid edges are calls or writes, and dotted
+edges are listeners, optional paths, or later phases. A zoomable version is on the
 [artifact page](https://claude.ai/artifact/Rgp726o2ToowpcLocYkn9V).
 
 ```mermaid
@@ -133,8 +131,8 @@ flowchart TB
 
 Two paths cross the diagram:
 
-- **A suggestion run.** The screen calls `TaskSuggestionManager`, which builds the context
-  locally and calls `startAiJob` through `AiJobClient`. The callable authorizes, writes
+- **A suggestion run.** The screen calls `TaskSuggestionManager`, which builds the context locally
+  and calls `startAiJob` through `AiJobClient`. The callable authorizes, writes
   `ai_jobs` and enqueues the worker. The worker runs the pipeline, calling providers through
   `AiProvider`, and writes the result back to `ai_jobs`, where the client's listener picks it up.
   Accepting writes tasks through the existing managers and sync.
@@ -184,7 +182,7 @@ feature/tasks/suggestions/datamanager/ NEW TaskSuggestionManager, SuggestionCont
 feature/tasks/suggestions/update/     NEW  Suggestions screen (moved starter pack), sources sheet
 feature/tasks/sharedassets/           strings (moved rows, see below)
 feature/tasks/di/                     includes the three new modules
-core/model/.../proto/thing/task_origin.proto            NEW
+core/model/.../proto/task/task_origin.proto             NEW
 core/model/.../proto/rpc/suggest_tasks/suggest_tasks.proto NEW
 core/model/.../proto/rpc/ai_job/ai_job.proto            NEW
 backend/firebase/functions/src/ai/                      NEW shared backend (§5)
@@ -192,21 +190,21 @@ backend/firebase/functions/src/ai/tasks/                NEW task pipeline (§6)
 backend/firebase/functions/eval/                        NEW evaluation harness (§12)
 ```
 
-- **Why `core/ai`.** AGENTS.md: feature managers never touch Firestore. The job doc is not an
-  entity path, so it does not belong to the sync engine either. `core/ai` owns the one callable
-  pair and the one listener, exposes `AiJobClient`, and is what #1181 reuses. It depends on
+- **Why `core/ai`.** AGENTS.md: feature managers never touch Firestore. The job doc is not an entity
+  path, so it does not belong to the sync engine either. `core/ai` owns the one callable pair and
+  the one listener, exposes `AiJobClient`, and is what #1181 reuses. It depends on
   `core/firebase` and nothing in `feature/`.
 - **The move.** `feature/tasks/update/.../starter/*` (route, VM, UI state, item) moves to
   `feature/tasks/suggestions/update`. `Screen.StarterPack` keeps its route string; the shell nav
   graph points at the new composable. `toMaintenanceTask` stays in `tasks/datamanager` and its
   slot → `ComponentType` mapping is extracted to a shared function the mapper reuses.
-- **Strings.** Starter-pack strings stay in `feature/tasks/sharedassets` (no row moves). If a
-  string does move, `StringSnapshotTest` rows are rewritten by module path, never regenerated.
+- **Strings.** Starter-pack strings stay in `feature/tasks/sharedassets` (no row moves). If a string
+  does move, `StringSnapshotTest` rows are rewritten by module path, never regenerated.
 - **Dependencies.** `suggestions:update` → `suggestions:{model,datamanager}`, `tasks:{model,
   datamanager,sharedassets}`, `attachment:{model,datamanager,viewing}`, `subscription:datamanager`,
   `core:{template,nav,analytics,ui,ui:adaptive,ui:theme}`. `suggestions:datamanager` →
-  `core:ai`, `tasks:datamanager`, `logs:datamanager`, `fleet:datamanager`, `core:template`.
-  Nothing lands in `feature/thing` or `feature/dashboard/host` beyond the one new
+  `core:ai`, `tasks:datamanager`, `logs:datamanager`, `fleet:datamanager`, `core:template`. Nothing
+  lands in `feature/thing` or `feature/dashboard/host` beyond the one new
   `ThingOverviewAction` case handled in `SectionActionHandler`.
 
 ## 4. Data model
@@ -214,7 +212,7 @@ backend/firebase/functions/eval/                        NEW evaluation harness (
 ### 4.1 `TaskOrigin` (entity)
 
 ```proto
-// thing/task_origin.proto
+// task/task_origin.proto
 enum TaskOriginKind {
   TASK_ORIGIN_KIND_UNSPECIFIED = 0;   // absent origin == made by hand; never written
   TASK_ORIGIN_KIND_TEMPLATE_STARTER = 1;
@@ -245,11 +243,15 @@ message TaskOrigin {
 - `MaintenanceTask` gains `TaskOrigin origin = 16;`. Starter-pack accepts now also write
   `TEMPLATE_STARTER` (cheap, and it lets analytics compare static vs AI survival). Existing and
   hand-made tasks have no origin (PRD R34).
+- `task_origin.proto` and `maintenance_task.proto` live in `proto/task/`, generating into
+  `dev.fanfly.wingslog.task`. Neither declares a proto `package`, so the move changes source paths
+  and Kotlin imports only: wire bytes and the stored `aircraft.MaintenanceTask` schema name are
+  untouched.
 - `ids.proto` gains `message AttachmentId { string value = 1; }`. `Attachment.id` stays a bare
   string (grandfathered); conversion happens once in the mapper.
-- `blobRefs.ts` and `AttachmentRefs` need no change: origin names an attachment the task also
-  lists in `attachments`, and only `attachments` owns bytes.
-- Add `thing/task_origin.proto` and `id/ids.proto` to `generate:proto` (TS), and check
+- `blobRefs.ts` and `AttachmentRefs` need no change: origin names an attachment the task also lists
+  in `attachments`, and only `attachments` owns bytes.
+- Add `task/task_origin.proto` and `id/ids.proto` to `generate:proto` (TS), and check
   `template.proto` / `meter_reading.proto` are generated via imports (they are not listed today).
 
 ### 4.2 RPC and job protos (wire, not entities)
@@ -258,9 +260,9 @@ message TaskOrigin {
 // rpc/ai_job/ai_job.proto — shared by every AI feature
 enum AiJobKind { AI_JOB_KIND_UNSPECIFIED = 0; AI_JOB_KIND_TASK_SUGGESTIONS = 1; }
 enum AiJobStatus {
-  AI_JOB_STATUS_UNSPECIFIED = 0; QUEUED = 1; RUNNING = 2;
-  SUCCEEDED = 3; EMPTY = 4;       // ran, nothing confident to say (PRD R21a)
-  FAILED = 5;
+  AI_JOB_STATUS_UNSPECIFIED = 0; AI_JOB_STATUS_QUEUED = 1; AI_JOB_STATUS_RUNNING = 2;
+  AI_JOB_STATUS_SUCCEEDED = 3; AI_JOB_STATUS_EMPTY = 4;  // ran, nothing confident to say (PRD R21a)
+  AI_JOB_STATUS_FAILED = 5;
 }
 message AiJobError { string code = 1; string detail_key = 2; } // codes in §5.7
 
@@ -277,43 +279,54 @@ message SourceDocumentRef {
   string sha256 = 4; int64 size_bytes = 5;
 }
 message SuggestionContext {
-  string template_id = 1; int32 template_version = 2;
-  repeated Spec specs = 3;                    // Thing.spec
+  TemplateId template_id = 1; int32 template_version = 2;
+  repeated Spec specs = 3;                    // Thing.spec, identifiers removed
   repeated ComponentSummary components = 4;   // slot_key, make, model, spec — no serials
-  repeated MeterSummary meters = 5;           // key, unit_label, component_slot_key, current value
-  repeated ExistingTask existing_tasks = 6;   // id, title, component, rules, type, reference_number
-  repeated LogSummary logs = 7;               // id, date, readings, work_description, component_type
+  repeated MeterSummary meters = 5;           // key, unit_label, component_slot_key, current, has_current
+  repeated ExistingTask existing_tasks = 6;   // id, title, component_slot_key, rules, type, reference_number
+  repeated LogSummary logs = 7;               // id, date, readings, title, work_description, component_slot_key
   bool logs_truncated = 8;
   repeated StarterTask static_pack = 9;       // for the merge (PRD R25)
   string lexicon_task_noun = 10;              // + the few nouns the prompt needs
 }
 message SuggestTasksResult {
   repeated TaskSuggestion suggestions = 1;
-  repeated IdentifiedDocument documents = 2;  // title, revision, doc_type, matches_thing (R8a)
+  repeated IdentifiedDocument documents = 2;  // blob_id, name, manufacturer, title, revision,
+                                              // doc_type, matches_thing (R8a)
   string generation_version = 3;
 }
 message TaskSuggestion {
-  string suggestion_id = 1;
+  SuggestionId suggestion_id = 1;
   string title = 2; string rationale = 3; string description = 4;
   string component_slot_key = 5; string component_hint = 6; // "Engine #2" in words, see §7.4
   repeated InspectionRule rules = 7; bool is_one_time = 8;
-  FirstDue first_due = 21;                    // one-time items: absolute date and/or reading
+  FirstDue first_due = 21;                    // one-time items: date and/or reading
   ComplianceType type = 9; string reference_number = 10; string compliance_authority = 11;
   TaskSourceKind source_kind = 12; string citation = 13; string page_ref = 14;
   AttachmentId source_document = 15;
+  repeated int32 source_pages = 22;           // 1-based PDF pages, for R30
   LastDoneEvidence last_done = 16;            // log_id, date, MeterReading
-  string matches_existing_task_id = 17;       // Already tracked (R24)
+  MaintenanceTaskId matches_existing_task_id = 17; // Already tracked (R24)
   string interval_difference_note = 18;
   int32 merges_static_index = 19;             // -1 = none (R25)
   bool preselect = 20;                        // server applies R27
 }
 ```
 
-- **The context has no field for PII.** `LogSummary` has no technician, cost, attachment or
-  comment field, and `ComponentSummary` has no serial, so R12 cannot be violated by a builder bug.
+- **Ids are boxed.** `ProtoIdLintTest` refuses a bare string id on a new message, so `ids.proto`
+  also gains `MaintenanceTaskId`, `MaintenanceLogId`, `TemplateId` and `SuggestionId`.
+- **Dates are ISO `yyyy-mm-dd` strings** (`LogSummary.date`, `FirstDue.date`,
+  `LastDoneEvidence.date`): calendar dates the model reads and writes, with no time zone to agree
+  on. The mapper converts to `Timestamp` when it writes the task.
+- **The pipeline's `model.ts` follows these field for field**, with ids unboxed and rules flattened
+  so the eval's cases stay readable JSON. Where phase 0 refined the shape (source pages, the
+  identified document's fields, a log's title, an existing task's slot key rather than its
+  `ComponentType`), the protos took the pipeline's version.
+- **The context has no field for PII.** `LogSummary` has no technician, cost, attachment or comment
+  field, and `ComponentSummary` has no serial, so R12 cannot be violated by a builder bug.
 - **The client sends the context**, rather than the server reading entity docs, because a Thing
-  created a second ago on a local-first device may not have synced. The server still checks the
-  ACL against `thing_shares` / the host tree.
+  created a second ago on a local-first device may not have synced. The server still checks the ACL
+  against `thing_shares` / the host tree.
 
 ### 4.3 Backend collections (never entities)
 
@@ -335,22 +348,22 @@ filter on `callerUid`); everything else functions-only. A composite index on
 
 ### 5.1 Callables
 
-| Callable                                                    | Does                                                                                                                                                                                                                   |
-|-------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`; `reason` is `run_in_progress` while another caller's run is in flight (R19a). Called when an entry point opens so the UI can show the right gate before any upload. Cheap; no model call. |
+| Callable                                                    | Does                                                                                                                                                                                                                                                                                                   |
+|-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`; `reason` is `run_in_progress` while another caller's run is in flight (R19a). Called when an entry point opens so the UI can show the right gate before any upload. Cheap; no model call.                     |
 | `startAiJob({kind, request})`                               | Same checks, then in one transaction: if `ai_usage.inFlightJobId` is QUEUED/RUNNING, return it when the caller started it (idempotent join) or fail with `run_in_progress` when someone else did; else write `ai_job_inputs/{id}`, `ai_jobs/{id}` (QUEUED) and set `inFlightJobId`. Returns `{jobId}`. |
-| `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc (accept, dismiss). Idempotent.                                                                                                                                                        |
+| `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc (accept, dismiss). Idempotent.                                                                                                                                                                                                                                        |
 
 `request` is the kind's own proto, base64, capped at 512 KiB (Firestore's 1 MiB doc limit with
 headroom); the client builder truncates logs first (§7.2).
 
 ### 5.2 Worker
 
-`runAiJob`: a task-queue function (`onTaskDispatched`), `timeoutSeconds: 1800`, `memory: "2GiB"`,
-no queue retries, secrets for every configured provider. `startAiJob` enqueues it with the job id
-after writing `ai_jobs/{jobId}`. A Firestore trigger was the first plan, but event functions stop at
-540 s and a Gemini three-document run reached 505 s in the bake-off (§12.5). It dispatches on `kind` to a registered
-pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggestionPipeline)`), and:
+`runAiJob`: a task-queue function (`onTaskDispatched`), `timeoutSeconds: 1800`, `memory: "2GiB"`, no
+queue retries, secrets for every configured provider. `startAiJob` enqueues it with the job id after
+writing `ai_jobs/{jobId}`. A Firestore trigger was the first plan, but event functions stop at 540 s
+and a Gemini three-document run reached 505 s in the bake-off (§12.5). It dispatches on `kind` to a
+registered pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggestionPipeline)`), and:
 
 1. Marks RUNNING, writes `stage` updates as the pipeline reports them ("reading_document", arg =
    document name) for the R19 progress text.
@@ -400,19 +413,18 @@ interface AiProvider {
 ```
 
 Adapters per candidate live in `src/ai/providers/`. Claude and Gemini run on Vertex AI in the
-project's `global` endpoint, authenticated by ADC, so their billing, IAM and data terms stay in
-GCP. OpenAI was dropped from the bake-off on 2026-09-30. Vertex has no server-side refusal fallback,
-so a Claude refusal is a `provider_error`. The Claude adapter can also call Anthropic's API
-directly (`channel: "direct"`, eval flag `--claude=direct`): same models, same list price, no
-refusal fallback on either route. The eval uses it while the project has no Vertex quota for
-Claude; production stays on Vertex. The chosen pair (fast, strong) is config in
+project's `global` endpoint, authenticated by ADC, so their billing, IAM and data terms stay in GCP.
+OpenAI was dropped from the bake-off on 2026-09-30. Vertex has no server-side refusal fallback, so a
+Claude refusal is a `provider_error`. The Claude adapter can also call Anthropic's API directly
+(`channel: "direct"`, eval flag `--claude=direct`): same models, same list price, no refusal
+fallback on either route. The eval uses it while the project has no Vertex quota for Claude;
+production stays on Vertex. The chosen pair (fast, strong) is config in
 `ai_config/global`, so switching provider is a config write once both adapters are deployed. The
 bake-off chose Gemini 3.8 Flash for both (§12.5); the Claude adapter stays for the eval and as a
-fallback. JSON
-that fails schema validation is retried once with the validation error appended; a second failure
-fails the stage (PRD §9.4 "valid output"). Schemas stay inside the subset all three vendors accept
-(kept to the strictest common form): every object closed, every property required, optional
-values as `null` unions. `assertPortableSchema` checks it.
+fallback. JSON that fails schema validation is retried once with the validation error appended; a
+second failure fails the stage (PRD §9.4 "valid output"). Schemas stay inside the subset all three
+vendors accept (kept to the strictest common form): every object closed, every property required,
+optional values as `null` unions. `assertPortableSchema` checks it.
 
 ### 5.5 Document reading
 
@@ -422,10 +434,11 @@ from Storage and the eval harness from disk. Page text is **always** produced, b
 verbatim check and the citation check need text regardless of whether the provider reads PDFs
 natively: the PDF text layer via `pdfjs-dist`; for image-only pages and photos, Document AI's
 Enterprise OCR (Mistral OCR was dropped from the bake-off on 2026-09-28; the bake-off measures
-Document AI's quality and time on the scanned case, §12). Limits: 5 documents per run, each within the attachment pipeline's
-existing file-size cap, checked at pick time; over-limit fails with `document_too_large` before any
-model spend. There is **no page limit** (decided 2026-09-28): the locate stage (§6.2) sends only
-the schedule pages onward, so a long manual costs more to read, not more to extract from.
+Document AI's quality and time on the scanned case, §12). Limits: 5 documents per run, each within
+the attachment pipeline's existing file-size cap, checked at pick time; over-limit fails with
+`document_too_large` before any model spend. There is **no page limit** (decided 2026-09-28): the
+locate stage (§6.2) sends only the schedule pages onward, so a long manual costs more to read, not
+more to extract from.
 
 ### 5.6 Cost logging
 
@@ -462,15 +475,15 @@ Thing context ──────────────────────
 
 ### 6.2 Stage 2: identify and extract (per document, `strong` tier)
 
-- **Identify:** manufacturer, model(s), document title, revision, `doc_type` (MAINTENANCE_MANUAL,
+- **Identify:** manufacturer, model (s), document title, revision, `doc_type` (MAINTENANCE_MANUAL,
   OWNERS_MANUAL, SERVICE_BULLETIN, SERVICE_INSTRUCTION, AIRWORTHINESS_DIRECTIVE, APPLIANCE_MANUAL,
   OTHER), and for SB/AD the reference number as printed.
-- **Locate:** the schedule pages, then extract only from those pages, their neighbours and the
-  first two (title, revision). Three methods, chosen by the bake-off: keyword scoring (the
-  default: pages over an absolute score floor, because a schedule's table pages score far below
-  its introduction), a `fast` model reading a one-line digest per page, or the whole document.
-  A document under 30 pages is read whole. Pages are marked `=== page N ===`, and items cite
-  those numbers, so the citation check runs on the same text.
+- **Locate:** the schedule pages, then extract only from those pages, their neighbours and the first
+  two (title, revision). Three methods, chosen by the bake-off: keyword scoring (the default: pages
+  over an absolute score floor, because a schedule's table pages score far below its introduction),
+  a `fast` model reading a one-line digest per page, or the whole document. A document under 30
+  pages is read whole. Pages are marked `=== page N ===`, and items cite those numbers, so the
+  citation check runs on the same text.
 - **Extract:** schedule items in the **source's** units and words, each with page refs and, for
   inspection events, the checklist lines (PRD decision 3).
 - Output is Thing-independent, so it is cached (§6.5).
@@ -494,10 +507,10 @@ Input: the candidate items from 2 and 3, the `SuggestionContext`. The model:
 
 - merges duplicates across sources (document beats recall, R16) and folds inspection-event items
   into one task (decision 3);
-- keeps the interval of a starter-pack item whose description cites the owner's regulations
-  (the airplane template's 14 CFR 91.411 and 91.413 items at 24 months) even when a manual gives
-  another, since a manual may follow a different country's rules (the Sling manual follows South
-  Africa's); otherwise a document's interval beats a starter-pack item's;
+- keeps the interval of a starter-pack item whose description cites the owner's regulations (the
+  airplane template's 14 CFR 91.411 and 91.413 items at 24 months) even when a manual gives another,
+  since a manual may follow a different country's rules (the Sling manual follows South Africa's);
+  otherwise a document's interval beats a starter-pack item's;
 - maps each to the template: meter keys from `context.meters` only, unit conversion with the source
   figure kept in the description (R23), a `component_slot_key` from the template's tree, and a
   `component_hint` in words when the Thing has several instances of the slot;
@@ -508,23 +521,23 @@ Input: the candidate items from 2 and 3, the `SuggestionContext`. The model:
 
 Each suggestion lists the candidate ids it merges (`d<doc>.<item>`, `r<item>`). Source kind,
 citation, pages and AD/SB typing are copied from the named candidate, never written by the tailor,
-so the validators check what the source said. A suggestion naming no known candidate is dropped
-as invented. When stage 3's identity confidence is low, its items are not offered to the tailor
-even on a document run.
+so the validators check what the source said. A suggestion naming no known candidate is dropped as
+invented. When stage 3's identity confidence is low, its items are not offered to the tailor even on
+a document run.
 
 ### 6.5 Cache
 
-- Keys: `doc:{sha256}:{generation_version}` for stage 2 (the revision is inside the content, so
-  the hash already distinguishes revisions) and `id:{sha256(normalized identity)}:{generation_version}`
+- Keys: `doc:{sha256}:{generation_version}` for stage 2 (the revision is inside the content, so the
+  hash already distinguishes revisions) and `id:{sha256(normalized identity)}:{generation_version}`
   for stage 3.
 - Written only when the job is SUCCEEDED (not EMPTY or FAILED), so a failed tailor never caches a
   bad extraction. Page text is never cached, so a stage-2 hit still runs stage 1 (cheap for a text
   layer) for the validators.
-- Holds derived items and document metadata only (PRD R43). The identity cache is written from
-  model knowledge only, never from a user document, so one user's document cannot change another
-  user's no-document suggestions. A stage-2 entry is served only for byte-identical documents.
-- Eviction: a `generation_version` bump invalidates everything; a reported entry (R32) is deleted
-  by key from the team's tooling.
+- Holds derived items and document metadata only (PRD R43). The identity cache is written from model
+  knowledge only, never from a user document, so one user's document cannot change another user's
+  no-document suggestions. A stage-2 entry is served only for byte-identical documents.
+- Eviction: a `generation_version` bump invalidates everything; a reported entry (R32) is deleted by
+  key from the team's tooling.
 
 ### 6.6 Generation version
 
@@ -538,40 +551,42 @@ Each rule is a pure function with its own tests (§14). In order:
 
 1. **Schema:** every suggestion maps to `MaintenanceTask` fields; rules use only the kinds R22
    allows (no `LinkedRule`, no `ImmediateRule`).
-2. **Meters (R23):** a `MeterRule` whose key is not in `context.meters` is removed from the task;
-   a task left with no rule becomes on-condition with the interval in its description.
+2. **Meters (R23):** a `MeterRule` whose key is not in `context.meters` is removed from the task; a
+   task left with no rule becomes on-condition with the interval in its description.
 3. **Regulatory typing (R18):**
-   - no documents in the run → force `ROUTINE_INSPECTION`, clear `reference_number` and
-     `compliance_authority`;
-   - document run → AD / SB typing kept only if the cited document's `doc_type` is that type **and**
-     `reference_number` occurs verbatim (whitespace- and case-normalized) in that document's page
-     text; otherwise downgrade and clear.
+    - no documents in the run → force `ROUTINE_INSPECTION`, clear `reference_number` and
+      `compliance_authority`;
+    - document run → AD / SB typing kept only if the cited document's `doc_type` is that type
+      **and**
+      `reference_number` occurs verbatim (whitespace- and case-normalized) in that document's page
+      text; otherwise downgrade and clear.
 4. **Citation (R18):** a `DOCUMENT` suggestion whose `page_ref` pages do not contain its key terms
-   (title tokens or interval figures) is dropped. A `MANUFACTURER_SCHEDULE` citation is kept as
-   text but never typed as anything but routine.
+   (title tokens or interval figures) is dropped. A `MANUFACTURER_SCHEDULE` citation is kept as text
+   but never typed as anything but routine.
 5. **Dedup ids:** `matches_existing_task_id` must be an id in `context.existing_tasks`, else
    cleared; `merges_static_index` must be in range, else −1.
 6. **Pre-selection (R27):** DOCUMENT and LOGS → true; others → true except on template `airplane`;
    `matches_thing = false` documents → false; Already tracked → false; a one-time item whose
-   first-due reading the Thing has already passed → false (shown, since it may not have been
-   done, but not ticked).
+   first-due reading the Thing has already passed → false (shown, since it may not have been done,
+   but not ticked).
 7. **Confidence (R21a):** the job is EMPTY when there are no documents and stage 3's identity
    confidence is low, or when nothing survives 1–6. Individual low-confidence items are dropped,
    never shown as such.
 
-A **source-backed rule** check runs after rule 2: a `DOCUMENT` suggestion keeps a time or meter
-rule only when one of its document candidates states a matching interval (days, months and years,
-and miles and kilometres, converted, within 3%) or the starter-pack item it merges has that rule.
-It removes calendar limits the tailor adds on its own ("100 h or 12 months" where the manual says
-100 h).
+A **source-backed rule** check runs after rule 2: a `DOCUMENT` suggestion keeps a time or meter rule
+only when one of its document candidates states a matching interval (days, months and years, and
+miles and kilometres, converted, within 3%) or the starter-pack item it merges has that rule. It
+removes calendar limits the tailor adds on its own ("100 h or 12 months" where the manual says 100
+h).
 
 Three more checks run with them: rule 1 files a suggestion whose slot the Thing does not fill at
-Thing level (R22); `last_done` must name a log in `context.logs`, whose date and reading are
-copied from that log (R29); and a one-time item's first due (R22) is made absolute. The tailor
-anchors it as a reading counted from new ("first service at 600 mi"), a meter distance from now
-("within 25 h") or a time from today ("within 3 months"); the validator resolves each against
+Thing level (R22); `last_done` must name a log in `context.logs`, whose date and reading are copied
+from that log (R29); and a one-time item's first due (R22) is made absolute. The tailor anchors it
+as a reading counted from new ("first service at 600 mi"), a meter distance from now ("within 25 h")
+or a time from today ("within 3 months"); the validator resolves each against
 `context.meters` and today, keeping the earliest date and the earliest reading, and drops anchors on
-meters the Thing lacks. A due point counted from an unrecorded date (delivery) is left out. A document run in which no document yields any item fails
+meters the Thing lacks. A due point counted from an unrecorded date (delivery) is left out. A
+document run in which no document yields any item fails
 `no_schedule_found` rather than falling back to recall alone.
 
 ## 7. Client data layer
@@ -589,15 +604,15 @@ interface AiJobClient {
 ```
 
 The Firebase implementation uses the shared `FirebaseFunctions` (as `FirebasePromoCodeRedeemer`
-does) and one Firestore snapshot listener on `ai_jobs`. `AiJobId` is a Kotlin value class around
-the backend's id. No caching: a job is short-lived and the doc is the state.
+does) and one Firestore snapshot listener on `ai_jobs`. `AiJobId` is a Kotlin value class around the
+backend's id. No caching: a job is short-lived and the doc is the state.
 
 ### 7.2 `SuggestionContextBuilder`
 
 Reads through existing managers: `FleetManager.loadThing`, `TaskDataManager.observeTasks`,
 `MaintenanceLogManager.observeLogs` and `observeMaintenanceOverview` (current meters), and
-`TemplateRegistry`. It builds `SuggestionContext` and truncates logs newest-first until the
-encoded request is under 400 KiB or 500 entries, setting `logs_truncated`. `hostUid` comes from
+`TemplateRegistry`. It builds `SuggestionContext` and truncates logs newest-first until the encoded
+request is under 400 KiB or 500 entries, setting `logs_truncated`. `hostUid` comes from
 `ThingScopeResolver.resolveNow(thingId)`, never from the signed-in uid.
 
 ### 7.3 `TaskSuggestionManager`
@@ -614,21 +629,21 @@ interface TaskSuggestionManager {
 
 `start` waits for each document's blob to reach SYNCED (the worker reads it from Storage) and
 reports an "Uploading" stage meanwhile. `accept` writes each task with `TaskDataManager.addTask`
-(one write per task, like the starter pack; a failure drops only its own card), then `close`s
-the job and releases unaccepted documents (§8.2).
+(one write per task, like the starter pack; a failure drops only its own card), then `close`s the
+job and releases unaccepted documents (§8.2).
 
 ### 7.4 `SuggestionMapper`: `TaskSuggestion` → `MaintenanceTask`
 
 - title, description (+ `component_hint` prepended when set), rules, `is_one_time`, compliance
   fields, `origin` (§4.1).
 - `component`: `component_slot_key` → `ComponentType` via the function extracted from
-  `StarterTasks.kt`. **Gap:** a task cannot name engine #2 (§2); the hint in the description is
-  the v1 answer, and a component-instance field on tasks is out of scope.
+  `StarterTasks.kt`. **Gap:** a task cannot name engine #2 (§2); the hint in the description is the
+  v1 answer, and a component-instance field on tasks is out of scope.
 - `first_due` → `force_due_date` and/or `force_due_meter` on a one-time task (PRD §7).
 - `TimeRule.creation_date` = accept time; `due_on_anniversary` from template capabilities, as
   `toMaintenanceTask` does.
-- `last_done` → `force_complied_status { complied_date, complied_meter }`. The due engine applies
-  it because a brand-new task has no linked log (TaskDueManagerImpl:253).
+- `last_done` → `force_complied_status { complied_date, complied_meter }`. The due engine applies it
+  because a brand-new task has no linked log (TaskDueManagerImpl:253).
 - `source_document` → the document's `Attachment` proto copied into `attachments` (same id, path,
   sha: one blob, R37).
 - **First-due preview** (R29): the review card runs `TaskDueManager.computeNextDue(mapped, logs)`
@@ -638,10 +653,10 @@ the job and releases unaccepted documents (§8.2).
 
 ### 8.1 Upload at run time
 
-Picking a document calls `AttachmentManager.addPickedFile(thingId, file, name)`, exactly as a
-form does: local blob, upload through the existing pipeline (own tree direct, member via
-`getBlobUploadSession`, which already enforces the owner's attachment entitlement, the same Pro
-tier documents need). R4 (existing attachment) skips the pick and reuses the `Attachment` proto.
+Picking a document calls `AttachmentManager.addPickedFile(thingId, file, name)`, exactly as a form
+does: local blob, upload through the existing pipeline (own tree direct, member via
+`getBlobUploadSession`, which already enforces the owner's attachment entitlement, the same Pro tier
+documents need). R4 (existing attachment) skips the pick and reuses the `Attachment` proto.
 
 ### 8.2 Job-owned documents
 
@@ -653,9 +668,9 @@ thing_id)`, not synced). They are released:
 - on dismiss;
 - on app start, for jobs that are closed or expired (the job doc is gone).
 
-Release goes through §8.3, so it is safe even if the user later attaches the same document by
-hand. Remotely, an unreferenced upload is also reclaimed by the daily sweep after the 7-day grace,
-which covers a device that never comes back.
+Release goes through §8.3, so it is safe even if the user later attaches the same document by hand.
+Remotely, an unreferenced upload is also reclaimed by the daily sweep after the 7-day grace, which
+covers a device that never comes back.
 
 ### 8.3 Reference-aware release (phase B)
 
@@ -681,15 +696,15 @@ handling two edges:
   removed). The new case.
 
 For each released id it runs `blobsReferencedByLiveRecords(uid, acId, docId)`, also counting
-`after`, and deletes only unreferenced blobs; `trustworthy == false` deletes nothing, as today.
-The sweep is unchanged and remains the backstop.
+`after`, and deletes only unreferenced blobs; `trustworthy == false` deletes nothing, as today. The
+sweep is unchanged and remains the backstop.
 
 **Old clients.** Builds before phase B still delete own-tree remote objects directly, which would
 destroy a shared document. `storage.rules` therefore denies client `delete` on
 `users/{uid}/thing/{thingId}/blobs/**` when phase D ships. An old client's `BlobDeleteDriver` then
 gets permission-denied and retries with backoff; the server trigger does the real collection.
-Retries stop when the device updates. Phase D does not ship until phase B has been in production
-for one release cycle.
+Retries stop when the device updates. Phase D does not ship until phase B has been in production for
+one release cycle.
 
 **Race.** A second device that references a blob in an unsynced write, while this device's release
 collects it, loses the bytes. The window exists today for any record; it is not widened by this
@@ -697,15 +712,14 @@ design. `BlobIndexReconciler` marks such a blob remote-missing rather than loopi
 
 ## 9. UX
 
-All states are one route: `Screen.StarterPack` gains an optional `mode` query arg
-(`starter` default, `suggest`, `document`) and an optional `attachmentId` (R4).
+All states are one route: `Screen.StarterPack` gains an optional `mode` query arg (`starter`
+default, `suggest`, `document`) and an optional `attachmentId` (R4).
 
 ### 9.1 Entry points
 
 - **Creation step 4** and the **empty task list**: `mode=starter` (existing routes, unchanged).
 - **Task list action** (R2): new `ThingOverviewAction.SuggestTasksClick` → `mode=suggest`.
-- **Add task → Tasks from a document** (R3): `mode=document` (sources sheet opens with the
-  picker).
+- **Add task → Tasks from a document** (R3): `mode=document` (sources sheet opens with the picker).
 - **Attachment row → Find tasks in this document** (R4, P1): `mode=document&attachmentId=`.
 
 While a run is in flight for the Thing, no entry point opens the sources sheet (PRD R19a):
@@ -717,9 +731,8 @@ While a run is in flight for the Thing, no entry point opens the sources sheet (
   `run_in_progress` from `ai_usage.inFlightJobId`, and the entry point shows "Suggestions are
   already being prepared for this plane" with no document controls.
 
-`startAiJob` is the server-side backstop: a second start by the same caller returns the running
-job, and a start by another member fails with `run_in_progress` instead of joining a job it cannot
-read.
+`startAiJob` is the server-side backstop: a second start by the same caller returns the running job,
+and a start by another member fails with `run_in_progress` instead of joining a job it cannot read.
 
 ### 9.2 Starter pack with suggestions
 
@@ -751,8 +764,8 @@ read.
 └────────────────────────────────────────────────┘
 ```
 
-Opening the sheet calls `eligibility`. `daily_limit` replaces *Suggest* with "Available again
-at 3:10 pm". A member whose owner is free sees "Documents need the owner’s Pro plan".
+Opening the sheet calls `eligibility`. `daily_limit` replaces *Suggest* with "Available again at 3:
+10 pm". A member whose owner is free sees "Documents need the owner’s Pro plan".
 
 ### 9.4 Working (R19)
 
@@ -792,8 +805,8 @@ citation and rationale, and opens the document at the page for a document source
 
 ### 9.6 Other states
 
-- **Empty (R21a):** "Not enough to go on for this {thing}." with *Add details* and *Add a
-  document*; the static pack stays below (custom: the message is the screen).
+- **Empty (R21a):** "Not enough to go on for this {thing}." with *Add details* and *Add a document*;
+  the static pack stays below (custom: the message is the screen).
 - **Failed (R21):** one line per error code (§5.7) with *Try again*.
 - **Guest (R47):** tapping *Suggest tasks* opens the existing link-account prompt.
 - **Offline (R51):** *Suggest tasks* disabled, "Needs a connection".
@@ -823,17 +836,17 @@ form when a task with an AI origin is saved changed. `StarterTasksOffered` / `Ac
 
 `backend/firebase/functions/eval/` imports the real pipeline (§6) with a chosen provider pair and
 runs it outside Cloud Functions: `npm run eval:tasks -- --fast=<id> --strong=<id> --cases=all`.
-Flags choose the locating method, the recall tier, OCR, repeats for p90 and a warm-cache re-run
-for R19. Every case runs on its own empty cache, since the cache key does not name the provider.
-Usage is in `eval/README.md`.
+Flags choose the locating method, the recall tier, OCR, repeats for p90 and a warm-cache re-run for
+R19. Every case runs on its own empty cache, since the cache key does not name the provider. Usage
+is in `eval/README.md`.
 
 ### 12.2 Cases
 
-`eval/cases/<case>/case.json`: the request as the pipeline's JSON types (context, and document
-refs that name each file by sha256), and `expected.json`: a list of expected tasks
-`{titleAliases[], rules[], citations[{document, pages[]}], type, optional?, mustNotAppear?}`,
-plus `reviewed` and an optional `expectedStatus`. Citation pages are PDF page numbers. Documents whose licence forbids
-committing them live in a private GCS bucket and are fetched by `eval/fetch.sh` into
+`eval/cases/<case>/case.json`: the request as the pipeline's JSON types (context, and document refs
+that name each file by sha256), and `expected.json`: a list of expected tasks
+`{titleAliases[], rules[], citations[{document, pages[]}], type, optional?, mustNotAppear?}`, plus
+`reviewed` and an optional `expectedStatus`. Citation pages are PDF page numbers. Documents whose
+licence forbids committing them live in a private GCS bucket and are fetched by `eval/fetch.sh` into
 `eval/docs/<sha256>.<ext>`; `eval/add-doc.sh` registers a local file. The repo holds only their
 sha256. Cases are PRD §9.3's table; the home case can say only the year built, because the home
 template declares no components or custom spec fields, so "gas water heater + septic" cannot be
@@ -842,8 +855,8 @@ expressed.
 ### 12.3 Scoring
 
 Matching is by alias and interval, not by exact title. Per case it reports recall, interval
-accuracy, citation accuracy (the cited page contains the item, checked by the same function as
-§6.7 rule 4), invented items, valid-output rate, latency, and cost; hard gates are §9.4's. Output:
+accuracy, citation accuracy (the cited page contains the item, checked by the same function as §6.7
+rule 4), invented items, valid-output rate, latency, and cost; hard gates are §9.4's. Output:
 `eval/out/<run>/report.md` + JSON, committed for the bake-off PR.
 
 ### 12.4 Not in CI
@@ -857,44 +870,44 @@ scorer, and a record-then-replay round trip on a synthetic document.
 
 **Chosen (2026-10-01): Gemini 3.8 Flash for both tiers**, on Vertex AI: LOW thinking for `fast`,
 MEDIUM for `strong`. Locating is `keywords` (§6.2). A manual's table pages go to extraction as a
-sliced PDF next to the text (`attachPdf`, §6.2). Image-only pages use Document AI (§5.5). Prompts are
+sliced PDF next to the text (`attachPdf`, §6.2). Image-only pages use Document AI (§5.5). Prompts
+are
 `tasks-4`.
 
-Flash + Sonnet 5.5 read intervals more accurately, added fewer extras and ran faster. Recall was
-the same. Gemini alone won on price. Every uncached run
-takes minutes either way, so the user leaves the screen whichever pair runs (PRD R19 was relaxed
-to match), and the extra 3–5 minutes are worth halving the cost. It also needs no Claude quota on
-Vertex, which was refused twice.
+Flash + Sonnet 5.5 read intervals more accurately, added fewer extras and ran faster. Recall was the
+same. Gemini alone won on price. Every uncached run takes minutes either way, so the user leaves the
+screen whichever pair runs (PRD R19 was relaxed to match), and the extra 3–5 minutes are worth
+halving the cost. It also needs no Claude quota on Vertex, which was refused twice.
 
 Document cases, 3 repeats each, the same prompts and settings (selective PDF). Scores are the mean
 over runs that finished, rescored after the Triumph key accepted folded inspection names:
 
-| | Gemini 3.8 Flash only | Flash + Sonnet 5.5 |
-|---|---|---|
-| Recall | 98% | 97% |
-| Interval accuracy | 92% | 96% |
-| Citation accuracy | 98% | 97% |
-| Precision | 84% | 92% |
-| Mean cost per document run | $0.23 | $0.44 |
-| Sling, three manuals | 344–505 s, $0.32 | 168–191 s, $0.73 |
-| Sienna guide / Triumph handbook | 194–326 s, $0.18 | 88–105 s, $0.30 |
-| Failed runs | 1 of 9 (Vertex 429) | 0 of 9 |
+|                                 | Gemini 3.8 Flash only | Flash + Sonnet 5.5 |
+|---------------------------------|-----------------------|--------------------|
+| Recall                          | 98%                   | 97%                |
+| Interval accuracy               | 92%                   | 96%                |
+| Citation accuracy               | 98%                   | 97%                |
+| Precision                       | 84%                   | 92%                |
+| Mean cost per document run      | $0.23                 | $0.44              |
+| Sling, three manuals            | 344–505 s, $0.32      | 168–191 s, $0.73   |
+| Sienna guide / Triumph handbook | 194–326 s, $0.18      | 88–105 s, $0.30    |
+| Failed runs                     | 1 of 9 (Vertex 429)   | 0 of 9             |
 
-| Case (Gemini only) | Recall | Intervals | Citations | Precision |
-|---|---|---|---|---|
-| Sling TSi, three manuals | 94% | 78% | 90% | 62% |
-| Toyota Sienna, owner's guide | 100% | 100% | 100% | 100% |
-| Triumph T100, handbook | 100% | 92% | 100% | 82% |
+| Case (Gemini only)           | Recall | Intervals | Citations | Precision |
+|------------------------------|--------|-----------|-----------|-----------|
+| Sling TSi, three manuals     | 94%    | 78%       | 90%       | 62%       |
+| Toyota Sienna, owner's guide | 100%   | 100%      | 100%      | 100%      |
+| Triumph T100, handbook       | 100%   | 92%       | 100%      | 82%       |
 
 - **Sling is the weak case.** Across two runs Gemini misread 4–7 intervals (airframe 100-hour,
-  engine 50-hour, coolant, propeller first inspection) and added 12–13 replacement items and up to
-  4 duplicates the key does not list. The A&P review before the airplane preset ships (PRD §9.3)
+  engine 50-hour, coolant, propeller first inspection) and added 12–13 replacement items and up to 4
+  duplicates the key does not list. The A&P review before the airplane preset ships (PRD §9.3)
   covers these.
-- **Triumph.** Gemini folds valve clearances and camshaft timing into one "20,000-mile
-  inspection", and the chain wear check into a "500-mile inspection", as §6.2's folding rule asks.
-  The key now accepts both names. It read the air cleaner as every 20,000 miles in two runs; the
-  handbook says 10,000. Its extras include two handbook items the key leaves out (throttle body
-  plate, side stand pivot).
+- **Triumph.** Gemini folds valve clearances and camshaft timing into one "20,000-mile inspection",
+  and the chain wear check into a "500-mile inspection", as §6.2's folding rule asks. The key now
+  accepts both names. It read the air cleaner as every 20,000 miles in two runs; the handbook says
+  10,000. Its extras include two handbook items the key leaves out (throttle body plate, side stand
+  pivot).
 - **No-document cases** all succeeded (bike, boat, Cessna, custom, home, and the Sling, Sienna and
   Triumph without documents) in 55–358 s. Home returns nothing in 2 of 3 runs, since its template
   cannot name the appliances (§12.2).
@@ -906,22 +919,22 @@ What the bake-off changed in the pipeline:
   with 500s.
 - Extract and tailor may write 65,536 tokens. At 32k the Sling tailor answer was cut off and asked
   again, which doubled its time.
-- Gemini calls wait 10 minutes for an answer (Node's default is 5) and retry dropped connections
-  and 429s with backoff.
+- Gemini calls wait 10 minutes for an answer (Node's default is 5) and retry dropped connections and
+  429s with backoff.
 - Gemini-only three-document runs reach 505 s, close to an event trigger's 540 s ceiling, so the
   worker moves to a task-queue function (§5.2).
 
 Rejected along the way: Flash-Lite + Haiku 4.5 (recall too low), Opus 5.5 as `strong` (worse than
 Sonnet at twice the cost), Gemini 3.1 Pro (dropped for Flash 3.8), OpenAI and Mistral OCR (dropped
 before testing). The runs, with every suggestion, are committed under `eval/out/`:
-`2026-10-01T17-03-10-977Z_gemini-3.8-flash_gemini-3.8-flash` (chosen), with the five cases it
-reuses in `2026-10-01T16-13-12-456Z_…`, and `2026-10-01T06-47-56-563Z_gemini-3.8-flash_claude-sonnet-5-5`
+`2026-10-01T17-03-10-977Z_gemini-3.8-flash_gemini-3.8-flash` (chosen), with the five cases it reuses
+in `2026-10-01T16-13-12-456Z_…`, and `2026-10-01T06-47-56-563Z_gemini-3.8-flash_claude-sonnet-5-5`
 for comparison. Their committed reports predate the Triumph key change.
 
 ## 13. Security and privacy
 
-- **Prompt injection from documents.** The provider has no tools and returns schema-bound JSON;
-  §6.7 validators run on everything. The worst case is odd suggestions for the uploader (and for
+- **Prompt injection from documents.** The provider has no tools and returns schema-bound JSON; §6.7
+  validators run on everything. The worst case is odd suggestions for the uploader (and for
   byte-identical documents via the cache), which the user must still accept.
 - **No PII to providers:** enforced by the context proto's shape (§4.2).
 - **Membership rechecked in the worker** (§5.3).
@@ -930,56 +943,56 @@ for comparison. Their committed reports predate the Triumph key change.
 ## 14. Tests
 
 - **Functions (vitest + emulator):**
-  - `authorizeAiCall`: anonymous, non-member, technician member, owner free/pro with and without
-    documents, daily limit (success counts; EMPTY/FAILED do not), spend ceiling, kill switch,
-    stale job.
-  - `startAiJob` idempotent join for the same caller and `run_in_progress` for another member; worker lifecycle with a fake provider (status, stage, input
-    deletion, `lastSuccessAt`).
-  - Every §6.7 validator, table-driven, including AD verbatim match and downgrade.
-  - `onThingRecordBlobsReleased`: two tasks share a blob, one drops it (kept), both drop it
-    (collected); record delete path unchanged (existing `blob-cleanup` and `shared-blob-gc` tests
-    extended).
-  - Rules: `ai_jobs` readable only by `callerUid`; client `delete` on blobs denied (phase D).
+    - `authorizeAiCall`: anonymous, non-member, technician member, owner free/pro with and without
+      documents, daily limit (success counts; EMPTY/FAILED do not), spend ceiling, kill switch,
+      stale job.
+    - `startAiJob` idempotent join for the same caller and `run_in_progress` for another member;
+      worker lifecycle with a fake provider (status, stage, input deletion, `lastSuccessAt`).
+    - Every §6.7 validator, table-driven, including AD verbatim match and downgrade.
+    - `onThingRecordBlobsReleased`: two tasks share a blob, one drops it (kept), both drop it
+      (collected); record delete path unchanged (existing `blob-cleanup` and `shared-blob-gc` tests
+      extended).
+    - Rules: `ai_jobs` readable only by `callerUid`; client `delete` on blobs denied (phase D).
 - **Kotlin (`src/test/kotlin`, JUnit 4 + MockK + Truth):**
-  - `SuggestionContextBuilder`: no technician/serial/cost leaves the device; truncation order.
-  - `SuggestionMapper`: rules, component mapping, force-complied, shared `Attachment`, origin.
-  - `release`: owner exclusion; referenced blob kept; `BlobDeleteDriver` no longer calls Storage.
-  - VM state machine: static-first, merge, Already tracked, empty, failed, returning-user resume.
+    - `SuggestionContextBuilder`: no technician/serial/cost leaves the device; truncation order.
+    - `SuggestionMapper`: rules, component mapping, force-complied, shared `Attachment`, origin.
+    - `release`: owner exclusion; referenced blob kept; `BlobDeleteDriver` no longer calls Storage.
+    - VM state machine: static-first, merge, Already tracked, empty, failed, returning-user resume.
 
 ## 15. Sequencing
 
-| Phase | Board items (§18) | Exit |
-|---|---|---|
-| **0** | 1–4: provider adapters and document reading, the pipeline as a library, the eval harness, the bake-off | §9.4 met by the chosen pair; §12.5 filled in |
-| **A** | 5–10: protos, collections and rules, authorization, callables, worker, `core/ai` | An echo job round-trips on all three hosts on developer builds |
-| **B** | 11–12: server release trigger, client `release` | Shared-blob tests green; one release cycle in production before D ships |
-| **C** | 13–19 and 26: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy, push when a run finishes | No-document flow on all presets and hosts, developer builds |
-| **D** | 20–25: storage-rule deny, document pipeline wiring, sources sheet, the two P1 document items, flag removal | T100, Sling TSi and C172N + AD cases end to end; flag deleted; v1 |
-| **E** | 27: wrong-suggestion report | — |
-| **F** | 28: #1181 backfill intake (PRD §10.1) | — |
+| Phase | Board items (§18)                                                                                                                                            | Exit                                                                    |
+|-------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| **0** | 1–4: provider adapters and document reading, the pipeline as a library, the eval harness, the bake-off                                                       | §9.4 met by the chosen pair; §12.5 filled in                            |
+| **A** | 5–10: protos, collections and rules, authorization, callables, worker, `core/ai`                                                                             | An echo job round-trips on all three hosts on developer builds          |
+| **B** | 11–12: server release trigger, client `release`                                                                                                              | Shared-blob tests green; one release cycle in production before D ships |
+| **C** | 13–19 and 26: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy, push when a run finishes | No-document flow on all presets and hosts, developer builds             |
+| **D** | 20–25: storage-rule deny, document pipeline wiring, sources sheet, the two P1 document items, flag removal                                                   | T100, Sling TSi and C172N + AD cases end to end; flag deleted; v1       |
+| **E** | 27: wrong-suggestion report                                                                                                                                  | —                                                                       |
+| **F** | 28: #1181 backfill intake (PRD §10.1)                                                                                                                        | —                                                                       |
 
 Ordering rules the phases alone do not show:
 
 - The pipeline is built in phase 0 as a library with no Firebase dependency, because the bake-off
-  has to run the real stages and validators (§12.1). Phases C and D wire it into the worker; they
-  do not write it.
+  has to run the real stages and validators (§12.1). Phases C and D wire it into the worker; they do
+  not write it.
 - Item 20 (storage-rule deny) deploys before item 22 reaches any user, and not before phase B has
   been in production for one release cycle (§8.3).
 - Item 19 (privacy policy) gates the phase C release, not phase C development (§17).
 
 ## 16. Risks
 
-| Risk | Mitigation |
-|---|---|
-| Hallucinated regulation | §6.7 rule 3 is deterministic; eval hard gate; `TaskOrigin` finds affected tasks by `generation_version` |
-| Cost runaway | Daily limit, per-tier and global spend ceilings, kill switch, cache. No per-caller burst limit (decided 2026-09-28): failed and empty runs are free, and the spend ceilings are the backstop |
-| Old clients delete a shared document | Storage-rule deny at phase D, one release cycle after B (§8.3) |
-| Context over 1 MiB | 400 KiB client cap + 512 KiB server cap; truncation flagged |
-| Worker timeout or cost on huge manuals (no page limit) | Locate stage before extract; text-layer reading is cheap, and OCR of image-only manuals is the slow case the bake-off must time; spend ceilings; stale-job recovery |
-| Component instance not representable | `component_hint` in the description; a task component-instance field is a separate proposal |
-| Job doc listener outside the sync engine | Confined to `core/ai`; not an entity path |
-| Vertex capacity (429) on Gemini | The adapter backs off and retries; a run that still fails is free and says "service unavailable" (PRD R21). Provisioned throughput if launch traffic needs it |
-| Gemini latency swings 2–5x between identical runs | The user can leave (R19); the worker allows 30 minutes |
+| Risk                                                   | Mitigation                                                                                                                                                                                   |
+|--------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Hallucinated regulation                                | §6.7 rule 3 is deterministic; eval hard gate; `TaskOrigin` finds affected tasks by `generation_version`                                                                                      |
+| Cost runaway                                           | Daily limit, per-tier and global spend ceilings, kill switch, cache. No per-caller burst limit (decided 2026-09-28): failed and empty runs are free, and the spend ceilings are the backstop |
+| Old clients delete a shared document                   | Storage-rule deny at phase D, one release cycle after B (§8.3)                                                                                                                               |
+| Context over 1 MiB                                     | 400 KiB client cap + 512 KiB server cap; truncation flagged                                                                                                                                  |
+| Worker timeout or cost on huge manuals (no page limit) | Locate stage before extract; text-layer reading is cheap, and OCR of image-only manuals is the slow case the bake-off must time; spend ceilings; stale-job recovery                          |
+| Component instance not representable                   | `component_hint` in the description; a task component-instance field is a separate proposal                                                                                                  |
+| Job doc listener outside the sync engine               | Confined to `core/ai`; not an entity path                                                                                                                                                    |
+| Vertex capacity (429) on Gemini                        | The adapter backs off and retries; a run that still fails is free and says "service unavailable" (PRD R21). Provisioned throughput if launch traffic needs it                                |
+| Gemini latency swings 2–5x between identical runs      | The user can leave (R19); the worker allows 30 minutes                                                                                                                                       |
 
 ## 17. Open questions
 
@@ -995,14 +1008,13 @@ dependency order.
 
 **Phase 0: evaluate**
 
-1. **Provider adapters and document reading.** The `AiProvider` interface, one adapter per
-   candidate (§9.2), `readDocument` with the PDF text layer and the OCR candidates (§5.4, §5.5).
-   Runnable outside Cloud Functions.
+1. **Provider adapters and document reading.** The `AiProvider` interface, one adapter per candidate
+   (§9.2), `readDocument` with the PDF text layer and the OCR candidates (§5.4, §5.5). Runnable
+   outside Cloud Functions.
 2. **Pipeline as a library.** Stages 1–5 and every §6.7 validator, table-driven tests, a cache
-   interface with an in-memory implementation, `GENERATION_VERSION`. R16–R18, R21a, R22–R24,
-   R27.
-3. **Eval harness.** Case format, scorer, fake provider with recorded responses (scorer tests run
-   in CI), `eval/fetch.sh` for licensed documents (§12).
+   interface with an in-memory implementation, `GENERATION_VERSION`. R16–R18, R21a, R22–R24, R27.
+3. **Eval harness.** Case format, scorer, fake provider with recorded responses (scorer tests run in
+   CI), `eval/fetch.sh` for licensed documents (§12).
 4. **Bake-off run.** Every candidate against every case; fill in §12.5 and choose the fast/strong
    pair, and confirm Document AI on the scanned case.
 
@@ -1012,17 +1024,17 @@ dependency order.
    `suggest_tasks`; add them to `generate:proto` and confirm `template.proto` and
    `meter_reading.proto` generate through imports (§4).
 6. **Collections and rules.** The `ai_*` collections, Firestore rules plus rules tests, the
-   `ai_jobs` composite index, TTL policies on `ai_jobs.expiresAt` and `ai_cost_log`, and the
-   seeded `ai_config/global` (§4.3).
-7. **Authorization.** `requireSignedInApp`, `ownerTierFor`, and `authorizeAiCall` with
-   membership, owner tier, the rolling 24 h daily limit, spend ceilings and the kill switch, each
-   with tests (§5.3). R45–R47, R49.
+   `ai_jobs` composite index, TTL policies on `ai_jobs.expiresAt` and `ai_cost_log`, and the seeded
+   `ai_config/global` (§4.3).
+7. **Authorization.** `requireSignedInApp`, `ownerTierFor`, and `authorizeAiCall` with membership,
+   owner tier, the rolling 24 h daily limit, spend ceilings and the kill switch, each with tests
+   (§5.3). R45–R47, R49.
 8. **Callables.** `getAiEligibility`, `startAiJob` with the idempotent join, and `closeAiJob`
    (§5.1).
-9. **Worker.** `runAiJob` as a task-queue function, the pipeline registry, an echo pipeline for round-trip tests, stage
-   updates, stale-job recovery, input deletion, the cost log and `ai_spend`, the Firestore cache
-   implementation, and provider secrets with their Secret Manager IAM bindings (§5.2, §5.6,
-   §6.5).
+9. **Worker.** `runAiJob` as a task-queue function, the pipeline registry, an echo pipeline for
+   round-trip tests, stage updates, stale-job recovery, input deletion, the cost log and `ai_spend`,
+   the Firestore cache implementation, and provider secrets with their Secret Manager IAM bindings
+   (§5.2, §5.6, §6.5).
 10. **`core/ai` client.** `AiJobClient` and the Firebase implementation, wired through
     `settings.gradle.kts` and `CommonAppModules`; AGENTS.md gains the module and the AI backend
     (§7.1).
@@ -1032,8 +1044,8 @@ dependency order.
 11. **Server release trigger.** `onThingRecordDeleted` generalized into
     `onThingRecordBlobsReleased`, with the shared-blob tests (§8.3). R38, R39.
 12. **Client release.** `BlobReferenceScanner` extracted from `TombstoneGc`,
-    `AttachmentManager.release(attachment, owner)`, the five `AttachmentFormController` call
-    sites, and `BlobDeleteDriver` no longer deleting remote objects. R38–R40.
+    `AttachmentManager.release(attachment, owner)`, the five `AttachmentFormController` call sites,
+    and `BlobDeleteDriver` no longer deleting remote objects. R38–R40.
 
 **Phase C: suggestions without documents**
 
@@ -1054,8 +1066,8 @@ dependency order.
     the working state from every entry point (§9.1, §9.2, §9.4–9.6). R19a, R24–R27, R31, R50, R52.
 18. **Update before accepting (P1).** The task form accepts a pre-filled suggestion and returns it
     as accepted-with-edits. R28.
-19. **Privacy policy.** State the chosen provider's retention and training terms. Not code; it
-    gates the phase C release (§17).
+19. **Privacy policy.** State the chosen provider's retention and training terms. Not code; it gates
+    the phase C release (§17).
 26. **Push when a run finishes (P0).** Moved here from phase E on 2026-10-01 and kept its number.
     The worker's `onFinished` hook sends it for every outcome, with the deep link decided in §17;
     the app drops it while that run's screen is open. R20.
@@ -1070,16 +1082,16 @@ dependency order.
     add task, job-owned documents (`ai_job_document` and its app-start cleanup), and the review
     header's identified documents with the mismatch warning (§8.1, §8.2, §9.3). R3, R6–R8b, R37,
     R46.
-23. **From an existing attachment (P1).** The attachment-row action and `mode=document&attachmentId=`.
-    R4.
+23. **From an existing attachment (P1).** The attachment-row action and
+    `mode=document&attachmentId=`. R4.
 24. **Document P1s.** Open the cited page (R30) and the "stays on N other tasks" copy when a shared
     document is removed (R41).
 25. **Flag removal.** Delete `isTaskSuggestionsSupported` at the v1 release. R48.
 
 **Phase E: follow-ups**
 
-27. **Report a wrong suggestion (P1).** The report path and the team's cache-eviction tooling.
-    R32, R44.
+27. **Report a wrong suggestion (P1).** The report path and the team's cache-eviction tooling. R32,
+    R44.
 
 **Phase F: backfill intake**
 

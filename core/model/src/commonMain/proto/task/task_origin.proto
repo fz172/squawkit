@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "id/ids.proto";
+
+option java_package = "dev.fanfly.wingslog.task";
+option java_multiple_files = true;
+
+// Where a task came from, when it did not come from the user's own hands. Design
+// docs/ai/task_population_design.md §4.1.
+//
+// A task made by hand carries no origin at all, and neither does any task written before this
+// field existed (PRD R34): UNSPECIFIED is never written.
+enum TaskOriginKind {
+    TASK_ORIGIN_KIND_UNSPECIFIED = 0;
+    TASK_ORIGIN_KIND_TEMPLATE_STARTER = 1;
+    // A suggestion run with no documents.
+    TASK_ORIGIN_KIND_AI_THING = 2;
+    TASK_ORIGIN_KIND_AI_DOCUMENT = 3;
+    // #1181's backfill from the Thing's logs (phase F).
+    TASK_ORIGIN_KIND_AI_LOG_BACKFILL = 4;
+}
+
+// What a suggestion's interval rests on. Shared with the suggest_tasks RPC, which carries it on
+// every suggestion before it becomes a task.
+enum TaskSourceKind {
+    TASK_SOURCE_KIND_UNSPECIFIED = 0;
+    TASK_SOURCE_KIND_DOCUMENT = 1;
+    TASK_SOURCE_KIND_MANUFACTURER_SCHEDULE = 2;
+    TASK_SOURCE_KIND_COMMON_PRACTICE = 3;
+    TASK_SOURCE_KIND_LOGS = 4;
+}
+
+message TaskOrigin {
+    TaskOriginKind kind = 1;
+    TaskSourceKind source_kind = 2;
+    // "Rotax 915 iS MM, rev 3", "Lycoming SI 1014M".
+    string citation = 3;
+    // Document runs only. The document is also on the task's `attachments`, and only that list owns
+    // bytes: blob reference counting never reads this field.
+    AttachmentId source_attachment_id = 4;
+    // "p. 5-12", "§ 4.2".
+    string page_ref = 5;
+    // The pipeline version that produced it (design §6.6), so a bad prompt's tasks can be found.
+    string generation_version = 6;
+    google.protobuf.Timestamp suggested_at = 7;
+}

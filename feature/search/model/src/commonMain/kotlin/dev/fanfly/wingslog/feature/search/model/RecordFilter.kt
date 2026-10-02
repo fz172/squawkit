@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.search.model
 
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.SquawkPriority
 

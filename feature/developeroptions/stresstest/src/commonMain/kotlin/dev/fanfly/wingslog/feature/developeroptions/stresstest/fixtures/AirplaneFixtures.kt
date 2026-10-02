@@ -1,13 +1,13 @@
 package dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures
 
 import dev.fanfly.wingslog.core.template.MeterKeys
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.ImmediateRule
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.OnConditionRule
+import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.ImmediateRule
-import dev.fanfly.wingslog.thing.InspectionRule
-import dev.fanfly.wingslog.thing.OnConditionRule
 import dev.fanfly.wingslog.thing.SquawkPriority
-import dev.fanfly.wingslog.thing.TimeRule
 
 /** The aviation pool. The one fixture with real Things behind it, so it is also the richest. */
 internal object AirplaneFixtures {

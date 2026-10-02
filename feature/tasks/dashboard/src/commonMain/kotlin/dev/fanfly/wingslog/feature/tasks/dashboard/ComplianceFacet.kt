@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
 
 internal val COMPLIANCE_OPTIONS = listOf(
   ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,

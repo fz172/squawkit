@@ -1,0 +1,185 @@
+syntax = "proto3";
+
+package dev.fanfly.wingslog.rpc.suggest_tasks;
+
+import "id/ids.proto";
+import "task/maintenance_task.proto";
+import "task/task_origin.proto";
+import "thing/meter_reading.proto";
+import "thing/spec.proto";
+import "thing/template.proto";
+
+option java_package = "dev.fanfly.wingslog.rpc.suggesttasks";
+option java_multiple_files = true;
+
+// The task-suggestion job's request and result (AI_JOB_KIND_TASK_SUGGESTIONS). Design
+// docs/ai/task_population_design.md §4.2. Wire only, never an entity.
+//
+// The pipeline's plain types in functions/src/ai/tasks/model.ts mirror these field for field, with
+// ids unboxed and rules flattened so the eval's cases stay readable JSON.
+//
+// NO FIELD FOR PII. A log summary has no technician, cost, attachment or comment, and a component
+// summary has no serial, so the client builder cannot leak them by mistake (PRD R12). Add a field
+// here only after checking it against R12.
+//
+// Dates are ISO `yyyy-mm-dd` strings: they are calendar dates the model reads and writes, with no
+// time zone to agree on.
+
+message SuggestTasksRequest {
+    ThingId thing_id = 1;
+    // Routing only, as in getBlobUploadSession: the server checks the caller's membership itself.
+    UserId host_uid = 2;
+    // Sent by the client rather than read from entity docs, because a Thing made a second ago on a
+    // local-first device may not have synced yet.
+    SuggestionContext context = 3;
+    repeated SourceDocumentRef documents = 4;
+    // Which entry point started the run. Analytics only.
+    string entry_point = 5;
+}
+
+// A document the client uploaded before starting the run, as an ordinary blob.
+message SourceDocumentRef {
+    AttachmentId blob_id = 1;
+    string name = 2;
+    string mime_type = 3;
+    string sha256 = 4;
+    int64 size_bytes = 5;
+}
+
+message SuggestionContext {
+    TemplateId template_id = 1;
+    int32 template_version = 2;
+    // The Thing's specs, minus the template's identifiers (tail number, VIN, address).
+    repeated Spec specs = 3;
+    repeated ComponentSummary components = 4;
+    repeated MeterSummary meters = 5;
+    repeated ExistingTask existing_tasks = 6;
+    // The builder drops the oldest to fit the request cap, and says so in `logs_truncated` (design
+    // §7.2).
+    repeated LogSummary logs = 7;
+    bool logs_truncated = 8;
+    // The template's starter pack, so a suggestion can replace the static card it improves on
+    // (PRD R25).
+    repeated StarterTask static_pack = 9;
+    // The template's word for a task, for the prompt.
+    string lexicon_task_noun = 10;
+}
+
+// A filled component slot. No serial.
+message ComponentSummary {
+    string slot_key = 1;
+    string make = 2;
+    string model = 3;
+    repeated Spec spec = 4;
+}
+
+message MeterSummary {
+    // MeterDef.key.
+    string key = 1;
+    string unit_label = 2;
+    string component_slot_key = 3;
+    // The latest reading. Meaningful only when `has_current`: nothing logged is not a zero reading.
+    double current = 4;
+    bool has_current = 5;
+}
+
+message ExistingTask {
+    MaintenanceTaskId id = 1;
+    string title = 2;
+    // The slot the task's ComponentType maps to, empty at Thing level. A slot key rather than the
+    // enum so the model compares it with the suggestions' own slots.
+    string component_slot_key = 3;
+    repeated InspectionRule rules = 4;
+    ComplianceType type = 5;
+    string reference_number = 6;
+}
+
+message LogSummary {
+    MaintenanceLogId id = 1;
+    string date = 2;
+    repeated MeterReading readings = 3;
+    string title = 4;
+    string work_description = 5;
+    string component_slot_key = 6;
+}
+
+message SuggestTasksResult {
+    repeated TaskSuggestion suggestions = 1;
+    // What each uploaded document turned out to be, for the review header (PRD R8a).
+    repeated IdentifiedDocument documents = 2;
+    string generation_version = 3;
+}
+
+enum DocType {
+    DOC_TYPE_UNSPECIFIED = 0;
+    DOC_TYPE_MAINTENANCE_MANUAL = 1;
+    DOC_TYPE_OWNERS_MANUAL = 2;
+    DOC_TYPE_SERVICE_BULLETIN = 3;
+    DOC_TYPE_SERVICE_INSTRUCTION = 4;
+    DOC_TYPE_AIRWORTHINESS_DIRECTIVE = 5;
+    DOC_TYPE_APPLIANCE_MANUAL = 6;
+    DOC_TYPE_OTHER = 7;
+}
+
+message IdentifiedDocument {
+    AttachmentId blob_id = 1;
+    string name = 2;
+    string manufacturer = 3;
+    string title = 4;
+    string revision = 5;
+    DocType doc_type = 6;
+    // False when the document looks like it is for a different Thing; the review warns (PRD R8a).
+    bool matches_thing = 7;
+}
+
+message TaskSuggestion {
+    SuggestionId suggestion_id = 1;
+    string title = 2;
+    string rationale = 3;
+    string description = 4;
+    // Empty files the task at Thing level.
+    string component_slot_key = 5;
+    // "Engine #2", in words, when the Thing has several of the slot. A task cannot name a component
+    // instance, so the mapper puts this at the head of the task's description (design §7.4).
+    string component_hint = 6;
+    repeated InspectionRule rules = 7;
+    bool is_one_time = 8;
+    ComplianceType type = 9;
+    string reference_number = 10;
+    string compliance_authority = 11;
+    TaskSourceKind source_kind = 12;
+    string citation = 13;
+    string page_ref = 14;
+    // Set only for a document source.
+    AttachmentId source_document = 15;
+    LastDoneEvidence last_done = 16;
+    // An existing task this duplicates; the review shows it as Already tracked (PRD R24).
+    MaintenanceTaskId matches_existing_task_id = 17;
+    string interval_difference_note = 18;
+    // The `static_pack` index this replaces, or -1 for none (PRD R25).
+    int32 merges_static_index = 19;
+    // Whether the review ticks it by default. The server applies PRD R27.
+    bool preselect = 20;
+    // Set only on a one-time item that says when it falls due.
+    FirstDue first_due = 21;
+    // The document pages it cites, 1-based PDF page numbers, for opening the document there (R30).
+    repeated int32 source_pages = 22;
+}
+
+// When a one-time item first falls due, whichever comes first. The mapper writes it to the task's
+// `force_due_date` and `force_due_meter`.
+message FirstDue {
+    // Empty when only a reading is given.
+    string date = 1;
+    // Absent when only a date is given.
+    MeterReading meter = 2;
+}
+
+// The log that shows the task was last done (PRD R29). The pipeline copies date and reading from
+// that log rather than trusting the model's.
+message LastDoneEvidence {
+    MaintenanceLogId log_id = 1;
+    string date = 2;
+    // Absent when the log recorded no reading for the task's meter.
+    MeterReading reading = 3;
+}
