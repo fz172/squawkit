@@ -2,14 +2,21 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_AI_CONFIG,
+  aiJobDocPath,
+  aiJobInputDocPath,
   aiSpendMonthKey,
   aiUsageDocPath,
   parseAiConfig,
 } from "../../src/ai/collections.js";
 
 describe("ai collection paths", () => {
+  it("keeps a job and its input under the caller", () => {
+    expect(aiJobDocPath("alice", "j1")).toBe("ai_jobs/alice/job/j1");
+    expect(aiJobInputDocPath("alice", "j1")).toBe("ai_job_inputs/alice/input/j1");
+  });
+
   it("keys usage by the Thing's tree, since a Thing id is unique only within one", () => {
-    expect(aiUsageDocPath("host", "t1")).toBe("ai_usage/host_t1");
+    expect(aiUsageDocPath("host", "t1")).toBe("ai_usage/host/thing/t1");
   });
 
   it("keys spend by UTC month", () => {

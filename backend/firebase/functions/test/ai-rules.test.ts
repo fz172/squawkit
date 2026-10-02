@@ -25,11 +25,11 @@ import {
   AI_CACHE_COLLECTION,
   AI_CONFIG_DOC_PATH,
   AI_COST_LOG_COLLECTION,
-  AI_JOB_INPUTS_COLLECTION,
-  AI_JOBS_COLLECTION,
   AI_SPEND_COLLECTION,
-  AI_USAGE_COLLECTION,
   aiJobDocPath,
+  aiJobInputDocPath,
+  aiJobsCollectionPath,
+  aiUsageDocPath,
 } from "../src/ai/collections.js";
 
 // The AI backend's collections (docs/ai/task_population_design.md §4.3): a job is readable by the
@@ -54,8 +54,8 @@ beforeEach(async () => {
   await testEnv.clearFirestore();
 });
 
-function job(callerUid: string, thingId = "t1") {
-  return { kind: 1, callerUid, hostUid: "host", thingId, status: 1, createdAt: new Date() };
+function job(thingId = "t1") {
+  return { kind: 1, hostUid: "host", thingId, status: 1, createdAt: new Date() };
 }
 
 async function seed(path: string, data: Record<string, unknown>): Promise<void> {
@@ -64,68 +64,60 @@ async function seed(path: string, data: Record<string, unknown>): Promise<void> 
   });
 }
 
-describe("ai_jobs/{jobId} rules", () => {
+describe("ai_jobs/{callerUid}/job/{jobId} rules", () => {
   it("lets the caller read their own job", async () => {
-    await seed(aiJobDocPath("j1"), job("alice"));
+    await seed(aiJobDocPath("alice", "j1"), job());
     const alice = testEnv.authenticatedContext("alice").firestore();
-    await assertSucceeds(getDoc(doc(alice, aiJobDocPath("j1"))));
+    await assertSucceeds(getDoc(doc(alice, aiJobDocPath("alice", "j1"))));
   });
 
   it("denies another user, a share member included", async () => {
-    await seed(aiJobDocPath("j1"), job("alice"));
+    await seed(aiJobDocPath("alice", "j1"), job());
     const bob = testEnv.authenticatedContext("bob").firestore();
-    await assertFails(getDoc(doc(bob, aiJobDocPath("j1"))));
+    await assertFails(getDoc(doc(bob, aiJobDocPath("alice", "j1"))));
   });
 
   it("denies a signed-out reader", async () => {
-    await seed(aiJobDocPath("j1"), job("alice"));
+    await seed(aiJobDocPath("alice", "j1"), job());
     const anon = testEnv.unauthenticatedContext().firestore();
-    await assertFails(getDoc(doc(anon, aiJobDocPath("j1"))));
+    await assertFails(getDoc(doc(anon, aiJobDocPath("alice", "j1"))));
   });
 
   it("reads a closed or expired job as absent, not as a denial", async () => {
     const alice = testEnv.authenticatedContext("alice").firestore();
-    const snap = await assertSucceeds(getDoc(doc(alice, aiJobDocPath("gone"))));
+    const snap = await assertSucceeds(getDoc(doc(alice, aiJobDocPath("alice", "gone"))));
     expect(snap.exists()).toBe(false);
   });
 
-  it("lets the caller list their jobs for a Thing when the query filters on callerUid", async () => {
-    await seed(aiJobDocPath("j1"), job("alice"));
-    await seed(aiJobDocPath("j2"), job("bob"));
+  it("lets the caller list their jobs for a Thing with no caller filter", async () => {
+    await seed(aiJobDocPath("alice", "j1"), job("t1"));
+    await seed(aiJobDocPath("alice", "j2"), job("t2"));
+    await seed(aiJobDocPath("bob", "j3"), job("t1"));
     const alice = testEnv.authenticatedContext("alice").firestore();
     const snap = await assertSucceeds(
-      getDocs(
-        query(
-          collection(alice, AI_JOBS_COLLECTION),
-          where("callerUid", "==", "alice"),
-          where("thingId", "==", "t1"),
-        ),
-      ),
+      getDocs(query(collection(alice, aiJobsCollectionPath("alice")), where("thingId", "==", "t1"))),
     );
     expect(snap.docs.map((d) => d.id)).toEqual(["j1"]);
   });
 
-  it("denies a list that does not filter on the caller", async () => {
+  it("denies listing another user's jobs", async () => {
     const alice = testEnv.authenticatedContext("alice").firestore();
-    await assertFails(getDocs(collection(alice, AI_JOBS_COLLECTION)));
-    await assertFails(
-      getDocs(query(collection(alice, AI_JOBS_COLLECTION), where("callerUid", "==", "bob"))),
-    );
+    await assertFails(getDocs(collection(alice, aiJobsCollectionPath("bob"))));
   });
 
   it("denies the caller creating, updating or deleting a job", async () => {
-    await seed(aiJobDocPath("j1"), job("alice"));
+    await seed(aiJobDocPath("alice", "j1"), job());
     const alice = testEnv.authenticatedContext("alice").firestore();
-    await assertFails(setDoc(doc(alice, aiJobDocPath("j2")), job("alice")));
-    await assertFails(updateDoc(doc(alice, aiJobDocPath("j1")), { status: 3 }));
-    await assertFails(deleteDoc(doc(alice, aiJobDocPath("j1"))));
+    await assertFails(setDoc(doc(alice, aiJobDocPath("alice", "j2")), job()));
+    await assertFails(updateDoc(doc(alice, aiJobDocPath("alice", "j1")), { status: 3 }));
+    await assertFails(deleteDoc(doc(alice, aiJobDocPath("alice", "j1"))));
   });
 });
 
 describe("functions-only ai_* collections", () => {
   const paths = [
-    `${AI_JOB_INPUTS_COLLECTION}/j1`,
-    `${AI_USAGE_COLLECTION}/alice_t1`,
+    aiJobInputDocPath("alice", "j1"),
+    aiUsageDocPath("alice", "t1"),
     `${AI_SPEND_COLLECTION}/202610`,
     `${AI_COST_LOG_COLLECTION}/r1`,
     `${AI_CACHE_COLLECTION}/doc:abc:tasks-4`,
@@ -134,7 +126,7 @@ describe("functions-only ai_* collections", () => {
 
   for (const path of paths) {
     it(`denies a signed-in user reading or writing ${path}`, async () => {
-      await seed(path, { callerUid: "alice" });
+      await seed(path, { hostUid: "alice" });
       const alice = testEnv.authenticatedContext("alice").firestore();
       await assertFails(getDoc(doc(alice, path)));
       await assertFails(setDoc(doc(alice, path), { enabled: true }));

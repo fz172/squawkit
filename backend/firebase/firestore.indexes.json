@@ -1,10 +1,9 @@
 {
   "indexes": [
     {
-      "collectionGroup": "ai_jobs",
+      "collectionGroup": "job",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "callerUid", "order": "ASCENDING" },
         { "fieldPath": "thingId", "order": "ASCENDING" },
         { "fieldPath": "kind", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
@@ -13,13 +12,13 @@
   ],
   "fieldOverrides": [
     {
-      "collectionGroup": "ai_jobs",
+      "collectionGroup": "job",
       "fieldPath": "expiresAt",
       "ttl": true,
       "indexes": []
     },
     {
-      "collectionGroup": "ai_job_inputs",
+      "collectionGroup": "input",
       "fieldPath": "expiresAt",
       "ttl": true,
       "indexes": []

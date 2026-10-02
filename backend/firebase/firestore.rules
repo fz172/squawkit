@@ -187,25 +187,21 @@ service cloud.firestore {
     // Thing's logs, and a share member who did not start the run sees it through their own job.
     // Functions write it; a client that could would mark its own run SUCCEEDED.
     //
-    // `get` is TOTAL over a missing document, as shareRole() is: a job closes or expires by
-    // deletion, and the client must read that as "gone", not as a denial. A job id is random, so
-    // learning that one does not exist tells a caller nothing.
-    //
-    // `list` must filter on callerUid, which is what the rule can prove of a query.
-    match /ai_jobs/{jobId} {
-      allow get: if request.auth != null
-        && (resource == null || resource.data.callerUid == request.auth.uid);
-      allow list: if request.auth != null && resource.data.callerUid == request.auth.uid;
+    // Jobs live under the caller's uid and the rule reads only the path, so it is TOTAL, as
+    // shareRole() is: a job closes or expires by deletion, and the client reads that as "gone",
+    // never as a denial. A list of one's own jobs needs no filter to pass.
+    match /ai_jobs/{callerUid}/job/{jobId} {
+      allow read: if request.auth != null && request.auth.uid == callerUid;
       allow write: if false; // functions only
     }
 
     // Everything else is server bookkeeping. The request holds the Thing's logs (ai_job_inputs);
     // the usage and spend documents are the limits themselves, which a writable copy would reset;
     // the cost log and the cache are shared across every user; the config is the kill switch.
-    match /ai_job_inputs/{jobId} {
+    match /ai_job_inputs/{callerUid}/input/{jobId} {
       allow read, write: if false; // functions only
     }
-    match /ai_usage/{usageId} {
+    match /ai_usage/{hostUid}/thing/{thingId} {
       allow read, write: if false; // functions only
     }
     match /ai_spend/{month} {

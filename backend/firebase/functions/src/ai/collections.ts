@@ -17,6 +17,16 @@ import type { PipelineCallRecord, PipelineStage } from "./tasks/pipeline.js";
 export const AI_JOBS_COLLECTION = "ai_jobs";
 export const AI_JOB_INPUTS_COLLECTION = "ai_job_inputs";
 export const AI_USAGE_COLLECTION = "ai_usage";
+
+/**
+ * Subcollection ids under the owning uid. A TTL policy and a composite index apply to every
+ * collection with the same id in the database, so `job` and `input` must not be reused elsewhere:
+ * firestore.indexes.json names them as collection groups. `thing` carries neither, and matches
+ * `thing_shares/{hostUid}/thing/{thingId}`.
+ */
+export const AI_JOB_SUBCOLLECTION = "job";
+export const AI_JOB_INPUT_SUBCOLLECTION = "input";
+export const AI_USAGE_THING_SUBCOLLECTION = "thing";
 export const AI_SPEND_COLLECTION = "ai_spend";
 export const AI_COST_LOG_COLLECTION = "ai_cost_log";
 export const AI_CACHE_COLLECTION = "ai_cache";
@@ -38,17 +48,25 @@ export const AI_JOB_INPUT_TTL_MS = AI_JOB_TTL_MS;
  */
 export const AI_COST_LOG_TTL_MS = 13 * 31 * 24 * 60 * 60 * 1000;
 
-export function aiJobDocPath(jobId: string): string {
-  return `${AI_JOBS_COLLECTION}/${jobId}`;
+/**
+ * Jobs live under the user who started them, so the rules authorize from the path alone and a
+ * client lists its own jobs without a filter it could leave off.
+ */
+export function aiJobsCollectionPath(callerUid: string): string {
+  return `${AI_JOBS_COLLECTION}/${callerUid}/${AI_JOB_SUBCOLLECTION}`;
 }
 
-export function aiJobInputDocPath(jobId: string): string {
-  return `${AI_JOB_INPUTS_COLLECTION}/${jobId}`;
+export function aiJobDocPath(callerUid: string, jobId: string): string {
+  return `${aiJobsCollectionPath(callerUid)}/${jobId}`;
 }
 
-/** One usage document per Thing, keyed by its tree: a Thing id is unique only within one. */
+export function aiJobInputDocPath(callerUid: string, jobId: string): string {
+  return `${AI_JOB_INPUTS_COLLECTION}/${callerUid}/${AI_JOB_INPUT_SUBCOLLECTION}/${jobId}`;
+}
+
+/** One usage document per Thing, under its tree: a Thing id is unique only within one. */
 export function aiUsageDocPath(hostUid: string, thingId: string): string {
-  return `${AI_USAGE_COLLECTION}/${hostUid}_${thingId}`;
+  return `${AI_USAGE_COLLECTION}/${hostUid}/${AI_USAGE_THING_SUBCOLLECTION}/${thingId}`;
 }
 
 /** `yyyymm` in UTC, so every function instance agrees on which month a call belongs to. */
@@ -68,16 +86,15 @@ export function aiCacheDocPath(key: string): string {
 export const AI_CONFIG_DOC_PATH = `${AI_CONFIG_COLLECTION}/${AI_CONFIG_GLOBAL_DOC}`;
 
 /**
- * `ai_jobs/{jobId}`. Written by functions; read by the caller alone, whose list queries must filter
- * on `callerUid` (the composite index on callerUid, thingId, kind, createdAt desc serves "latest job
- * for this Thing").
+ * `ai_jobs/{callerUid}/job/{jobId}`. Written by functions; read by the caller alone. The composite
+ * index on (thingId, kind, createdAt desc) serves "latest job for this Thing". The caller is the
+ * path, not a field: nothing in the document can disagree with it.
  *
  * `kind` and `status` hold the proto enums' numbers, which the client reads with Wire's
  * `fromValue`; a number it does not know reads as null rather than as a wrong state.
  */
 export type AiJobDoc = {
   kind: AiJobKind;
-  callerUid: string;
   /** The Thing's tree. Routing for the worker; the caller is checked against it at start. */
   hostUid: string;
   thingId: string;
@@ -102,7 +119,10 @@ export type AiJobErrorDoc = {
   detailKey: string;
 };
 
-/** `ai_job_inputs/{jobId}`. Functions only; deleted by the worker when it finishes. */
+/**
+ * `ai_job_inputs/{callerUid}/input/{jobId}`, beside its job. Functions only; deleted by the worker
+ * when it finishes.
+ */
 export type AiJobInputDoc = {
   kind: AiJobKind;
   /** Base64 of the kind's request proto (`SuggestTasksRequest`), at most 512 KiB decoded. */
@@ -112,13 +132,18 @@ export type AiJobInputDoc = {
   expiresAt: Timestamp;
 };
 
-/** `ai_usage/{hostUid}_{thingId}`. Functions only. */
+/** `ai_usage/{hostUid}/thing/{thingId}`. Functions only. */
 export type AiUsageDoc = {
   /** The daily limit runs 24 h from here (PRD R49). Set only on SUCCEEDED. */
   lastSuccessAt: Timestamp | null;
-  /** The job a run in flight holds, which makes `startAiJob` join it or refuse (R19a). */
-  inFlightJobId: string | null;
+  /**
+   * The run in flight, which makes `startAiJob` join it or refuse (R19a). It may be another share
+   * member's, so it names the caller as well as the job: that is where the job lives.
+   */
+  inFlightJob: AiJobRef | null;
 };
+
+export type AiJobRef = { callerUid: string; jobId: string };
 
 /** The tier whose spend a call counts against: the Thing owner's, never the caller's. */
 export type AiOwnerTier = "free" | "pro";
