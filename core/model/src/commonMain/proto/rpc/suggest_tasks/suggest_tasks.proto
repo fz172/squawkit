@@ -4,10 +4,10 @@ package dev.fanfly.wingslog.rpc.suggest_tasks;
 
 import "id/ids.proto";
 import "task/maintenance_task.proto";
+import "task/starter_task.proto";
 import "task/task_origin.proto";
 import "thing/meter_reading.proto";
 import "thing/spec.proto";
-import "thing/template.proto";
 
 option java_package = "dev.fanfly.wingslog.rpc.suggesttasks";
 option java_multiple_files = true;

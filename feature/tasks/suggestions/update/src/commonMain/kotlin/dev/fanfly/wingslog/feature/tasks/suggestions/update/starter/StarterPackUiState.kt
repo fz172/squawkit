@@ -1,6 +1,7 @@
-package dev.fanfly.wingslog.feature.tasks.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
 import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
 

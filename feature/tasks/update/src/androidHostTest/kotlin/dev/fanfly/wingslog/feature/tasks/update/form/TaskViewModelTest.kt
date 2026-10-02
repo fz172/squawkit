@@ -18,10 +18,14 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.ForceCompliedStatus
 import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.TaskOrigin
+import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -372,6 +376,52 @@ class TaskViewModelTest {
       }
       assertThat(persisted.captured.force_complied_status).isNotNull()
     }
+
+  // ---- origin ----
+
+  @Test
+  fun saveNewTask_marksTheTaskAsMadeByHand() = runTest(testDispatcher) {
+    coEvery { inspectionDataManager.addTask(TEST_THING_ID, any()) } returns Result.success(true)
+    val viewModel = buildViewModelForNew()
+    advanceUntilIdle()
+
+    viewModel.saveNewTask(
+      title = "Wash",
+      type = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      component = ComponentType.COMPONENT_UNKNOWN,
+      rules = emptyList(),
+      referenceNumber = "",
+      complianceAuthority = "",
+      complianceDetails = "",
+      isOneTime = false,
+      forceDueDate = null,
+      forceDueEngine = 0f,
+      onSuccess = {},
+    )
+    advanceUntilIdle()
+
+    val persisted = slot<MaintenanceTask>()
+    coVerify { inspectionDataManager.addTask(TEST_THING_ID, capture(persisted)) }
+    assertThat(persisted.captured.origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_USER)
+  }
+
+  @Test
+  fun saveEditedTask_keepsTheStoredOrigin() = runTest(testDispatcher) {
+    // The form never shows the origin, so the rebuilt card must carry it over (PRD R35).
+    val origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER)
+    val stored = skippedCard(forceDueEngine = 0f).copy(origin = origin)
+    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(listOf(stored))
+    coEvery { inspectionDataManager.updateTask(TEST_THING_ID, any()) } returns Result.success(true)
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+
+    viewModel.saveEditedTaskFrom(stored.copy(title = "Renamed", origin = null))
+    advanceUntilIdle()
+
+    val persisted = slot<MaintenanceTask>()
+    coVerify { inspectionDataManager.updateTask(TEST_THING_ID, capture(persisted)) }
+    assertThat(persisted.captured.origin).isEqualTo(origin)
+  }
 
   // ---- helpers ----
 

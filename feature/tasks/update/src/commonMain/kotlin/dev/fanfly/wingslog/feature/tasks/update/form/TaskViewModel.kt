@@ -37,6 +37,8 @@ import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.ForceCompliedStatus
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.TaskOrigin
+import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -351,6 +353,9 @@ class TaskViewModel(
           force_due_date = forceDueDate,
           notes = notes,
           attachments = attachments,
+          // Made by hand here, so it says so (design §4.1); only tasks written before origins
+          // existed carry none.
+          origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_USER),
         ).withForcedDueMeter(
           // The meter the rules schedule against — an override is measured in the same one.
           meterKeyFor(component, rules),
@@ -384,15 +389,18 @@ class TaskViewModel(
     forceDueDate: Instant?,
     forceDueEngine: Float,
   ): Boolean {
-    val stored = (_uiState.value as? TaskUiState.Success)
-      ?.allInspections
-      ?.find { it.id == cardId }
-      ?: return false
+    val stored = storedTask(cardId) ?: return false
     return rules != stored.rules ||
       isOneTime != stored.is_one_time ||
       forceDueDate != stored.force_due_date ||
       forceDueEngine != (stored.forcedDueMeter()?.value ?: 0f)
   }
+
+  /** The card as last loaded, or null before the list has loaded. */
+  private fun storedTask(cardId: String): MaintenanceTask? =
+    (_uiState.value as? TaskUiState.Success)
+      ?.allInspections
+      ?.find { it.id == cardId }
 
   fun saveEditedTask(
     cardId: String,
@@ -437,6 +445,10 @@ class TaskViewModel(
           ) null else forceCompliedStatus,
           notes = notes,
           attachments = attachments,
+          // The form does not show where a task came from, so an edit keeps it (PRD R35): the card
+          // is rebuilt from the form, and without this every edit would erase a starter or AI
+          // task's origin.
+          origin = storedTask(cardId)?.origin,
         )
         inspectionDataManager.updateTask(
           thingId,

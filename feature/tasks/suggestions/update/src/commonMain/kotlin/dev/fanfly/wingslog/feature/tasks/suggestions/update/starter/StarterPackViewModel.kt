@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

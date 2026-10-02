@@ -7,18 +7,22 @@ import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.task.SeasonalRule
+import dev.fanfly.wingslog.task.StarterTask
+import dev.fanfly.wingslog.task.TaskOrigin
+import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate
 import com.squareup.wire.Instant as WireInstant
 
 /**
  * The ordinary [MaintenanceTask] an accepted starter task becomes (PRD §4.9).
  *
- * Nothing marks it afterwards — editable, deletable, indistinguishable from one typed in. The
- * id is left for `TaskDataManager.addTask` to assign. Both halves of the pack's rule survive when
- * both are set, so "every 5,000 mi or 6 months" is two rules and the due engine takes the earlier.
+ * Editable and deletable like one typed in; only its `origin` says it came from the template's pack
+ * (TEMPLATE_STARTER, docs/ai/task_population_design.md §4.1), which lets analytics compare how long
+ * static and AI suggestions survive. The id is left for `TaskDataManager.addTask` to assign. Both
+ * halves of the pack's rule survive when both are set, so "every 5,000 mi or 6 months" is two rules
+ * and the due engine takes the earlier.
  */
 fun StarterTask.toMaintenanceTask(
   template: ThingTemplate?,
@@ -26,7 +30,11 @@ fun StarterTask.toMaintenanceTask(
 ): MaintenanceTask = MaintenanceTask(
   title = title,
   notes = description,
-  component = componentTypeFor(template),
+  component = componentTypeForSlot(component_slot_key, template),
+  origin = TaskOrigin(
+    kind = TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER,
+    suggested_at = createdAt
+  ),
   type = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
   rules = buildList {
     if (months.isNotEmpty()) {
@@ -69,14 +77,19 @@ fun StarterTask.toMaintenanceTask(
 )
 
 /**
- * `ComponentType` is aviation's frozen enum. On the airplane preset a task on the Thing itself is
- * an airframe task — the template declares no airframe slot, so an empty key is what "airframe"
- * looks like — and every other preset files it against the Thing with no component (#732).
+ * The `ComponentType` a task filed against component slot [slotKey] gets, shared by starter tasks
+ * and AI suggestions (design §3, §7.4). `ComponentType` is aviation's frozen enum. On the airplane
+ * preset a task on the Thing itself is an airframe task — the template declares no airframe slot,
+ * so an empty key is what "airframe" looks like — and every other preset files it against the Thing
+ * with no component (#732).
  */
-private fun StarterTask.componentTypeFor(template: ThingTemplate?): ComponentType =
+fun componentTypeForSlot(
+  slotKey: String,
+  template: ThingTemplate?
+): ComponentType =
   when {
     !template.usesComponentTypes -> ComponentType.COMPONENT_UNKNOWN
-    component_slot_key == SlotKeys.ENGINE -> ComponentType.COMPONENT_ENGINE
-    component_slot_key == SlotKeys.PROPELLER -> ComponentType.COMPONENT_PROPELLER
+    slotKey == SlotKeys.ENGINE -> ComponentType.COMPONENT_ENGINE
+    slotKey == SlotKeys.PROPELLER -> ComponentType.COMPONENT_PROPELLER
     else -> ComponentType.COMPONENT_AIRFRAME
   }

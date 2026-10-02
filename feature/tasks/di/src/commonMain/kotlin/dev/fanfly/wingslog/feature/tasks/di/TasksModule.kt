@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.feature.tasks.di
 
 import dev.fanfly.wingslog.feature.tasks.dashboard.di.tasksDashboardModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksDataManagerModule
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.tasksSuggestionsDataManagerModule
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.di.tasksSuggestionsUpdateModule
 import dev.fanfly.wingslog.feature.tasks.update.di.tasksUpdateModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -15,5 +17,7 @@ val tasksModule: Module = module {
     tasksDashboardModule,
     tasksDataManagerModule,
     tasksUpdateModule,
+    tasksSuggestionsDataManagerModule,
+    tasksSuggestionsUpdateModule,
   )
 }

@@ -194,8 +194,19 @@ backend/firebase/functions/eval/                        NEW evaluation harness (
   `feature/tasks/suggestions/update`. `Screen.StarterPack` keeps its route string; the shell nav
   graph points at the new composable. `toMaintenanceTask` stays in `tasks/datamanager` and its
   slot → `ComponentType` mapping is extracted to a shared function the mapper reuses.
-- **Strings.** Starter-pack strings stay in `feature/tasks/sharedassets` (no row moves). If a string
-  does move, `StringSnapshotTest` rows are rewritten by module path, never regenerated.
+- **Strings.** The starter screen's 13 strings (`starter_pack_*`, `starter_rule_*`) lived in
+  `feature/tasks/update`, not `sharedassets`, and only that screen uses them. So they moved with it
+  to `suggestions/update`, and their `StringSnapshotTest` rows were rewritten by module path (T13).
+  A module may not depend on another `update` module for its strings. `starter_pack_empty_action`
+  stays in `feature/tasks/sharedassets`.
+- **What moved in T13.** `StarterPackItem` → `suggestions/model`; the route, VM and UI state →
+  `suggestions/update` (package `…suggestions.update.starter`), with the VM's Koin binding.
+  `suggestions/datamanager` holds only its (empty) Koin module until T15. `toMaintenanceTask` stamps
+  `TEMPLATE_STARTER`, and `componentTypeForSlot` is the extracted slot mapping. The `StarterTask`
+  message moved from `thing/template.proto` to its own `task/starter_task.proto`
+  (`dev.fanfly.wingslog.task`); with no proto `package`, wire bytes and stored Things are unchanged.
+- **Origins on the task form.** A new task writes `USER`. An edit carries the stored `origin` over,
+  because the form rebuilds the card from its fields and would otherwise erase it (PRD R35).
 - **Dependencies.** `suggestions:update` → `suggestions:{model,datamanager}`, `tasks:{model,
   datamanager,sharedassets}`, `attachment:{model,datamanager,viewing}`, `subscription:datamanager`,
   `core:{template,nav,analytics,ui,ui:adaptive,ui:theme}`. `suggestions:datamanager` →
@@ -814,13 +825,13 @@ sweep is unchanged and remains the backstop.
 
 Built in T11 as `storage/onRecordBlobsReleased.ts`:
 
-- **Edges that release nothing:** a creation, an undelete, a write to a tombstone, and an edit
-  whose payload string is unchanged. That last one is the common case, a cheap string compare, so
-  the Thing's collections are scanned only when an attachment actually left.
+- **Edges that release nothing:** a creation, an undelete, a write to a tombstone, and an edit whose
+  payload string is unchanged. That last one is the common case, a cheap string compare, so the
+  Thing's collections are scanned only when an attachment actually left.
 - **`after` needs no special counting.** An edit's released ids are, by definition, the ones
   `after` no longer names, and a tombstone holds no claim.
-- **Either side of an edit that will not decode releases nothing**, as an undecodable delete
-  already did.
+- **Either side of an edit that will not decode releases nothing**, as an undecodable delete already
+  did.
 - **Renaming the export is a delete-and-create on deploy.** A write in that window is not seen by
   the trigger, and the daily sweep collects it after its grace period.
 

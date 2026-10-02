@@ -2,12 +2,12 @@ package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.ScheduleType
 import dev.fanfly.wingslog.thing.SpecField
-import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
