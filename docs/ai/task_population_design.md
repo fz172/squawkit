@@ -367,7 +367,8 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 - **Config.** `parseAiConfig` fails closed: a missing or malformed `ai_config/global` reads as
   disabled. `npm run ai-config` seeds it from `DEFAULT_AI_CONFIG` (never overwriting) and flips the
   kill switch with `--enabled true|false`. It seeds **disabled**, with placeholder ceilings ($50
-  free, $150 Pro, $200 total a month) until the PRD's limit values are settled.
+  free, $150 Pro, $200 total a month) until the PRD's limit values are settled, and 3 documents per
+  run. Production was seeded and enabled on 2026-10-01 for phase A's echo check.
 
 ## 5. Shared AI backend
 
@@ -519,7 +520,7 @@ from Storage and the eval harness from disk. Page text is **always** produced, b
 verbatim check and the citation check need text regardless of whether the provider reads PDFs
 natively: the PDF text layer via `pdfjs-dist`; for image-only pages and photos, Document AI's
 Enterprise OCR (Mistral OCR was dropped from the bake-off on 2026-09-28; the bake-off measures
-Document AI's quality and time on the scanned case, §12). Limits: 5 documents per run, each within
+Document AI's quality and time on the scanned case, §12). Limits: 3 documents per run (decided 2026-10-01; `maxDocumentsPerRun` in `ai_config`), each within
 the attachment pipeline's existing file-size cap, checked at pick time; over-limit fails with
 `document_too_large` before any model spend. There is **no page limit** (decided 2026-09-28): the
 locate stage (§6.2) sends only the schedule pages onward, so a long manual costs more to read, not
