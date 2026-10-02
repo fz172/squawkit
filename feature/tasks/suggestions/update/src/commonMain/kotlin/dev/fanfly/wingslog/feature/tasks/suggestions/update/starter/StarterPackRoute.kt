@@ -44,7 +44,7 @@ import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.thing.StarterTask
+import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

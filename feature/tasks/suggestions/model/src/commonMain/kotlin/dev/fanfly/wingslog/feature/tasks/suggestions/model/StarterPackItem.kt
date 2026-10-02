@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.model
 
-import dev.fanfly.wingslog.thing.StarterTask
+import dev.fanfly.wingslog.task.StarterTask
 
 data class StarterPackItem(
   val task: StarterTask,

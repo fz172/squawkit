@@ -21,10 +21,10 @@ import {
   complianceTypeToJSON,
   InspectionRule,
 } from "../../task/maintenance_task";
+import { StarterTask } from "../../task/starter_task";
 import { TaskSourceKind, taskSourceKindFromJSON, taskSourceKindToJSON } from "../../task/task_origin";
 import { MeterReading } from "../../thing/meter_reading";
 import { Spec } from "../../thing/spec";
-import { StarterTask } from "../../thing/template";
 
 export const protobufPackage = "dev.fanfly.wingslog.rpc.suggest_tasks";
 

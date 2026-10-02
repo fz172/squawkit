@@ -6,10 +6,10 @@ import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
@@ -141,9 +141,18 @@ class StarterTasksTest {
   @Test
   fun aSlotMapsToTheFrozenComponentEnumOnlyOnTheAirplanePreset() {
     val airplane = AirplaneTemplate.TEMPLATE
-    assertThat(componentTypeForSlot(SlotKeys.ENGINE, airplane)).isEqualTo(ComponentType.COMPONENT_ENGINE)
-    assertThat(componentTypeForSlot(SlotKeys.PROPELLER, airplane)).isEqualTo(ComponentType.COMPONENT_PROPELLER)
-    assertThat(componentTypeForSlot("", airplane)).isEqualTo(ComponentType.COMPONENT_AIRFRAME)
+    assertThat(componentTypeForSlot(SlotKeys.ENGINE, airplane)).isEqualTo(
+      ComponentType.COMPONENT_ENGINE
+    )
+    assertThat(componentTypeForSlot(SlotKeys.PROPELLER, airplane)).isEqualTo(
+      ComponentType.COMPONENT_PROPELLER
+    )
+    assertThat(
+      componentTypeForSlot(
+        "",
+        airplane
+      )
+    ).isEqualTo(ComponentType.COMPONENT_AIRFRAME)
     assertThat(componentTypeForSlot(SlotKeys.ENGINE, CanonicalTemplates.HOME))
       .isEqualTo(ComponentType.COMPONENT_UNKNOWN)
   }

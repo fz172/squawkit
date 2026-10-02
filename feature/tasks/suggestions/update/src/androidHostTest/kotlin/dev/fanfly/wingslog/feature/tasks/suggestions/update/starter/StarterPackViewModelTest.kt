@@ -8,8 +8,8 @@ import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.task.TaskOriginKind
-import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -139,7 +139,8 @@ class StarterPackViewModelTest {
     // Ordinary cards: the due engine needs a dated TimeRule. Only the origin says they came from the
     // pack (design §4.1).
     written.forEach { assertThat(it.rules.single().time_rule?.creation_date).isNotNull() }
-    assertThat(written.map { it.origin?.kind }.distinct())
+    assertThat(written.map { it.origin?.kind }
+                 .distinct())
       .containsExactly(TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER)
     assertThat(
       analytics.paramsFor("starter_tasks_accepted")

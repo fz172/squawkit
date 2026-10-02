@@ -7,11 +7,11 @@ import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.task.SeasonalRule
+import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate
 import com.squareup.wire.Instant as WireInstant
 
@@ -31,7 +31,10 @@ fun StarterTask.toMaintenanceTask(
   title = title,
   notes = description,
   component = componentTypeForSlot(component_slot_key, template),
-  origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER, suggested_at = createdAt),
+  origin = TaskOrigin(
+    kind = TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER,
+    suggested_at = createdAt
+  ),
   type = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
   rules = buildList {
     if (months.isNotEmpty()) {
@@ -80,7 +83,10 @@ fun StarterTask.toMaintenanceTask(
  * so an empty key is what "airframe" looks like — and every other preset files it against the Thing
  * with no component (#732).
  */
-fun componentTypeForSlot(slotKey: String, template: ThingTemplate?): ComponentType =
+fun componentTypeForSlot(
+  slotKey: String,
+  template: ThingTemplate?
+): ComponentType =
   when {
     !template.usesComponentTypes -> ComponentType.COMPONENT_UNKNOWN
     slotKey == SlotKeys.ENGINE -> ComponentType.COMPONENT_ENGINE
