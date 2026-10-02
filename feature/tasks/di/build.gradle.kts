@@ -27,6 +27,8 @@ kotlin {
       implementation(project(":feature:tasks:dashboard"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:update"))
+      implementation(project(":feature:tasks:suggestions:datamanager"))
+      implementation(project(":feature:tasks:suggestions:update"))
       implementation(libs.koin.core)
     }
   }

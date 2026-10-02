@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.model
 
 import dev.fanfly.wingslog.thing.StarterTask
 

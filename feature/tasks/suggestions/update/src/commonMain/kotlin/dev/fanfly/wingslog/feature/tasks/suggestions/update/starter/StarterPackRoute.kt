@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,20 +48,20 @@ import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.starter_pack_add
-import wingslog.feature.tasks.update.generated.resources.starter_pack_added
-import wingslog.feature.tasks.update.generated.resources.starter_pack_disclaimer
-import wingslog.feature.tasks.update.generated.resources.starter_pack_screen_title
-import wingslog.feature.tasks.update.generated.resources.starter_pack_skip
-import wingslog.feature.tasks.update.generated.resources.starter_pack_subtitle
-import wingslog.feature.tasks.update.generated.resources.starter_pack_title
-import wingslog.feature.tasks.update.generated.resources.starter_rule_either
-import wingslog.feature.tasks.update.generated.resources.starter_rule_every_meter
-import wingslog.feature.tasks.update.generated.resources.starter_rule_every_month
-import wingslog.feature.tasks.update.generated.resources.starter_rule_every_months
-import wingslog.feature.tasks.update.generated.resources.starter_rule_every_year
-import wingslog.feature.tasks.update.generated.resources.starter_rule_every_years
+import wingslog.feature.tasks.suggestions.update.generated.resources.Res
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_either
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_meter
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_month
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_months
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_year
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_years
 
 /**
  * The starter-pack step (PRD §4.9, §8.1 step 4): per-item checkboxes, and Skip as a real button.

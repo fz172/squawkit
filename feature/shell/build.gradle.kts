@@ -67,6 +67,7 @@ kotlin {
       implementation(project(":feature:notifications:viewing"))
       implementation(project(":feature:notifications:model"))
       implementation(project(":feature:tasks:update"))
+      implementation(project(":feature:tasks:suggestions:update"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:technician:manage"))
 
