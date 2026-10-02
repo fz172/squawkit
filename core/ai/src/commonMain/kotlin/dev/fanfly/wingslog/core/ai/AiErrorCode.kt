@@ -25,6 +25,12 @@ enum class AiErrorCode(val wire: String?) {
   /** No answer from the server: offline, or a request that never left the device. */
   UNAVAILABLE(null),
 
+  /**
+   * The server would not accept this copy of the app: App Check could not attest it, which on a
+   * developer build means its debug token is not registered. Not the user's to fix.
+   */
+  APP_UNVERIFIED(null),
+
   /** A code this build does not know, or a refusal that carried none. */
   UNKNOWN(null),
   ;
