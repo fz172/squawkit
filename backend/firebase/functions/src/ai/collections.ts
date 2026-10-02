@@ -225,7 +225,7 @@ export const DEFAULT_AI_CONFIG: AiConfig = {
   fastProvider: "gemini-3.8-flash",
   strongProvider: "gemini-3.8-flash",
   monthlyCeilingMicros: { free: 50_000_000, pro: 150_000_000, total: 200_000_000 },
-  maxDocumentsPerRun: 5,
+  maxDocumentsPerRun: 3,
 };
 
 /**
