@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.core.storage.LocalAccountMigratorImpl
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.core.storage.WireCodec
+import dev.fanfly.wingslog.core.storage.blob.BlobReferenceScanner
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -122,6 +123,8 @@ val storageModule: Module = module {
         ?: CurrentUidProvider { null },
     )
   }
+
+  single<BlobReferenceScanner> { BlobReferenceScanner(get<WingsLogDatabase>()) }
 
   single<TombstoneGc> {
     TombstoneGc(

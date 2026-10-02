@@ -14,6 +14,8 @@ import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
@@ -48,8 +50,6 @@ import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,6 +74,8 @@ import wingslog.feature.attachment.sharedassets.generated.resources.file_too_lar
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
 import wingslog.feature.logs.update.generated.resources.log_not_found
 import wingslog.feature.logs.update.generated.resources.work_description_required
+import kotlin.time.Clock
+import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
 import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
@@ -129,7 +131,11 @@ class MaintenanceLogFormViewModel(
 
   private var saveJob: Job? = null
   private val attachmentForm =
-    AttachmentFormController(attachmentManager, thingId)
+    AttachmentFormController(
+      attachmentManager,
+      thingId,
+      owner = logId?.let { EntityRef(CollectionKind.MaintenanceLog, it) },
+    )
   private val _uiState = MutableStateFlow(
     MaintenanceLogFormUiState(
       maintenanceDate = Clock.System.now()

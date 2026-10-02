@@ -17,9 +17,9 @@ Seven pieces, in dependency order. §15 sequences them and §18 breaks them into
 1. **Evaluation harness** (§12). Runs the generation pipeline against a fixed case set with any
    provider adapter and scores it against PRD §9.4. The bake-off result is a follow-up PR that fills
    in §12.5.
-2. **Shared AI backend** (§5). A job model: `startAiJob` callable → `ai_jobs/{callerUid}/job/{jobId}` doc →
-   task-queue worker → result on the same doc, which the client listens to. Provider abstraction,
-   limits, kill switch, cost log.
+2. **Shared AI backend** (§5). A job model: `startAiJob` callable →
+   `ai_jobs/{callerUid}/job/{jobId}` doc → task-queue worker → result on the same doc, which the
+   client listens to. Provider abstraction, limits, kill switch, cost log.
 3. **Reference-aware blob release** (§8.3). The client stops deleting remote blobs; a server trigger
    collects a blob when the last live record naming it drops it. Independent of AI; ships first.
 4. **Task suggestion pipeline** (§6). Identify and extract per document, recall a common schedule
@@ -39,94 +39,90 @@ edges are listeners, optional paths, or later phases. A zoomable version is on t
 
 ```mermaid
 flowchart TB
-  subgraph Client["Client · Android / iOS / web"]
-    direction LR
-    Entry["Entry points<br/>new: suggest, from a document"]
-    SuggestUI["Suggestions screen<br/>feature/tasks/suggestions/update"]
-    Gate["Gating<br/>new AppCapability flag"]
-    subgraph SugDM["feature/tasks/suggestions/datamanager"]
-      direction LR
-      Mgr["TaskSuggestionManager"]
-      Ctx["SuggestionContextBuilder<br/>no PII fields"]
-      Map["SuggestionMapper<br/>→ MaintenanceTask + TaskOrigin"]
+    subgraph Client["Client · Android / iOS / web"]
+        direction LR
+        Entry["Entry points<br/>new: suggest, from a document"]
+        SuggestUI["Suggestions screen<br/>feature/tasks/suggestions/update"]
+        Gate["Gating<br/>new AppCapability flag"]
+        subgraph SugDM["feature/tasks/suggestions/datamanager"]
+            direction LR
+            Mgr["TaskSuggestionManager"]
+            Ctx["SuggestionContextBuilder<br/>no PII fields"]
+            Map["SuggestionMapper<br/>→ MaintenanceTask + TaskOrigin"]
+        end
+        Existing(["existing managers"])
+        AttMgr["AttachmentManager<br/>release(owner)"]
+        AiClient["core/ai · AiJobClient"]
+        Local[("core/storage<br/>new: BlobReferenceScanner,<br/>ai_job_document")]
+        Sync["feature/sync/data<br/>BlobDeleteDriver: local only"]
     end
-    Existing(["existing managers"])
-    AttMgr["AttachmentManager<br/>release(owner)"]
-    AiClient["core/ai · AiJobClient"]
-    Local[("core/storage<br/>new: BlobReferenceScanner,<br/>ai_job_document")]
-    Sync["feature/sync/data<br/>BlobDeleteDriver: local only"]
-  end
 
-  subgraph Backend["Cloud Functions"]
-    direction LR
-    Callables["Callables<br/>getAiEligibility · startAiJob<br/>closeAiJob"]
-    Auth["authorizeAiCall<br/>signed in · kill switch · membership<br/>owner tier · daily limit · spend ceiling"]
-    Worker["runAiJob worker<br/>onTaskDispatched"]
-    subgraph Pipeline["Task pipeline · src/ai/tasks"]
-      direction LR
-      S1["1 read<br/>text / OCR"] --> S2["2 identify<br/>+ extract"]
-      S3["3 recall<br/>common schedule"]
-      S2 --> S4["4 tailor<br/>to Thing"]
-      S3 --> S4
-      S4 --> S5["5 validate<br/>deterministic"]
+    subgraph Backend["Cloud Functions"]
+        direction LR
+        Callables["Callables<br/>getAiEligibility · startAiJob<br/>closeAiJob"]
+        Auth["authorizeAiCall<br/>signed in · kill switch · membership<br/>owner tier · daily limit · spend ceiling"]
+        Worker["runAiJob worker<br/>onTaskDispatched"]
+        subgraph Pipeline["Task pipeline · src/ai/tasks"]
+            direction LR
+            S1["1 read<br/>text / OCR"] --> S2["2 identify<br/>+ extract"]
+            S3["3 recall<br/>common schedule"]
+            S2 --> S4["4 tailor<br/>to Thing"]
+            S3 --> S4
+            S4 --> S5["5 validate<br/>deterministic"]
+        end
+        Prov["AiProvider adapters<br/>fast / strong"]
+        Release["onThingRecordBlobsReleased<br/>delete · attachment removed"]
+        Sweep(["storage sweep"])
+        Push(["push · R20"])
     end
-    Prov["AiProvider adapters<br/>fast / strong"]
-    Release["onThingRecordBlobsReleased<br/>delete · attachment removed"]
-    Sweep(["storage sweep"])
-    Push(["push · R20"])
-  end
 
-  subgraph Data["Firebase data"]
-    direction LR
-    Jobs[("ai_jobs/jobId<br/>status · stage · result")]
-    AiColl[("Backend-only<br/>ai_usage · ai_spend<br/>ai_cost_log · ai_cache · ai_config")]
-    ACL[("shares · subscriptions")]
-    Entities[("Entity docs<br/>tasks gain TaskOrigin")]
-    GCS[("Cloud Storage")]
-  end
+    subgraph Data["Firebase data"]
+        direction LR
+        Jobs[("ai_jobs/jobId<br/>status · stage · result")]
+        AiColl[("Backend-only<br/>ai_usage · ai_spend<br/>ai_cost_log · ai_cache · ai_config")]
+        ACL[("shares · subscriptions")]
+        Entities[("Entity docs<br/>tasks gain TaskOrigin")]
+        GCS[("Cloud Storage")]
+    end
 
-  LLM(["LLM + OCR providers"])
-  Eval["Eval harness<br/>manual · phase 0"]
-
-  Entry --> SuggestUI
-  SuggestUI --> Gate
-  SuggestUI --> Mgr
-  Mgr --> Ctx & Map
-  Ctx & Map --> Existing
-  Mgr --> AttMgr
-  Mgr --> AiClient
-  Existing --> Local
-  AttMgr --> Local
-  Local <--> Sync
-  Sync <-- entities --> Entities
-  Sync -- blob upload --> GCS
-
-  AiClient -- call --> Callables
-  AiClient -. listen .-> Jobs
-  Callables --> Auth
-  Auth --> ACL
-  Auth --> AiColl
-  Callables -- create / close --> Jobs
-  Jobs -- trigger --> Worker
-  Worker --> Pipeline
-  Worker -- result --> Jobs
-  Worker --> AiColl
-  Worker -.-> Push
-  S1 -- read document --> GCS
-  Pipeline -- cache --> AiColl
-  Pipeline --> Prov --> LLM
-  Eval -.-> Pipeline
-
-  Entities -- trigger --> Release
-  Release -- delete unreferenced --> GCS
-  Sweep -.-> GCS
-
-  classDef new fill:#E3F2E8,stroke:#276B39,stroke-width:2px,color:#10231A
-  classDef changed fill:#FFECB3,stroke:#8B5E00,stroke-width:2px,color:#2B1D05
-  classDef existing fill:transparent,stroke:#8D9AAF,stroke-width:1px,stroke-dasharray:4 3,color:#7A8699,font-size:12px
-  class SuggestUI,Mgr,Ctx,Map,AiClient,Callables,Auth,Worker,S1,S2,S3,S4,S5,Prov,Jobs,AiColl,Eval new
-  class Entry,AttMgr,Local,Sync,Release,Entities,Gate changed
-  class Existing,Sweep,ACL,GCS,Push,LLM existing
+    LLM(["LLM + OCR providers"])
+    Eval["Eval harness<br/>manual · phase 0"]
+    Entry --> SuggestUI
+    SuggestUI --> Gate
+    SuggestUI --> Mgr
+    Mgr --> Ctx & Map
+    Ctx & Map --> Existing
+    Mgr --> AttMgr
+    Mgr --> AiClient
+    Existing --> Local
+    AttMgr --> Local
+    Local <--> Sync
+    Sync <-- entities --> Entities
+    Sync -- blob upload --> GCS
+    AiClient -- call --> Callables
+    AiClient -. listen .-> Jobs
+    Callables --> Auth
+    Auth --> ACL
+    Auth --> AiColl
+    Callables -- create / close --> Jobs
+    Jobs -- trigger --> Worker
+    Worker --> Pipeline
+    Worker -- result --> Jobs
+    Worker --> AiColl
+    Worker -.-> Push
+    S1 -- read document --> GCS
+    Pipeline -- cache --> AiColl
+    Pipeline --> Prov --> LLM
+    Eval -.-> Pipeline
+    Entities -- trigger --> Release
+    Release -- delete unreferenced --> GCS
+    Sweep -.-> GCS
+    classDef new fill: #E3F2E8, stroke: #276B39, stroke-width: 2px, color: #10231A
+    classDef changed fill: #FFECB3, stroke: #8B5E00, stroke-width: 2px, color: #2B1D05
+    classDef existing fill: transparent, stroke: #8D9AAF, stroke-width: 1px, stroke-dasharray: 4 3, color: #7A8699, font-size: 12px
+    class SuggestUI, Mgr, Ctx, Map, AiClient, Callables, Auth, Worker, S1, S2, S3, S4, S5, Prov, Jobs, AiColl, Eval new
+    class Entry, AttMgr, Local, Sync, Release, Entities, Gate changed
+    class Existing, Sweep, ACL, GCS, Push, LLM existing
 ```
 
 Two paths cross the diagram:
@@ -242,9 +238,9 @@ message TaskOrigin {
 ```
 
 - `MaintenanceTask` gains `TaskOrigin origin = 16;`. Starter-pack accepts now also write
-  `TEMPLATE_STARTER` (cheap, and it lets analytics compare static vs AI survival), and a task
-  made by hand writes `USER`, so every new task says where it came from. Tasks written before
-  this field have no origin and are not backfilled (PRD R34).
+  `TEMPLATE_STARTER` (cheap, and it lets analytics compare static vs AI survival), and a task made
+  by hand writes `USER`, so every new task says where it came from. Tasks written before this field
+  have no origin and are not backfilled (PRD R34).
 - `task_origin.proto` and `maintenance_task.proto` live in `proto/task/`, generating into
   `dev.fanfly.wingslog.task`. Neither declares a proto `package`, so the move changes source paths
   and Kotlin imports only: wire bytes and the stored `aircraft.MaintenanceTask` schema name are
@@ -334,25 +330,26 @@ message TaskSuggestion {
 
 Names, paths and field types are in `functions/src/ai/collections.ts`.
 
-| Path                           | Written by | Read by                          | Contents                                                                                                                                  | Lifetime                                                    |
-|--------------------------------|------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
-| `ai_jobs/{callerUid}/job/{jobId}` | functions  | caller (path uid == auth.uid) | kind, hostUid, thingId, status, stage, stageArg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error {code, detailKey} | TTL on `expiresAt` (24 h, R19); deleted on close            |
-| `ai_jobs/{callerUid}/job/{jobId}/input/request` | functions  | functions                        | kind, base64 `SuggestTasksRequest`, createdAt, expiresAt                                                                                  | deleted by the worker when it finishes (no retention, §5.8); TTL on `expiresAt` (24 h) as a backstop |
-| `ai_usage/{hostUid}/thing/{thingId}` | functions  | functions                  | `lastSuccessAt`, `inFlightJob {callerUid, jobId}`                                                                                                        | permanent, tiny                                             |
-| `ai_spend/{yyyymm}`            | functions  | functions                        | `freeMicros`, `proMicros` (by owner tier), updatedAt; the month is UTC                                                                    | permanent                                                   |
-| `ai_cost_log/{autoId}`         | functions  | team                             | per-call cost record (§5.6), no uid                                                                                                       | TTL on `expiresAt` (13 × 31 days)                           |
-| `ai_cache/{stage}/{version}/{hash}` | functions  | functions                        | derived schedule items as JSON (§6.5), createdAt                                                                                          | until generation version bump                               |
-| `ai_config/global`             | team       | functions                        | `enabled`, `fastProvider`, `strongProvider`, `monthlyCeilingMicros {free, pro, total}`, `maxDocumentsPerRun`                              | permanent                                                   |
+| Path                                            | Written by | Read by                       | Contents                                                                                                                                        | Lifetime                                                                                             |
+|-------------------------------------------------|------------|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| `ai_jobs/{callerUid}/job/{jobId}`               | functions  | caller (path uid == auth.uid) | kind, hostUid, thingId, status, stage, stageArg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error {code, detailKey} | TTL on `expiresAt` (24 h, R19); deleted on close                                                     |
+| `ai_jobs/{callerUid}/job/{jobId}/input/request` | functions  | functions                     | kind, base64 `SuggestTasksRequest`, createdAt, expiresAt                                                                                        | deleted by the worker when it finishes (no retention, §5.8); TTL on `expiresAt` (24 h) as a backstop |
+| `ai_usage/{hostUid}/thing/{thingId}`            | functions  | functions                     | `lastSuccessAt`, `inFlightJob {callerUid, jobId}`                                                                                               | permanent, tiny                                                                                      |
+| `ai_spend/{yyyymm}`                             | functions  | functions                     | `freeMicros`, `proMicros` (by owner tier), updatedAt; the month is UTC                                                                          | permanent                                                                                            |
+| `ai_cost_log/{autoId}`                          | functions  | team                          | per-call cost record (§5.6), no uid                                                                                                             | TTL on `expiresAt` (13 × 31 days)                                                                    |
+| `ai_cache/{stage}/{version}/{hash}`             | functions  | functions                     | derived schedule items as JSON (§6.5), createdAt                                                                                                | until generation version bump                                                                        |
+| `ai_config/global`                              | team       | functions                     | `enabled`, `fastProvider`, `strongProvider`, `monthlyCeilingMicros {free, pro, total}`, `maxDocumentsPerRun`                                    | permanent                                                                                            |
 
 - **Enums are numbers.** `kind` and `status` hold the `AiJobKind` / `AiJobStatus` numbers, which the
-  client reads with Wire's `fromValue`; a value it does not know reads as null, not as a wrong state.
-- **Owners are path segments, not fields.** A job lives under the caller's uid and usage under
-  the Thing's tree, as `thing_shares/{hostUid}/thing/{thingId}` does. The rule then reads only the
-  path, a caller lists its own jobs with no filter to forget, and no field can disagree with where
-  the document lives. `inFlightJob` names the caller too, because the run in flight may be another
-  share member's.
-- **The input sits under its job**, in a document of its own: the rules keep it from the caller
-  who can read the job, and the job's listener never downloads it. Firestore never deletes a
+  client reads with Wire's `fromValue`; a value it does not know reads as null, not as a wrong
+  state.
+- **Owners are path segments, not fields.** A job lives under the caller's uid and usage under the
+  Thing's tree, as `thing_shares/{hostUid}/thing/{thingId}` does. The rule then reads only the path,
+  a caller lists its own jobs with no filter to forget, and no field can disagree with where the
+  document lives. `inFlightJob` names the caller too, because the run in flight may be another share
+  member's.
+- **The input sits under its job**, in a document of its own: the rules keep it from the caller who
+  can read the job, and the job's listener never downloads it. Firestore never deletes a
   subcollection with its parent, by TTL or by delete, so `closeAiJob` deletes both and the input
   keeps its own TTL as a backstop.
 - **Subcollection ids are collection groups.** TTL policies and composite indexes apply to every
@@ -360,25 +357,24 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 - **Rules.** A job is read-only to its caller, and the rule is total: a closed or expired job reads
   as absent rather than as a denial. Every other `ai_*` collection is functions-only, named
   explicitly in `firestore.rules`. Tests in `test/ai-rules.test.ts`.
-- **Index and TTL** live in `backend/firebase/firestore.indexes.json`: the composite index on
-  the `job` group's (thingId, kind, createdAt desc) serves "latest job for this Thing", and the
-  three TTL policies above. The Firestore rules workflow deploys them after the rules, in their own
-  step.
+- **Index and TTL** live in `backend/firebase/firestore.indexes.json`: the composite index on the
+  `job` group's (thingId, kind, createdAt desc) serves "latest job for this Thing", and the three
+  TTL policies above. The Firestore rules workflow deploys them after the rules, in their own step.
 - **Config.** `parseAiConfig` fails closed: a missing or malformed `ai_config/global` reads as
   disabled. `npm run ai-config` seeds it from `DEFAULT_AI_CONFIG` (never overwriting) and flips the
-  kill switch with `--enabled true|false`. It seeds **disabled**, with placeholder ceilings ($50
-  free, $150 Pro, $200 total a month) until the PRD's limit values are settled, and 3 documents per
-  run. Production was seeded and enabled on 2026-10-01 for phase A's echo check.
+  kill switch with `--enabled true|false`. It seeds **disabled**, with placeholder ceilings
+  ($50 free, $150 Pro, $200 total a month) until the PRD's limit values are settled, and 3 documents
+  per run. Production was seeded and enabled on 2026-10-01 for phase A's echo check.
 
 ## 5. Shared AI backend
 
 ### 5.1 Callables
 
-| Callable                                                    | Does                                                                                                                                                                                                                                                                                                   |
-|-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`; `reason` is `run_in_progress` while another caller's run is in flight (R19a). Called when an entry point opens so the UI can show the right gate before any upload. Cheap; no model call.                     |
+| Callable                                                    | Does                                                                                                                                                                                                                                                                                                       |
+|-------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`; `reason` is `run_in_progress` while another caller's run is in flight (R19a). Called when an entry point opens so the UI can show the right gate before any upload. Cheap; no model call.                         |
 | `startAiJob({kind, request})`                               | Same checks, then in one transaction: if `ai_usage.inFlightJob` is QUEUED/RUNNING, return it when the caller started it (idempotent join) or fail with `run_in_progress` when someone else did; else write the job's input and the job (QUEUED) under the caller and set `inFlightJob`. Returns `{jobId}`. |
-| `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc and its input (accept, dismiss). Idempotent.                                                                                                                                                                                                                                        |
+| `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc and its input (accept, dismiss). Idempotent.                                                                                                                                                                                                                              |
 
 `request` is the kind's own proto, base64, capped at 512 KiB (Firestore's 1 MiB doc limit with
 headroom); the client builder truncates logs first (§7.2).
@@ -426,8 +422,8 @@ Implemented in `functions/src/ai/worker.ts` (T09):
 
 - **Pipelines** implement `run(request bytes, context) → { status, result bytes }` and an optional
   `onFinished`, and are registered per kind with `registerPipeline`. `kinds.ts` holds what the
-  callables need per kind without loading pipelines: how to find the request's Thing, and whether
-  a success counts toward the daily limit.
+  callables need per kind without loading pipelines: how to find the request's Thing, and whether a
+  success counts toward the daily limit.
 - **Claim first.** The worker moves the job QUEUED → RUNNING in a transaction; a duplicate delivery,
   a job already failed as stale, or a job closed before it ran is a no-op (a closed job's input is
   deleted). Queue retries are off: a run costs money each time, and a failed run is free to start
@@ -520,8 +516,9 @@ from Storage and the eval harness from disk. Page text is **always** produced, b
 verbatim check and the citation check need text regardless of whether the provider reads PDFs
 natively: the PDF text layer via `pdfjs-dist`; for image-only pages and photos, Document AI's
 Enterprise OCR (Mistral OCR was dropped from the bake-off on 2026-09-28; the bake-off measures
-Document AI's quality and time on the scanned case, §12). Limits: 3 documents per run (decided 2026-10-01; `maxDocumentsPerRun` in `ai_config`), each within
-the attachment pipeline's existing file-size cap, checked at pick time; over-limit fails with
+Document AI's quality and time on the scanned case, §12). Limits: 3 documents per run (decided
+2026-10-01; `maxDocumentsPerRun` in `ai_config`), each within the attachment pipeline's existing
+file-size cap, checked at pick time; over-limit fails with
 `document_too_large` before any model spend. There is **no page limit** (decided 2026-09-28): the
 locate stage (§6.2) sends only the schedule pages onward, so a long manual costs more to read, not
 more to extract from.
@@ -542,9 +539,9 @@ maps each to one string (PRD R21) and one analytics reason (R50).
 
 ### 5.8 Retention
 
-Inputs are deleted when the worker finishes (the job's `input/request`); results expire in 24 h or on close;
-documents are the user's own blobs and are never copied. Provider-side retention is the PRD's open
-question and must be settled before phase C.
+Inputs are deleted when the worker finishes (the job's `input/request`); results expire in 24 h or
+on close; documents are the user's own blobs and are never copied. Provider-side retention is the
+PRD's open question and must be settled before phase C.
 
 ## 6. Task suggestion pipeline
 
@@ -613,8 +610,8 @@ a document run.
 
 ### 6.5 Cache
 
-- Keys are paths: `ai_cache/doc/{generation_version}/{sha256}` for stage 2 (the revision is
-  inside the content, so the hash already distinguishes revisions) and
+- Keys are paths: `ai_cache/doc/{generation_version}/{sha256}` for stage 2 (the revision is inside
+  the content, so the hash already distinguishes revisions) and
   `ai_cache/id/{generation_version}/{sha256(normalized identity)}` for stage 3. The version is a
   collection, so a bump's stranded entries are deleted as one collection.
 - Written only when the job is SUCCEEDED (not EMPTY or FAILED), so a failed tailor never caches a
@@ -696,9 +693,9 @@ backend's id. No caching: a job is short-lived and the doc is the state.
 
 As built (T10), two changes from the sketch above:
 
-- **`start` returns `AiStartResult`**, `Started(jobId, joined)` or `Refused(reason, nextAvailableAt)`,
-  rather than `Result<AiJobId>`: every refusal has a reason the screen shows, and `joined` tells the
-  VM it found its own run.
+- **`start` returns `AiStartResult`**, `Started(jobId, joined)` or
+  `Refused(reason, nextAvailableAt)`, rather than `Result<AiJobId>`: every refusal has a reason the
+  screen shows, and `joined` tells the VM it found its own run.
 - **Nothing throws.** `eligibility` answers a failure as not allowed, and `close` logs one. Reasons
   are `AiErrorCode`, from the callable error's `details.code` through `core/firebase`'s
   `callableDetailsString` (platform-specific: `details` is a `Map` on Android, an `NSDictionary` on
@@ -790,6 +787,20 @@ covers a device that never comes back.
 - `BlobDeleteDriver` **no longer deletes remote objects**, own tree included. It only hard-deletes
   the local row. Remote collection is the server's job.
 
+Built in T12:
+
+- **`BlobReferenceScanner.isFree` is the conservative rule**: an undecodable live payload makes
+  nothing free, as on the server. `TombstoneGc` keeps its old leniency (it only frees the device's
+  copy, which a later download restores).
+- **The scan root comes from the blob's own row** (`users/{hostUid}/thing/{thingId}`), so `release`
+  needs no Thing argument and a shared Thing's blob is checked against the host's account.
+- **`AttachmentFormController` takes `owner`** at construction: the log, squawk and task form
+  ViewModels pass their record from the route (`logId`, `squawkId`, `cardId`), null on an add form.
+- **`BlobDeleteDriver` holds no Storage or Auth client**, so it cannot delete a remote object.
+- **A picked file the form never saved** (removed, a duplicate, or the form abandoned) now reaches
+  the server only through the daily sweep's orphan pass, after its grace period, rather than being
+  deleted by the device at once. That is the cost of the safety rule; such files are few and small.
+
 **Server.** `onThingRecordDeleted` generalizes into `onThingRecordBlobsReleased` on the same path,
 handling two edges:
 
@@ -830,8 +841,8 @@ While a run is in flight for the Thing, no entry point opens the sources sheet (
   entry point opens the working state (§9.4). It survives leaving, an app restart and a web reload,
   on any of the caller's devices.
 - **Another member's run.** The caller cannot read that job (§4.3). `getAiEligibility` reports
-  `run_in_progress` from `ai_usage.inFlightJob`, and the entry point shows "Suggestions are
-  already being prepared for this plane" with no document controls.
+  `run_in_progress` from `ai_usage.inFlightJob`, and the entry point shows "Suggestions are already
+  being prepared for this plane" with no document controls.
 
 `startAiJob` is the server-side backstop: a second start by the same caller returns the running job,
 and a start by another member fails with `run_in_progress` instead of joining a job it cannot read.
@@ -1063,15 +1074,15 @@ for comparison. Their committed reports predate the Triumph key change.
 
 ## 15. Sequencing
 
-| Phase | Board items (§18)                                                                                                                                            | Exit                                                                    |
-|-------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| **0** | 1–4: provider adapters and document reading, the pipeline as a library, the eval harness, the bake-off                                                       | §9.4 met by the chosen pair; §12.5 filled in                            |
+| Phase | Board items (§18)                                                                                                                                            | Exit                                                                                                                                                 |
+|-------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **0** | 1–4: provider adapters and document reading, the pipeline as a library, the eval harness, the bake-off                                                       | §9.4 met by the chosen pair; §12.5 filled in                                                                                                         |
 | **A** | 5–10: protos, collections and rules, authorization, callables, worker, `core/ai`                                                                             | An echo job round-trips on all three hosts on developer builds (Developer Options → AI backend → Echo round trip, `feature/developeroptions/aiecho`) |
-| **B** | 11–12: server release trigger, client `release`                                                                                                              | Shared-blob tests green; one release cycle in production before D ships |
-| **C** | 13–19 and 26: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy, push when a run finishes | No-document flow on all presets and hosts, developer builds             |
-| **D** | 20–25: storage-rule deny, document pipeline wiring, sources sheet, the two P1 document items, flag removal                                                   | T100, Sling TSi and C172N + AD cases end to end; flag deleted; v1       |
-| **E** | 27: wrong-suggestion report                                                                                                                                  | —                                                                       |
-| **F** | 28: #1181 backfill intake (PRD §10.1)                                                                                                                        | —                                                                       |
+| **B** | 11–12: server release trigger, client `release`                                                                                                              | Shared-blob tests green; one release cycle in production before D ships                                                                              |
+| **C** | 13–19 and 26: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy, push when a run finishes | No-document flow on all presets and hosts, developer builds                                                                                          |
+| **D** | 20–25: storage-rule deny, document pipeline wiring, sources sheet, the two P1 document items, flag removal                                                   | T100, Sling TSi and C172N + AD cases end to end; flag deleted; v1                                                                                    |
+| **E** | 27: wrong-suggestion report                                                                                                                                  | —                                                                                                                                                    |
+| **F** | 28: #1181 backfill intake (PRD §10.1)                                                                                                                        | —                                                                                                                                                    |
 
 Ordering rules the phases alone do not show:
 
@@ -1153,8 +1164,7 @@ dependency order.
 
 13. **Module move.** `feature/tasks/suggestions/{model,datamanager,update}` through the five-step
     new-module checklist; the starter pack moves in and its tests move with it; starter accepts
-    write `TEMPLATE_STARTER` origin, and creating a task in the task form writes `USER` (§3,
-    §4.1).
+    write `TEMPLATE_STARTER` origin, and creating a task in the task form writes `USER` (§3, §4.1).
 14. **Worker wiring, no documents.** Register the task pipeline (stages 3–5) in the worker, with a
     worker test on the fake provider. R9, R15, R19, R21.
 15. **Data layer.** `SuggestionContextBuilder` (truncation, no PII by construction),

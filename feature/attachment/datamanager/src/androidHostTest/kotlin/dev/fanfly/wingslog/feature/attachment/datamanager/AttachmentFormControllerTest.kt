@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
@@ -31,7 +33,8 @@ class AttachmentFormControllerTest {
     controller = AttachmentFormController(
       attachmentManager,
       THING_ID,
-      CoroutineScope(UnconfinedTestDispatcher()),
+      owner = OWNER,
+      cleanupScope = CoroutineScope(UnconfinedTestDispatcher()),
     )
   }
 
@@ -234,7 +237,7 @@ class AttachmentFormControllerTest {
       assertThat(errors).containsExactly(AttachmentFormController.AddFileError.Duplicate)
       assertThat(controller.pendingAttachments.value).hasSize(1)
       // addPickedFile already wrote the copy to disk and scheduled its upload — reclaim both.
-      coVerify(exactly = 1) { attachmentManager.delete(copy) }
+      coVerify(exactly = 1) { attachmentManager.release(copy, OWNER) }
     }
 
   @Test
@@ -404,7 +407,7 @@ class AttachmentFormControllerTest {
 
     assertThat(controller.pendingAttachments.value).isEmpty()
     // Links carry no blob — nothing to tombstone.
-    coVerify(exactly = 0) { attachmentManager.delete(any()) }
+    coVerify(exactly = 0) { attachmentManager.release(any(), any()) }
   }
 
   @Test
@@ -416,7 +419,7 @@ class AttachmentFormControllerTest {
     assertThat(controller.pendingAttachments.value.single())
       .isInstanceOf(PendingAttachment.PendingDelete::class.java)
     // Saved files are tombstoned at save time (resolveForSave), not on remove.
-    coVerify(exactly = 0) { attachmentManager.delete(any()) }
+    coVerify(exactly = 0) { attachmentManager.release(any(), any()) }
   }
 
   @Test
@@ -432,7 +435,7 @@ class AttachmentFormControllerTest {
     controller.remove("local-1")
 
     assertThat(controller.pendingAttachments.value).isEmpty()
-    coVerify(exactly = 1) { attachmentManager.delete(local) }
+    coVerify(exactly = 1) { attachmentManager.release(local, OWNER) }
   }
 
   // ---- hasChanges ----
@@ -504,7 +507,7 @@ class AttachmentFormControllerTest {
 
     val resolved = controller.resolveForSave()
 
-    coVerify(exactly = 1) { attachmentManager.delete(doomed) }
+    coVerify(exactly = 1) { attachmentManager.release(doomed, OWNER) }
     assertThat(resolved).containsExactly(kept)
   }
 
@@ -540,7 +543,7 @@ class AttachmentFormControllerTest {
 
     controller.discardUnsavedLocalBlobs()
 
-    coVerify(exactly = 1) { attachmentManager.delete(local) }
+    coVerify(exactly = 1) { attachmentManager.release(local, OWNER) }
   }
 
   @Test
@@ -556,7 +559,7 @@ class AttachmentFormControllerTest {
 
     controller.discardUnsavedLocalBlobs()
 
-    coVerify(exactly = 0) { attachmentManager.delete(any()) }
+    coVerify(exactly = 0) { attachmentManager.release(any(), any()) }
   }
 
   @Test
@@ -566,7 +569,7 @@ class AttachmentFormControllerTest {
 
     controller.discardUnsavedLocalBlobs()
 
-    coVerify(exactly = 0) { attachmentManager.delete(any()) }
+    coVerify(exactly = 0) { attachmentManager.release(any(), any()) }
   }
 
   // ---- deleteSavedFiles ----
@@ -579,8 +582,8 @@ class AttachmentFormControllerTest {
 
     controller.deleteSavedFiles()
 
-    coVerify(exactly = 1) { attachmentManager.delete(file) }
-    coVerify(exactly = 0) { attachmentManager.delete(link) }
+    coVerify(exactly = 1) { attachmentManager.release(file, OWNER) }
+    coVerify(exactly = 0) { attachmentManager.release(link, OWNER) }
   }
 
   // ---- DATA_LOG references ----
@@ -636,8 +639,13 @@ class AttachmentFormControllerTest {
 
     // Deleting the parent tombstones the file only.
     controller.deleteSavedFiles()
-    coVerify(exactly = 1) { attachmentManager.delete(file) }
-    coVerify(exactly = 0) { attachmentManager.delete(match { it.type == AttachmentType.ATTACHMENT_TYPE_DATA_LOG }) }
+    coVerify(exactly = 1) { attachmentManager.release(file, OWNER) }
+    coVerify(exactly = 0) {
+      attachmentManager.release(
+        match { it.type == AttachmentType.ATTACHMENT_TYPE_DATA_LOG },
+        any()
+      )
+    }
   }
 
   @Test
@@ -744,6 +752,9 @@ class AttachmentFormControllerTest {
   )
 
   private companion object {
+    /** The saved record this form edits; every release must name it. */
+    val OWNER = EntityRef(CollectionKind.MaintenanceLog, "log-1")
+
     const val THING_ID = "thing-1"
     const val SHA = "abc123"
   }

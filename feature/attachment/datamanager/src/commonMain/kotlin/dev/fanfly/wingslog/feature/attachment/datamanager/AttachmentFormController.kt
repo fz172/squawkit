@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_ATTACHMENTS
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
@@ -35,10 +36,15 @@ import kotlinx.coroutines.launch
  * [cleanupScope] outlives the owning ViewModel on purpose: [discardUnsavedLocalBlobs] is called
  * from `onCleared`, where `viewModelScope` is already cancelled, so the abandon-cleanup must run
  * somewhere that survives.
+ *
+ * [owner] is the saved record this form edits, null on an add form. Every release passes it, so a
+ * blob that record's old payload still names is not mistaken for one another record holds
+ * (docs/ai/task_population_design.md §8.3).
  */
 class AttachmentFormController(
   private val attachmentManager: AttachmentManager,
   private val thingId: String,
+  private val owner: EntityRef? = null,
   private val cleanupScope: CoroutineScope =
     CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
@@ -152,7 +158,7 @@ class AttachmentFormController(
         // that is already attached would otherwise burn a slot on a second copy of the same
         // bytes; tombstone the copy addPickedFile just wrote so it doesn't orphan.
         if (isDuplicateOnParent(attachment.sha256)) {
-          attachmentManager.delete(attachment)
+          attachmentManager.release(attachment, owner)
           onError(AddFileError.Duplicate)
           continue
         }
@@ -186,8 +192,7 @@ class AttachmentFormController(
    * existed carry none either — treating those as identical would block every new file.
    */
   private fun isDuplicateOnParent(sha256: String): Boolean {
-    if (sha256.isBlank()) return false
-    return _pendingAttachments.value.any { pending ->
+    return sha256.isNotBlank() && _pendingAttachments.value.any { pending ->
       when (pending) {
         is PendingAttachment.Local -> pending.attachment.sha256 == sha256
         is PendingAttachment.Saved -> pending.attachment.sha256 == sha256
@@ -257,13 +262,14 @@ class AttachmentFormController(
       }
     }
     if (removed is PendingAttachment.Local) {
-      attachmentManager.delete(removed.attachment)
+      attachmentManager.release(removed.attachment, owner)
     }
   }
 
   /**
-   * Tombstones pending-delete attachments (best-effort; BlobDeleteDriver finishes cleanup) and
-   * returns the final attachment list for the parent proto. Local items already have fully
+   * Releases pending-delete attachments and returns the final attachment list for the parent proto.
+   * The release leaves out [owner], whose old payload still names them until this save is written;
+   * a document another record still cites stays. Local items already have fully
    * populated protos — addPickedFile ran at pick time, so there is no network wait here.
    */
   suspend fun resolveForSave(): List<Attachment> {
@@ -272,7 +278,7 @@ class AttachmentFormController(
     committed = true
     val pending = _pendingAttachments.value
     pending.filterIsInstance<PendingAttachment.PendingDelete>()
-      .forEach { attachmentManager.delete(it.attachment) }
+      .forEach { attachmentManager.release(it.attachment, owner) }
     return buildList {
       addAll(
         pending.filterIsInstance<PendingAttachment.Saved>()
@@ -305,7 +311,7 @@ class AttachmentFormController(
       _pendingAttachments.value.filterIsInstance<PendingAttachment.Local>()
     if (locals.isEmpty()) return
     cleanupScope.launch {
-      locals.forEach { attachmentManager.delete(it.attachment) }
+      locals.forEach { attachmentManager.release(it.attachment, owner) }
     }
   }
 
@@ -317,6 +323,6 @@ class AttachmentFormController(
     _pendingAttachments.value
       .filterIsInstance<PendingAttachment.Saved>()
       .filter { it.attachment.type.isFile }
-      .forEach { attachmentManager.delete(it.attachment) }
+      .forEach { attachmentManager.release(it.attachment, owner) }
   }
 }

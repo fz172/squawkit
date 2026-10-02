@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -53,11 +54,19 @@ interface AttachmentManager {
   fun makeDataLogRef(dataLogId: DataLogId, displayName: String): Attachment
 
   /**
-   * Mark [attachment] for deletion. Tombstones the corresponding `blob_object` row so the
-   * `BlobDeleteDriver` (PR 5) cleans up gs://. Removing the proto reference from the owning
-   * entity is the caller's responsibility.
+   * [owner] no longer holds [attachment] (docs/ai/task_population_design.md §8.3). Removing the
+   * proto reference from the owning entity is the caller's responsibility.
+   *
+   * The device's copy is let go of only when no OTHER live record under the Thing's account still
+   * names the blob: one document can sit on several tasks, and a copy can put one id on two
+   * records. [owner] is left out of that check because its old payload, which still names the
+   * blob, is in the table until the caller writes the edit. Null when no saved record held it (a
+   * file picked on an add form, or a document an AI run uploaded).
+   *
+   * Never deletes the remote object: the server collects it once no record names it
+   * (`onRecordBlobsReleased`, or the daily sweep for a file no record ever held).
    */
-  suspend fun delete(attachment: Attachment)
+  suspend fun release(attachment: Attachment, owner: EntityRef?)
 
   /**
    * Trigger a foreground download of a REMOTE_ONLY attachment, verifying sha256 before writing

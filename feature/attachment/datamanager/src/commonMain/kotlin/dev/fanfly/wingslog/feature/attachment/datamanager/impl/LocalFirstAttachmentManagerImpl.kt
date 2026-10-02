@@ -3,9 +3,11 @@ package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
+import dev.fanfly.wingslog.core.storage.blob.BlobReferenceScanner
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
@@ -47,6 +49,7 @@ class LocalFirstAttachmentManagerImpl(
   private val fileByteReader: FileByteReader,
   private val imageCompressor: ImageCompressor,
   private val thingScopeResolver: ThingScopeResolver,
+  private val references: BlobReferenceScanner,
   private val uploadScheduler: UploadScheduler? = null,
   private val clock: Clock = Clock.System,
 ) : AttachmentManager {
@@ -162,14 +165,21 @@ class LocalFirstAttachmentManagerImpl(
     data_log_id = dataLogId,
   )
 
-  override suspend fun delete(attachment: Attachment) {
-    // References own no blob: there is nothing to tombstone.
+  override suspend fun release(attachment: Attachment, owner: EntityRef?) {
+    // References own no blob: there is nothing to release.
     if (!attachment.type.isFile) return
     val id = BlobId(attachment.id)
+    val ref = blobs.get(id) ?: return
+    if (ref.deleted) return
+    // The blob's own scope is the Thing's tree (users/{hostUid}/thing/{thingId}), so its account
+    // root covers every record that could name it, a shared Thing's included.
+    val root = BlobReferenceScanner.userRootOf(ref.scope.toPath())
+    if (!references.referencedUnder(setOf(root), excluding = owner)
+        .isFree(id)
+    ) return
     blobs.delete(id)
-    // Kick the delete driver now, exactly as addPickedFile schedules the upload. Without this the
-    // tombstone just waits for the next SyncEngine.schedulePendingBlobs at startup, so an in-session
-    // delete would not reclaim the remote object until the app was restarted.
+    // Kick the delete driver now, exactly as addPickedFile schedules the upload, so the local row
+    // and file go this session rather than at the next startup scan.
     uploadScheduler?.scheduleDelete(id)
   }
 

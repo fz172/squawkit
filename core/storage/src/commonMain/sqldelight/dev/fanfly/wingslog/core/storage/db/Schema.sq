@@ -150,11 +150,12 @@ selectPurgeableTombstones:
 SELECT collection, scope_path, id, payload FROM entity
 WHERE deleted = 1 AND dirty = 0 AND updated_at < :cutoffMs;
 
--- Live rows under a scope prefix. TombstoneGc uses this to prove a blob is unreferenced before it
--- drops it: two records can name the same attachment id (a duplicate/copy), and a blob a live
--- record still shows must survive its sibling's purge.
+-- Live rows under a scope prefix. BlobReferenceScanner uses this to prove a blob is unreferenced
+-- before TombstoneGc drops it or AttachmentManager.release lets it go: two records can name the same
+-- attachment id (a duplicate, a copy, or one document cited by several tasks), and a blob a live
+-- record still shows must survive. `id` lets a release leave out the record doing the releasing.
 selectLivePayloadsInScopePrefix:
-SELECT collection, payload FROM entity
+SELECT collection, id, payload FROM entity
 WHERE scope_path LIKE :scopePrefix AND deleted = 0;
 
 gcTombstones:
