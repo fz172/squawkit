@@ -91,11 +91,13 @@ export async function handleGetAiEligibility(
 
   const access = { callerUid: uid, hostUid: data.hostUid, thingId: data.thingId, withDocuments: data.withDocuments };
   const decision = decideAiAccess(access, await loadAiAccessFacts(access, now), now);
+  // The owner's Pro opens documents only where this deploy runs them for the kind.
+  const documentsAllowed = decision.documentsAllowed && data.spec.acceptsDocuments;
   if (!decision.allowed) {
     return {
       allowed: false,
       reason: decision.code,
-      documentsAllowed: decision.documentsAllowed,
+      documentsAllowed,
       nextAvailableAt: decision.nextAvailableAt?.toISOString() ?? null,
     };
   }
@@ -103,19 +105,20 @@ export async function handleGetAiEligibility(
   const usage = await adminDb.doc(aiUsageDocPath(data.hostUid, data.thingId)).get();
   const inFlight = await readInFlight(usage.data() as AiUsageDoc | undefined, (ref) => ref.get(), now);
   if (inFlight.state === "active" && inFlight.ref.callerUid !== uid) {
-    return { ...refusal("run_in_progress"), documentsAllowed: decision.documentsAllowed };
+    return { ...refusal("run_in_progress"), documentsAllowed };
   }
-  return { allowed: true, reason: null, documentsAllowed: decision.documentsAllowed, nextAvailableAt: null };
+  return { allowed: true, reason: null, documentsAllowed, nextAvailableAt: null };
 }
 
 function refusal(reason: AiErrorCode): AiEligibilityResponse {
   return { allowed: false, reason, documentsAllowed: false, nextAvailableAt: null };
 }
 
-function parseEligibilityRequest(data: unknown): AiEligibilityRequest {
+function parseEligibilityRequest(data: unknown): AiEligibilityRequest & { spec: AiJobKindSpec } {
   const d = (data ?? {}) as Record<string, unknown>;
-  requireKind(d.kind);
+  const spec = requireKind(d.kind);
   return {
+    spec,
     kind: d.kind as number,
     thingId: requireId(d.thingId, "thingId"),
     hostUid: requireId(d.hostUid, "hostUid"),
@@ -152,6 +155,9 @@ export async function handleStartAiJob(
   const kind = spec.kind;
   if (!hostUid || !thingId) throw new HttpsError("invalid-argument", "The request names no Thing.");
 
+  if (target.documentCount > 0 && !spec.acceptsDocuments) {
+    throw new HttpsError("invalid-argument", "This kind of run takes no documents yet.");
+  }
   const access = await authorizeAiCall(request, { hostUid, thingId, withDocuments: target.documentCount > 0 }, now);
   if (target.documentCount > access.config.maxDocumentsPerRun) {
     throw new HttpsError("invalid-argument", `At most ${access.config.maxDocumentsPerRun} documents.`);

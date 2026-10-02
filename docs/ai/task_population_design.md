@@ -563,6 +563,20 @@ identity  ──────────────▶ [3 recall common schedul
 Thing context ─────────────────────────────────────────────▶ [4 tailor] ──▶ [5 validate] ──▶ result
 ```
 
+### 6.0 In the worker (T14)
+
+`tasks/taskSuggestionPipeline.ts` is the kind's registered pipeline. It decodes the request proto
+into the pipeline's types (`tasks/wire.ts`), runs the stages on the providers `ai_config/global`
+names (Vertex, `global`, the runtime account), and encodes the result proto back. The settings are
+the bake-off's (§12.5): keyword locating, table pages as PDF, recall on the fast tier.
+
+- **Rules on the wire** are the app's `InspectionRule`. A suggested time rule leaves
+  `creation_date` and `due_on_anniversary` for the client to stamp at accept (§7.4). An existing
+  task's linked or immediate rule has no flat form and is left out of the model's context.
+- **Documents wait for T21.** `kinds.ts` marks the task kind `acceptsDocuments: false`, so
+  `startAiJob` refuses a request with documents and `getAiEligibility` reports
+  `documentsAllowed: false` even for a Pro owner. The pipeline refuses them again.
+
 ### 6.1 Stage 1: read
 
 §5.5, per document, in parallel.

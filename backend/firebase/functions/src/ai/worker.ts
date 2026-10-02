@@ -27,6 +27,7 @@ import { AiError, type AiErrorCode } from "./errors.js";
 import { FirestorePipelineCache } from "./firestoreCache.js";
 import { aiJobKindSpec, type AiJobKindSpec } from "./kinds.js";
 import type { PipelineCache } from "./tasks/cache.js";
+import { createTaskSuggestionPipeline } from "./tasks/taskSuggestionPipeline.js";
 import type { PipelineCallRecord } from "./tasks/pipeline.js";
 
 /**
@@ -72,9 +73,12 @@ export interface AiPipeline {
   onFinished?(finish: AiJobFinish): Promise<void>;
 }
 
-const PIPELINES = new Map<AiJobKind, AiPipeline>([[AiJobKind.AI_JOB_KIND_ECHO, echoPipeline]]);
+const PIPELINES = new Map<AiJobKind, AiPipeline>([
+  [AiJobKind.AI_JOB_KIND_ECHO, echoPipeline],
+  [AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, createTaskSuggestionPipeline()],
+]);
 
-/** Each kind registers its pipeline here at module load (the task pipeline in T14). */
+/** Registers or replaces a kind's pipeline; the built-in kinds are in PIPELINES above. */
 export function registerPipeline(kind: AiJobKind, pipeline: AiPipeline): void {
   PIPELINES.set(kind, pipeline);
 }
