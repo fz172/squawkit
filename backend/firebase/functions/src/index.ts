@@ -2,6 +2,7 @@ import { onCall } from "firebase-functions/v2/https";
 
 import { FUNCTION_REGION } from "./config/env.js";
 import { deleteMyAccount } from "./account/deleteMyAccount.js";
+import { closeAiJob, getAiEligibility, startAiJob } from "./ai/jobs.js";
 import { requestExportDelivery } from "./export/requestExportDelivery.js";
 import { cancelThingShareInvite } from "./sharing/cancelThingShareInvite.js";
 import { createThingShareInvite } from "./sharing/createThingShareInvite.js";
@@ -71,3 +72,5 @@ export { revenueCatWebhook };
 export { reconcileMyEntitlement };
 export { redeemPromoCode };
 export { scheduledEntitlementReconcile };
+// AI jobs (docs/ai/task_population_design.md §5.1). Refused while ai_config/global is off.
+export { getAiEligibility, startAiJob, closeAiJob };

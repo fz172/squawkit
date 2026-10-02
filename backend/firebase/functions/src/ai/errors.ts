@@ -10,6 +10,7 @@ export type AiErrorCode =
   | "not_member"
   | "owner_not_pro"
   | "daily_limit"
+  | "run_in_progress"
   | "spend_ceiling"
   | "document_missing"
   | "document_too_large"
