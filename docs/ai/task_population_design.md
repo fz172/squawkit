@@ -382,6 +382,26 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 `request` is the kind's own proto, base64, capped at 512 KiB (Firestore's 1 MiB doc limit with
 headroom); the client builder truncates logs first (§7.2).
 
+Implemented in `functions/src/ai/jobs.ts` (T08):
+
+- **Eligibility answers, start throws.** `getAiEligibility` returns every policy refusal as
+  `reason` (a guest gets `sign_in_required`) because the entry point renders it either way.
+  `startAiJob` throws `HttpsError` with `details: { code, nextAvailableAt }`, as §5.3 does.
+- **The caller's own run in flight is allowed.** Eligibility says `allowed`; `startAiJob` returns
+  that job with `joined: true` and dispatches nothing.
+- **Start, in one transaction on `ai_usage`:** read `inFlightJob` and its job. If the job is QUEUED
+  or RUNNING and updated within 35 minutes, it is joined (same caller) or `run_in_progress`. If it
+  is older, it is marked FAILED `stale` and its input deleted. A pointer to a finished or deleted
+  job counts as none. Then the job, its input and `inFlightJob` are written, and only after commit
+  is the job enqueued for `runAiJob`.
+- **A dispatch that fails** marks the job FAILED `provider_error`, deletes its input, clears
+  `inFlightJob` if it still names the job, and throws `unavailable / provider_error`, so the Thing
+  is not held for 35 minutes by a job no worker will run.
+- **Close does not clear `inFlightJob`.** A job closed while running is left to the worker, which
+  clears the pointer when it ends and must tolerate its job being gone (T09). Clearing it on close
+  would let a second run start beside the first.
+- More documents than `maxDocumentsPerRun` is `invalid-argument`; the client caps at pick time.
+
 ### 5.2 Worker
 
 `runAiJob`: a task-queue function (`onTaskDispatched`), `timeoutSeconds: 1800`, `memory: "2GiB"`, no
