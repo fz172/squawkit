@@ -180,6 +180,46 @@ service cloud.firestore {
       allow read, write: if false; // functions only
     }
 
+    // --- AI backend (docs/ai/task_population_design.md §4.3) ----------------------------------
+
+    // A job's document is the one AI collection a client sees: the caller listens to it for the
+    // run's stage and result. Only the caller, because `result` holds suggestions built from the
+    // Thing's logs, and a share member who did not start the run sees it through their own job.
+    // Functions write it; a client that could would mark its own run SUCCEEDED.
+    //
+    // Jobs live under the caller's uid and the rule reads only the path, so it is TOTAL, as
+    // shareRole() is: a job closes or expires by deletion, and the client reads that as "gone",
+    // never as a denial. A list of one's own jobs needs no filter to pass.
+    match /ai_jobs/{callerUid}/job/{jobId} {
+      allow read: if request.auth != null && request.auth.uid == callerUid;
+      allow write: if false; // functions only
+
+      // The job's request, which holds the Thing's logs. The grant above stops at the job
+      // document; this says outright that it does not reach the input.
+      match /input/{inputId} {
+        allow read, write: if false; // functions only
+      }
+    }
+
+    // Everything else is server bookkeeping. The usage and spend documents are the limits
+    // themselves, which a writable copy would reset; the cost log and the cache are shared across
+    // every user; the config is the kill switch.
+    match /ai_usage/{hostUid}/thing/{thingId} {
+      allow read, write: if false; // functions only
+    }
+    match /ai_spend/{month} {
+      allow read, write: if false; // functions only
+    }
+    match /ai_cost_log/{recordId} {
+      allow read, write: if false; // functions only
+    }
+    match /ai_cache/{stage}/{version}/{hash} {
+      allow read, write: if false; // functions only
+    }
+    match /ai_config/{configId} {
+      allow read, write: if false; // functions only
+    }
+
     // --- Share ACL tree (plain-field, rules-readable) ------------------------------------------
 
     // Keyed by HOST, then thing (#204). The {hostUid} segment is pinned to the caller's own uid on

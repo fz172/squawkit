@@ -76,7 +76,7 @@ npm run serve     # firebase emulators:start --only functions
 |---|---|---|
 | `build.yml` | **manual only** (`workflow_dispatch`) | lint → `assembleDebug` → `testDebugUnitTest` + `testAndroidHostTest` |
 | `deploy-functions.yml` | PR + push to `main` under `functions/**` | emulator test suite as the gate; deploys functions on merge |
-| `deploy-firestore-rules.yml` | PR + push to `main` on `firestore.rules` | emulator rules suite; deploys rules on merge |
+| `deploy-firestore-rules.yml` | PR + push to `main` on `firestore.rules` / `firestore.indexes.json` | emulator rules suite; deploys rules, then indexes and TTL policies, on merge |
 | `deploy-storage-rules.yml` | PR + push to `main` on `storage.rules` | emulator rules suite; deploys rules on merge |
 | `deploy-web.yml` | manual | `:webApp:jsBrowserDistribution` → Firebase Hosting `live` (production), or the `alpha` / `debug` preview channel |
 
@@ -347,7 +347,7 @@ Notable jobs beyond the callables: `scheduledStorageSweep` (orphaned-blob GC, ar
 
 Tests are vitest running against the auth/firestore/storage emulators and cover functions **and**
 the Firestore/Storage rules (`test/firestore-rules.test.ts`, `test/storage-rules.test.ts`,
-`test/sharing-rules.test.ts`).
+`test/sharing-rules.test.ts`, `test/ai-rules.test.ts`).
 
 ## Key Dependencies (`gradle/libs.versions.toml`)
 
