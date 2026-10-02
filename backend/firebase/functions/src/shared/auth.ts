@@ -28,6 +28,19 @@ export function requireAuthenticatedApp(request: CallableRequest<unknown>): Call
 }
 
 /**
+ * As [requireAuthenticatedApp], but refuses a guest (anonymous) account, for features that need a
+ * real sign-in (AI runs, PRD R47). `details.code` is `sign_in_required`, so the client shows the
+ * sign-in prompt rather than a generic failure.
+ */
+export function requireSignedInApp(request: CallableRequest<unknown>): CallableIdentity {
+  const identity = requireAuthenticatedApp(request);
+  if (request.auth?.token?.firebase?.sign_in_provider === "anonymous") {
+    throw new HttpsError("unauthenticated", "Sign in to use this feature.", { code: "sign_in_required" });
+  }
+  return identity;
+}
+
+/**
  * As [requireAuthenticatedApp], but also requires the caller's token to carry an `admin` custom
  * claim. Gates operations no ordinary user may perform — e.g. writing a comp'd (SERVER_GRANT)
  * entitlement. The claim is set out of band via the Admin SDK; a normal sign-in never has it, so a

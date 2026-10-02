@@ -422,6 +422,21 @@ In order, in a shared `authorizeAiCall(request, thingId, hostUid, withDocuments)
 
 The worker re-runs 4–5 before the first model call (a share can be revoked in between).
 
+Implemented in `functions/src/ai/authorize.ts` (T07):
+
+- **The order is policy.** `decideAiAccess` is a pure function over the loaded facts, so a caller
+  who is not a member is told `not_member` and never the Thing's usage or the owner's tier, however
+  the reads were ordered. The kill switch comes before membership.
+- **The client reads `details.code`.** Every refusal is an `HttpsError` whose `details` are
+  `{ code, nextAvailableAt }`, the code from §5.7 and the time as ISO-8601 (`daily_limit` and
+  `spend_ceiling` only). The gRPC status (`resource-exhausted` and so on) is incidental.
+- **An owner's Thing must exist and not be tombstoned** at `users/{hostUid}/thing/{thingId}`.
+  Otherwise an invented thing id would be a fresh daily limit. A Thing created on a device that has
+  not synced yet is therefore `not_member`, so `TaskSuggestionManager.start` (T15) waits for the
+  Thing to sync before starting, as it waits for documents.
+- **Spend resets at UTC midnight on the 1st**, the same month `ai_spend`'s key uses; that is the
+  `nextAvailableAt` for `spend_ceiling`.
+
 ### 5.4 Provider abstraction
 
 ```ts
@@ -653,8 +668,9 @@ interface TaskSuggestionManager {
 }
 ```
 
-`start` waits for each document's blob to reach SYNCED (the worker reads it from Storage) and
-reports an "Uploading" stage meanwhile. `accept` writes each task with `TaskDataManager.addTask`
+`start` waits for the Thing itself and each document's blob to reach SYNCED (the server checks the
+Thing exists, §5.3, and the worker reads documents from Storage) and reports an "Uploading" stage
+meanwhile. `accept` writes each task with `TaskDataManager.addTask`
 (one write per task, like the starter pack; a failure drops only its own card), then `close`s the
 job and releases unaccepted documents (§8.2).
 
