@@ -5,8 +5,7 @@ import { logger } from "firebase-functions/v2";
 
 import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb } from "../config/firebaseAdmin.js";
-import { AiJobKind, AiJobStatus } from "../generated/proto/rpc/ai_job/ai_job.js";
-import { SuggestTasksRequest } from "../generated/proto/rpc/suggest_tasks/suggest_tasks.js";
+import { AiJobStatus } from "../generated/proto/rpc/ai_job/ai_job.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
 import { authorizeAiCall, decideAiAccess, loadAiAccessFacts } from "./authorize.js";
 import {
@@ -22,10 +21,11 @@ import {
   type AiUsageDoc,
 } from "./collections.js";
 import type { AiErrorCode } from "./errors.js";
+import { aiJobKindSpec, type AiJobKindSpec, type AiJobTarget } from "./kinds.js";
 
 /**
  * The three AI callables (docs/ai/task_population_design.md §5.1). Every kind of AI job goes
- * through them; only the request decoding below is per kind.
+ * through them; what differs per kind is in kinds.ts.
  *
  * Each callable is a thin `onCall` over a handler that takes its dependencies, so the tests run the
  * real handler against the emulator with a fake dispatcher.
@@ -147,17 +147,13 @@ export async function handleStartAiJob(
   dispatch: AiJobDispatcher,
   now: Date = new Date(),
 ): Promise<StartAiJobResponse> {
-  const { kind, encoded, decoded } = parseStartRequest(request.data);
-  const hostUid = decoded.hostUid?.value ?? "";
-  const thingId = decoded.thingId?.value ?? "";
+  const { spec, encoded, target } = parseStartRequest(request.data);
+  const { hostUid, thingId } = target;
+  const kind = spec.kind;
   if (!hostUid || !thingId) throw new HttpsError("invalid-argument", "The request names no Thing.");
 
-  const access = await authorizeAiCall(
-    request,
-    { hostUid, thingId, withDocuments: decoded.documents.length > 0 },
-    now,
-  );
-  if (decoded.documents.length > access.config.maxDocumentsPerRun) {
+  const access = await authorizeAiCall(request, { hostUid, thingId, withDocuments: target.documentCount > 0 }, now);
+  if (target.documentCount > access.config.maxDocumentsPerRun) {
     throw new HttpsError("invalid-argument", `At most ${access.config.maxDocumentsPerRun} documents.`);
   }
   const uid = access.callerUid;
@@ -215,9 +211,9 @@ export async function handleStartAiJob(
   return outcome;
 }
 
-function parseStartRequest(data: unknown): { kind: AiJobKind; encoded: string; decoded: SuggestTasksRequest } {
+function parseStartRequest(data: unknown): { spec: AiJobKindSpec; encoded: string; target: AiJobTarget } {
   const d = (data ?? {}) as Record<string, unknown>;
-  requireKind(d.kind);
+  const spec = requireKind(d.kind);
   if (typeof d.request !== "string" || d.request.length === 0) {
     throw new HttpsError("invalid-argument", "A request is required.");
   }
@@ -226,7 +222,7 @@ function parseStartRequest(data: unknown): { kind: AiJobKind; encoded: string; d
     throw new HttpsError("invalid-argument", `The request is over ${AI_REQUEST_MAX_BYTES} bytes.`);
   }
   try {
-    return { kind: d.kind as AiJobKind, encoded: d.request, decoded: SuggestTasksRequest.decode(bytes) };
+    return { spec, encoded: d.request, target: spec.decodeTarget(bytes) };
   } catch {
     throw new HttpsError("invalid-argument", "The request does not decode.");
   }
@@ -316,10 +312,10 @@ async function failAndRelease(
   });
 }
 
-function requireKind(kind: unknown): void {
-  if (kind !== AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS) {
-    throw new HttpsError("invalid-argument", "Unknown AI job kind.");
-  }
+function requireKind(kind: unknown): AiJobKindSpec {
+  const spec = aiJobKindSpec(kind);
+  if (spec == null) throw new HttpsError("invalid-argument", "Unknown AI job kind.");
+  return spec;
 }
 
 /** A document id from the caller: non-empty, no path separator, so it cannot reach another path. */
