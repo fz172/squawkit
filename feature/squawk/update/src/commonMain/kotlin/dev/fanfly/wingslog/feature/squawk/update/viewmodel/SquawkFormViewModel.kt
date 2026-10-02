@@ -15,6 +15,8 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
@@ -32,7 +34,6 @@ import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlin.time.Clock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,6 +49,7 @@ import wingslog.feature.attachment.sharedassets.generated.resources.add_file_fai
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
+import kotlin.time.Clock
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
@@ -113,7 +115,11 @@ class SquawkFormViewModel(
   val events = _events.receiveAsFlow()
 
   private val attachmentForm =
-    AttachmentFormController(attachmentManager, thingId)
+    AttachmentFormController(
+      attachmentManager,
+      thingId,
+      owner = squawkId?.let { EntityRef(CollectionKind.Squawk, it) },
+    )
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
   val showAttachmentPicker: StateFlow<Boolean> = attachmentForm.showPicker

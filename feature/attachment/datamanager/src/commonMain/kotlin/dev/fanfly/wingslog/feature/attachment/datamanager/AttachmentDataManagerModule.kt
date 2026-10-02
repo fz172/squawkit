@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
+import dev.fanfly.wingslog.core.storage.blob.BlobReferenceScanner
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.SqlDelightLocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -35,6 +36,7 @@ val attachmentDataManagerModule = module {
       fileByteReader = get<FileByteReader>(),
       imageCompressor = get<ImageCompressor>(),
       thingScopeResolver = get<ThingScopeResolver>(),
+      references = get<BlobReferenceScanner>(),
       uploadScheduler = getOrNull(),
     )
   }

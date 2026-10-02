@@ -66,9 +66,7 @@ actual val platformBlobSchedulerModule: Module = module {
   single {
     BlobDeleteDriver(
       blobs = get<LocalBlobStore>(),
-      storage = get<FirebaseStorage>(),
       db = get<WingsLogDatabase>(),
-      auth = get<FirebaseAuth>(),
       writeLock = get<DatabaseWriteLock>(),
     )
   }

@@ -2,10 +2,13 @@ package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
+import dev.fanfly.wingslog.core.storage.blob.BlobReferenceScanner
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
@@ -37,6 +40,8 @@ import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-abc"
+private const val BLOB = "blob-1"
+private val OWNER = EntityRef(CollectionKind.MaintenanceLog, "log-1")
 private const val TEST_SHA256 =
   "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 private val FIXED_EPOCH_SECONDS = 1_700_000_000L
@@ -50,6 +55,7 @@ class LocalFirstAttachmentManagerImplTest {
   private lateinit var imageCompressor: ImageCompressor
   private lateinit var thingScopeResolver: ThingScopeResolver
   private lateinit var uploadScheduler: UploadScheduler
+  private lateinit var references: BlobReferenceScanner
   private lateinit var clock: Clock
   private lateinit var manager: LocalFirstAttachmentManagerImpl
 
@@ -63,6 +69,14 @@ class LocalFirstAttachmentManagerImplTest {
     imageCompressor = mockk(relaxed = true)
     coEvery { imageCompressor.compressToJpeg(any()) } returns null
     uploadScheduler = mockk(relaxed = true)
+    // Default: nothing else names the blob, so a release lets it go.
+    references = mockk()
+    coEvery {
+      references.referencedUnder(
+        any(),
+        any()
+      )
+    } returns BlobReferenceScanner.References(emptySet(), 0)
     clock = mockk(relaxed = true)
 
     val fixedNow = Instant.fromEpochSeconds(FIXED_EPOCH_SECONDS, 0)
@@ -85,6 +99,7 @@ class LocalFirstAttachmentManagerImplTest {
       fileByteReader,
       imageCompressor,
       thingScopeResolver,
+      references,
       uploadScheduler,
       clock = clock
     )
@@ -230,7 +245,7 @@ class LocalFirstAttachmentManagerImplTest {
       manager.addPickedFile(TEST_THING_ID, picked, displayName = "file")
 
     assertThat(result.created_at).isNotNull()
-    assertThat(result.created_at!!.getEpochSecond()).isEqualTo(
+    assertThat(result.created_at!!.epochSecond).isEqualTo(
       FIXED_EPOCH_SECONDS
     )
   }
@@ -470,7 +485,7 @@ class LocalFirstAttachmentManagerImplTest {
     val result = manager.makeLink("https://example.com", displayName = "Link")
 
     assertThat(result.created_at).isNotNull()
-    assertThat(result.created_at!!.getEpochSecond()).isEqualTo(
+    assertThat(result.created_at!!.epochSecond).isEqualTo(
       FIXED_EPOCH_SECONDS
     )
   }
@@ -489,18 +504,18 @@ class LocalFirstAttachmentManagerImplTest {
     assertThat(result.sha256).isEmpty()
     assertThat(result.storage_path).isEmpty()
     assertThat(result.size_bytes).isEqualTo(0L)
-    assertThat(result.created_at!!.getEpochSecond()).isEqualTo(
+    assertThat(result.created_at!!.epochSecond).isEqualTo(
       FIXED_EPOCH_SECONDS
     )
   }
 
   @Test
-  fun delete_isNoOp_forDataLogRef() = runTest {
-    manager.delete(
+  fun release_isNoOp_forDataLogRef() = runTest {
+    manager.release(
       manager.makeDataLogRef(
         DataLogId("dl-1"),
         displayName = "Ground run"
-      )
+      ), OWNER
     )
 
     coVerify(exactly = 0) { blobs.delete(any()) }
@@ -508,57 +523,107 @@ class LocalFirstAttachmentManagerImplTest {
   }
 
   @Test
-  fun delete_isNoOp_forLinkAttachment() = runTest {
-    val picked = manager.makeLink("https://example.com", displayName = "Link")
-
-    manager.delete(picked)
+  fun release_isNoOp_forLinkAttachment() = runTest {
+    manager.release(
+      manager.makeLink(
+        "https://example.com",
+        displayName = "Link"
+      ), OWNER
+    )
 
     coVerify(exactly = 0) { blobs.delete(any()) }
     verify(exactly = 0) { uploadScheduler.scheduleDelete(any()) }
   }
 
   @Test
-  fun delete_schedulesRemoteDeleteImmediately() = runTest {
-    // The tombstone alone waits for the next startup sweep; deleting in-session must kick the
-    // delete driver now so the remote object is reclaimed without an app restart.
-    val fakeBytes = byteArrayOf(1)
-    every { fileByteReader.readBytes(any()) } returns fakeBytes
-    coEvery {
-      blobs.put(any(), any(), contentType = any(), scope = any())
-    } returns buildBlobRef()
-    val attachment = manager.addPickedFile(
-      TEST_THING_ID,
-      buildPickedFile(),
-      displayName = "file"
-    )
+  fun release_ofAnUnnamedBlob_tombstonesItAndKicksTheDriver() = runTest {
+    givenStoredBlob()
+    val attachment = fileAttachment()
 
-    manager.delete(attachment)
+    manager.release(attachment, OWNER)
 
+    coVerify(exactly = 1) { blobs.delete(BlobId(attachment.id)) }
     verify(exactly = 1) { uploadScheduler.scheduleDelete(BlobId(attachment.id)) }
   }
 
   @Test
-  fun delete_callsBlobsDelete_withBlobIdMatchingAttachmentId() = runTest {
-    val fakeBytes = byteArrayOf(1)
-    every { fileByteReader.readBytes(any()) } returns fakeBytes
-    coEvery {
-      blobs.put(
-        any(),
-        any(),
-        contentType = any(),
-        scope = any()
+  fun release_asksAboutTheBlobsAccountRoot_leavingOutTheOwner() = runTest {
+    // The blob sits in the host's tree; every record that could name it is under the host's root.
+    givenStoredBlob(EntityScope.thingChildUnsafe("host-uid", TEST_THING_ID))
+
+    manager.release(fileAttachment(), OWNER)
+
+    coVerify(exactly = 1) {
+      references.referencedUnder(
+        setOf("/users/host-uid/"),
+        OWNER
       )
-    } returns buildBlobRef()
-    val attachment = manager.addPickedFile(
-      TEST_THING_ID,
-      buildPickedFile(),
-      displayName = "file"
+    }
+  }
+
+  @Test
+  fun release_keepsABlobAnotherLiveRecordStillNames() = runTest {
+    givenStoredBlob()
+    // One manual cited by two tasks: dropping it from one must not take it from the other.
+    coEvery { references.referencedUnder(any(), any()) } returns
+      BlobReferenceScanner.References(setOf(BlobId(BLOB)), 0)
+
+    manager.release(fileAttachment(), OWNER)
+
+    coVerify(exactly = 0) { blobs.delete(any()) }
+    verify(exactly = 0) { uploadScheduler.scheduleDelete(any()) }
+  }
+
+  @Test
+  fun release_keepsTheBlobWhenALivePayloadWouldNotDecode() = runTest {
+    givenStoredBlob()
+    coEvery {
+      references.referencedUnder(
+        any(),
+        any()
+      )
+    } returns BlobReferenceScanner.References(emptySet(), 1)
+
+    manager.release(fileAttachment(), OWNER)
+
+    coVerify(exactly = 0) { blobs.delete(any()) }
+  }
+
+  @Test
+  fun release_ofABlobWithNoLocalRowOrAlreadyReleased_isNoOp() = runTest {
+    coEvery { blobs.get(BlobId(BLOB)) } returns null
+    manager.release(fileAttachment(), null)
+    coEvery { blobs.get(BlobId(BLOB)) } returns storedBlob().copy(deleted = true)
+    manager.release(fileAttachment(), null)
+
+    coVerify(exactly = 0) { references.referencedUnder(any(), any()) }
+    coVerify(exactly = 0) { blobs.delete(any()) }
+  }
+
+  private fun fileAttachment() =
+    Attachment(
+      id = BLOB,
+      type = AttachmentType.ATTACHMENT_TYPE_IMAGE,
+      sha256 = TEST_SHA256
     )
 
-    manager.delete(attachment)
-
-    coVerify(exactly = 1) { blobs.delete(BlobId(attachment.id)) }
+  /** The blob's local row, live, in [scope] (the caller's own Thing by default). */
+  private fun givenStoredBlob(
+    scope: EntityScope = EntityScope.thingChildUnsafe(
+      TEST_USER_ID,
+      TEST_THING_ID
+    )
+  ) {
+    coEvery { blobs.get(BlobId(BLOB)) } returns storedBlob(scope)
   }
+
+  private fun storedBlob(
+    scope: EntityScope = EntityScope.thingChildUnsafe(
+      TEST_USER_ID,
+      TEST_THING_ID
+    )
+  ) =
+    buildBlobRef().copy(id = BlobId(BLOB), scope = scope)
 
   // ---- observeStatus ----
 

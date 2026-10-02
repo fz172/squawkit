@@ -171,7 +171,7 @@ class TaskViewModelTest {
       assertThat(viewModel.pendingAttachments.value).hasSize(1)
       assertThat((viewModel.uiState.value as TaskUiState.Success).error).isNotNull()
       // The rejected copy is already on disk with an upload scheduled — it must be reclaimed.
-      coVerify(exactly = 1) { attachmentManager.delete(any()) }
+      coVerify(exactly = 1) { attachmentManager.release(any(), any()) }
     }
 
   // ---- attachment gate (P8.7 §9.7) ----

@@ -4,6 +4,7 @@ import app.cash.sqldelight.async.coroutines.awaitAsList
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.blob.AttachmentRefs
 import dev.fanfly.wingslog.core.storage.blob.BlobId
+import dev.fanfly.wingslog.core.storage.blob.BlobReferenceScanner
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import kotlin.time.Clock
@@ -33,6 +34,8 @@ class TombstoneGc(
   private val retention: Duration = RETENTION,
 ) {
 
+  private val scanner = BlobReferenceScanner(db)
+
   suspend fun runOnce(now: Instant = Clock.System.now()) {
     val cutoffMs = (now - retention).toEpochMilliseconds()
     // Blobs first: the payloads about to be deleted are the only record of which blobs belonged to
@@ -60,7 +63,7 @@ class TombstoneGc(
     val roots = mutableSetOf<String>()
 
     for (row in doomed) {
-      roots += userRootOf(row.scope_path)
+      roots += BlobReferenceScanner.userRootOf(row.scope_path)
       if (row.collection == CollectionKind.Thing) {
         // Blobs are thing-scoped, so a deleted thing takes its whole blob prefix with it
         // (§5.2). This is also what reclaims blobs no surviving payload names — the orphans of a
@@ -87,35 +90,16 @@ class TombstoneGc(
     Logger.i { "TombstoneGc reclaimed ${condemned.size} local blob(s)" }
   }
 
-  /** `/users/u1/thing/a1/` → `/users/u1/`; anything else is left as-is and vetoes only itself. */
-  private fun userRootOf(scopePath: String): String {
-    val segments = scopePath.trim('/')
-      .split('/')
-    return if (segments.size >= 2 && segments[0] == "users") "/users/${segments[1]}/" else scopePath
-  }
-
   /**
    * Blob ids that a *live* record anywhere in [roots] still names. Attachment ids are
    * per-attachment, but a copy or duplicate can put the same id on two records, and a blob one of
    * them still shows must survive the other's purge.
+   *
+   * An undecodable live payload is logged and otherwise ignored here, as it always was: this only
+   * frees the device's own copy, which a later download restores.
    */
-  private suspend fun stillReferenced(roots: Set<String>): Set<BlobId> {
-    val referenced = mutableSetOf<BlobId>()
-    for (root in roots) {
-      val live = db.schemaQueries.selectLivePayloadsInScopePrefix("$root%")
-        .awaitAsList()
-      for (row in live) {
-        try {
-          referenced += AttachmentRefs.blobIdsIn(row.collection, row.payload)
-        } catch (e: Exception) {
-          Logger.e(throwable = e) {
-            "Could not decode a live ${row.collection.wireName} payload while checking blob references"
-          }
-        }
-      }
-    }
-    return referenced
-  }
+  private suspend fun stillReferenced(roots: Set<String>): Set<BlobId> =
+    scanner.referencedUnder(roots).referenced
 
   companion object {
     /**

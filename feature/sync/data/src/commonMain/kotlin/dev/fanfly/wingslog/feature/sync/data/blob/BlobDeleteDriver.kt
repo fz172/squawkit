@@ -5,28 +5,23 @@ import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.storage.FirebaseStorage
 
 /**
- * Cleans up a tombstoned (`deleted=1`) blob: removes the remote Firebase Storage object if one
- * exists, then hard-deletes the local row. Called by the scheduler during startup scan and after
- * [LocalBlobStore.delete] is invoked.
+ * Finishes a released (`deleted=1`) blob on this device by hard-deleting its local row. Called by
+ * the scheduler during the startup scan and after [LocalBlobStore.delete].
  *
- * Safe to call multiple times — if the remote object is already gone, Firebase Storage returns a
- * 404 which we treat as success (the object is gone either way).
+ * **It never deletes the remote object, own tree included** (docs/ai/task_population_design.md
+ * §8.3). It used to, for own-tree blobs, and that is unsafe once one document can sit on several
+ * records: an AI suggestion's source manual is the same blob on every task that cites it, and a
+ * device that let go of it on one task would have destroyed it for the rest. The server collects
+ * the canonical bytes once no live record names them (`onRecordBlobsReleased`, then the daily
+ * sweep as backstop), which is also what always happened for a member's foreign-hosted blobs.
  *
- * **Foreign-hosted** (shared-thing) blobs are not deleted from Storage here: a member has no
- * write rights to the host's tree and the broker exposes no delete door, so a direct delete would
- * only earn a permanent `PERMISSION_DENIED`. The remote object is the host's to reclaim — via the
- * host-side deletion cascade / orphan sweep (design §9.6, P8.6). We just drop the local row so the
- * member's device stops tracking bytes it no longer references.
+ * Holding no Storage client is the guarantee: there is nothing here that could delete one.
  */
 class BlobDeleteDriver(
   private val blobs: LocalBlobStore,
-  private val storage: FirebaseStorage,
   private val db: WingsLogDatabase,
-  private val auth: FirebaseAuth,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) {
 
@@ -42,43 +37,10 @@ class BlobDeleteDriver(
       log.w { "delete skipped: ${id.value} is not tombstoned" }
       return true
     }
-
-    // Delete the remote object whenever one could exist. remotePath is populated for every state
-    // that has been (or is being) uploaded — Synced, Uploading, AND RemoteOnly. RemoteOnly is the
-    // easy one to miss: it's a blob known from a synced record whose bytes were never downloaded to
-    // this device (e.g. after a reinstall), so it very much exists in gs:// and must be removed.
-    // Only LocalOnly carries a null path, and it has nothing in Storage to delete.
-    val foreign = BlobLocation.of(ref)
-      ?.isForeign(auth.currentUser?.uid) == true
-
-    val remotePath = ref.remotePath
-    if (remotePath != null && !foreign) {
-      try {
-        storage.reference(remotePath)
-          .delete()
-        log.i { "deleted remote object for ${id.value}" }
-      } catch (e: Exception) {
-        if (isNotFound(e)) {
-          log.i { "remote object for ${id.value} already gone" }
-        } else {
-          log.w(e) { "transient failure deleting remote object for ${id.value}; will retry" }
-          return false
-        }
-      }
-    } else if (foreign) {
-      log.i { "skipping remote delete of foreign-hosted blob ${id.value}; host reclaims it (§9.6)" }
-    }
-
     writeLock.withLock { db.schemaQueries.hardDeleteBlob(id.value) }
-    log.i { "hard-deleted blob row ${id.value}" }
+    log.i { "hard-deleted blob row ${id.value}; the server collects the remote object" }
     return true
   }
-
-  private fun isNotFound(e: Exception): Boolean =
-    e.message?.contains("404") == true || e.message?.contains(
-      "not found",
-      ignoreCase = true
-    ) == true
 
   companion object {
     private const val TAG = "BlobDeleteDriver"

@@ -12,6 +12,8 @@ import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.currentFor
@@ -88,7 +90,11 @@ class TaskViewModel(
   // Attachment state is kept separate so it survives inspection list reloads.
   private var saveJob: Job? = null
   private val attachmentForm =
-    AttachmentFormController(attachmentManager, thingId)
+    AttachmentFormController(
+      attachmentManager,
+      thingId,
+      owner = cardId?.let { EntityRef(CollectionKind.MaintenanceTask, it) },
+    )
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
   val showAttachmentPicker: StateFlow<Boolean> = attachmentForm.showPicker
