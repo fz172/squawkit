@@ -218,7 +218,7 @@ describe("task pipeline without documents", () => {
       ["recall", "fast-model", "fast"],
       ["tailor", "strong-model", "strong"],
     ]);
-    expect(h.cache.keys()).toEqual([expect.stringMatching(new RegExp(`^id:[0-9a-f]{64}:${GENERATION_VERSION}$`))]);
+    expect(h.cache.keys()).toEqual([expect.stringMatching(new RegExp(`^id/${GENERATION_VERSION}/[0-9a-f]{64}$`))]);
   });
 
   it("recalls on the strong model when asked to", async () => {
@@ -309,7 +309,7 @@ describe("task pipeline with documents", () => {
     ]);
     // The extraction saw the page markers the citation check relies on.
     expect(JSON.stringify(h.strong.asked.find((a) => a.stage === "extract")!.req.parts)).toContain("=== page 2 ===");
-    expect(h.cache.keys()).toContain(`doc:sha-blob-ad:${GENERATION_VERSION}`);
+    expect(h.cache.keys()).toContain(`doc/${GENERATION_VERSION}/sha-blob-ad`);
     expect(h.stages).toContainEqual(["reading_document", "blob-ad.pdf"]);
   });
 

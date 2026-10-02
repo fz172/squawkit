@@ -213,7 +213,7 @@ service cloud.firestore {
     match /ai_cost_log/{recordId} {
       allow read, write: if false; // functions only
     }
-    match /ai_cache/{key} {
+    match /ai_cache/{stage}/{version}/{hash} {
       allow read, write: if false; // functions only
     }
     match /ai_config/{configId} {

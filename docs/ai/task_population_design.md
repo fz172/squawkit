@@ -341,7 +341,7 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 | `ai_usage/{hostUid}/thing/{thingId}` | functions  | functions                  | `lastSuccessAt`, `inFlightJob {callerUid, jobId}`                                                                                                        | permanent, tiny                                             |
 | `ai_spend/{yyyymm}`            | functions  | functions                        | `freeMicros`, `proMicros` (by owner tier), updatedAt; the month is UTC                                                                    | permanent                                                   |
 | `ai_cost_log/{autoId}`         | functions  | team                             | per-call cost record (§5.6), no uid                                                                                                       | TTL on `expiresAt` (13 × 31 days)                           |
-| `ai_cache/{key}`               | functions  | functions                        | derived schedule items as JSON (§6.5), createdAt                                                                                          | until generation version bump                               |
+| `ai_cache/{stage}/{version}/{hash}` | functions  | functions                        | derived schedule items as JSON (§6.5), createdAt                                                                                          | until generation version bump                               |
 | `ai_config/global`             | team       | functions                        | `enabled`, `fastProvider`, `strongProvider`, `monthlyCeilingMicros {free, pro, total}`, `maxDocumentsPerRun`                              | permanent                                                   |
 
 - **Enums are numbers.** `kind` and `status` hold the `AiJobKind` / `AiJobStatus` numbers, which the
@@ -552,9 +552,10 @@ a document run.
 
 ### 6.5 Cache
 
-- Keys: `doc:{sha256}:{generation_version}` for stage 2 (the revision is inside the content, so the
-  hash already distinguishes revisions) and `id:{sha256(normalized identity)}:{generation_version}`
-  for stage 3.
+- Keys are paths: `ai_cache/doc/{generation_version}/{sha256}` for stage 2 (the revision is
+  inside the content, so the hash already distinguishes revisions) and
+  `ai_cache/id/{generation_version}/{sha256(normalized identity)}` for stage 3. The version is a
+  collection, so a bump's stranded entries are deleted as one collection.
 - Written only when the job is SUCCEEDED (not EMPTY or FAILED), so a failed tailor never caches a
   bad extraction. Page text is never cached, so a stage-2 hit still runs stage 1 (cheap for a text
   layer) for the validators.

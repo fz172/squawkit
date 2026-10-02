@@ -84,7 +84,10 @@ export function aiSpendDocPath(at: Date): string {
   return `${AI_SPEND_COLLECTION}/${aiSpendMonthKey(at)}`;
 }
 
-/** A cache key from tasks/cache.ts holds `:`, which a document id may contain. */
+/**
+ * A key from tasks/cache.ts is already a path, `{stage}/{version}/{hash}`, so this is a document:
+ * `ai_cache/doc/tasks-4/{sha256}`. `ai_cache/doc` itself is never written.
+ */
 export function aiCacheDocPath(key: string): string {
   return `${AI_CACHE_COLLECTION}/${key}`;
 }
@@ -186,9 +189,10 @@ export type AiCostLogDoc = {
 };
 
 /**
- * `ai_cache/{key}`. Functions only. Derived schedule items for a document or a Thing identity,
- * never document bytes, page text or anything from one Thing (§6.5). The key carries the
- * generation version, so a version bump strands old entries rather than serving them.
+ * `ai_cache/{stage}/{version}/{hash}`, stage `doc` or `id`. Functions only. Derived schedule items
+ * for a document or a Thing identity, never document bytes, page text or anything from one Thing
+ * (§6.5). A version bump strands old entries rather than serving them, and they sit in one
+ * collection per version, so `ai_cache/doc/tasks-3` is deleted whole.
  */
 export type AiCacheDoc = {
   /** A DocumentCacheEntry or IdentityCacheEntry from tasks/cache.ts, as JSON. */

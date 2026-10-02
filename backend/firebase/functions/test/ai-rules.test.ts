@@ -26,6 +26,7 @@ import {
   AI_CONFIG_DOC_PATH,
   AI_COST_LOG_COLLECTION,
   AI_SPEND_COLLECTION,
+  aiCacheDocPath,
   aiJobDocPath,
   aiJobInputDocPath,
   aiJobsCollectionPath,
@@ -129,7 +130,7 @@ describe("functions-only ai_* collections", () => {
     aiUsageDocPath("alice", "t1"),
     `${AI_SPEND_COLLECTION}/202610`,
     `${AI_COST_LOG_COLLECTION}/r1`,
-    `${AI_CACHE_COLLECTION}/doc:abc:tasks-4`,
+    aiCacheDocPath("doc/tasks-4/abc"),
     AI_CONFIG_DOC_PATH,
   ];
 
@@ -146,6 +147,6 @@ describe("functions-only ai_* collections", () => {
   it("denies listing the cost log and the cache", async () => {
     const alice = testEnv.authenticatedContext("alice").firestore();
     await assertFails(getDocs(collection(alice, AI_COST_LOG_COLLECTION)));
-    await assertFails(getDocs(collection(alice, AI_CACHE_COLLECTION)));
+    await assertFails(getDocs(collection(alice, `${AI_CACHE_COLLECTION}/doc/tasks-4`)));
   });
 });

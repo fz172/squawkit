@@ -28,14 +28,20 @@ export class InMemoryPipelineCache implements PipelineCache {
   }
 }
 
+/**
+ * Keys are paths, `{stage}/{version}/{hash}`: in Firestore the stage is a document, the version a
+ * collection and the hash a document (collections.ts), so one version's entries can be deleted
+ * together once a bump strands them.
+ */
+
 /** Stage 2. The revision is inside the content, so the hash already tells revisions apart. */
 export function documentCacheKey(sha256: string): string {
-  return `doc:${sha256}:${GENERATION_VERSION}`;
+  return `doc/${GENERATION_VERSION}/${sha256}`;
 }
 
 /** Stage 3. `identityHash` is from identity.ts, which strips identifying specs first. */
 export function identityCacheKey(identityHash: string): string {
-  return `id:${identityHash}:${GENERATION_VERSION}`;
+  return `id/${GENERATION_VERSION}/${identityHash}`;
 }
 
 export type DocumentCacheEntry = ExtractOutput;
