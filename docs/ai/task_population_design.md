@@ -421,6 +421,31 @@ registered pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggest
 A crashed worker leaves a job RUNNING. Eligibility and `startAiJob` treat a RUNNING job older than
 35 minutes (the worker timeout plus margin) as FAILED (`stale`) and clear it.
 
+Implemented in `functions/src/ai/worker.ts` (T09):
+
+- **Pipelines** implement `run(request bytes, context) → { status, result bytes }` and an optional
+  `onFinished`, and are registered per kind with `registerPipeline`. `kinds.ts` holds what the
+  callables need per kind without loading pipelines: how to find the request's Thing, and whether
+  a success counts toward the daily limit.
+- **Claim first.** The worker moves the job QUEUED → RUNNING in a transaction; a duplicate delivery,
+  a job already failed as stale, or a job closed before it ran is a no-op (a closed job's input is
+  deleted). Queue retries are off: a run costs money each time, and a failed run is free to start
+  again.
+- **The re-check** asks again about the kill switch, membership, the owner's tier for documents and
+  spend, before any model call. Not the daily limit: the run itself holds the Thing.
+- **Cost before outcome.** Each `recordCall` writes one `ai_cost_log` record and increments
+  `ai_spend` in one batch; all of them settle before the outcome is written.
+- **The outcome transaction** writes status, result (base64) and error, clears `stage`, frees
+  `inFlightJob` if it still names the job, sets `lastSuccessAt` on a counted SUCCEEDED, and deletes
+  the input. A job closed mid-run has nothing to write, but the Thing is still freed.
+- **`AI_JOB_KIND_ECHO`** (100) is the developer round trip for this phase's exit: it takes a
+  `SuggestTasksRequest`, reports one stage and succeeds with the request's own bytes. No model call
+  and no spend, and it never counts toward the daily limit. It still needs the kill switch on.
+- **No provider secrets.** Production calls Gemini and Document AI on Vertex in this project through
+  the runtime service account's ADC, which `roles/editor` already covers, as it covers enqueuing to
+  Cloud Tasks. API keys exist only for the eval's direct channels. The Cloud Tasks API must be
+  enabled for the task-queue function to deploy.
+
 ### 5.3 Authorization
 
 In order, in a shared `authorizeAiCall(request, thingId, hostUid, withDocuments)`:

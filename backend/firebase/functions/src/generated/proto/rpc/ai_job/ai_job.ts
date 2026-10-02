@@ -13,6 +13,12 @@ export enum AiJobKind {
   AI_JOB_KIND_UNSPECIFIED = 0,
   /** AI_JOB_KIND_TASK_SUGGESTIONS - Request `SuggestTasksRequest`, result `SuggestTasksResult`. */
   AI_JOB_KIND_TASK_SUGGESTIONS = 1,
+  /**
+   * AI_JOB_KIND_ECHO - Developer round trip (design §15, phase A's exit): request `SuggestTasksRequest`, and the
+   * result is the request's own bytes. No model call, no spend, never counted against the daily
+   * limit. Far from the real kinds so it never sits among them.
+   */
+  AI_JOB_KIND_ECHO = 100,
   UNRECOGNIZED = -1,
 }
 
@@ -24,6 +30,9 @@ export function aiJobKindFromJSON(object: any): AiJobKind {
     case 1:
     case "AI_JOB_KIND_TASK_SUGGESTIONS":
       return AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS;
+    case 100:
+    case "AI_JOB_KIND_ECHO":
+      return AiJobKind.AI_JOB_KIND_ECHO;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -37,6 +46,8 @@ export function aiJobKindToJSON(object: AiJobKind): string {
       return "AI_JOB_KIND_UNSPECIFIED";
     case AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS:
       return "AI_JOB_KIND_TASK_SUGGESTIONS";
+    case AiJobKind.AI_JOB_KIND_ECHO:
+      return "AI_JOB_KIND_ECHO";
     case AiJobKind.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";

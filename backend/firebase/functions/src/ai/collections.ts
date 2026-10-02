@@ -2,7 +2,7 @@ import type { Timestamp } from "firebase-admin/firestore";
 
 import type { AiJobKind, AiJobStatus } from "../generated/proto/rpc/ai_job/ai_job.js";
 import type { AiErrorCode } from "./errors.js";
-import type { PipelineCallRecord, PipelineStage } from "./tasks/pipeline.js";
+import type { PipelineCallRecord } from "./tasks/pipeline.js";
 
 /**
  * The AI backend's Firestore collections (docs/ai/task_population_design.md §4.3). None is an
@@ -108,8 +108,8 @@ export type AiJobDoc = {
   hostUid: string;
   thingId: string;
   status: AiJobStatus;
-  /** The R19 progress text's key, null until the worker reports one. */
-  stage: PipelineStage | null;
+  /** The R19 progress text's key, as the kind's pipeline names it; null until it reports one. */
+  stage: string | null;
   /** The stage's argument, such as the document being read. */
   stageArg: string | null;
   createdAt: Timestamp;
@@ -172,7 +172,8 @@ export type AiSpendDoc = {
 export type AiCostLogDoc = {
   kind: AiJobKind;
   jobId: string;
-  stage: PipelineCallRecord["stage"];
+  /** The pipeline stage that made the call ("extract", "tailor", …). */
+  stage: string;
   provider: string;
   tier: PipelineCallRecord["tier"];
   ownerTier: AiOwnerTier;
