@@ -38,6 +38,7 @@ kotlin {
       implementation(project(":feature:ads:di"))
       implementation(project(":feature:attachment:di"))
       implementation(project(":feature:comments:datamanager"))
+      implementation(project(":feature:developeroptions:aiecho"))
       implementation(project(":feature:datalog:di"))
       implementation(project(":feature:export:di"))
       implementation(project(":feature:fleet:di"))

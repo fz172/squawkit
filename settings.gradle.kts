@@ -110,6 +110,7 @@ include(":feature:export:update")
 include(":feature:export:di")
 include(":feature:developeroptions:datamanager")
 include(":feature:developeroptions:plugin")
+include(":feature:developeroptions:aiecho")
 
 include(":feature:comments:model")
 include(":feature:comments:datamanager")
