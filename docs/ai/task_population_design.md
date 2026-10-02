@@ -801,6 +801,18 @@ For each released id it runs `blobsReferencedByLiveRecords(uid, acId, docId)`, a
 `after`, and deletes only unreferenced blobs; `trustworthy == false` deletes nothing, as today. The
 sweep is unchanged and remains the backstop.
 
+Built in T11 as `storage/onRecordBlobsReleased.ts`:
+
+- **Edges that release nothing:** a creation, an undelete, a write to a tombstone, and an edit
+  whose payload string is unchanged. That last one is the common case, a cheap string compare, so
+  the Thing's collections are scanned only when an attachment actually left.
+- **`after` needs no special counting.** An edit's released ids are, by definition, the ones
+  `after` no longer names, and a tombstone holds no claim.
+- **Either side of an edit that will not decode releases nothing**, as an undecodable delete
+  already did.
+- **Renaming the export is a delete-and-create on deploy.** A write in that window is not seen by
+  the trigger, and the daily sweep collects it after its grace period.
+
 **Old clients.** Builds before phase B still delete own-tree remote objects directly, which would
 destroy a shared document. `storage.rules` therefore denies client `delete` on
 `users/{uid}/thing/{thingId}/blobs/**` when phase D ships. An old client's `BlobDeleteDriver` then
