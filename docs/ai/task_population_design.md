@@ -214,11 +214,12 @@ backend/firebase/functions/eval/                        NEW evaluation harness (
 ```proto
 // task/task_origin.proto
 enum TaskOriginKind {
-  TASK_ORIGIN_KIND_UNSPECIFIED = 0;   // absent origin == made by hand; never written
+  TASK_ORIGIN_KIND_UNSPECIFIED = 0;   // never written; absent origin == written before origins existed
   TASK_ORIGIN_KIND_TEMPLATE_STARTER = 1;
   TASK_ORIGIN_KIND_AI_THING = 2;      // suggestion run with no documents
   TASK_ORIGIN_KIND_AI_DOCUMENT = 3;
   TASK_ORIGIN_KIND_AI_LOG_BACKFILL = 4; // phase F
+  TASK_ORIGIN_KIND_USER = 5;          // made by hand in the task form
 }
 
 enum TaskSourceKind {
@@ -241,8 +242,9 @@ message TaskOrigin {
 ```
 
 - `MaintenanceTask` gains `TaskOrigin origin = 16;`. Starter-pack accepts now also write
-  `TEMPLATE_STARTER` (cheap, and it lets analytics compare static vs AI survival). Existing and
-  hand-made tasks have no origin (PRD R34).
+  `TEMPLATE_STARTER` (cheap, and it lets analytics compare static vs AI survival), and a task
+  made by hand writes `USER`, so every new task says where it came from. Tasks written before
+  this field have no origin and are not backfilled (PRD R34).
 - `task_origin.proto` and `maintenance_task.proto` live in `proto/task/`, generating into
   `dev.fanfly.wingslog.task`. Neither declares a proto `package`, so the move changes source paths
   and Kotlin imports only: wire bytes and the stored `aircraft.MaintenanceTask` schema name are
@@ -1051,7 +1053,8 @@ dependency order.
 
 13. **Module move.** `feature/tasks/suggestions/{model,datamanager,update}` through the five-step
     new-module checklist; the starter pack moves in and its tests move with it; starter accepts
-    write `TEMPLATE_STARTER` origin (§3).
+    write `TEMPLATE_STARTER` origin, and creating a task in the task form writes `USER` (§3,
+    §4.1).
 14. **Worker wiring, no documents.** Register the task pipeline (stages 3–5) in the worker, with a
     worker test on the fake provider. R9, R15, R19, R21.
 15. **Data layer.** `SuggestionContextBuilder` (truncation, no PII by construction),

@@ -6,11 +6,11 @@ import "id/ids.proto";
 option java_package = "dev.fanfly.wingslog.task";
 option java_multiple_files = true;
 
-// Where a task came from, when it did not come from the user's own hands. Design
-// docs/ai/task_population_design.md §4.1.
+// Where a task came from. Design docs/ai/task_population_design.md §4.1.
 //
-// A task made by hand carries no origin at all, and neither does any task written before this
-// field existed (PRD R34): UNSPECIFIED is never written.
+// Every task written from now on carries one, a task made by hand included (USER). A task written
+// before this field existed has none and is not backfilled, so an absent origin means "unknown",
+// not "made by hand" (PRD R34). UNSPECIFIED is never written.
 enum TaskOriginKind {
     TASK_ORIGIN_KIND_UNSPECIFIED = 0;
     TASK_ORIGIN_KIND_TEMPLATE_STARTER = 1;
@@ -19,6 +19,8 @@ enum TaskOriginKind {
     TASK_ORIGIN_KIND_AI_DOCUMENT = 3;
     // #1181's backfill from the Thing's logs (phase F).
     TASK_ORIGIN_KIND_AI_LOG_BACKFILL = 4;
+    // Made by hand in the task form. Carries no source, citation or generation version.
+    TASK_ORIGIN_KIND_USER = 5;
 }
 
 // What a suggestion's interval rests on. Shared with the suggest_tasks RPC, which carries it on

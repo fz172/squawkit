@@ -117,7 +117,7 @@ message MaintenanceTask {
     // which could only ever mean engine hours (PRD §11.1), retired in #761.
     MeterReading force_due_meter = 15;
 
-    // Where the task came from. Absent on a task made by hand (PRD R34).
+    // Where the task came from. Absent only on a task written before the field existed (PRD R34).
     TaskOrigin origin = 16;
 
     reserved 6;

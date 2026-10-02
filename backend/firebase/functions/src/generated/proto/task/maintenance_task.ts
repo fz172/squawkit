@@ -165,7 +165,7 @@ export interface MaintenanceTask {
   forceDueMeter:
     | MeterReading
     | undefined;
-  /** Where the task came from. Absent on a task made by hand (PRD R34). */
+  /** Where the task came from. Absent only on a task written before the field existed (PRD R34). */
   origin: TaskOrigin | undefined;
 }
 

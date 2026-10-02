@@ -12,11 +12,11 @@ import { AttachmentId } from "../id/ids";
 export const protobufPackage = "";
 
 /**
- * Where a task came from, when it did not come from the user's own hands. Design
- * docs/ai/task_population_design.md §4.1.
+ * Where a task came from. Design docs/ai/task_population_design.md §4.1.
  *
- * A task made by hand carries no origin at all, and neither does any task written before this
- * field existed (PRD R34): UNSPECIFIED is never written.
+ * Every task written from now on carries one, a task made by hand included (USER). A task written
+ * before this field existed has none and is not backfilled, so an absent origin means "unknown",
+ * not "made by hand" (PRD R34). UNSPECIFIED is never written.
  */
 export enum TaskOriginKind {
   TASK_ORIGIN_KIND_UNSPECIFIED = 0,
@@ -26,6 +26,8 @@ export enum TaskOriginKind {
   TASK_ORIGIN_KIND_AI_DOCUMENT = 3,
   /** TASK_ORIGIN_KIND_AI_LOG_BACKFILL - #1181's backfill from the Thing's logs (phase F). */
   TASK_ORIGIN_KIND_AI_LOG_BACKFILL = 4,
+  /** TASK_ORIGIN_KIND_USER - Made by hand in the task form. Carries no source, citation or generation version. */
+  TASK_ORIGIN_KIND_USER = 5,
   UNRECOGNIZED = -1,
 }
 
@@ -46,6 +48,9 @@ export function taskOriginKindFromJSON(object: any): TaskOriginKind {
     case 4:
     case "TASK_ORIGIN_KIND_AI_LOG_BACKFILL":
       return TaskOriginKind.TASK_ORIGIN_KIND_AI_LOG_BACKFILL;
+    case 5:
+    case "TASK_ORIGIN_KIND_USER":
+      return TaskOriginKind.TASK_ORIGIN_KIND_USER;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -65,6 +70,8 @@ export function taskOriginKindToJSON(object: TaskOriginKind): string {
       return "TASK_ORIGIN_KIND_AI_DOCUMENT";
     case TaskOriginKind.TASK_ORIGIN_KIND_AI_LOG_BACKFILL:
       return "TASK_ORIGIN_KIND_AI_LOG_BACKFILL";
+    case TaskOriginKind.TASK_ORIGIN_KIND_USER:
+      return "TASK_ORIGIN_KIND_USER";
     case TaskOriginKind.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
