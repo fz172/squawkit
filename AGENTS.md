@@ -257,6 +257,16 @@ Conflict resolution is last-writer-wins on the Firestore server timestamp; dirty
 remote overwrite (no local clock in the ordering logic). Anonymous users are fully offline — the
 engine stays idle.
 
+### AI jobs (`core/ai`) — the other Firestore client
+
+`AiJobClient` (`core/ai`, docs/ai/task_population_design.md §7.1) is the app's one door to the AI
+backend: the `getAiEligibility` / `startAiJob` / `closeAiJob` callables and a listener on the
+signed-in user's own `ai_jobs/{uid}/job/{jobId}` documents. A job document is not an entity, so the
+sync engine never sees it, and feature managers reach it only through this client. Refusals arrive as
+`AiErrorCode`, read from the callable error's `details.code` (`core/firebase`'s
+`callableDetailsString`), never from the gRPC status. It depends on `core/firebase` and `core/model`
+and nothing in `feature/`, so every AI feature (#1181, #1183) shares it.
+
 ### Firestore + protobuf serialization
 
 Proto definitions live in `core/model/src/commonMain/proto/` and are also the input to the Cloud
@@ -337,13 +347,22 @@ three mechanisms above.
 ## Backend
 
 TypeScript Cloud Functions (Firebase Functions v2, Node 22) in `backend/firebase/functions/`, grouped
-by domain: `account/`, `export/`, `sharing/`, `storage/`, `subscription/`, with `shared/auth.ts`
+by domain: `account/`, `ai/`, `export/`, `sharing/`, `storage/`, `subscription/`, with `shared/auth.ts`
 enforcing authenticated + App Check callers and `config/` holding env and admin bootstrap. Protos are
 generated from `core/model` at build time into `src/generated/proto/`.
 
 Notable jobs beyond the callables: `scheduledStorageSweep` (orphaned-blob GC, armed),
 `scheduledEntitlementReconcile`, `revenueCatWebhook`, `onRecordDeleted` and `onAircraftDeleted`
 (cascade cleanup).
+
+`ai/` is the shared AI backend (docs/ai/task_population_design.md §5): the three job callables,
+`authorize.ts` (kill switch, membership, owner tier, daily limit, spend ceilings), and `runAiJob`,
+a Cloud Tasks worker that runs each job kind's registered pipeline (`worker.ts`, kinds in
+`kinds.ts`). Its Firestore collections are all `ai_*` and never entities (`collections.ts`).
+`ai_config/global` is the kill switch and provider choice, managed with `npm run ai-config`; a
+missing or malformed config reads as disabled. `AI_JOB_KIND_ECHO` round-trips a job with no model
+call, for developer testing. Models run on Vertex AI through the runtime service account, so there
+are no provider secrets.
 
 Tests are vitest running against the auth/firestore/storage emulators and cover functions **and**
 the Firestore/Storage rules (`test/firestore-rules.test.ts`, `test/storage-rules.test.ts`,
