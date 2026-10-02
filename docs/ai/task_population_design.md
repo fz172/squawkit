@@ -693,6 +693,20 @@ The Firebase implementation uses the shared `FirebaseFunctions` (as `FirebasePro
 does) and one Firestore snapshot listener on `ai_jobs`. `AiJobId` is a Kotlin value class around the
 backend's id. No caching: a job is short-lived and the doc is the state.
 
+As built (T10), two changes from the sketch above:
+
+- **`start` returns `AiStartResult`**, `Started(jobId, joined)` or `Refused(reason, nextAvailableAt)`,
+  rather than `Result<AiJobId>`: every refusal has a reason the screen shows, and `joined` tells the
+  VM it found its own run.
+- **Nothing throws.** `eligibility` answers a failure as not allowed, and `close` logs one. Reasons
+  are `AiErrorCode`, from the callable error's `details.code` through `core/firebase`'s
+  `callableDetailsString` (platform-specific: `details` is a `Map` on Android, an `NSDictionary` on
+  iOS, a plain object on the web). No code at all is `UNAVAILABLE` for a network-shaped failure and
+  `UNKNOWN` otherwise.
+
+The listeners follow `FirebaseAuth.authStateChanged`: jobs live under the signed-in uid, so signed
+out there is nothing to observe and both flows emit null.
+
 ### 7.2 `SuggestionContextBuilder`
 
 Reads through existing managers: `FleetManager.loadThing`, `TaskDataManager.observeTasks`,

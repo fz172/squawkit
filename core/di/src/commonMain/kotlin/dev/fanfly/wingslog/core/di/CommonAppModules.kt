@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.di
 
+import dev.fanfly.wingslog.core.ai.di.aiModule
 import dev.fanfly.wingslog.core.analytics.di.analyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.crash.di.crashModule
@@ -61,6 +62,8 @@ val commonAppModules: List<Module> = listOf(
   platformLifecycleModule,
   // The one Cloud Functions client. Ahead of every callable client that injects it.
   functionsModule,
+  // The AI backend client (docs/ai/task_population_design.md §7.1).
+  aiModule,
   authModule,
   storageModule,
   platformStorageModule,
