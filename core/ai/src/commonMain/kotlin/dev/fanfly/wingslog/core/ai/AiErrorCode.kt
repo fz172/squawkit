@@ -31,6 +31,7 @@ enum class AiErrorCode(val wire: String?) {
 
   companion object {
     fun fromWire(code: String?): AiErrorCode =
-      if (code == null) UNKNOWN else entries.firstOrNull { it.wire == code } ?: UNKNOWN
+      if (code == null) UNKNOWN else entries.firstOrNull { it.wire == code }
+        ?: UNKNOWN
   }
 }

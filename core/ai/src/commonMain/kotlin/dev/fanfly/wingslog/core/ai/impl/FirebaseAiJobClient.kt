@@ -55,17 +55,32 @@ class FirebaseAiJobClient(
     withDocuments: Boolean,
   ): AiEligibility = try {
     functions.httpsCallable(GET_ELIGIBILITY)
-      .invoke(EligibilityRequest(kind.value, thingId.value_, hostUid.value_, withDocuments))
+      .invoke(
+        EligibilityRequest(
+          kind.value,
+          thingId.value_,
+          hostUid.value_,
+          withDocuments
+        )
+      )
       .data<EligibilityResponse>()
       .toEligibility()
   } catch (e: CancellationException) {
     throw e
   } catch (e: Exception) {
     report(GET_ELIGIBILITY, e)
-    AiEligibility(allowed = false, reason = failureCode(e), documentsAllowed = false, nextAvailableAt = null)
+    AiEligibility(
+      allowed = false,
+      reason = failureCode(e),
+      documentsAllowed = false,
+      nextAvailableAt = null
+    )
   }
 
-  override suspend fun start(kind: AiJobKind, request: ByteString): AiStartResult = try {
+  override suspend fun start(
+    kind: AiJobKind,
+    request: ByteString
+  ): AiStartResult = try {
     val response = functions.httpsCallable(START)
       .invoke(StartRequest(kind.value, request.base64()))
       .data<StartResponse>()
@@ -74,26 +89,35 @@ class FirebaseAiJobClient(
     throw e
   } catch (e: Exception) {
     report(START, e)
-    AiStartResult.Refused(failureCode(e), e.callableDetailsString(NEXT_AVAILABLE_AT).toInstantOrNull())
+    AiStartResult.Refused(
+      failureCode(e),
+      e.callableDetailsString(NEXT_AVAILABLE_AT)
+        .toInstantOrNull()
+    )
   }
 
   override fun observe(jobId: AiJobId): Flow<AiJob?> = signedInUid { uid ->
     jobs(uid).document(jobId.value).snapshots.map { snap -> snap.toAiJobOrNull() }
   }
 
-  override fun observeLatest(kind: AiJobKind, thingId: ThingId): Flow<AiJob?> = signedInUid { uid ->
-    jobs(uid)
-      .where { THING_ID equalTo thingId.value_ }
-      .where { KIND equalTo kind.value }
-      .orderBy(CREATED_AT, Direction.DESCENDING)
-      .limit(1)
-      .snapshots
-      .map { snap -> snap.documents.firstOrNull()?.toAiJobOrNull() }
-  }
+  override fun observeLatest(kind: AiJobKind, thingId: ThingId): Flow<AiJob?> =
+    signedInUid { uid ->
+      jobs(uid)
+        .where { THING_ID equalTo thingId.value_ }
+        .where { KIND equalTo kind.value }
+        .orderBy(CREATED_AT, Direction.DESCENDING)
+        .limit(1)
+        .snapshots
+        .map { snap ->
+          snap.documents.firstOrNull()
+            ?.toAiJobOrNull()
+        }
+    }
 
   override suspend fun close(jobId: AiJobId) {
     try {
-      functions.httpsCallable(CLOSE).invoke(CloseRequest(jobId.value))
+      functions.httpsCallable(CLOSE)
+        .invoke(CloseRequest(jobId.value))
     } catch (e: CancellationException) {
       throw e
     } catch (e: Exception) {
@@ -102,7 +126,9 @@ class FirebaseAiJobClient(
     }
   }
 
-  private fun jobs(uid: String) = firestore.collection(AI_JOBS).document(uid).collection(JOB)
+  private fun jobs(uid: String) = firestore.collection(AI_JOBS)
+    .document(uid)
+    .collection(JOB)
 
   private fun signedInUid(listen: (String) -> Flow<AiJob?>): Flow<AiJob?> =
     auth.authStateChanged.flatMapLatest { user ->
@@ -115,13 +141,19 @@ class FirebaseAiJobClient(
 
   private fun DocumentSnapshot.toAiJobOrNull(): AiJob? {
     if (!exists) return null
-    return runCatching { data<JobDocFirestore>().toWire().toAiJob(id) }
+    return runCatching {
+      data<JobDocFirestore>().toWire()
+        .toAiJob(id)
+    }
       .onFailure { logger.w(it) { "AI job $id did not decode" } }
       .getOrNull()
   }
 
   private fun failureCode(e: Exception): AiErrorCode =
-    failureCodeOf(e.callableDetailsString(CODE), (e as? FirebaseFunctionsException)?.code?.name)
+    failureCodeOf(
+      e.callableDetailsString(CODE),
+      (e as? FirebaseFunctionsException)?.code?.name
+    )
 
   private fun report(callable: String, e: Exception) {
     // A refusal with a code is ordinary traffic; only a build the server would not accept, or a
@@ -172,8 +204,10 @@ internal data class JobDocFirestore(
     status = status,
     stage = stage,
     stageArg = stageArg,
-    createdAtMillis = createdAt?.toMilliseconds()?.toLong() ?: 0L,
-    updatedAtMillis = updatedAt?.toMilliseconds()?.toLong() ?: 0L,
+    createdAtMillis = createdAt?.toMilliseconds()
+      ?.toLong() ?: 0L,
+    updatedAtMillis = updatedAt?.toMilliseconds()
+      ?.toLong() ?: 0L,
     result = result,
     error = error,
   )

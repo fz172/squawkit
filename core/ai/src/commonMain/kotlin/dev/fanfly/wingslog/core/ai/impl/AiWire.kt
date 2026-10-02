@@ -38,13 +38,19 @@ internal data class EligibilityResponse(
 internal data class StartRequest(val kind: Int, val request: String)
 
 @Serializable
-internal data class StartResponse(val jobId: String = "", val joined: Boolean = false)
+internal data class StartResponse(
+  val jobId: String = "",
+  val joined: Boolean = false
+)
 
 @Serializable
 internal data class CloseRequest(val jobId: String)
 
 @Serializable
-internal data class JobErrorWire(val code: String = "", val detailKey: String = "")
+internal data class JobErrorWire(
+  val code: String = "",
+  val detailKey: String = ""
+)
 
 /**
  * `ai_jobs/{uid}/job/{jobId}`, minus `expiresAt` (TTL's business). Times are epoch milliseconds
@@ -94,10 +100,14 @@ internal fun String?.toInstantOrNull(): Instant? =
  * network-shaped one, is [AiErrorCode.UNAVAILABLE]; any other answer without a code is
  * [AiErrorCode.UNKNOWN]. The Android SDK folds network failures into INTERNAL.
  */
-internal fun failureCodeOf(detailsCode: String?, statusName: String?): AiErrorCode = when {
+internal fun failureCodeOf(
+  detailsCode: String?,
+  statusName: String?
+): AiErrorCode = when {
   detailsCode != null -> AiErrorCode.fromWire(detailsCode)
   statusName == null || statusName in NO_ANSWER_STATUSES -> AiErrorCode.UNAVAILABLE
   else -> AiErrorCode.UNKNOWN
 }
 
-private val NO_ANSWER_STATUSES = setOf("UNAVAILABLE", "DEADLINE_EXCEEDED", "INTERNAL")
+private val NO_ANSWER_STATUSES =
+  setOf("UNAVAILABLE", "DEADLINE_EXCEEDED", "INTERNAL")

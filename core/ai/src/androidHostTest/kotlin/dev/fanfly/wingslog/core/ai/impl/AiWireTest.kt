@@ -22,35 +22,89 @@ class AiWireTest {
     assertThat(serializer<EligibilityRequest>().descriptor.elementNames.toList())
       .containsExactly("kind", "thingId", "hostUid", "withDocuments")
     assertThat(serializer<EligibilityResponse>().descriptor.elementNames.toList())
-      .containsExactly("allowed", "reason", "documentsAllowed", "nextAvailableAt")
-    assertThat(serializer<StartRequest>().descriptor.elementNames.toList()).containsExactly("kind", "request")
-    assertThat(serializer<StartResponse>().descriptor.elementNames.toList()).containsExactly("jobId", "joined")
-    assertThat(serializer<CloseRequest>().descriptor.elementNames.toList()).containsExactly("jobId")
+      .containsExactly(
+        "allowed",
+        "reason",
+        "documentsAllowed",
+        "nextAvailableAt"
+      )
+    assertThat(serializer<StartRequest>().descriptor.elementNames.toList()).containsExactly(
+      "kind",
+      "request"
+    )
+    assertThat(serializer<StartResponse>().descriptor.elementNames.toList()).containsExactly(
+      "jobId",
+      "joined"
+    )
+    assertThat(serializer<CloseRequest>().descriptor.elementNames.toList()).containsExactly(
+      "jobId"
+    )
     assertThat(serializer<JobDocFirestore>().descriptor.elementNames.toList()).containsExactly(
-      "kind", "hostUid", "thingId", "status", "stage", "stageArg", "createdAt", "updatedAt", "result", "error",
+      "kind",
+      "hostUid",
+      "thingId",
+      "status",
+      "stage",
+      "stageArg",
+      "createdAt",
+      "updatedAt",
+      "result",
+      "error",
     )
   }
 
   @Test
   fun `every backend code maps both ways, and an unknown one reads as UNKNOWN`() {
     val backend = listOf(
-      "sign_in_required", "disabled", "not_member", "owner_not_pro", "daily_limit", "run_in_progress",
-      "spend_ceiling", "document_missing", "document_too_large", "document_unreadable",
-      "no_schedule_found", "provider_error", "invalid_output", "stale",
+      "sign_in_required",
+      "disabled",
+      "not_member",
+      "owner_not_pro",
+      "daily_limit",
+      "run_in_progress",
+      "spend_ceiling",
+      "document_missing",
+      "document_too_large",
+      "document_unreadable",
+      "no_schedule_found",
+      "provider_error",
+      "invalid_output",
+      "stale",
     )
     assertThat(backend.map { AiErrorCode.fromWire(it).wire }).isEqualTo(backend)
-    assertThat(AiErrorCode.fromWire("a_code_from_the_future")).isEqualTo(AiErrorCode.UNKNOWN)
+    assertThat(AiErrorCode.fromWire("a_code_from_the_future")).isEqualTo(
+      AiErrorCode.UNKNOWN
+    )
     assertThat(AiErrorCode.fromWire(null)).isEqualTo(AiErrorCode.UNKNOWN)
   }
 
   @Test
   fun `a refusal reads its code from details, and a failure without one by status`() {
-    assertThat(failureCodeOf("daily_limit", "RESOURCE_EXHAUSTED")).isEqualTo(AiErrorCode.DAILY_LIMIT)
-    assertThat(failureCodeOf("spend_ceiling", "RESOURCE_EXHAUSTED")).isEqualTo(AiErrorCode.SPEND_CEILING)
+    assertThat(failureCodeOf("daily_limit", "RESOURCE_EXHAUSTED")).isEqualTo(
+      AiErrorCode.DAILY_LIMIT
+    )
+    assertThat(failureCodeOf("spend_ceiling", "RESOURCE_EXHAUSTED")).isEqualTo(
+      AiErrorCode.SPEND_CEILING
+    )
     assertThat(failureCodeOf(null, null)).isEqualTo(AiErrorCode.UNAVAILABLE)
-    assertThat(failureCodeOf(null, "INTERNAL")).isEqualTo(AiErrorCode.UNAVAILABLE)
-    assertThat(failureCodeOf(null, "UNAUTHENTICATED")).isEqualTo(AiErrorCode.UNKNOWN)
-    assertThat(failureCodeOf(null, "INVALID_ARGUMENT")).isEqualTo(AiErrorCode.UNKNOWN)
+    assertThat(
+      failureCodeOf(
+        null,
+        "INTERNAL"
+      )
+    ).isEqualTo(AiErrorCode.UNAVAILABLE)
+    assertThat(
+      failureCodeOf(
+        null,
+        "UNAUTHENTICATED"
+      )
+    ).isEqualTo(AiErrorCode.UNKNOWN)
+    assertThat(
+      failureCodeOf(
+        null,
+        "INVALID_ARGUMENT"
+      )
+    ).isEqualTo(AiErrorCode.UNKNOWN)
   }
 
   @Test
@@ -65,7 +119,11 @@ class AiWireTest {
     assertThat(refused.documentsAllowed).isTrue()
     assertThat(refused.nextAvailableAt).isEqualTo(Instant.parse("2026-10-16T11:00:00Z"))
 
-    val allowed = EligibilityResponse(allowed = true, reason = "ignored", nextAvailableAt = "not a time")
+    val allowed = EligibilityResponse(
+      allowed = true,
+      reason = "ignored",
+      nextAvailableAt = "not a time"
+    )
       .toEligibility()
     assertThat(allowed.reason).isNull()
     assertThat(allowed.nextAvailableAt).isNull()
@@ -99,7 +157,11 @@ class AiWireTest {
 
   @Test
   fun `a failed job carries its code, and an unknown status or kind reads as null`() {
-    val job = JobDocWire(status = 77, kind = 55, error = JobErrorWire(code = "stale")).toAiJob("j2")
+    val job = JobDocWire(
+      status = 77,
+      kind = 55,
+      error = JobErrorWire(code = "stale")
+    ).toAiJob("j2")
     assertThat(job.status).isNull()
     assertThat(job.kind).isNull()
     assertThat(job.error).isEqualTo(AiErrorCode.STALE)

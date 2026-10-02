@@ -77,5 +77,6 @@ sealed interface AiStartResult {
   data class Started(val jobId: AiJobId, val joined: Boolean) : AiStartResult
 
   /** The server said no, and why. */
-  data class Refused(val reason: AiErrorCode, val nextAvailableAt: Instant?) : AiStartResult
+  data class Refused(val reason: AiErrorCode, val nextAvailableAt: Instant?) :
+    AiStartResult
 }
