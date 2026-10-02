@@ -1105,3 +1105,17 @@ feature/logs/update	delete_this_log_title	Delete this %1$s
 feature/thing/update	delete_this_thing_subtitle	Permanently removes it and every record filed under it.
 feature/thing/update	delete_this_thing_title	Delete this %1$s
 core/sharedassets	loading	Loading
+feature/developeroptions/aiecho	ai_echo_header	AI backend
+feature/developeroptions/aiecho	ai_echo_title	Echo round trip
+feature/developeroptions/aiecho	ai_echo_idle	Starts an echo job on your first Thing and checks it comes back unchanged
+feature/developeroptions/aiecho	ai_echo_run_action	Run
+feature/developeroptions/aiecho	ai_echo_step_starting	Starting…
+feature/developeroptions/aiecho	ai_echo_step_queued	Queued
+feature/developeroptions/aiecho	ai_echo_step_running	Running: %1$s
+feature/developeroptions/aiecho	ai_echo_step_closing	Closing…
+feature/developeroptions/aiecho	ai_echo_passed	Round trip OK in %1$s
+feature/developeroptions/aiecho	ai_echo_refused	Refused: %1$s
+feature/developeroptions/aiecho	ai_echo_failed	Failed: %1$s
+feature/developeroptions/aiecho	ai_echo_mismatch	Came back changed
+feature/developeroptions/aiecho	ai_echo_timed_out	No result after 2 minutes
+feature/developeroptions/aiecho	ai_echo_no_thing	Add a Thing first

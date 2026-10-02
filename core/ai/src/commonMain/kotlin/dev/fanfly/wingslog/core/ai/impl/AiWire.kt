@@ -97,8 +97,9 @@ internal fun String?.toInstantOrNull(): Instant? =
 /**
  * Why a callable failed. The backend's `details.code` when it sent one. Otherwise, by status name
  * (a String, as in CallableFailure.kt, so this is testable off-device): no status at all, or a
- * network-shaped one, is [AiErrorCode.UNAVAILABLE]; any other answer without a code is
- * [AiErrorCode.UNKNOWN]. The Android SDK folds network failures into INTERNAL.
+ * network-shaped one, is [AiErrorCode.UNAVAILABLE]; App Check's UNAUTHENTICATED is
+ * [AiErrorCode.APP_UNVERIFIED]; any other answer without a code is [AiErrorCode.UNKNOWN]. The
+ * Android SDK folds network failures into INTERNAL.
  */
 internal fun failureCodeOf(
   detailsCode: String?,
@@ -106,8 +107,12 @@ internal fun failureCodeOf(
 ): AiErrorCode = when {
   detailsCode != null -> AiErrorCode.fromWire(detailsCode)
   statusName == null || statusName in NO_ANSWER_STATUSES -> AiErrorCode.UNAVAILABLE
+  // A signed-in client only meets UNAUTHENTICATED from App Check: a guest gets a code.
+  statusName == UNAUTHENTICATED -> AiErrorCode.APP_UNVERIFIED
   else -> AiErrorCode.UNKNOWN
 }
 
 private val NO_ANSWER_STATUSES =
   setOf("UNAVAILABLE", "DEADLINE_EXCEEDED", "INTERNAL")
+
+private const val UNAUTHENTICATED = "UNAUTHENTICATED"

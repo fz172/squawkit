@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="ai_echo_header">AI backend</string>
+  <string name="ai_echo_title">Echo round trip</string>
+  <string name="ai_echo_idle">Starts an echo job on your first Thing and checks it comes back unchanged</string>
+  <string name="ai_echo_run_action">Run</string>
+  <string name="ai_echo_step_starting">Starting…</string>
+  <string name="ai_echo_step_queued">Queued</string>
+  <string name="ai_echo_step_running">Running: %1$s</string>
+  <string name="ai_echo_step_closing">Closing…</string>
+  <string name="ai_echo_passed">Round trip OK in %1$s</string>
+  <string name="ai_echo_refused">Refused: %1$s</string>
+  <string name="ai_echo_failed">Failed: %1$s</string>
+  <string name="ai_echo_mismatch">Came back changed</string>
+  <string name="ai_echo_timed_out">No result after 2 minutes</string>
+  <string name="ai_echo_no_thing">Add a Thing first</string>
+</resources>

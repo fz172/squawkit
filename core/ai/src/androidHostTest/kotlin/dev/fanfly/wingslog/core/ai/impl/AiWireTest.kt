@@ -98,7 +98,7 @@ class AiWireTest {
         null,
         "UNAUTHENTICATED"
       )
-    ).isEqualTo(AiErrorCode.UNKNOWN)
+    ).isEqualTo(AiErrorCode.APP_UNVERIFIED)
     assertThat(
       failureCodeOf(
         null,
