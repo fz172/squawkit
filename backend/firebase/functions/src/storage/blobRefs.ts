@@ -1,7 +1,7 @@
 import { Attachment, AttachmentType } from "../generated/proto/thing/attachment.js";
 import { DataLog } from "../generated/proto/datalog/data_log.js";
 import { MaintenanceLog } from "../generated/proto/thing/maintenance_log.js";
-import { MaintenanceTask } from "../generated/proto/thing/maintenance_task.js";
+import { MaintenanceTask } from "../generated/proto/task/maintenance_task.js";
 import { Squawk } from "../generated/proto/thing/squawk.js";
 
 /**

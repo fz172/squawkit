@@ -17,7 +17,7 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.task.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.remove
 import wingslog.feature.tasks.sharedassets.generated.resources.Res

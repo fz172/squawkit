@@ -15,13 +15,36 @@ option java_multiple_files = true;
 // with more than `value`.
 
 message ThingId {
-  string value = 1;
+    string value = 1;
 }
 
 message DataLogId {
-  string value = 1;
+    string value = 1;
 }
 
 message UserId {
-  string value = 1;
+    string value = 1;
+}
+
+// An `Attachment.id`, which is also its blob id. `Attachment.id` itself stays a bare string.
+message AttachmentId {
+    string value = 1;
+}
+
+message MaintenanceTaskId {
+    string value = 1;
+}
+
+message MaintenanceLogId {
+    string value = 1;
+}
+
+// `ThingTemplate.id`, the same across a template's versions.
+message TemplateId {
+    string value = 1;
+}
+
+// One suggestion within one AI run; not stored once the run closes.
+message SuggestionId {
+    string value = 1;
 }

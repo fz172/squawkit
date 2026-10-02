@@ -13,7 +13,7 @@ import dev.fanfly.wingslog.feature.tasks.update.abbreviationFirstLabel
 import dev.fanfly.wingslog.feature.tasks.update.form.IdentityRadioItem
 import dev.fanfly.wingslog.feature.tasks.update.form.IdentitySection
 import dev.fanfly.wingslog.feature.tasks.update.form.taskLockedReason
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.compliance_ad_sub

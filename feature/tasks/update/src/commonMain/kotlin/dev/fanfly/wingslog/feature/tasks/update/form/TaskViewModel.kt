@@ -31,12 +31,12 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.ScheduleState
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.ForceCompliedStatus
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.ForceCompliedStatus
-import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

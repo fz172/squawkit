@@ -264,8 +264,9 @@ which case it is the first follow-up; **P2** is designed for, not built.
   - the source attachment id and page or section;
   - the generation version (prompt and model).
 
-  New id fields use boxed id messages (`id/ids.proto`). Existing and hand-made tasks have no origin
-  and render as they do today, with no backfill.
+  New id fields use boxed id messages (`id/ids.proto`). A task made by hand is written with the
+  manual (`USER`) kind. Tasks that already exist have no origin and render as they do today, with
+  no backfill.
 - **R35 (P0).** Task detail shows the origin as one quiet line ("From Rotax 915 iS MM · p. 5-12",
   "Suggested · Common practice"). Editing a task keeps its origin, and the edit is counted for
   analytics (R50).

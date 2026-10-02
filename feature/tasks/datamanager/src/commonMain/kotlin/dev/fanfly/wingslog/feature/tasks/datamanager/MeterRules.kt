@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager
 
 import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.InspectionRule
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
 
 /**

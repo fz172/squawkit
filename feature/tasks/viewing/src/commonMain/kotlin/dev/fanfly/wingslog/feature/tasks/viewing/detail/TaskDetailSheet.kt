@@ -28,8 +28,8 @@ import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_ad_short

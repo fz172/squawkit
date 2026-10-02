@@ -21,8 +21,8 @@ import dev.fanfly.wingslog.core.ui.sheet.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.tasks.update.pluralLabel
-import dev.fanfly.wingslog.thing.ComplianceType
-import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.tasks.update.generated.resources.Res

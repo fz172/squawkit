@@ -1,12 +1,11 @@
 package dev.fanfly.wingslog.core.storage.blob
 
 import dev.fanfly.wingslog.core.storage.CollectionKind
-import dev.fanfly.wingslog.core.storage.blob.AttachmentRefs.of
 import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 
 /**

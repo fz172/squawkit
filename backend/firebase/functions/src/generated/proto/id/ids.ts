@@ -21,6 +21,29 @@ export interface UserId {
   value: string;
 }
 
+/** An `Attachment.id`, which is also its blob id. `Attachment.id` itself stays a bare string. */
+export interface AttachmentId {
+  value: string;
+}
+
+export interface MaintenanceTaskId {
+  value: string;
+}
+
+export interface MaintenanceLogId {
+  value: string;
+}
+
+/** `ThingTemplate.id`, the same across a template's versions. */
+export interface TemplateId {
+  value: string;
+}
+
+/** One suggestion within one AI run; not stored once the run closes. */
+export interface SuggestionId {
+  value: string;
+}
+
 function createBaseThingId(): ThingId {
   return { value: "" };
 }
@@ -190,6 +213,296 @@ export const UserId: MessageFns<UserId> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserId>, I>>(object: I): UserId {
     const message = createBaseUserId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseAttachmentId(): AttachmentId {
+  return { value: "" };
+}
+
+export const AttachmentId: MessageFns<AttachmentId> = {
+  encode(message: AttachmentId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AttachmentId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAttachmentId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AttachmentId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: AttachmentId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AttachmentId>, I>>(base?: I): AttachmentId {
+    return AttachmentId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AttachmentId>, I>>(object: I): AttachmentId {
+    const message = createBaseAttachmentId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseMaintenanceTaskId(): MaintenanceTaskId {
+  return { value: "" };
+}
+
+export const MaintenanceTaskId: MessageFns<MaintenanceTaskId> = {
+  encode(message: MaintenanceTaskId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MaintenanceTaskId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMaintenanceTaskId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MaintenanceTaskId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: MaintenanceTaskId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MaintenanceTaskId>, I>>(base?: I): MaintenanceTaskId {
+    return MaintenanceTaskId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MaintenanceTaskId>, I>>(object: I): MaintenanceTaskId {
+    const message = createBaseMaintenanceTaskId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseMaintenanceLogId(): MaintenanceLogId {
+  return { value: "" };
+}
+
+export const MaintenanceLogId: MessageFns<MaintenanceLogId> = {
+  encode(message: MaintenanceLogId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MaintenanceLogId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMaintenanceLogId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MaintenanceLogId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: MaintenanceLogId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MaintenanceLogId>, I>>(base?: I): MaintenanceLogId {
+    return MaintenanceLogId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MaintenanceLogId>, I>>(object: I): MaintenanceLogId {
+    const message = createBaseMaintenanceLogId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseTemplateId(): TemplateId {
+  return { value: "" };
+}
+
+export const TemplateId: MessageFns<TemplateId> = {
+  encode(message: TemplateId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TemplateId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTemplateId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TemplateId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: TemplateId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TemplateId>, I>>(base?: I): TemplateId {
+    return TemplateId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TemplateId>, I>>(object: I): TemplateId {
+    const message = createBaseTemplateId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseSuggestionId(): SuggestionId {
+  return { value: "" };
+}
+
+export const SuggestionId: MessageFns<SuggestionId> = {
+  encode(message: SuggestionId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SuggestionId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuggestionId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SuggestionId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: SuggestionId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SuggestionId>, I>>(base?: I): SuggestionId {
+    return SuggestionId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SuggestionId>, I>>(object: I): SuggestionId {
+    const message = createBaseSuggestionId();
     message.value = object.value ?? "";
     return message;
   },

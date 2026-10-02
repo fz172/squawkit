@@ -4,13 +4,13 @@ import com.squareup.wire.Instant
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
-import dev.fanfly.wingslog.thing.ImmediateRule
-import dev.fanfly.wingslog.thing.InspectionRule
-import dev.fanfly.wingslog.thing.LinkedRule
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.MeterRule
-import dev.fanfly.wingslog.thing.SeasonalRule
-import dev.fanfly.wingslog.thing.TimeRule
+import dev.fanfly.wingslog.task.ImmediateRule
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.LinkedRule
+import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.MeterRule
+import dev.fanfly.wingslog.task.SeasonalRule
+import dev.fanfly.wingslog.task.TimeRule
 import kotlin.time.Clock
 
 /**

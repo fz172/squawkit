@@ -4,9 +4,9 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.toDueDate
 import dev.fanfly.wingslog.feature.tasks.datamanager.toPickerMillis
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.ScheduleState
-import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceTask
 
 /**
  * WIP values for the add/edit task form. Held in the ViewModel (not composable `remember`) so the

@@ -2,14 +2,15 @@
 // versions:
 //   protoc-gen-ts_proto  v2.11.8
 //   protoc               v3.19.1
-// source: thing/maintenance_task.proto
+// source: task/maintenance_task.proto
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../google/protobuf/timestamp";
-import { Attachment } from "./attachment";
-import { ComponentType, componentTypeFromJSON, componentTypeToJSON } from "./component_type";
-import { MeterReading } from "./meter_reading";
+import { Attachment } from "../thing/attachment";
+import { ComponentType, componentTypeFromJSON, componentTypeToJSON } from "../thing/component_type";
+import { MeterReading } from "../thing/meter_reading";
+import { TaskOrigin } from "./task_origin";
 
 export const protobufPackage = "";
 
@@ -161,7 +162,11 @@ export interface MaintenanceTask {
    * The meter reading this task is forced due at, keyed. Replaced `force_due_engine_hour` (6),
    * which could only ever mean engine hours (PRD §11.1), retired in #761.
    */
-  forceDueMeter: MeterReading | undefined;
+  forceDueMeter:
+    | MeterReading
+    | undefined;
+  /** Where the task came from. Absent only on a task written before the field existed (PRD R34). */
+  origin: TaskOrigin | undefined;
 }
 
 function createBaseTimeRule(): TimeRule {
@@ -930,6 +935,7 @@ function createBaseMaintenanceTask(): MaintenanceTask {
     attachments: [],
     forceCompliedStatus: undefined,
     forceDueMeter: undefined,
+    origin: undefined,
   };
 }
 
@@ -976,6 +982,9 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
     }
     if (message.forceDueMeter !== undefined) {
       MeterReading.encode(message.forceDueMeter, writer.uint32(122).fork()).join();
+    }
+    if (message.origin !== undefined) {
+      TaskOrigin.encode(message.origin, writer.uint32(130).fork()).join();
     }
     return writer;
   },
@@ -1099,6 +1108,14 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
           message.forceDueMeter = MeterReading.decode(reader, reader.uint32());
           continue;
         }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.origin = TaskOrigin.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1154,6 +1171,7 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
         : isSet(object.force_due_meter)
         ? MeterReading.fromJSON(object.force_due_meter)
         : undefined,
+      origin: isSet(object.origin) ? TaskOrigin.fromJSON(object.origin) : undefined,
     };
   },
 
@@ -1201,6 +1219,9 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
     if (message.forceDueMeter !== undefined) {
       obj.forceDueMeter = MeterReading.toJSON(message.forceDueMeter);
     }
+    if (message.origin !== undefined) {
+      obj.origin = TaskOrigin.toJSON(message.origin);
+    }
     return obj;
   },
 
@@ -1226,6 +1247,9 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
       : undefined;
     message.forceDueMeter = (object.forceDueMeter !== undefined && object.forceDueMeter !== null)
       ? MeterReading.fromPartial(object.forceDueMeter)
+      : undefined;
+    message.origin = (object.origin !== undefined && object.origin !== null)
+      ? TaskOrigin.fromPartial(object.origin)
       : undefined;
     return message;
   },

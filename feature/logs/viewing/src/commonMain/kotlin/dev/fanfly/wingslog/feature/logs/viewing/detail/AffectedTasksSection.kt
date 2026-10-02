@@ -21,8 +21,8 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.viewing.generated.resources.affected_maintenance_tasks
 import wingslog.feature.logs.viewing.generated.resources.no_tasks_linked

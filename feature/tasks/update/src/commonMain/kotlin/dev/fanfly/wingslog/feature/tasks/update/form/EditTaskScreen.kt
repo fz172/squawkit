@@ -62,8 +62,8 @@ import dev.fanfly.wingslog.feature.tasks.update.form.identity.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource

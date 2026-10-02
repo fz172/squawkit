@@ -17,7 +17,7 @@ import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.ui.form.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.update.form.LogSection
-import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource

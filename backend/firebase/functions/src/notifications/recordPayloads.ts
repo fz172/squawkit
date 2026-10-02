@@ -3,7 +3,7 @@ import { logger } from "firebase-functions/v2";
 import { Thing } from "../generated/proto/thing/thing.js";
 import { MaintenanceLog } from "../generated/proto/thing/maintenance_log.js";
 import { DataLog } from "../generated/proto/datalog/data_log.js";
-import { MaintenanceTask } from "../generated/proto/thing/maintenance_task.js";
+import { MaintenanceTask } from "../generated/proto/task/maintenance_task.js";
 import { Squawk, SquawkDismissReason, SquawkPriority } from "../generated/proto/thing/squawk.js";
 import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
 import { RECORD_TYPE, type RecordType } from "./notificationModels.js";
