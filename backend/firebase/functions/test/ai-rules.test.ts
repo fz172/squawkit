@@ -105,6 +105,15 @@ describe("ai_jobs/{callerUid}/job/{jobId} rules", () => {
     await assertFails(getDocs(collection(alice, aiJobsCollectionPath("bob"))));
   });
 
+  it("denies the caller their own job's input, which holds the Thing's logs", async () => {
+    await seed(aiJobDocPath("alice", "j1"), job());
+    await seed(aiJobInputDocPath("alice", "j1"), { request: "base64" });
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(alice, aiJobInputDocPath("alice", "j1"))));
+    await assertFails(setDoc(doc(alice, aiJobInputDocPath("alice", "j1")), { request: "x" }));
+    await assertFails(getDocs(collection(alice, `${aiJobDocPath("alice", "j1")}/input`)));
+  });
+
   it("denies the caller creating, updating or deleting a job", async () => {
     await seed(aiJobDocPath("alice", "j1"), job());
     const alice = testEnv.authenticatedContext("alice").firestore();

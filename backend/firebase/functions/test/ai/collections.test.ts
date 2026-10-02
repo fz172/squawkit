@@ -12,7 +12,7 @@ import {
 describe("ai collection paths", () => {
   it("keeps a job and its input under the caller", () => {
     expect(aiJobDocPath("alice", "j1")).toBe("ai_jobs/alice/job/j1");
-    expect(aiJobInputDocPath("alice", "j1")).toBe("ai_job_inputs/alice/input/j1");
+    expect(aiJobInputDocPath("alice", "j1")).toBe("ai_jobs/alice/job/j1/input/request");
   });
 
   it("keys usage by the Thing's tree, since a Thing id is unique only within one", () => {

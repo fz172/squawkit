@@ -79,7 +79,7 @@ flowchart TB
   subgraph Data["Firebase data"]
     direction LR
     Jobs[("ai_jobs/jobId<br/>status · stage · result")]
-    AiColl[("Backend-only<br/>ai_job_inputs · ai_usage · ai_spend<br/>ai_cost_log · ai_cache · ai_config")]
+    AiColl[("Backend-only<br/>ai_usage · ai_spend<br/>ai_cost_log · ai_cache · ai_config")]
     ACL[("shares · subscriptions")]
     Entities[("Entity docs<br/>tasks gain TaskOrigin")]
     GCS[("Cloud Storage")]
@@ -337,7 +337,7 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 | Path                           | Written by | Read by                          | Contents                                                                                                                                  | Lifetime                                                    |
 |--------------------------------|------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
 | `ai_jobs/{callerUid}/job/{jobId}` | functions  | caller (path uid == auth.uid) | kind, hostUid, thingId, status, stage, stageArg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error {code, detailKey} | TTL on `expiresAt` (24 h, R19); deleted on close            |
-| `ai_job_inputs/{callerUid}/input/{jobId}` | functions  | functions                        | kind, base64 `SuggestTasksRequest`, createdAt, expiresAt                                                                                  | deleted by the worker when it finishes (no retention, §5.8); TTL on `expiresAt` (24 h) as a backstop |
+| `ai_jobs/{callerUid}/job/{jobId}/input/request` | functions  | functions                        | kind, base64 `SuggestTasksRequest`, createdAt, expiresAt                                                                                  | deleted by the worker when it finishes (no retention, §5.8); TTL on `expiresAt` (24 h) as a backstop |
 | `ai_usage/{hostUid}/thing/{thingId}` | functions  | functions                  | `lastSuccessAt`, `inFlightJob {callerUid, jobId}`                                                                                                        | permanent, tiny                                             |
 | `ai_spend/{yyyymm}`            | functions  | functions                        | `freeMicros`, `proMicros` (by owner tier), updatedAt; the month is UTC                                                                    | permanent                                                   |
 | `ai_cost_log/{autoId}`         | functions  | team                             | per-call cost record (§5.6), no uid                                                                                                       | TTL on `expiresAt` (13 × 31 days)                           |
@@ -346,11 +346,15 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 
 - **Enums are numbers.** `kind` and `status` hold the `AiJobKind` / `AiJobStatus` numbers, which the
   client reads with Wire's `fromValue`; a value it does not know reads as null, not as a wrong state.
-- **Owners are path segments, not fields.** A job and its input live under the caller's uid and
-  usage under the Thing's tree, as `thing_shares/{hostUid}/thing/{thingId}` does. The rule then reads
-  only the path, a caller lists its own jobs with no filter to forget, and no field can disagree
-  with where the document lives. `inFlightJob` names the caller too, because the run in flight may
-  be another share member's.
+- **Owners are path segments, not fields.** A job lives under the caller's uid and usage under
+  the Thing's tree, as `thing_shares/{hostUid}/thing/{thingId}` does. The rule then reads only the
+  path, a caller lists its own jobs with no filter to forget, and no field can disagree with where
+  the document lives. `inFlightJob` names the caller too, because the run in flight may be another
+  share member's.
+- **The input sits under its job**, in a document of its own: the rules keep it from the caller
+  who can read the job, and the job's listener never downloads it. Firestore never deletes a
+  subcollection with its parent, by TTL or by delete, so `closeAiJob` deletes both and the input
+  keeps its own TTL as a backstop.
 - **Subcollection ids are collection groups.** TTL policies and composite indexes apply to every
   collection with that id in the database, so `job` and `input` are reserved for these.
 - **Rules.** A job is read-only to its caller, and the rule is total: a closed or expired job reads
@@ -373,7 +377,7 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 |-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `getAiEligibility({kind, thingId, hostUid, withDocuments})` | Auth checks (§5.3), then returns `{allowed, reason, documentsAllowed, nextAvailableAt}`; `reason` is `run_in_progress` while another caller's run is in flight (R19a). Called when an entry point opens so the UI can show the right gate before any upload. Cheap; no model call.                     |
 | `startAiJob({kind, request})`                               | Same checks, then in one transaction: if `ai_usage.inFlightJob` is QUEUED/RUNNING, return it when the caller started it (idempotent join) or fail with `run_in_progress` when someone else did; else write the job's input and the job (QUEUED) under the caller and set `inFlightJob`. Returns `{jobId}`. |
-| `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc (accept, dismiss). Idempotent.                                                                                                                                                                                                                                        |
+| `closeAiJob({jobId})`                                       | Caller-only. Deletes the job doc and its input (accept, dismiss). Idempotent.                                                                                                                                                                                                                                        |
 
 `request` is the kind's own proto, base64, capped at 512 KiB (Firestore's 1 MiB doc limit with
 headroom); the client builder truncates logs first (§7.2).
@@ -477,7 +481,7 @@ maps each to one string (PRD R21) and one analytics reason (R50).
 
 ### 5.8 Retention
 
-Inputs are deleted when the worker finishes (`ai_job_inputs`); results expire in 24 h or on close;
+Inputs are deleted when the worker finishes (the job's `input/request`); results expire in 24 h or on close;
 documents are the user's own blobs and are never copied. Provider-side retention is the PRD's open
 question and must be settled before phase C.
 

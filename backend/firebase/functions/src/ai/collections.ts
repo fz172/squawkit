@@ -15,17 +15,18 @@ import type { PipelineCallRecord, PipelineStage } from "./tasks/pipeline.js";
  */
 
 export const AI_JOBS_COLLECTION = "ai_jobs";
-export const AI_JOB_INPUTS_COLLECTION = "ai_job_inputs";
 export const AI_USAGE_COLLECTION = "ai_usage";
 
 /**
- * Subcollection ids under the owning uid. A TTL policy and a composite index apply to every
- * collection with the same id in the database, so `job` and `input` must not be reused elsewhere:
- * firestore.indexes.json names them as collection groups. `thing` carries neither, and matches
+ * Subcollection ids. A TTL policy and a composite index apply to every collection with the same id
+ * in the database, so `job` and `input` must not be reused elsewhere: firestore.indexes.json names
+ * them as collection groups. `thing` carries neither, and matches
  * `thing_shares/{hostUid}/thing/{thingId}`.
  */
 export const AI_JOB_SUBCOLLECTION = "job";
+/** Under a job. Its one document is AI_JOB_INPUT_DOC. */
 export const AI_JOB_INPUT_SUBCOLLECTION = "input";
+export const AI_JOB_INPUT_DOC = "request";
 export const AI_USAGE_THING_SUBCOLLECTION = "thing";
 export const AI_SPEND_COLLECTION = "ai_spend";
 export const AI_COST_LOG_COLLECTION = "ai_cost_log";
@@ -37,8 +38,9 @@ export const AI_CONFIG_GLOBAL_DOC = "global";
 export const AI_JOB_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
- * A backstop only: the worker deletes a job's input when it finishes (design §5.8). This catches
- * a job whose worker never ran, so a request with the Thing's logs in it cannot outlive its job.
+ * A backstop only: the worker deletes a job's input when it finishes (design §5.8). Firestore never
+ * deletes a subcollection with its parent, by TTL or otherwise, so without this a job whose worker
+ * never ran would leave the Thing's logs behind it.
  */
 export const AI_JOB_INPUT_TTL_MS = AI_JOB_TTL_MS;
 
@@ -60,8 +62,12 @@ export function aiJobDocPath(callerUid: string, jobId: string): string {
   return `${aiJobsCollectionPath(callerUid)}/${jobId}`;
 }
 
+/**
+ * The job's request, under the job but in a document of its own: the rules keep it from the caller
+ * who can read the job, and the job's listener never downloads it.
+ */
 export function aiJobInputDocPath(callerUid: string, jobId: string): string {
-  return `${AI_JOB_INPUTS_COLLECTION}/${callerUid}/${AI_JOB_INPUT_SUBCOLLECTION}/${jobId}`;
+  return `${aiJobDocPath(callerUid, jobId)}/${AI_JOB_INPUT_SUBCOLLECTION}/${AI_JOB_INPUT_DOC}`;
 }
 
 /** One usage document per Thing, under its tree: a Thing id is unique only within one. */
@@ -120,8 +126,8 @@ export type AiJobErrorDoc = {
 };
 
 /**
- * `ai_job_inputs/{callerUid}/input/{jobId}`, beside its job. Functions only; deleted by the worker
- * when it finishes.
+ * `ai_jobs/{callerUid}/job/{jobId}/input/request`. Functions only; deleted by the worker when it
+ * finishes, and with the job when it closes.
  */
 export type AiJobInputDoc = {
   kind: AiJobKind;

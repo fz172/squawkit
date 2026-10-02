@@ -193,14 +193,17 @@ service cloud.firestore {
     match /ai_jobs/{callerUid}/job/{jobId} {
       allow read: if request.auth != null && request.auth.uid == callerUid;
       allow write: if false; // functions only
+
+      // The job's request, which holds the Thing's logs. The grant above stops at the job
+      // document; this says outright that it does not reach the input.
+      match /input/{inputId} {
+        allow read, write: if false; // functions only
+      }
     }
 
-    // Everything else is server bookkeeping. The request holds the Thing's logs (ai_job_inputs);
-    // the usage and spend documents are the limits themselves, which a writable copy would reset;
-    // the cost log and the cache are shared across every user; the config is the kill switch.
-    match /ai_job_inputs/{callerUid}/input/{jobId} {
-      allow read, write: if false; // functions only
-    }
+    // Everything else is server bookkeeping. The usage and spend documents are the limits
+    // themselves, which a writable copy would reset; the cost log and the cache are shared across
+    // every user; the config is the kill switch.
     match /ai_usage/{hostUid}/thing/{thingId} {
       allow read, write: if false; // functions only
     }
