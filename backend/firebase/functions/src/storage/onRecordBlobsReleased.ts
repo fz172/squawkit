@@ -27,50 +27,60 @@ type SyncDocWire = {
 };
 
 /**
- * Deleting a record deletes its attachments (#158).
+ * A record that lets go of a blob frees it (#158; docs/ai/task_population_design.md §8.3).
  *
- * Until now it did not: `deleteLog()` tombstoned the row and the photos it carried stayed in Storage
- * forever. Two costs — bytes we pay for indefinitely, and a user who deleted a photo of a damaged
- * part had not actually deleted it.
+ * Two edges release blobs:
+ *   - **live → deleted.** The tombstoned payload is retained on delete, precisely so it can still be
+ *     read, and every blob it names is released. Until #158 nothing did this: `deleteLog()`
+ *     tombstoned the row and its photos stayed in Storage forever.
+ *   - **live → live, with an attachment removed** (phase B). The released ids are those the payload
+ *     named before and no longer names. Until now this edge was left to the daily sweep, after its
+ *     grace period. With reference-aware release on the client (T12), the device no longer deletes
+ *     remote objects itself, so this is the prompt collection for an edit.
  *
- * Fires on the `deleted: false → true` edge, decodes the tombstoned payload (retained on delete,
- * precisely so it can still be read), and collects the blobs it names.
+ * A released blob is deleted only if no OTHER live record under the Thing still names it: since
+ * phase B one document can sit on several tasks (an AI suggestion's source manual), and a copy can
+ * put one id on two records. Anything that will not decode deletes nothing, as before.
  *
- * The client is not asked to cooperate. It could have stamped the blob ids onto the tombstone, but
- * then cleanup would depend on the deleting client being new enough to have done so, would miss
- * every record deleted before the field existed, and would introduce a second source of truth that
- * can drift from the payload it describes — and a drifted list either leaks bytes or deletes a photo
- * a live record still shows. See docs/storage/deletion_gc_design.html §4.
+ * The client is not asked to cooperate. It could have stamped the blob ids onto the record, but
+ * then cleanup would depend on the writing client being new enough to have done so, would miss
+ * every record written before the field existed, and would introduce a second source of truth that
+ * can drift from the payload it describes. See docs/storage/deletion_gc_design.html §4.
  *
  * [segment] is the entity path segment the event fired for — every path this handler builds must
  * stay in that same tree (see config/entitySegment.ts).
  */
-const handleRecordDeleted =
+const handleBlobsReleased =
   (segment: EntitySegment) =>
   async (event: FirestoreEvent<Change<DocumentSnapshot> | undefined, Record<string, string>>) => {
     const after = event.data?.after;
     if (after == null || !after.exists) return; // hard-deleted; nothing left to read
-
     const before = event.data?.before;
-    const wasDeleted = before?.exists === true && (before.data() as SyncDocWire)?.deleted === true;
-    const doc = after.data() as SyncDocWire;
-    if (doc?.deleted !== true || wasDeleted) return; // only the false → true edge
+    // A creation releases nothing, and neither does any write to a record already tombstoned
+    // (a repeated tombstone, or an undelete): the false → true edge already released its blobs.
+    if (before == null || !before.exists) return;
+    const prev = before.data() as SyncDocWire;
+    if (prev?.deleted === true) return;
 
+    const next = after.data() as SyncDocWire;
     const { uid, acId, docId } = event.params;
-    const schema = doc.schema ?? "";
-    if (!schemaCanOwnBlobs(schema) || doc.payload == null) return;
+    const schema = next?.schema ?? "";
+    if (!schemaCanOwnBlobs(schema)) return;
 
-    const owned = blobIdsInPayload(schema, doc.payload);
-    if (owned == null) {
+    const edge = next.deleted === true ? "deleted" : "edited";
+    const released = releasedBlobIds(edge, prev, next, schema);
+    if (released == null) {
       // Unreadable. Deleting nothing is the only safe answer: a payload we cannot decode is
-      // indistinguishable from one that owns every blob in the aircraft.
-      logger.error("Could not decode a deleted record; skipping blob cleanup", {
-        uid, acId, docId, schema,
+      // indistinguishable from one that owns every blob in the Thing.
+      logger.error("Could not decode a record that released blobs; skipping", {
+        uid, acId, docId, schema, edge,
       });
       return;
     }
-    if (owned.length === 0) return;
+    if (released.length === 0) return;
 
+    // `after` is excluded from the scan, but it cannot hold a released id: an edit's released ids
+    // are by definition the ones it no longer names, and a tombstone holds no claim.
     const live = await blobsReferencedByLiveRecords(uid, acId, docId, segment);
     if (!live.trustworthy) {
       // A live record would not decode, so we cannot know what it still holds. Collect nothing this
@@ -79,17 +89,14 @@ const handleRecordDeleted =
       return;
     }
 
-    // Never delete a blob a LIVE record still shows. Attachment ids are per-attachment, but a copy
-    // or duplicate feature can put the same id on two records, and deleting a photo another log
-    // still displays is not recoverable.
-    const collectable = owned.filter((id) => !live.referenced.has(id));
+    const collectable = released.filter((id) => !live.referenced.has(id));
     if (collectable.length === 0) return;
 
     await Promise.all(
       collectable.map(async (blobId) => {
         const path = entityBlobPath(uid, acId, blobId, segment);
         try {
-          // ignoreNotFound makes this idempotent: the trigger may re-run, and the aircraft-delete
+          // ignoreNotFound makes this idempotent: the trigger may re-run, and the Thing-delete
           // prefix sweep may have got there first.
           await adminStorage.bucket().file(path).delete({ ignoreNotFound: true });
         } catch (e) {
@@ -98,22 +105,46 @@ const handleRecordDeleted =
       }),
     );
 
-    logger.info("Collected blobs for a deleted record", {
-      uid, acId, docId, schema, count: collectable.length,
-    });
+    logger.info("Collected released blobs", { uid, acId, docId, schema, edge, count: collectable.length });
   };
+
+/**
+ * The blob ids a write let go of, or null when a payload it needs will not decode. An empty or
+ * missing payload on either side of an edit releases nothing rather than everything.
+ */
+function releasedBlobIds(
+  edge: "deleted" | "edited",
+  prev: SyncDocWire,
+  next: SyncDocWire,
+  schema: string,
+): string[] | null {
+  if (edge === "deleted") {
+    return next.payload == null ? [] : blobIdsInPayload(schema, next.payload);
+  }
+  if (prev.payload == null || next.payload == null) return [];
+  // Most writes leave the attachments alone; the stored base64 string compares cheaply.
+  if (typeof prev.payload === "string" && prev.payload === next.payload) return [];
+  const had = blobIdsInPayload(prev.schema ?? schema, prev.payload);
+  const has = blobIdsInPayload(schema, next.payload);
+  if (had == null || has == null) return null;
+  const kept = new Set(has);
+  return had.filter((id) => !kept.has(id));
+}
 
 // MIGRATION (task F3): the `aircraft`-path registration is gone — see onThingDeleted.
 // MIGRATION (thing_migration_design.md §2.7c / task B9): deployed with C2, NOT with the Phase A/B
 // branch. A cutover copy CREATES each document, so `before` never exists and every record the Phase
 // D script copies would read as a fresh authored write here. By C2 the copy is done, and nothing
 // writes `/thing/` until E2 anyway — so these are inert before this point and correct after it.
-export const onThingRecordDeleted = onDocumentWritten(
+//
+// Was `onThingRecordDeleted`, which handled only the delete edge (phase B renamed it). One trigger
+// for both edges, on the same path, so a write is judged once.
+export const onThingRecordBlobsReleased = onDocumentWritten(
   {
     document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}/{kind}/{docId}`,
     region: FUNCTION_REGION,
   },
-  handleRecordDeleted(ENTITY_SEGMENT_THING),
+  handleBlobsReleased(ENTITY_SEGMENT_THING),
 );
 
 type LiveRefs = {

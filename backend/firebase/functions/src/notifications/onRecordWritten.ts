@@ -32,7 +32,7 @@ import { escalationOf, recordTitleOf, thingLabelOf, type Escalation } from "./re
  * N1 collaboration fan-out (docs/notifications/notifications_design.md §7.2).
  *
  * Two triggers over the paths a collaborator's edit lands on: the per-aircraft record subtree — the
- * same path `onRecordDeleted` already watches — and the aircraft document itself.
+ * same path `onRecordBlobsReleased` already watches — and the aircraft document itself.
  *
  * Three properties do the security work, and none of them is a check that has to be remembered:
  *

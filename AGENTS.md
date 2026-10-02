@@ -1,31 +1,31 @@
 # AGENTS.md
 
 The canonical engineering reference for this repository, and the source of truth for every coding
-agent working in it (Claude Code, Codex, and any other). [CLAUDE.md](CLAUDE.md) is a short pointer to
-this file; where the two ever disagree, **this file wins** — fix CLAUDE.md rather than forking the
-guidance.
+agent working in it (Claude Code, Codex, and any other). [CLAUDE.md](CLAUDE.md) is a short pointer
+to this file; where the two ever disagree, **this file wins** — fix CLAUDE.md rather than forking
+the guidance.
 
-Doc "Implementation Status" notes under `docs/` are maintained by hand and occasionally lag the code.
-When a rollout gate, module name, or flag matters, check the source.
+Doc "Implementation Status" notes under `docs/` are maintained by hand and occasionally lag the
+code. When a rollout gate, module name, or flag matters, check the source.
 
 ## What This Is
 
-SquawkIt is a **Kotlin Multiplatform** app for aviation logbook and fleet management — aircraft CRUD,
-maintenance logs, inspection compliance tracking, due-status computation, squawks, technicians,
-attachments, logbook export, multi-user aircraft sharing, subscriptions, and free-tier display ads.
-Targets Android (minSdk 33, target/compileSdk 37), iOS, and web, sharing one Compose Multiplatform
-codebase.
+SquawkIt is a **Kotlin Multiplatform** app for aviation logbook and fleet management — aircraft
+CRUD, maintenance logs, inspection compliance tracking, due-status computation, squawks,
+technicians, attachments, logbook export, multi-user aircraft sharing, subscriptions, and free-tier
+display ads. Targets Android (minSdk 33, target/compileSdk 37), iOS, and web, sharing one Compose
+Multiplatform codebase.
 
 The user-facing app is branded **SquawkIt**; codebase identifiers still use the original WingsLog
 name (Kotlin package `dev.fanfly.wingslog`, Gradle root project `wingslog`, Firebase project
-`wingslog-9ca4e`). This is deliberate — renaming the published identity would break Play Store /
-App Store / Firebase registration.
+`wingslog-9ca4e`). This is deliberate — renaming the published identity would break Play Store / App
+Store / Firebase registration.
 
 The app is **local-first** (R1 — shipped, the only path): a SQLDelight entity store is the single
 source of truth for every read and write, and a Firestore sync engine pushes local changes and pulls
-remote ones in the background. There is **no Firestore in the UI read path** and **no rollout flag**.
-Local-first **attachments** (R2) are built — local blob store plus background upload/download — with
-file/photo upload gated by the Pro subscription (links are always free). See
+remote ones in the background. There is **no Firestore in the UI read path** and **no rollout
+flag**. Local-first **attachments** (R2) are built — local blob store plus background
+upload/download — with file/photo upload gated by the Pro subscription (links are always free). See
 `docs/storage/storage_r1_design.md` and `docs/storage/storage_r2_design.md`.
 
 ## Build & Test Commands
@@ -72,13 +72,13 @@ npm run serve     # firebase emulators:start --only functions
 
 ## CI / CD (`.github/workflows/`)
 
-| Workflow | Trigger | What it does |
-|---|---|---|
-| `build.yml` | **manual only** (`workflow_dispatch`) | lint → `assembleDebug` → `testDebugUnitTest` + `testAndroidHostTest` |
-| `deploy-functions.yml` | PR + push to `main` under `functions/**` | emulator test suite as the gate; deploys functions on merge |
-| `deploy-firestore-rules.yml` | PR + push to `main` on `firestore.rules` / `firestore.indexes.json` | emulator rules suite; deploys rules, then indexes and TTL policies, on merge |
-| `deploy-storage-rules.yml` | PR + push to `main` on `storage.rules` | emulator rules suite; deploys rules on merge |
-| `deploy-web.yml` | manual | `:webApp:jsBrowserDistribution` → Firebase Hosting `live` (production), or the `alpha` / `debug` preview channel |
+| Workflow                     | Trigger                                                             | What it does                                                                                                     |
+|------------------------------|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `build.yml`                  | **manual only** (`workflow_dispatch`)                               | lint → `assembleDebug` → `testDebugUnitTest` + `testAndroidHostTest`                                             |
+| `deploy-functions.yml`       | PR + push to `main` under `functions/**`                            | emulator test suite as the gate; deploys functions on merge                                                      |
+| `deploy-firestore-rules.yml` | PR + push to `main` on `firestore.rules` / `firestore.indexes.json` | emulator rules suite; deploys rules, then indexes and TTL policies, on merge                                     |
+| `deploy-storage-rules.yml`   | PR + push to `main` on `storage.rules`                              | emulator rules suite; deploys rules on merge                                                                     |
+| `deploy-web.yml`             | manual                                                              | `:webApp:jsBrowserDistribution` → Firebase Hosting `live` (production), or the `alpha` / `debug` preview channel |
 
 **The Kotlin build does not run automatically on PRs or pushes.** Run `./gradlew lint
 testDebugUnitTest testAndroidHostTest` locally before pushing anything non-trivial. iOS is never
@@ -133,15 +133,15 @@ logic.
 
 ### What lives where
 
-| Layer | Module | Contents |
-|-------|--------|----------|
-| Domain | `model/` | Feature-specific data classes, enums (e.g. `DueStatus`, `DueMetadata`, `ShareRole`) |
-| Data | `datamanager/` | Manager interface, `impl/` package, Koin `*Module.kt` |
-| Resources | `sharedassets/` | `strings.xml` and drawables used by both `viewing/` and `update/`; may hold small leaf presentation helpers (label mappers, shared input fields) that other features consume without pulling in this feature's UI modules — may depend on `core:ui`/`core:model`, never on another feature |
-| Display | `viewing/` | Stateless composables — cards, list items, detail sheets, alert sections |
-| Edit | `update/` | One package per screen holding its route, screen, ViewModel + `UiState` and the components the screen composes (grouped into sub-packages by the part of the screen they build, e.g. `selection/setup/`); Koin ViewModel module in `di/`. Packages are named for a concern, never for a kind of declaration — no `viewmodel/` or `compose/` buckets (reference: `feature/export/update`; older modules are being converted under #1142) |
-| Dashboard | `dashboard/` | The feature's contribution to the per-thing dashboard (`feature/dashboard`): its section tab, tab ViewModel and the rows the overview rails render. Depends on `feature/dashboard/api` for the section state and actions, never on `feature/dashboard/host`. Keep it minimal — anything that fits `model/`, `viewing/` or `update/` goes there instead |
-| DI | `di/` | One `<Name>Module.kt` whose `<name>Module` bundles the sibling modules with `includes()`; no bindings of its own |
+| Layer     | Module          | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|-----------|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Domain    | `model/`        | Feature-specific data classes, enums (e.g. `DueStatus`, `DueMetadata`, `ShareRole`)                                                                                                                                                                                                                                                                                                                                                     |
+| Data      | `datamanager/`  | Manager interface, `impl/` package, Koin `*Module.kt`                                                                                                                                                                                                                                                                                                                                                                                   |
+| Resources | `sharedassets/` | `strings.xml` and drawables used by both `viewing/` and `update/`; may hold small leaf presentation helpers (label mappers, shared input fields) that other features consume without pulling in this feature's UI modules — may depend on `core:ui`/`core:model`, never on another feature                                                                                                                                              |
+| Display   | `viewing/`      | Stateless composables — cards, list items, detail sheets, alert sections                                                                                                                                                                                                                                                                                                                                                                |
+| Edit      | `update/`       | One package per screen holding its route, screen, ViewModel + `UiState` and the components the screen composes (grouped into sub-packages by the part of the screen they build, e.g. `selection/setup/`); Koin ViewModel module in `di/`. Packages are named for a concern, never for a kind of declaration — no `viewmodel/` or `compose/` buckets (reference: `feature/export/update`; older modules are being converted under #1142) |
+| Dashboard | `dashboard/`    | The feature's contribution to the per-thing dashboard (`feature/dashboard`): its section tab, tab ViewModel and the rows the overview rails render. Depends on `feature/dashboard/api` for the section state and actions, never on `feature/dashboard/host`. Keep it minimal — anything that fits `model/`, `viewing/` or `update/` goes there instead                                                                                  |
+| DI        | `di/`           | One `<Name>Module.kt` whose `<name>Module` bundles the sibling modules with `includes()`; no bindings of its own                                                                                                                                                                                                                                                                                                                        |
 
 ### Non-canonical exceptions (do not copy these for new features)
 
@@ -178,14 +178,14 @@ Module names follow one scheme, so `commonAppModules` reads without opening anyt
 `<feature><Submodule>Module` is a submodule's common module (`tasksDataManagerModule`,
 `logsViewingModule`, `squawkUpdateModule`, `syncDataModule`), and `platform<Binding>Module` is an
 `expect`/`actual` module with one actual per host (`platformAuthModule`, `platformBillingModule`,
-`platformBlobSchedulerModule`). The file is named after its val. A `platform*Module` is
-normally `internal` and reached only through its feature's or core module's bundle — `authModule`
+`platformBlobSchedulerModule`). The file is named after its val. A `platform*Module` is normally
+`internal` and reached only through its feature's or core module's bundle — `authModule`
 includes `platformAuthModule`, `analyticsModule` includes both analytics actuals — so
 `commonAppModules` lists no platform module except `platformStorageModule` and
-`platformLifecycleModule`. `composeApp`'s `initKoin.kt` and `webApp`'s `main.kt` are thin wrappers that take that list
-and add host bootstrap only (`createAppCapability`, `stressTestKoinModules()`, host-only singles like
-the web SQLite worker). The list is kept in one place because it drifted between hosts once before —
-a module registered in one host but not the other fails at *runtime*
+`platformLifecycleModule`. `composeApp`'s `initKoin.kt` and `webApp`'s `main.kt` are thin wrappers
+that take that list and add host bootstrap only (`createAppCapability`, `stressTestKoinModules()`,
+host-only singles like the web SQLite worker). The list is kept in one place because it drifted
+between hosts once before — a module registered in one host but not the other fails at *runtime*
 (`NoDefinitionFoundException`), not at compile time.
 
 ### New feature checklist
@@ -208,7 +208,8 @@ Firestore (background sync only) | Protocol Buffers (Wire) | Compose Multiplatfo
 
 ### Layering pattern
 
-1. **UI** — `@Composable` screen collects `StateFlow<UiState>` from a ViewModel via `koinViewModel()`
+1. **UI** — `@Composable` screen collects `StateFlow<UiState>` from a ViewModel via
+   `koinViewModel()`
 2. **ViewModel** — holds `MutableStateFlow<UiState>`, combines manager data with `combine()` /
    `flatMapLatest()`
 3. **Manager (interface + impl)** — in `datamanager/`; the interface defines the contract, `impl/`
@@ -243,9 +244,10 @@ key).
 `SyncEngine` is anchored to `FirebaseAuth.authStateChanged` and gated on signed-in **and**
 non-anonymous **and** cloud-sync-enabled. On sign-in it hydrates top-level scopes (Aircraft,
 Technician, UserInfo) under the user's root, attaches pull listeners at the cursor watermark, starts
-`PushWorker`, and observes the local aircraft list to spin up per-aircraft listeners for nested kinds
-(logs, tasks, overview, squawks, comments). On sign-out it tears down the per-user scope; data on disk is left
-alone (a different user gets their own `users/{uid}/…` scope, so there is no leakage).
+`PushWorker`, and observes the local aircraft list to spin up per-aircraft listeners for nested
+kinds (logs, tasks, overview, squawks, comments). On sign-out it tears down the per-user scope; data
+on disk is left alone (a different user gets their own `users/{uid}/…` scope, so there is no
+leakage).
 
 Supporting pieces: `HydrationRunner`, `PullListener` / `FirestorePullSubscription`, `PushWorker` +
 `PushFailureClassifier` (drains `dirty=1` via `FirestoreSyncWriter`), `SyncCursorStore`,
@@ -253,16 +255,17 @@ Supporting pieces: `HydrationRunner`, `PullListener` / `FirestorePullSubscriptio
 server-authoritative entitlement), `TombstoneGc`, and the blob drivers (upload/download/delete, with
 Android WorkManager workers and an iOS background `URLSession` scheduler).
 
-Conflict resolution is last-writer-wins on the Firestore server timestamp; dirty rows are immune from
-remote overwrite (no local clock in the ordering logic). Anonymous users are fully offline — the
-engine stays idle.
+Conflict resolution is last-writer-wins on the Firestore server timestamp; dirty rows are immune
+from remote overwrite (no local clock in the ordering logic). Anonymous users are fully offline —
+the engine stays idle.
 
 ### AI jobs (`core/ai`) — the other Firestore client
 
 `AiJobClient` (`core/ai`, docs/ai/task_population_design.md §7.1) is the app's one door to the AI
 backend: the `getAiEligibility` / `startAiJob` / `closeAiJob` callables and a listener on the
 signed-in user's own `ai_jobs/{uid}/job/{jobId}` documents. A job document is not an entity, so the
-sync engine never sees it, and feature managers reach it only through this client. Refusals arrive as
+sync engine never sees it, and feature managers reach it only through this client. Refusals arrive
+as
 `AiErrorCode`, read from the callable error's `details.code` (`core/firebase`'s
 `callableDetailsString`), never from the gRPC status. It depends on `core/firebase` and `core/model`
 and nothing in `feature/`, so every AI feature (#1181, #1183) shares it.
@@ -300,19 +303,21 @@ their own subscription — the host's entitlement governs and the blob broker en
 
 ### Gating: three mechanisms, kept separate
 
-| Question | Mechanism |
-|---|---|
+| Question                                    | Mechanism                                             |
+|---------------------------------------------|-------------------------------------------------------|
 | Does this build/platform support it at all? | `AppCapability` (`core:appinfo`) — injected singleton |
-| Is the account entitled to it? | `SubscriptionManager` flows |
-| Is a developer overriding it locally? | `DeveloperOptionsManager` / `DeveloperFlags` |
+| Is the account entitled to it?              | `SubscriptionManager` flows                           |
+| Is a developer overriding it locally?       | `DeveloperOptionsManager` / `DeveloperFlags`          |
 
 `AppCapability` fields: `isDeveloperOptionsSupported`, `isCameraCaptureSupported`,
 `isAnonymousLoginSupported`, `isAdsSupported`, `isDataLogsSupported` (the data-log rollout switch:
-developer builds only until V1 ships, see `docs/datalog/`). Constructed once per host at Koin startup via
-`createAppCapability(isDeveloperBuild)`. Search and filter is unconditional on every host as of
-#854 and carries no flag.
+developer builds only until V1 ships, see `docs/datalog/`). Constructed once per host at Koin
+startup via
+`createAppCapability(isDeveloperBuild)`. Search and filter is unconditional on every host as of #854
+and carries no flag.
 
-`SubscriptionManager` gates: `status()`, `entitlement()`, `canUploadAttachments()` (links stay free),
+`SubscriptionManager` gates: `status()`, `entitlement()`, `canUploadAttachments()` (links stay
+free),
 `canEmailExports()` (export-to-device stays free), `canHostShare()` (accepting an invite is never
 gated), `aircraftLimit()`, `shouldShowAds()`. The entitlement is server-authoritative — written only
 by Cloud Functions at `subscriptions/{uid}` and mirrored read-only into the local store.
@@ -335,8 +340,8 @@ three mechanisms above.
   `feature/<name>/di` uber module (§ Koin modules above).
 - Platform bindings via `androidMain` / `iosMain` / `jsMain` actuals, always named
   `platform<Binding>Module` — e.g. `platformBillingModule` (RevenueCat vs. no-purchase on web),
-  `platformAdConsentModule` (UMP vs. Swift bridge vs. no-op), `platformStorageModule` (SQLite
-  driver per host), `platformAuthModule` (the Android `AuthManager` needs the current Activity).
+  `platformAdConsentModule` (UMP vs. Swift bridge vs. no-op), `platformStorageModule` (SQLite driver
+  per host), `platformAuthModule` (the Android `AuthManager` needs the current Activity).
 
 ### Multiplatform split
 
@@ -346,18 +351,20 @@ three mechanisms above.
 
 ## Backend
 
-TypeScript Cloud Functions (Firebase Functions v2, Node 22) in `backend/firebase/functions/`, grouped
-by domain: `account/`, `ai/`, `export/`, `sharing/`, `storage/`, `subscription/`, with `shared/auth.ts`
-enforcing authenticated + App Check callers and `config/` holding env and admin bootstrap. Protos are
-generated from `core/model` at build time into `src/generated/proto/`.
+TypeScript Cloud Functions (Firebase Functions v2, Node 22) in `backend/firebase/functions/`,
+grouped by domain: `account/`, `ai/`, `export/`, `sharing/`, `storage/`, `subscription/`, with
+`shared/auth.ts`
+enforcing authenticated + App Check callers and `config/` holding env and admin bootstrap. Protos
+are generated from `core/model` at build time into `src/generated/proto/`.
 
 Notable jobs beyond the callables: `scheduledStorageSweep` (orphaned-blob GC, armed),
-`scheduledEntitlementReconcile`, `revenueCatWebhook`, `onRecordDeleted` and `onAircraftDeleted`
+`scheduledEntitlementReconcile`, `revenueCatWebhook`, `onRecordBlobsReleased` (a deleted record, or
+an edit that drops an attachment) and `onAircraftDeleted`
 (cascade cleanup).
 
 `ai/` is the shared AI backend (docs/ai/task_population_design.md §5): the three job callables,
-`authorize.ts` (kill switch, membership, owner tier, daily limit, spend ceilings), and `runAiJob`,
-a Cloud Tasks worker that runs each job kind's registered pipeline (`worker.ts`, kinds in
+`authorize.ts` (kill switch, membership, owner tier, daily limit, spend ceilings), and `runAiJob`, a
+Cloud Tasks worker that runs each job kind's registered pipeline (`worker.ts`, kinds in
 `kinds.ts`). Its Firestore collections are all `ai_*` and never entities (`collections.ts`).
 `ai_config/global` is the kill switch and provider choice, managed with `npm run ai-config`; a
 missing or malformed config reads as disabled. `AI_JOB_KIND_ECHO` round-trips a job with no model
@@ -370,53 +377,54 @@ the Firestore/Storage rules (`test/firestore-rules.test.ts`, `test/storage-rules
 
 ## Key Dependencies (`gradle/libs.versions.toml`)
 
-| Library | Version |
-|---------|---------|
-| Kotlin | 2.4.20 |
-| Compose Multiplatform | 1.12.0 |
-| Android Gradle Plugin | 9.3.2 |
-| Firebase KMP (GitLive) | 2.7.0 |
-| Koin | 4.2.2 |
-| Wire (protobuf) | 6.4.7 |
-| SQLDelight | 2.3.2 |
-| Kotlinx Coroutines | 1.11.0 |
-| Kotlinx Datetime | 0.8.0 |
-| Ktor | 3.5.2 |
-| Coil | 3.6.0 |
-| RevenueCat KMP (Android/iOS only) | 3.6.0 |
-| Play Services Ads / UMP | 25.4.0 / 4.0.0 |
-| MockK | 1.14.11 |
-| Google Truth | 1.4.5 |
-| Firebase Crashlytics Gradle plugin | 3.0.8 |
+| Library                            | Version        |
+|------------------------------------|----------------|
+| Kotlin                             | 2.4.20         |
+| Compose Multiplatform              | 1.12.0         |
+| Android Gradle Plugin              | 9.3.2          |
+| Firebase KMP (GitLive)             | 2.7.0          |
+| Koin                               | 4.2.2          |
+| Wire (protobuf)                    | 6.4.7          |
+| SQLDelight                         | 2.3.2          |
+| Kotlinx Coroutines                 | 1.11.0         |
+| Kotlinx Datetime                   | 0.8.0          |
+| Ktor                               | 3.5.2          |
+| Coil                               | 3.6.0          |
+| RevenueCat KMP (Android/iOS only)  | 3.6.0          |
+| Play Services Ads / UMP            | 25.4.0 / 4.0.0 |
+| MockK                              | 1.14.11        |
+| Google Truth                       | 1.4.5          |
+| Firebase Crashlytics Gradle plugin | 3.0.8          |
 
 ## Design System
 
-Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional typography
-hierarchy, consistent spacing tokens. Prioritize clarity and readability over information density.
+Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional
+typography hierarchy, consistent spacing tokens. Prioritize clarity and readability over information
+density.
 
-**Read `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` before any UI work.** `DESIGN.md` and
-its sidecar own the visual world: the required instrument palette (Aviation Blue primary, Instrument
-Amber accent ≤10% of color moments, semantic forest/amber status colors, the authored neutral ramp),
-the required typography (Space Grotesk titles, JetBrains Mono for technical data, system sans for
-body), spacing, elevation, motion and components. Dynamic color is disabled; the instrument palette
-is the brand. `PRODUCT.md` owns product truth — users, positioning, capabilities, constraints and the
-five product principles (Dependability First, The Template Speaks, Safety-Critical Status Wins,
-Minimal Friction, Share the Thing Not the Account). It deliberately holds no palette or type rules,
-so there is exactly one authority to change.
+**Read `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` before any UI work.** `DESIGN.md`
+and its sidecar own the visual world: the required instrument palette (Aviation Blue primary,
+Instrument Amber accent ≤10% of color moments, semantic forest/amber status colors, the authored
+neutral ramp), the required typography (Space Grotesk titles, JetBrains Mono for technical data,
+system sans for body), spacing, elevation, motion and components. Dynamic color is disabled; the
+instrument palette is the brand. `PRODUCT.md` owns product truth — users, positioning, capabilities,
+constraints and the five product principles (Dependability First, The Template Speaks,
+Safety-Critical Status Wins, Minimal Friction, Share the Thing Not the Account). It deliberately
+holds no palette or type rules, so there is exactly one authority to change.
 
 ## Design Docs
 
 Feature PRDs and architecture design docs live in `docs/`, organized into per-topic subfolders:
 
 - `docs/product/` — `PRD.md`, `multi_domain_maintenance_PRD.md` (the pivot from aircraft-only to any
-  maintainable “Thing” via a template configuration system — **Phases 1–3 shipped by 2026-09-04; Phase 4 is
-  proposed**), `thing_migration_design.md` (**shipped** — the Phase 1 proto/Firestore/Storage migration, and the
-  reference for how a stored-identity change is sequenced), `template_system_design.md` (**shipped** except the
-  fetch RPC, publishing script and canonical cache — how a template is defined, distributed, versioned, and
-  resolved), `pivot_rollout_design.md` (**shipped** — Phase 3: inflate-on-write, the presets, template-driven
+  maintainable “Thing” via a template configuration system — **Phases 1–3 shipped by 2026-09-04;
+  Phase 4 is proposed**), `thing_migration_design.md` (**shipped** — the Phase 1
+  proto/Firestore/Storage migration, and the reference for how a stored-identity change is
+  sequenced), `template_system_design.md` (**shipped** except the fetch RPC, publishing script and
+  canonical cache — how a template is defined, distributed, versioned, and resolved),
+  `pivot_rollout_design.md` (**shipped** — Phase 3: inflate-on-write, the presets, template-driven
   rendering, starter packs, the create flow),
-  `platform_feature_parity.html`, store assets
-  and screenshots
+  `platform_feature_parity.html`, store assets and screenshots
 - `docs/storage/` — `storage_mode_PRD.md`, `storage_r1_design.md`, `storage_r2_design.md`,
   `deletion_gc_design.html`
 - `docs/attachments/` — `attachments_PRD.md`, `attachments_design.md`
@@ -430,23 +438,28 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
 - `docs/ads/` — `display_ads_PRD.md`, `ads_design.html`
 - `docs/account/` — `account_upgrade_PRD.html`, `account_upgrade_design.html`,
   `email_link_signin_design.html`
-- `docs/analytics/` — `analytics_design.html` (**shipped** 2026-08-30 — `core/analytics`, typed GA4 taxonomy)
-- `docs/notifications/` — `notifications_PRD.md`, `notifications_design.md` (**shipped** 2026-08-19 → 08-26,
+- `docs/analytics/` — `analytics_design.html` (**shipped** 2026-08-30 — `core/analytics`, typed GA4
+  taxonomy)
+- `docs/notifications/` — `notifications_PRD.md`, `notifications_design.md` (**shipped**
+  2026-08-19 → 08-26,
   `feature/notifications`)
 - `docs/aircraft/` — `aircraft_overview_tabs.md`
-- `docs/cards/` — `card_swipe_actions_PRD.md`, `card_swipe_actions_design.md` (**shipped** 2026-09-07 → 09-08,
-  project #12 — swipe-to-reveal quick actions on squawk/task/log cards, `SwipeActionCard` in `core/ui`,
-  and squawk deletion)
-- `docs/datalog/` — `data_log_visualizer_PRD.md`, `data_log_visualizer_design.md` (📋 proposed — avionics
-  data-log import and a multi-pane time-series visualizer; "Flight Data" on the airplane preset, G3X first,
-  then G1000 and Dynon; capabilities resolved by template id so the new section needs no DNA refresh)
-- `docs/search/` — `search_filter_PRD.md`, `search_filter_design.md` (📋 proposed — per-tab search and filter bars with a tolerant in-memory matcher), `intelligentsearch.md` (engine research, kept as the escalation path)
+- `docs/cards/` — `card_swipe_actions_PRD.md`, `card_swipe_actions_design.md` (**shipped**
+  2026-09-07 → 09-08, project #12 — swipe-to-reveal quick actions on squawk/task/log cards,
+  `SwipeActionCard` in `core/ui`, and squawk deletion)
+- `docs/datalog/` — `data_log_visualizer_PRD.md`, `data_log_visualizer_design.md` (📋 proposed —
+  avionics data-log import and a multi-pane time-series visualizer; "Flight Data" on the airplane
+  preset, G3X first, then G1000 and Dynon; capabilities resolved by template id so the new section
+  needs no DNA refresh)
+- `docs/search/` — `search_filter_PRD.md`, `search_filter_design.md` (📋 proposed — per-tab search
+  and filter bars with a tolerant in-memory matcher), `intelligentsearch.md` (engine research, kept
+  as the escalation path)
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`,
   `web_adaptive_layout_design.html`, `promo_site_design.html`,
   `login_page_split_design.md` (📋 proposed — a hand-written static promo page at `/` and the KMP
   bundle entered at `/login`, so the marketing page is crawlable and sign-in stops being buried)
-- `docs/cleanup/` — `codebase_cleanup_plan.md` (the 2026-07 cleanup; phases 1–5 executed, kept as the
-  record of what moved where and why)
+- `docs/cleanup/` — `codebase_cleanup_plan.md` (the 2026-07 cleanup; phases 1–5 executed, kept as
+  the record of what moved where and why)
 - `docs/branding/` — brand assets
 
 Consult the relevant doc before making non-trivial changes to a feature area, and update its
@@ -454,15 +467,16 @@ Consult the relevant doc before making non-trivial changes to a feature area, an
 
 **Doc format policy:** all *new* docs are authored in **Markdown**. Existing HTML docs stay as-is
 until substantially rewritten; do not bulk-convert. Place a new doc in the matching subfolder
-(create one if no topic fits) and link related docs with relative paths. A Markdown doc opens in
-any editor, diffs cleanly in review, and needs no embedded stylesheet — which is why it, not
+(create one if no topic fits) and link related docs with relative paths. A Markdown doc opens in any
+editor, diffs cleanly in review, and needs no embedded stylesheet — which is why it, not
 self-contained HTML, is now the default.
 
 ## Developer Builds & Capabilities
 
 There is no compiled-out "dogfood" variant. The **Fake Data Generator** (`feature/stresstest`) is a
 normal dependency compiled into every build; its routes and the Developer Options entry are
-contributed through Koin (`StressTestPlugin`) and gated on `AppCapability.isDeveloperOptionsSupported`
+contributed through Koin (`StressTestPlugin`) and gated on
+`AppCapability.isDeveloperOptionsSupported`
 — identically on Android, iOS, and web. It had a second flag of its own, `isStressTestSupported`,
 until #854 retired it: every host set it to exactly `isDeveloperBuild`, which is what
 `isDeveloperOptionsSupported` already means, so the generator can only appear on a screen that flag
@@ -474,8 +488,8 @@ anonymous login) and `isAdsSupported`.
 ### Android
 
 - No product flavor — a single `app` variant dimension (`debug`/`release`).
-- `isDeveloperBuild` comes from `BuildConfig.DEVELOPER_BUILD`: hardcoded `true` for `debug`, settable
-  on `release` via `-PdeveloperBuild=true` (see `app/build.gradle.kts`).
+- `isDeveloperBuild` comes from `BuildConfig.DEVELOPER_BUILD`: hardcoded `true` for `debug`,
+  settable on `release` via `-PdeveloperBuild=true` (see `app/build.gradle.kts`).
 - Build: `./gradlew assembleDebug` · `./gradlew assembleRelease` ·
   `./gradlew assembleRelease -PdeveloperBuild=true` (signed dogfood-style release, tooling on).
 
@@ -489,33 +503,48 @@ anonymous login) and `isAdsSupported`.
   Release does not. `forceDeveloperBuild` stays on the API as the iOS equivalent of
   `-PdeveloperBuild=true`; there is no Swift compile flag, because Swift cannot see
   `Platform.isDebugBinary`.
-- Crashlytics links as an SPM product on the `iosApp` target and uploads dSYMs from the
-  **Upload Crashlytics dSYMs** run-script phase, which shells out to the `Crashlytics/run` script
-  inside the resolved `firebase-ios-sdk` checkout. Only Release builds produce a dSYM
+- Crashlytics links as an SPM product on the `iosApp` target and uploads dSYMs from the **Upload
+  Crashlytics dSYMs** run-script phase, which shells out to the `Crashlytics/run` script inside the
+  resolved `firebase-ios-sdk` checkout. Only Release builds produce a dSYM
   (`DEBUG_INFORMATION_FORMAT`), so the phase is a no-op under Debug.
 - Build: open `iosApp/iosApp.xcodeproj`, select **iosAppDebug**, run.
 
 ### Web
 
-- `webApp` depends on `feature:developeroptions:stresstest:config` and registers the plugin route and Koin module the
-  same way as Android/iOS. `isDeveloperBuild` comes from the webpack-injected `__WINGSLOG_DEBUG__`.
+- `webApp` depends on `feature:developeroptions:stresstest:config` and registers the plugin route
+  and Koin module the same way as Android/iOS. `isDeveloperBuild` comes from the webpack-injected
+  `__WINGSLOG_DEBUG__`.
 - The Fake Data Generator is reachable through **Settings → Developer Options**.
 - Build: `./gradlew :webApp:jsBrowserDevelopmentWebpack`.
 
 ## Coding Conventions
 
-- **Thing, not aircraft**: the domain is **Things**, not aircraft (Milestone 1, `docs/product/thing_migration_design.md`). New types, properties, wire names, and schema names use Thing vocabulary. Use aviation vocabulary **only** when the subject is genuinely and permanently an airplane — `Engine`, `Propeller`, `PropellerHub`, `EngineHourRule` qualify; anything that will one day hold a boat, a house, or a 3D printer does not.
+- **Thing, not aircraft**: the domain is **Things**, not aircraft (Milestone 1,
+  `docs/product/thing_migration_design.md`). New types, properties, wire names, and schema names use
+  Thing vocabulary. Use aviation vocabulary **only** when the subject is genuinely and permanently
+  an airplane — `Engine`, `Propeller`, `PropellerHub`, `EngineHourRule` qualify; anything that will
+  one day hold a boat, a house, or a 3D printer does not.
 
-  What survives with aviation names is **grandfathered, not exemplary**: `CollectionKind`'s five `aircraft.*` `schemaName`s, the `shared_aircraft_ref` wireName, the `SharedAircraftRef` and `ExportRecordAircraft` proto messages (and the Kotlin/TS names that mirror them), the `aircraft_id` proto field, the push payload's `aircraftId` key and its `*_aircraft_updated` bodyKeys, and the `airframe_hours` / `airframe` template keys. Issue #638 records why they stay — renaming stored identity is a data migration, not a refactor. Do not copy them.
+  What survives with aviation names is **grandfathered, not exemplary**: `CollectionKind`'s five
+  `aircraft.*` `schemaName`s, the `shared_aircraft_ref` wireName, the `SharedAircraftRef` and
+  `ExportRecordAircraft` proto messages (and the Kotlin/TS names that mirror them), the
+  `aircraft_id` proto field, the push payload's `aircraftId` key and its `*_aircraft_updated`
+  bodyKeys, and the `airframe_hours` / `airframe` template keys. Issue #638 records why they stay —
+  renaming stored identity is a data migration, not a refactor. Do not copy them.
 
-  Everything else was renamed in #637: types, parameters, test constants, log messages, nav routes and the notification tap-URI segment now all say Thing.
+  Everything else was renamed in #637: types, parameters, test constants, log messages, nav routes
+  and the notification tap-URI segment now all say Thing.
 
-  The cost is asymmetric and that is the whole point. A wrong name in Kotlin is a compiler-verified rename; a wrong `wireName` or `schemaName` is a global batch, a grace window, and a coordinated client release across three platforms. Milestone 1 did that once, deliberately. Get the name right when it is free.
+  The cost is asymmetric and that is the whole point. A wrong name in Kotlin is a compiler-verified
+  rename; a wrong `wireName` or `schemaName` is a global batch, a grace window, and a coordinated
+  client release across three platforms. Milestone 1 did that once, deliberately. Get the name right
+  when it is free.
 - **Instants**: always `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.
 - **Koin injection**: always `get<ClassType>()`, never bare `get()`. A `PostToolUse` hook
-  (`.claude/hooks/no-bare-koin-get.sh`) rejects the latter — a bare `get()` resolves positionally and
-  silently rebinds to the wrong dependency when a constructor is reordered, while the explicit type
-  argument turns that into a compile error. Kotlin property accessors (`val x get() = …`) are exempt.
+  (`.claude/hooks/no-bare-koin-get.sh`) rejects the latter — a bare `get()` resolves positionally
+  and silently rebinds to the wrong dependency when a constructor is reordered, while the explicit
+  type argument turns that into a compile error. Kotlin property accessors (`val x get() = …`) are
+  exempt.
 - **No backslash escapes in Kotlin strings or `strings.xml`**: use a typographic apostrophe `’`,
   never `\'` (`"it's"` is already legal Kotlin, and `’` is better typography anyway). Enforced by
   `.claude/hooks/no-escape-chars.sh`; Kotlin char literals are exempt.
@@ -527,28 +556,30 @@ anonymous login) and `isAdsSupported`.
   against it, because renaming orphans the history rather than migrating it, exactly as with a wire
   identity (#638). `AnalyticsTaxonomyTest` pins the shipped names. Thing-scoped events implement
   `ThingScopedEvent`, which requires `template_id` — the dimension PRD §13 splits every metric by.
-- **No primitive-keyed maps or tuples**: values that travel together get a named data class passed as
-  a `List`, never `Map<DataLogId, String>`, `Map<String, Foo>`, `Pair<Int, Foo>` or a `Triple` with a
-  primitive — a bare `String` beside an id does not say what it holds, and positional values of one
-  type swap silently. A `PostToolUse` hook (`.claude/hooks/no-primitive-tuples.sh`) rejects lines an
-  edit adds (existing uses are grandfathered until touched; test source sets are exempt). A genuine
-  platform boundary opts out on the line with `// allow-primitive-tuple: <reason>`.
+- **No primitive-keyed maps or tuples**: values that travel together get a named data class passed
+  as a `List`, never `Map<DataLogId, String>`, `Map<String, Foo>`, `Pair<Int, Foo>` or a `Triple`
+  with a primitive — a bare `String` beside an id does not say what it holds, and positional values
+  of one type swap silently. A `PostToolUse` hook (`.claude/hooks/no-primitive-tuples.sh`) rejects
+  lines an edit adds (existing uses are grandfathered until touched; test source sets are exempt). A
+  genuine platform boundary opts out on the line with `// allow-primitive-tuple: <reason>`.
 - **Feature managers read/write `EntityStore` only** — the sync engine is the Firestore client, with
   the two documented online-only exceptions above.
 - **Per-thing scopes** come from `ThingScopeResolver`, never from the signed-in uid.
 - **Capabilities**: build-time/platform gates go through the injected `AppCapability` singleton, not
   ad-hoc `isDeveloperBuild` checks or `expect`/`actual` booleans scattered across feature modules.
 - **Entitlement gates** go through `SubscriptionManager`, not a per-feature copy of the tier logic.
-- **ViewModels in `viewing/`**: allowed when a feature has no `update` submodule (e.g. `logs:viewing`,
+- **ViewModels in `viewing/`**: allowed when a feature has no `update` submodule (e.g.
+  `logs:viewing`,
   `subscription:viewing`); the app-shell ViewModel lives in `feature/shell`.
-- **Transitive deps**: `core:storage` and `core:ui` api-export most shared deps; don't redeclare them
-  in downstream modules.
+- **Transitive deps**: `core:storage` and `core:ui` api-export most shared deps; don't redeclare
+  them in downstream modules.
 
 ## Testing
 
 - Unit tests live in each module's **`src/test/kotlin`** and run under `./gradlew testDebugUnitTest`
-  — except modules migrated to the `com.android.kotlin.multiplatform.library` plugin, where they live
-  in **`src/androidHostTest/kotlin`** and run under `./gradlew testAndroidHostTest`. `commonTest` /
+  — except modules migrated to the `com.android.kotlin.multiplatform.library` plugin, where they
+  live in **`src/androidHostTest/kotlin`** and run under `./gradlew testAndroidHostTest`.
+  `commonTest` /
   `jsTest` are used only where a test genuinely must be multiplatform.
 - Stack: **JUnit 4 + MockK + Google Truth + kotlinx-coroutines-test**.
 - The densest suites are the best patterns to copy: `feature/sync/data`, `core/storage`,
@@ -580,15 +611,14 @@ reviewable.
 ### Popups start their own text-selection scope (enforced)
 
 The web host wraps the app in a `SelectionContainer` (via `TextSelectionLayer`, `core/ui/selection`)
-so text can be selected and copied like on any web page. Compose can only
-select across text that shares a layout root with that container, and every popup — dialog, sheet,
-menu — draws in a root of its own: a text inside one that inherits the outer scope crashes
-foundation on mouse-down (`layouts are not part of the same hierarchy`). So every popup boundary
-starts a fresh scope:
+so text can be selected and copied like on any web page. Compose can only select across text that
+shares a layout root with that container, and every popup — dialog, sheet, menu — draws in a root of
+its own: a text inside one that inherits the outer scope crashes foundation on mouse-down
+(`layouts are not part of the same hierarchy`). So every popup boundary starts a fresh scope:
 
 - `AlertDialog`, `ModalBottomSheet`, `DropdownMenu`, `DatePickerDialog` come from
-  `dev.fanfly.wingslog.core.ui.popup`, never from Material
-  directly. Same names and signatures; only the import differs.
+  `dev.fanfly.wingslog.core.ui.popup`, never from Material directly. Same names and signatures; only
+  the import differs.
 - Nav dialog destinations are registered with `selectionDialog(...)` (`feature/shell`), never the
   raw `dialog(...)` builder.
 - Every other popup-creating API — `ui.window.Dialog` / `Popup`, `BasicAlertDialog`,
@@ -599,15 +629,16 @@ starts a fresh scope:
 - No wildcard import of `material3`, `foundation` or `ui.window`.
 
 `scripts/check-popup-selection-scopes.sh` enforces all of it. It runs as the Gradle task
-`checkPopupSelectionScopes` under every module's `lint` (so CI and the pre-push checklist), and
-the `.claude/hooks/no-raw-popups.sh` hook runs it per edit. There is no runtime catch — the crash
-fires inside foundation's pointer handling and takes the composition down — so the static rules
-are the only guard; extend the script's lists when a Material upgrade adds a popup. The mobile
-hosts leave `LocalTextSelectionLayers` off, so none of this changes their behaviour.
+`checkPopupSelectionScopes` under every module's `lint` (so CI and the pre-push checklist), and the
+`.claude/hooks/no-raw-popups.sh` hook runs it per edit. There is no runtime catch — the crash fires
+inside foundation's pointer handling and takes the composition down — so the static rules are the
+only guard; extend the script's lists when a Material upgrade adds a popup. The mobile hosts leave
+`LocalTextSelectionLayers` off, so none of this changes their behaviour.
 
 ### User-facing strings must live in `strings.xml` (required)
 
-Every user-facing string must be defined in a `strings.xml` resource and referenced via the generated
+Every user-facing string must be defined in a `strings.xml` resource and referenced via the
+generated
 `Res` / `stringResource` — never hardcoded inline in Compose or other UI code.
 
 **Where the resource goes** — placement follows actual usage:
@@ -625,8 +656,8 @@ Every user-facing string must be defined in a `strings.xml` resource and referen
 
 ## graphify
 
-This project can carry a knowledge graph at `graphify-out/` (git-ignored, so a fresh clone won't have
-one) with god nodes, community structure, and cross-file relationships.
+This project can carry a knowledge graph at `graphify-out/` (git-ignored, so a fresh clone won't
+have one) with god nodes, community structure, and cross-file relationships.
 
 Rules:
 
@@ -634,7 +665,8 @@ Rules:
   exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for
   focused concepts. These return a scoped subgraph, usually much smaller than `GRAPH_REPORT.md` or
   raw grep output.
-- If `graphify-out/wiki/index.md` exists, use it for broad navigation instead of raw source browsing.
-- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review, or when
-  query/path/explain do not surface enough context.
+- If `graphify-out/wiki/index.md` exists, use it for broad navigation instead of raw source
+  browsing.
+- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review, or when query/path/explain
+  do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

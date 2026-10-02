@@ -7,9 +7,9 @@ import { DataLog } from "../src/generated/proto/datalog/data_log.js";
 import { MaintenanceLog } from "../src/generated/proto/thing/maintenance_log.js";
 import { Squawk } from "../src/generated/proto/thing/squawk.js";
 import { onThingDeleted } from "../src/sharing/onThingDeleted.js";
-import { onThingRecordDeleted } from "../src/storage/onRecordDeleted.js";
+import { onThingRecordBlobsReleased } from "../src/storage/onRecordBlobsReleased.js";
 
-const wrappedRecord = fft.wrap(onThingRecordDeleted);
+const wrappedRecord = fft.wrap(onThingRecordBlobsReleased);
 const wrappedThing = fft.wrap(onThingDeleted);
 
 const UID = "user-gc";
@@ -73,12 +73,24 @@ function deletion(path: string, payload: unknown, schema = "aircraft.Maintenance
   };
 }
 
+/** A live → live write, as the sync engine pushes an edit. */
+function edit(path: string, before: unknown, after: unknown, docId = LOG) {
+  const schema = "aircraft.MaintenanceLog";
+  return {
+    data: fft.makeChange(
+      fft.firestore.makeDocumentSnapshot({ deleted: false, schema, payload: before }, path),
+      fft.firestore.makeDocumentSnapshot({ deleted: false, schema, payload: after }, path),
+    ),
+    params: { uid: UID, acId: AC, kind: "maintenance_log", docId },
+  };
+}
+
 beforeEach(async () => {
   await adminDb.recursiveDelete(adminDb.doc(`users/${UID}`));
   await adminStorage.bucket().deleteFiles({ prefix: `users/${UID}/` });
 });
 
-describe("onRecordDeleted — a deleted record takes its photos with it (#158)", () => {
+describe("onRecordBlobsReleased — a deleted record takes its photos with it (#158)", () => {
   it("deletes the blobs the record owned", async () => {
     // The whole point: deleting a log used to leave its photos in Storage forever. A user who
     // deleted a photo of a damaged part had not deleted it.
@@ -242,6 +254,71 @@ describe("onRecordDeleted — a deleted record takes its photos with it (#158)",
     } as never);
 
     expect(await blobExists("squawk-blob")).toBe(false);
+  });
+});
+
+describe("onRecordBlobsReleased — an edit that drops an attachment frees it (phase B)", () => {
+  it("collects the blob an edit removed, and keeps the ones it still names", async () => {
+    await putBlob("kept");
+    await putBlob("dropped");
+
+    await wrappedRecord(
+      edit(logPath(), logPayload(attachment("kept"), attachment("dropped")), logPayload(attachment("kept"))) as never,
+    );
+
+    expect(await blobExists("kept")).toBe(true);
+    expect(await blobExists("dropped")).toBe(false);
+  });
+
+  it("spares a dropped blob another LIVE record still names (a shared document)", async () => {
+    await putBlob("manual");
+    await adminDb.doc(logPath("log-2")).set({
+      deleted: false,
+      schema: "aircraft.MaintenanceLog",
+      payload: logPayload(attachment("manual")),
+    });
+
+    await wrappedRecord(edit(logPath(), logPayload(attachment("manual")), logPayload()) as never);
+
+    expect(await blobExists("manual")).toBe(true);
+  });
+
+  it("releases nothing when an edit adds an attachment or changes nothing else", async () => {
+    await putBlob("a");
+    await putBlob("b");
+
+    await wrappedRecord(edit(logPath(), logPayload(attachment("a")), logPayload(attachment("a"), attachment("b"))) as never);
+    await wrappedRecord(edit(logPath(), logPayload(attachment("a")), logPayload(attachment("a"))) as never);
+
+    expect(await blobExists("a")).toBe(true);
+    expect(await blobExists("b")).toBe(true);
+  });
+
+  it("collects NOTHING when either side of the edit will not decode", async () => {
+    await putBlob("a");
+
+    await wrappedRecord(edit(logPath(), CORRUPT_PAYLOAD, logPayload()) as never);
+    await wrappedRecord(edit(logPath(), logPayload(attachment("a")), CORRUPT_PAYLOAD) as never);
+
+    expect(await blobExists("a")).toBe(true);
+  });
+
+  it("releases nothing on a creation, an undelete, or a write to a tombstone", async () => {
+    await putBlob("a");
+    const schema = "aircraft.MaintenanceLog";
+    const live = fft.firestore.makeDocumentSnapshot({ deleted: false, schema, payload: logPayload() }, logPath());
+    const tombstone = fft.firestore.makeDocumentSnapshot(
+      { deleted: true, schema, payload: logPayload(attachment("a")) },
+      logPath(),
+    );
+    const missing = fft.firestore.makeDocumentSnapshot({}, logPath());
+    const params = { uid: UID, acId: AC, kind: "maintenance_log", docId: LOG };
+
+    await wrappedRecord({ data: fft.makeChange(missing, live), params } as never);
+    await wrappedRecord({ data: fft.makeChange(tombstone, live), params } as never);
+    await wrappedRecord({ data: fft.makeChange(tombstone, tombstone), params } as never);
+
+    expect(await blobExists("a")).toBe(true);
   });
 });
 

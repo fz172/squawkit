@@ -5,7 +5,7 @@ import { adminDb, adminStorage, fft } from "./helpers.js";
 
 import { Attachment, AttachmentType } from "../src/generated/proto/thing/attachment.js";
 import { MaintenanceLog } from "../src/generated/proto/thing/maintenance_log.js";
-import { onThingRecordDeleted } from "../src/storage/onRecordDeleted.js";
+import { onThingRecordBlobsReleased } from "../src/storage/onRecordBlobsReleased.js";
 import { runStorageSweep } from "../src/storage/storageSweep.js";
 
 /**
@@ -16,13 +16,14 @@ import { runStorageSweep } from "../src/storage/storageSweep.js";
  * the canonical bytes are reclaimed no matter WHO initiated the delete, rather than being silently
  * dropped because the writer was a member operating on a foreign tree.
  *
- * Both reclaim paths are covered, because a member has two distinct ways to orphan bytes:
- *  - deleting the whole record  → the `onRecordDeleted` trigger collects immediately;
- *  - removing one attachment    → the record stays LIVE, so no trigger fires and the scheduled
- *                                 sweep is the backstop.
+ * Both ways a member can orphan bytes are covered, and both are collected by the
+ * `onRecordBlobsReleased` trigger right away:
+ *  - deleting the whole record  → the live → deleted edge;
+ *  - removing one attachment    → the live → live edge (phase B). The scheduled sweep stays the
+ *                                 backstop for both.
  */
 
-const wrappedRecord = fft.wrap(onThingRecordDeleted);
+const wrappedRecord = fft.wrap(onThingRecordBlobsReleased);
 
 const HOST = "host-shared-gc";
 const MEMBER = "member-shared-gc";
@@ -136,8 +137,8 @@ describe("a MEMBER's delete reclaims the host's canonical bytes", () => {
 
 describe("the sweep is the backstop when a member removes just one attachment", () => {
   it("reclaims a blob the member dropped from a still-LIVE record", async () => {
-    // Removing one attachment UPDATES the record rather than deleting it, so onRecordDeleted never
-    // fires. The member also cannot delete the object directly (storage.rules deny the host's tree,
+    // Removing one attachment UPDATES the record rather than deleting it. Since phase B the trigger
+    // collects that edit too (below); this is the sweep catching one the trigger missed. The member also cannot delete the object directly (storage.rules deny the host's tree,
     // and the broker has no delete door), so the sweep is what actually reclaims the bytes.
     await putBlob("dropped-by-member");
     await putMemberWrittenLog(LOG, { deleted: false, blobs: [] }); // attachment removed
@@ -159,5 +160,37 @@ describe("the sweep is the backstop when a member removes just one attachment", 
     expect(report.orphanBlobsCollected).toBe(1);
     expect(await blobExists("kept")).toBe(true);
     expect(await blobExists("dropped")).toBe(false);
+  });
+});
+
+describe("a MEMBER's edit that drops an attachment reclaims the host's bytes (phase B)", () => {
+  function memberEdit(before: string, after: string, docId = LOG) {
+    const base = { schema: "aircraft.MaintenanceLog", writerUid: MEMBER, deleted: false };
+    return {
+      data: fft.makeChange(
+        fft.firestore.makeDocumentSnapshot({ ...base, payload: before }, logPath(docId)),
+        fft.firestore.makeDocumentSnapshot({ ...base, payload: after }, logPath(docId)),
+      ),
+      params: { uid: HOST, acId: AC, kind: "maintenance_log", docId },
+    };
+  }
+
+  it("collects at once, keyed on the host's path rather than the writer", async () => {
+    await putBlob("dropped-by-member");
+    await putMemberWrittenLog(LOG, { deleted: false, blobs: [] });
+
+    await wrappedRecord(memberEdit(logPayload("dropped-by-member"), logPayload()) as never);
+
+    expect(await blobExists("dropped-by-member")).toBe(false);
+  });
+
+  it("spares a document a co-member's live task still cites", async () => {
+    await putBlob("shared-manual");
+    await putMemberWrittenLog(LOG, { deleted: false, blobs: [] });
+    await putMemberWrittenLog("log-other", { deleted: false, blobs: ["shared-manual"] });
+
+    await wrappedRecord(memberEdit(logPayload("shared-manual"), logPayload()) as never);
+
+    expect(await blobExists("shared-manual")).toBe(true);
   });
 });

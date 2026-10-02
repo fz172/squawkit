@@ -14,7 +14,7 @@ import {
 import { onThingDeleted } from "./sharing/onThingDeleted.js";
 import { previewThingShareInvite } from "./sharing/previewThingShareInvite.js";
 import { getBlobUploadSession } from "./storage/getBlobUploadSession.js";
-import { onThingRecordDeleted } from "./storage/onRecordDeleted.js";
+import { onThingRecordBlobsReleased } from "./storage/onRecordBlobsReleased.js";
 import { streamBlob } from "./storage/streamBlob.js";
 import { scheduledStorageSweep } from "./storage/storageSweepTriggers.js";
 import { redeemThingShareInvite } from "./sharing/redeemThingShareInvite.js";
@@ -62,7 +62,7 @@ export { updateThingShareRole };
 // deletes the deployed function — intended here, and the reason F3 waits until F2 has run.
 export { onThingDeleted };
 export { createThingShareInvite, previewThingShareInvite, cancelThingShareInvite };
-export { onThingRecordDeleted };
+export { onThingRecordBlobsReleased };
 export { onNotifiableThingRecordWritten, onNotifiableThingWritten };
 export { scheduledStorageSweep };
 export { streamBlob };
