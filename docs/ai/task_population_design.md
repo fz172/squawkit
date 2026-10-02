@@ -332,19 +332,32 @@ message TaskSuggestion {
 
 ### 4.3 Backend collections (never entities)
 
+Names, paths and field types are in `functions/src/ai/collections.ts`.
+
 | Path                           | Written by | Read by                          | Contents                                                                                                                                  | Lifetime                                                    |
 |--------------------------------|------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
-| `ai_jobs/{jobId}`              | functions  | caller (`callerUid == auth.uid`) | kind, callerUid, hostUid, thingId, status, stage, stage_arg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error | TTL on `expiresAt` (24 h, R19); deleted on close            |
-| `ai_job_inputs/{jobId}`        | functions  | functions                        | base64 `SuggestTasksRequest`                                                                                                              | deleted by the worker when it finishes (no retention, §5.8) |
+| `ai_jobs/{jobId}`              | functions  | caller (`callerUid == auth.uid`) | kind, callerUid, hostUid, thingId, status, stage, stageArg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error {code, detailKey} | TTL on `expiresAt` (24 h, R19); deleted on close            |
+| `ai_job_inputs/{jobId}`        | functions  | functions                        | kind, base64 `SuggestTasksRequest`, createdAt, expiresAt                                                                                  | deleted by the worker when it finishes (no retention, §5.8); TTL on `expiresAt` (24 h) as a backstop |
 | `ai_usage/{hostUid}_{thingId}` | functions  | functions                        | `lastSuccessAt`, `inFlightJobId`                                                                                                          | permanent, tiny                                             |
-| `ai_spend/{yyyymm}`            | functions  | functions                        | spend by tier (micro-dollars)                                                                                                             | permanent                                                   |
-| `ai_cost_log/{autoId}`         | functions  | team                             | per-call cost record (§5.6)                                                                                                               | 13 months TTL                                               |
-| `ai_cache/{key}`               | functions  | functions                        | derived schedule items (§6.5)                                                                                                             | until generation version bump                               |
-| `ai_config/global`             | team       | functions                        | `enabled`, per-tier ceilings, limits                                                                                                      | permanent                                                   |
+| `ai_spend/{yyyymm}`            | functions  | functions                        | `freeMicros`, `proMicros` (by owner tier), updatedAt; the month is UTC                                                                    | permanent                                                   |
+| `ai_cost_log/{autoId}`         | functions  | team                             | per-call cost record (§5.6), no uid                                                                                                       | TTL on `expiresAt` (13 × 31 days)                           |
+| `ai_cache/{key}`               | functions  | functions                        | derived schedule items as JSON (§6.5), createdAt                                                                                          | until generation version bump                               |
+| `ai_config/global`             | team       | functions                        | `enabled`, `fastProvider`, `strongProvider`, `monthlyCeilingMicros {free, pro, total}`, `maxDocumentsPerRun`                              | permanent                                                   |
 
-Rules: `ai_jobs` read-only for `resource.data.callerUid == request.auth.uid` (list queries must
-filter on `callerUid`); everything else functions-only. A composite index on
-`ai_jobs(callerUid, thingId, kind, createdAt desc)` serves "latest job for this Thing".
+- **Enums are numbers.** `kind` and `status` hold the `AiJobKind` / `AiJobStatus` numbers, which the
+  client reads with Wire's `fromValue`; a value it does not know reads as null, not as a wrong state.
+- **Rules.** `ai_jobs` is read-only to its caller. `get` is total over a missing document, so a
+  closed or expired job reads as absent rather than as a denial; `list` queries must filter on
+  `callerUid`. Every other `ai_*` collection is functions-only, named explicitly in
+  `firestore.rules`. Tests in `test/ai-rules.test.ts`.
+- **Index and TTL** live in `backend/firebase/firestore.indexes.json`: the composite index on
+  `ai_jobs(callerUid, thingId, kind, createdAt desc)` serves "latest job for this Thing", and the
+  three TTL policies above. The Firestore rules workflow deploys them after the rules, in their own
+  step.
+- **Config.** `parseAiConfig` fails closed: a missing or malformed `ai_config/global` reads as
+  disabled. `npm run ai-config` seeds it from `DEFAULT_AI_CONFIG` (never overwriting) and flips the
+  kill switch with `--enabled true|false`. It seeds **disabled**, with placeholder ceilings ($50
+  free, $150 Pro, $200 total a month) until the PRD's limit values are settled.
 
 ## 5. Shared AI backend
 

@@ -1,13 +1,15 @@
 name: Deploy Firestore Rules
 
-# Firestore security rules are source-controlled in backend/firebase/firestore.rules.
+# Firestore security rules are source-controlled in backend/firebase/firestore.rules, and composite
+# indexes and TTL policies in backend/firebase/firestore.indexes.json.
 # On a PR touching the rules (or their tests) this runs the emulator rules suite as a gate;
-# on merge to main it re-runs the suite and then deploys the rules to wingslog-9ca4e.
+# on merge to main it re-runs the suite and then deploys rules, then indexes, to wingslog-9ca4e.
 # The Firebase console is read-only — this workflow is the only publisher.
 on:
   pull_request:
     paths:
       - backend/firebase/firestore.rules
+      - backend/firebase/firestore.indexes.json
       - backend/firebase/firebase.json
       - backend/firebase/functions/test/**
       - backend/firebase/functions/package.json
@@ -17,6 +19,7 @@ on:
     branches: [main]
     paths:
       - backend/firebase/firestore.rules
+      - backend/firebase/firestore.indexes.json
       - backend/firebase/firebase.json
       - backend/firebase/functions/test/**
       - backend/firebase/functions/package.json
@@ -87,4 +90,16 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
           trap 'rm -f "$RUNNER_TEMP/firebase-sa.json"' EXIT
           npx firebase-tools@latest deploy --only firestore:rules \
+            --project wingslog-9ca4e --non-interactive
+
+      # A separate step, so an index or TTL failure never holds back a rules deploy. Without
+      # --force, a non-interactive deploy never deletes an index that is missing from the file.
+      - name: Deploy Firestore indexes and TTL policies
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WINGSLOG_9CA4E }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          trap 'rm -f "$RUNNER_TEMP/firebase-sa.json"' EXIT
+          npx firebase-tools@latest deploy --only firestore:indexes \
             --project wingslog-9ca4e --non-interactive
