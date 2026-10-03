@@ -19,6 +19,8 @@ enum NotificationTapEncoder {
     case .aircraft(let aircraftId, let tab):
       let base = "wingslog://notification-tap/aircraft/\(aircraftId)"
       return tab.map { "\(base)?tab=\($0)" } ?? base
+    case .suggestions(let aircraftId):
+      return "wingslog://notification-tap/suggestions/\(aircraftId)"
     }
   }
 }
