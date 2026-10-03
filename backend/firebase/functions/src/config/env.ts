@@ -81,6 +81,15 @@ export const ENTITLEMENT_RECONCILE_REQUEST_SPACING_MS = 1_000;
 export const ENTITLEMENT_RECONCILE_ON_DEMAND_THROTTLE_MS = 5 * 60 * 1000;
 
 export const EXPORT_DELIVERY_PROVIDER = process.env.EXPORT_DELIVERY_PROVIDER ?? "resend";
+
+/**
+ * The Document AI Enterprise OCR processor that reads a document's image-only pages for AI task
+ * suggestions (design §5.5), or null: then such pages are skipped, and a PDF with a text layer
+ * still reads.
+ */
+export function documentAiProcessor(): string | null {
+  return process.env.DOCUMENT_AI_PROCESSOR?.trim() || null;
+}
 export const EXPORT_DELIVERY_SIGNED_URL_TTL_MS = 24 * 60 * 60 * 1000;
 export const EXPORT_DELIVERY_LEASE_TTL_MS = 10 * 60 * 1000;
 
