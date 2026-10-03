@@ -68,11 +68,10 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_none
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_already_tracked
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
@@ -350,16 +349,8 @@ fun StarterPackRoute(
         }
         BottomButtons(
           modifier = Modifier.align(Alignment.BottomCenter),
-          // Nothing is checked to start (PRD R27): say what to do rather than "Add 0".
-          primaryLabel = if (uiState.selectedCount == 0) {
-            stringResource(Res.string.starter_pack_add_none, taskNoun.plural)
-          } else {
-            stringResource(
-              Res.string.starter_pack_add,
-              uiState.selectedCount,
-              if (uiState.selectedCount == 1) taskNoun.singular else taskNoun.plural,
-            )
-          },
+          // Just "Add": the checkboxes already say what will be added.
+          primaryLabel = stringResource(CoreRes.string.add),
           primaryEnabled = uiState.selectedCount > 0 && !uiState.isSaving,
           isPrimaryFunctionInProgress = uiState.isSaving,
           onPrimaryClick = { viewModel.onAccept() },

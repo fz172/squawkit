@@ -4,8 +4,6 @@
   <string name="starter_pack_title">Pick the <xliff:g example="tasks">%1$s</xliff:g> you need</string>
   <string name="starter_pack_subtitle">Check the ones that apply to this <xliff:g example="home">%1$s</xliff:g>. Nothing is added until you do.</string>
   <string name="starter_pack_disclaimer">Recommendations, not requirements. Confirm each interval against the manufacturer’s service manual for your <xliff:g example="car">%1$s</xliff:g>.</string>
-  <string name="starter_pack_add">Add <xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g></string>
-  <string name="starter_pack_add_none">Check <xliff:g example="tasks">%1$s</xliff:g> to add</string>
   <string name="starter_pack_skip">Skip</string>
   <string name="starter_pack_added"><xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g> added</string>
   <string name="starter_pack_suggest">Suggest more <xliff:g example="inspections">%1$s</xliff:g></string>
