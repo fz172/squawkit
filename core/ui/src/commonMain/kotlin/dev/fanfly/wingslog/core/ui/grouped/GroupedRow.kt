@@ -31,6 +31,8 @@ fun GroupedRow(
   onClick: (() -> Unit)? = null,
   leading: (@Composable RowScope.() -> Unit)? = null,
   trailing: (@Composable RowScope.() -> Unit)? = null,
+  /** Under the subtitle, for what text alone cannot carry (a tappable source chip). */
+  supporting: (@Composable () -> Unit)? = null,
 ) {
   Row(
     modifier = modifier
@@ -67,6 +69,7 @@ fun GroupedRow(
           color = subtitleColor,
         )
       }
+      supporting?.invoke()
     }
 
     if (trailing != null) {

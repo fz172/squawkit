@@ -17,6 +17,7 @@ fun GroupedCheckboxRow(
   enabled: Boolean = true,
   titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
   leading: (@Composable RowScope.() -> Unit)? = null,
+  supporting: (@Composable () -> Unit)? = null,
 ) {
   GroupedRow(
     title = title,
@@ -33,5 +34,6 @@ fun GroupedCheckboxRow(
       )
     },
     modifier = modifier,
+    supporting = supporting,
   )
 }

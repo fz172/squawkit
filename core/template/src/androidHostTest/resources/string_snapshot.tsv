@@ -1158,3 +1158,10 @@ feature/tasks/suggestions/update	starter_pack_already_tracked	Already tracked
 feature/tasks/suggestions/update	starter_pack_first_due_date	First due %1$s
 feature/tasks/suggestions/update	starter_pack_first_due_meter	First due at %1$s %2$s
 feature/tasks/suggestions/update	starter_pack_first_due_either	First due %1$s or at %2$s %3$s, whichever comes first
+feature/tasks/suggestions/update	suggestion_source_document	From your document
+feature/tasks/suggestions/update	suggestion_source_manufacturer	Manufacturer schedule
+feature/tasks/suggestions/update	suggestion_source_common_practice	Common practice
+feature/tasks/suggestions/update	suggestion_source_logs	From your logs
+feature/tasks/suggestions/update	suggestion_source_verify	Verify against your manual.
+feature/tasks/suggestions/update	suggestion_source_page	Page %1$s
+feature/tasks/suggestions/update	suggestion_ai_disclosure	Suggestions are drafted by AI from the sources shown on each one. The manufacturer’s documents govern.
