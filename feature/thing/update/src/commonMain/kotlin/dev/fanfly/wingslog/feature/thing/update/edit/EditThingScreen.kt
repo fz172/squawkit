@@ -101,7 +101,6 @@ fun EditThingScreen(
 
   // This effect will run when isSaved becomes true
   LaunchedEffect(uiState.isSaved, uiState.isDeleted) {
-    val packThingId = uiState.starterPackThingId
     // The shell beneath this dialog switches to the new Thing once we close; staying on the one
     // the switcher happened to point at would show the form's work on a different Thing.
     uiState.createdThingId?.let { id ->
@@ -115,14 +114,8 @@ fun EditThingScreen(
         Screen.AdaptiveShell.route,
         inclusive = false
       )
-      // A create whose template ships a pack continues into step 4 (PRD §8.1) in place of this
-      // form: the form leaves the stack so Back from the pack lands on the shell, not on a
-      // second copy of a Thing that already exists.
-      uiState.isSaved && packThingId != null ->
-        navController.navigate(Screen.StarterPack.createRoute(packThingId)) {
-          popUpTo(Screen.AddThing.route) { inclusive = true }
-        }
-
+      // A create ends here too: suggested tasks are offered from the Thing's task tab, not as a
+      // step after creating it (PRD R1, revised 2026-10-03).
       uiState.isSaved -> navController.popBackStack()
     }
   }

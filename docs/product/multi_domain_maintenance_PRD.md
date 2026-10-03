@@ -831,7 +831,7 @@ the fork is structural, then a plugin behind the interface that already exists:
 | 1 — What is it? | Icon grid: Airplane · Car · Motorcycle · Bike · Boat · Home · Custom |
 | 2 — Identity | Name + the template's spec fields, template-labeled |
 | 3 — Components | Pre-filled slots; skipped entirely when `capabilities.components` is off |
-| 4 — Starter pack | Per-item checkboxes; "Skip" is a first-class button |
+| ~~4 — Starter pack~~ | Removed 2026-10-03: creating a Thing ends at step 3. Recommended tasks are offered from the Thing's task tab instead (empty-list recommendations and *Suggest tasks*; [`task_population_PRD.md`](../ai/task_population_PRD.md) R1) |
 
 **What "Custom" gets at step 1.** Choosing Custom does not open a field/slot/meter editor — that's the template
 *editor*, deferred to Phase 4 (§16 #3). What v1 gives a Custom Thing is per-Thing flexibility on top of a fixed,

@@ -134,33 +134,9 @@ class ThingCreatedAnalyticsTest {
   }
 
   @Test
-  fun creatingAThingWithAPackHandsOffToTheStarterPackStep() =
-    runTest(dispatcher) {
-      // PRD §8.1 step 4. The hand-off carries the written Thing's id — the form never had one.
-      val vm = viewModel(existingId = null)
-      vm.loadThing(completeThing())
-
-      vm.saveThing()
-      advanceUntilIdle()
-
-      assertThat(vm.uiState.value.isSaved).isTrue()
-      assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
-      assertThat(vm.uiState.value.starterPackThingId).isEqualTo("thing-new")
-    }
-
-  @Test
-  fun creatingAThingWithoutAPackJustCloses() = runTest(dispatcher) {
-    // A template with no pack must not reach the step: it would count in the §13 denominator as
-    // a pack offered and declined.
-    val packless = AirplaneTemplate.TEMPLATE.copy(starter_tasks = emptyList())
-    coEvery { fleetManager.updateThing(any()) } answers {
-      Result.success(
-        ThingInflater.inflate(
-          firstArg<Thing>().copy(id = "thing-new"),
-          packless
-        )
-      )
-    }
+  fun creatingAThingJustClosesTheForm() = runTest(dispatcher) {
+    // No step after creating: suggested tasks are offered from the task tab (PRD R1, 2026-10-03).
+    // The create carries the written Thing's id for the shell to switch to; the form never had one.
     val vm = viewModel(existingId = null)
     vm.loadThing(completeThing())
 
@@ -169,7 +145,6 @@ class ThingCreatedAnalyticsTest {
 
     assertThat(vm.uiState.value.isSaved).isTrue()
     assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
-    assertThat(vm.uiState.value.starterPackThingId).isNull()
   }
 
   @Test
@@ -185,7 +160,6 @@ class ThingCreatedAnalyticsTest {
 
     assertThat(analytics.countOf("thing_created")).isEqualTo(0)
     assertThat(vm.uiState.value.createdThingId).isNull()
-    assertThat(vm.uiState.value.starterPackThingId).isNull()
   }
 
   @Test
