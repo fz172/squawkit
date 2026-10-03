@@ -196,6 +196,7 @@ internal data class JobDocFirestore(
   val updatedAt: Timestamp? = null,
   val result: String? = null,
   val error: JobErrorWire? = null,
+  val aiSkipped: AiSkippedFirestore? = null,
 ) {
   fun toWire(): JobDocWire = JobDocWire(
     kind = kind,
@@ -210,5 +211,15 @@ internal data class JobDocFirestore(
       ?.toLong() ?: 0L,
     result = result,
     error = error,
+    aiSkipped = aiSkipped?.let {
+      AiSkippedWire(code = it.code, nextAvailableAtMillis = it.nextAvailableAt?.toMilliseconds()?.toLong())
+    },
   )
 }
+
+/** The job's `aiSkipped` as Firestore holds it (backend `AiSkippedDoc`). */
+@Serializable
+internal data class AiSkippedFirestore(
+  val code: String = "",
+  val nextAvailableAt: Timestamp? = null,
+)

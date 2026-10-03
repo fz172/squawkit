@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJob
 import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
@@ -68,6 +69,13 @@ internal data class JobDocWire(
   val updatedAtMillis: Long = 0,
   val result: String? = null,
   val error: JobErrorWire? = null,
+  val aiSkipped: AiSkippedWire? = null,
+)
+
+/** The job's `aiSkipped`, with its time in epoch milliseconds as [JobDocWire]'s are. */
+internal data class AiSkippedWire(
+  val code: String = "",
+  val nextAvailableAtMillis: Long? = null,
 )
 
 internal fun EligibilityResponse.toEligibility(): AiEligibility = AiEligibility(
@@ -89,6 +97,12 @@ internal fun JobDocWire.toAiJob(id: String): AiJob = AiJob(
   updatedAt = Instant.fromEpochMilliseconds(updatedAtMillis),
   result = result?.decodeBase64(),
   error = error?.let { AiErrorCode.fromWire(it.code) },
+  aiSkipped = aiSkipped?.let { skipped ->
+    AiSkipped(
+      reason = AiErrorCode.fromWire(skipped.code),
+      nextAvailableAt = skipped.nextAvailableAtMillis?.let(Instant::fromEpochMilliseconds),
+    )
+  },
 )
 
 internal fun String?.toInstantOrNull(): Instant? =

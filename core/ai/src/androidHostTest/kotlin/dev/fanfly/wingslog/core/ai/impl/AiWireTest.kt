@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.ai.impl
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
@@ -50,7 +51,10 @@ class AiWireTest {
       "updatedAt",
       "result",
       "error",
+      "aiSkipped",
     )
+    assertThat(serializer<AiSkippedFirestore>().descriptor.elementNames.toList())
+      .containsExactly("code", "nextAvailableAt")
   }
 
   @Test
@@ -166,5 +170,19 @@ class AiWireTest {
     assertThat(job.kind).isNull()
     assertThat(job.error).isEqualTo(AiErrorCode.STALE)
     assertThat(job.result).isNull()
+    assertThat(job.aiSkipped).isNull()
+  }
+
+  @Test
+  fun `a curated-only job says why its model was skipped, and when it is back`() {
+    val limited = JobDocWire(
+      status = AiJobStatus.AI_JOB_STATUS_SUCCEEDED.value,
+      aiSkipped = AiSkippedWire(code = "daily_limit", nextAvailableAtMillis = 5_000),
+    ).toAiJob("j3")
+    val disabled = JobDocWire(aiSkipped = AiSkippedWire(code = "disabled")).toAiJob("j4")
+
+    assertThat(limited.aiSkipped)
+      .isEqualTo(AiSkipped(AiErrorCode.DAILY_LIMIT, Instant.fromEpochMilliseconds(5_000)))
+    assertThat(disabled.aiSkipped).isEqualTo(AiSkipped(AiErrorCode.DISABLED, nextAvailableAt = null))
   }
 }
