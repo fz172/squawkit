@@ -3,16 +3,22 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -25,6 +31,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
@@ -44,7 +51,8 @@ import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.task.StarterTask
+import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -55,8 +63,11 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pac
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggesting
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_either
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_days
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_meter
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_month
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_months
@@ -156,12 +167,36 @@ fun StarterPackRoute(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
+          if (uiState.canSuggest) {
+            OutlinedButton(onClick = viewModel::onSuggest, enabled = !uiState.isSaving) {
+              Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.padding(end = Spacing.small))
+                Text(stringResource(Res.string.starter_pack_suggest, LexiconFormatter.plural(taskNoun)))
+              }
+            }
+          }
+          if (uiState.isSuggesting) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+              CircularProgressIndicator(modifier = Modifier.size(Spacing.large), strokeWidth = 2.dp)
+              Text(
+                text = stringResource(
+                  Res.string.starter_pack_suggesting,
+                  LocalThingLexicon.current.thingNoun.singular,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
           GroupedRowGroup(
             rows = uiState.items.mapIndexed { index, item ->
               {
                 GroupedCheckboxRow(
-                  title = item.task.title,
-                  subtitle = item.task.summary(uiState.template),
+                  title = item.suggestion.title,
+                  subtitle = item.suggestion.summary(uiState.template),
                   checked = item.selected,
                   enabled = !uiState.isSaving,
                   onCheckedChange = { viewModel.onToggle(index) },
@@ -199,28 +234,23 @@ fun StarterPackRoute(
   }
 }
 
-/** "Every 6 months · why" — the rule first, because it is the part worth scanning for. */
+/**
+ * "Every 6 months · why" — the rule first, because it is the part worth scanning for. A seasonal
+ * rule says nothing here, as the starter pack never did; an on-condition rule shows its own words.
+ */
 @Composable
-private fun StarterTask.summary(template: ThingTemplate?): String {
-  val calendar = when {
-    interval_months <= 0 -> null
-    interval_months == 1 -> stringResource(Res.string.starter_rule_every_month)
-    interval_months == 12 -> stringResource(Res.string.starter_rule_every_year)
-    interval_months % 12 == 0 ->
-      stringResource(Res.string.starter_rule_every_years, interval_months / 12)
-
-    else -> stringResource(
-      Res.string.starter_rule_every_months,
-      interval_months
-    )
-  }
-  val meter = if (meter_key.isNotEmpty() && interval > 0f) {
-    stringResource(
-      Res.string.starter_rule_every_meter,
-      formatInterval(interval),
-      template.meter(meter_key)?.unit_label ?: meter_key,
-    )
-  } else null
+private fun TaskSuggestion.summary(template: ThingTemplate?): String {
+  val calendar = rules.firstNotNullOfOrNull { it.time_rule }?.let { calendarText(it) }
+  val meter = rules.firstNotNullOfOrNull { it.meter_rule }
+    ?.takeIf { it.meter_key.isNotEmpty() && it.interval > 0f }
+    ?.let {
+      stringResource(
+        Res.string.starter_rule_every_meter,
+        formatInterval(it.interval),
+        template.meter(it.meter_key)?.unit_label ?: it.meter_key,
+      )
+    }
+  val onCondition = rules.firstNotNullOfOrNull { it.on_condition_rule }?.description?.takeIf { it.isNotBlank() }
   val rule = when {
     meter != null && calendar != null -> stringResource(
       Res.string.starter_rule_either,
@@ -228,11 +258,24 @@ private fun StarterTask.summary(template: ThingTemplate?): String {
       calendar
     )
 
-    else -> meter ?: calendar
+    else -> meter ?: calendar ?: onCondition
   }
   return listOfNotNull(
     rule,
     description.takeIf { it.isNotEmpty() }).joinToString(" · ")
+}
+
+@Composable
+private fun calendarText(rule: TimeRule): String? {
+  val months = rule.interval_months + 12 * rule.interval_years
+  return when {
+    months == 1 -> stringResource(Res.string.starter_rule_every_month)
+    months == 12 -> stringResource(Res.string.starter_rule_every_year)
+    months > 0 && months % 12 == 0 -> stringResource(Res.string.starter_rule_every_years, months / 12)
+    months > 0 -> stringResource(Res.string.starter_rule_every_months, months)
+    rule.interval_days > 0 -> stringResource(Res.string.starter_rule_every_days, rule.interval_days)
+    else -> null
+  }
 }
 
 /** 5000 → "5,000"; 7.5 → "7.5". Grouping by hand because `String.format` is not common code. */

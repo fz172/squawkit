@@ -1122,3 +1122,6 @@ feature/developeroptions/aiecho	ai_echo_no_thing	Add a Thing first
 feature/tasks/dashboard	suggest_tasks_action	Suggest %1$s
 feature/tasks/dashboard	suggest_tasks_sign_in	Sign in to get suggestions for this list
 feature/tasks/dashboard	suggest_tasks_missing_identity	Add %1$s to get suggestions
+feature/tasks/suggestions/update	starter_rule_every_days	Every %1$d days
+feature/tasks/suggestions/update	starter_pack_suggest	Suggest more %1$s
+feature/tasks/suggestions/update	starter_pack_suggesting	Tailoring these to your %1$s…

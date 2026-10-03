@@ -49,14 +49,20 @@ class TaskSuggestionManagerImpl(
   override suspend fun eligibility(thingId: String): AiEligibility =
     client.eligibility(KIND, ThingId(value_ = thingId), UserId(value_ = hostUidOf(thingId)), withDocuments = false)
 
-  override suspend fun start(thingId: String, entryPoint: String): AiStartResult {
+  override suspend fun start(thingId: String, entryPoint: String, curatedOnly: Boolean): AiStartResult {
     val hostUid = hostUidOf(thingId)
     // A Thing made seconds ago on this device may not be on the server yet, and the server refuses
     // one it cannot find as not_member (§5.3). After the wait the server decides either way.
     if (!syncObserver.awaitSynced(CollectionKind.Thing, EntityScope.userRoot(hostUid), thingId, SYNC_WAIT)) {
       logger.w { "Starting suggestions before the Thing is confirmed on the server" }
     }
-    val request = contextBuilder.build(thingId, entryPoint)
+    val built = contextBuilder.build(thingId, entryPoint)
+    // The curated list is fitted to the Thing's slots, meters and tasks (§6.8), never its logs.
+    val request = if (curatedOnly) {
+      built.copy(curated_only = true, context = built.context?.copy(logs = emptyList(), logs_truncated = false))
+    } else {
+      built
+    }
     return client.start(KIND, request.encodeByteString())
   }
 
@@ -108,15 +114,21 @@ class TaskSuggestionManagerImpl(
 
     val logger = Logger.withTag("TaskSuggestionManager")
 
-    fun AiJob.toRun(): SuggestionRun = when (status) {
-      AiJobStatus.AI_JOB_STATUS_SUCCEEDED -> {
-        val result = result?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
-        if (result != null) SuggestionRun.Ready(id, result) else SuggestionRun.Failed(id, AiErrorCode.UNKNOWN)
+    fun AiJob.toRun(): SuggestionRun {
+      val decoded = result?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
+      return when (status) {
+        AiJobStatus.AI_JOB_STATUS_SUCCEEDED ->
+          if (decoded != null) {
+            SuggestionRun.Ready(id, decoded, aiSkipped)
+          } else {
+            SuggestionRun.Failed(id, AiErrorCode.UNKNOWN)
+          }
+        AiJobStatus.AI_JOB_STATUS_EMPTY -> SuggestionRun.Empty(id, decoded)
+        AiJobStatus.AI_JOB_STATUS_FAILED -> SuggestionRun.Failed(id, error ?: AiErrorCode.UNKNOWN, decoded)
+        // QUEUED, RUNNING, and a status this build does not know: still working, as far as it can
+        // tell, with the curated suggestions it started with.
+        else -> SuggestionRun.Working(id, stage, stageArg, decoded)
       }
-      AiJobStatus.AI_JOB_STATUS_EMPTY -> SuggestionRun.Empty(id)
-      AiJobStatus.AI_JOB_STATUS_FAILED -> SuggestionRun.Failed(id, error ?: AiErrorCode.UNKNOWN)
-      // QUEUED, RUNNING, and a status this build does not know: still working, as far as it can tell.
-      else -> SuggestionRun.Working(id, stage, stageArg)
     }
   }
 }

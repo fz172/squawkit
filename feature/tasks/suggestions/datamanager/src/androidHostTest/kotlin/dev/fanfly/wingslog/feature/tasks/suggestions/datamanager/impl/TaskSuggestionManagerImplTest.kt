@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJob
 import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -26,8 +27,10 @@ import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
 import dev.fanfly.wingslog.rpc.suggesttasks.LastDoneEvidence
+import dev.fanfly.wingslog.rpc.suggesttasks.LogSummary
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksRequest
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
+import dev.fanfly.wingslog.rpc.suggesttasks.SuggestionContext
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TaskOriginKind
@@ -70,7 +73,12 @@ class TaskSuggestionManagerImplTest {
 
   private val suggestion = TaskSuggestion(title = "Replace spark plugs", component_slot_key = "engine")
 
-  private fun job(status: AiJobStatus?, result: SuggestTasksResult? = null, error: AiErrorCode? = null) = AiJob(
+  private fun job(
+    status: AiJobStatus?,
+    result: SuggestTasksResult? = null,
+    error: AiErrorCode? = null,
+    aiSkipped: AiSkipped? = null,
+  ) = AiJob(
     id = JOB,
     kind = AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
     hostUid = UserId(value_ = "host"),
@@ -82,6 +90,7 @@ class TaskSuggestionManagerImplTest {
     updatedAt = Instant.fromEpochMilliseconds(0),
     result = result?.encodeByteString(),
     error = error,
+    aiSkipped = aiSkipped,
   )
 
   @Test
@@ -119,6 +128,24 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
+  fun `asks for the curated suggestions alone, without the logs`() = runTest {
+    val request = SuggestTasksRequest(
+      thing_id = ThingId(value_ = THING),
+      context = SuggestionContext(logs = listOf(LogSummary(work_description = "Oil change")), logs_truncated = true),
+    )
+    coEvery { builder.build(THING, "created") } returns request
+    val sent = slot<ByteString>()
+    coEvery { client.start(any(), capture(sent)) } returns AiStartResult.Started(JOB, joined = false)
+
+    manager.start(THING, "created", curatedOnly = true)
+
+    val decoded = SuggestTasksRequest.ADAPTER.decode(sent.captured)
+    assertThat(decoded.curated_only).isTrue()
+    assertThat(decoded.context?.logs).isEmpty()
+    assertThat(decoded.context?.logs_truncated).isFalse()
+  }
+
+  @Test
   fun `still starts when the Thing is not confirmed synced, and lets the server decide`() = runTest {
     coEvery { sync.awaitSynced(any(), any(), any(), any()) } returns false
     coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
@@ -151,6 +178,25 @@ class TaskSuggestionManagerImplTest {
       SuggestionRun.Empty(JOB),
       SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR),
       SuggestionRun.Failed(JOB, AiErrorCode.UNKNOWN),
+    ).inOrder()
+  }
+
+  @Test
+  fun `carries the curated suggestions in every state, and why the model was skipped`() = runTest {
+    val curated = SuggestTasksResult(suggestions = listOf(TaskSuggestion(title = "Annual")), generation_version = "tasks-4")
+    val skipped = AiSkipped(AiErrorCode.DAILY_LIMIT, Instant.fromEpochMilliseconds(5_000))
+    every { client.observeLatest(AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, ThingId(value_ = THING)) } returns flowOf(
+      job(AiJobStatus.AI_JOB_STATUS_QUEUED, result = curated),
+      job(AiJobStatus.AI_JOB_STATUS_EMPTY, result = curated),
+      job(AiJobStatus.AI_JOB_STATUS_FAILED, result = curated, error = AiErrorCode.PROVIDER_ERROR),
+      job(AiJobStatus.AI_JOB_STATUS_SUCCEEDED, result = curated, aiSkipped = skipped),
+    )
+
+    assertThat(manager.observeRun(THING).toList()).containsExactly(
+      SuggestionRun.Working(JOB, "tailoring", null, curated),
+      SuggestionRun.Empty(JOB, curated),
+      SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR, curated),
+      SuggestionRun.Ready(JOB, curated, skipped),
     ).inOrder()
   }
 
