@@ -8,7 +8,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { getBytes, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getBytes, ref, uploadBytes } from "firebase/storage";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 
 const rulesPath = resolve(dirname(fileURLToPath(import.meta.url)), "../../storage.rules");
@@ -72,6 +72,27 @@ describe("storage rules — blobs are strictly uid-scoped", () => {
   it("a member reads and writes their OWN tree normally", async () => {
     await assertSucceeds(uploadBytes(ref(as(MEMBER), memberBlob), new Uint8Array([7])));
     await assertSucceeds(getBytes(ref(as(MEMBER), memberBlob)));
+  });
+
+  it("the owner may NOT delete a blob: the backend releases it by reference (T20)", async () => {
+    // One blob can back several records; since phase B only the backend deletes one, once no live
+    // record names it (design §8.3). An older client would still send this delete.
+    const thingBlob = `users/${HOST}/thing/${AC}/blobs/blob-2`;
+    await assertSucceeds(uploadBytes(ref(as(HOST), thingBlob), new Uint8Array([5])));
+
+    await assertFails(deleteObject(ref(as(HOST), thingBlob)));
+    await assertFails(deleteObject(ref(as(HOST), hostBlob))); // the legacy aircraft segment too
+    // Still readable and still overwritable, by the owner only.
+    await assertSucceeds(getBytes(ref(as(HOST), thingBlob)));
+    await assertSucceeds(uploadBytes(ref(as(HOST), thingBlob), new Uint8Array([6])));
+  });
+
+  it("the owner may still delete their other files, such as an export archive", async () => {
+    const exportFile = `users/${HOST}/exports/export-1/logbook.zip`; // ExportHistoryRemoteRepository's shape
+    await assertSucceeds(uploadBytes(ref(as(HOST), exportFile), new Uint8Array([1])));
+
+    await assertSucceeds(deleteObject(ref(as(HOST), exportFile)));
+    await assertFails(deleteObject(ref(as(MEMBER), hostBlob)));
   });
 
   it("an unauthenticated caller gets nothing", async () => {

@@ -16,10 +16,27 @@ rules_version = '2';
 //
 // Consequence worth keeping in mind when changing this: a member's *upload* to a shared aircraft is
 // denied too, so the client must not offer to attach files there either.
+//
+// **No client deletes a blob** (task population design §8.3, T20). One blob can back several
+// records, so since phase B the backend releases a blob only when no live record names it any more
+// (`onThingRecordBlobsReleased`), and current clients never delete remote bytes. This denies the
+// delete an older client would still send. Everything else under the user, such as an export
+// archive, the owner may still delete.
 service firebase.storage {
   match /b/{bucket}/o {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // `users/{uid}/{segment}/{thingId}/blobs/{blobId}`, under either segment (thing or the legacy
+    // aircraft).
+    function isBlob() {
+      return resource.name.matches('users/[^/]+/[^/]+/[^/]+/blobs/.+');
+    }
+
     match /users/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, create, update: if isOwner(userId);
+      allow delete: if isOwner(userId) && !isBlob();
     }
   }
 }
