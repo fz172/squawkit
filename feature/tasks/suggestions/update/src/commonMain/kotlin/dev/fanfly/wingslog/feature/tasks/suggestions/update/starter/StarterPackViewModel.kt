@@ -61,7 +61,7 @@ class StarterPackViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
+  val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
 
   private val _uiState = MutableStateFlow(
     StarterPackUiState(
@@ -76,6 +76,9 @@ class StarterPackViewModel(
 
   /** The job the cards follow: the one this screen started last. */
   private var followedJob: AiJobId? = null
+
+  /** The user asked for the model, here or from *Suggest tasks*, rather than the curated list alone. */
+  private var modelRequested = false
 
   init {
     viewModelScope.launch {
@@ -119,6 +122,7 @@ class StarterPackViewModel(
 
   private suspend fun showRun(template: ThingTemplate?) {
     val curatedOnly = uiState.value.mode == Screen.StarterPack.MODE_STARTER
+    modelRequested = !curatedOnly
     val started = suggestionManager.start(
       thingId,
       entryPoint = uiState.value.mode,
@@ -150,22 +154,30 @@ class StarterPackViewModel(
         val failure = (latest as? SuggestionRun.Failed)?.reason
         // A curated-only run is finished from the start, so only a model run reads as working.
         val working = latest as? SuggestionRun.Working
+        // Only a model run can come back with nothing to say; a curated-only one that is empty is
+        // a template with no list.
+        val notEnough = latest is SuggestionRun.Empty && modelRequested
         _uiState.update {
           it.copy(
             isSuggesting = !finished,
             failure = failure,
             stage = working?.stage,
             stageArg = working?.stageArg,
+            aiSkipped = (latest as? SuggestionRun.Ready)?.aiSkipped,
+            notEnough = notEnough,
           )
         }
         if (result == null) {
           // A template with no curated list, and no model answer (yet). A failure with no cards
           // to fall back on closes the screen, and the task tab says why.
+          // An empty model run stays, to offer *Add details* (R21a; for the custom template that
+          // message is the whole screen).
           if (finished) _uiState.update {
+            val close = it.items.isEmpty() && !notEnough
             it.copy(
               isLoading = false,
-              isDone = it.items.isEmpty(),
-              closingError = failure.takeIf { _ -> it.items.isEmpty() },
+              isDone = close,
+              closingError = failure.takeIf { _ -> close },
             )
           }
           return@collect
@@ -207,8 +219,14 @@ class StarterPackViewModel(
     _uiState.update { it.copy(notice = null) }
   }
 
+  /** *Add details* after an empty run: the run is done with; the screen gives way to the Thing's edit form. */
+  fun onAddDetails() {
+    run?.jobIdOrNull?.let { viewModelScope.launch { suggestionManager.dismiss(it) } }
+  }
+
   private fun startModelRun(onRefused: (StarterPackUiState) -> StarterPackUiState) {
-    _uiState.update { it.copy(canSuggest = false, isSuggesting = true, failure = null) }
+    modelRequested = true
+    _uiState.update { it.copy(canSuggest = false, isSuggesting = true, failure = null, notEnough = false) }
     viewModelScope.launch {
       val curatedRun = run
       val started = suggestionManager.start(

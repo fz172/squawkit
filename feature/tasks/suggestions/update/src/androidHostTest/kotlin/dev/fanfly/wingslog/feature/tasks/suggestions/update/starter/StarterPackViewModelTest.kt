@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.appinfo.AppCapability
@@ -33,6 +34,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -529,6 +531,46 @@ class StarterPackViewModelTest {
     advanceUntilIdle()
     assertThat(vm.uiState.value.isSuggesting).isFalse()
     assertThat(vm.uiState.value.stage).isNull()
+  }
+
+  @Test
+  fun aCuratedOnlyAnswerSaysWhyTheModelWasSkipped() = runTest(dispatcher) {
+    val skipped = AiSkipped(AiErrorCode.DAILY_LIMIT, Instant.fromEpochMilliseconds(5_000))
+    serving(SuggestionRun.Ready(JOB, curatedList, skipped))
+
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.aiSkipped).isEqualTo(skipped)
+    assertThat(vm.uiState.value.items).hasSize(3)
+  }
+
+  @Test
+  fun anEmptyModelRunKeepsTheCuratedCardsAndOffersAddDetails() = runTest(dispatcher) {
+    serving(SuggestionRun.Empty(JOB, curatedList))
+
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.notEnough).isTrue()
+    assertThat(vm.uiState.value.items).hasSize(3)
+
+    vm.onAddDetails()
+    advanceUntilIdle()
+    coVerify { suggestions.dismiss(JOB) }
+  }
+
+  @Test
+  fun anEmptyModelRunWithNoCuratedListStaysToSayNotEnough() = runTest(dispatcher) {
+    // The custom template: the message is the whole screen (R21a).
+    serving(SuggestionRun.Empty(JOB, result = null))
+
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isDone).isFalse()
+    assertThat(vm.uiState.value.isLoading).isFalse()
+    assertThat(vm.uiState.value.notEnough).isTrue()
   }
 
   private companion object {

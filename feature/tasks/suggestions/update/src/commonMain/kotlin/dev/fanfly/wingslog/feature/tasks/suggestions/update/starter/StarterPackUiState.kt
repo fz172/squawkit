@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
 import dev.fanfly.wingslog.core.ai.AiErrorCode
+import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
@@ -26,6 +27,13 @@ data class StarterPackUiState(
   val stageArg: String? = null,
   /** The model run failed; the cards stay, with this and *Try again* above them (PRD R21). */
   val failure: AiErrorCode? = null,
+  /**
+   * The run returned the curated suggestions alone because the model was refused: why, and for
+   * the daily limit when it is back (PRD R9a).
+   */
+  val aiSkipped: AiSkipped? = null,
+  /** The model had nothing confident to say (PRD R21a); the screen offers *Add details*. */
+  val notEnough: Boolean = false,
   /** Why *Suggest more* or *Try again* did not start; shown once, as a snackbar. */
   val notice: AiErrorCode? = null,
   val isSaving: Boolean = false,

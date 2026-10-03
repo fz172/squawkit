@@ -38,6 +38,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -64,14 +65,16 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_none
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_stage_hint
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_stage_hint
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_either
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_days
@@ -185,6 +188,36 @@ fun StarterPackRoute(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
+          uiState.aiSkipped?.let { skipped ->
+            // The curated cards came alone; say why, and when the model is back (PRD R9a).
+            Text(
+              text = skipped.text(),
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+          if (uiState.notEnough) {
+            // R21a: nothing confident to suggest; more about the Thing is what would help.
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+              Text(
+                text = stringResource(
+                  Res.string.starter_pack_not_enough,
+                  LocalThingLexicon.current.thingNoun.singular,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+              )
+              OutlinedButton(
+                onClick = {
+                  viewModel.onAddDetails()
+                  navController.navigate(Screen.EditThing.createRoute(viewModel.thingId)) {
+                    popUpTo(Screen.StarterPack.route) { inclusive = true }
+                  }
+                },
+              ) {
+                Text(stringResource(Res.string.starter_pack_add_details))
+              }
+            }
+          }
           uiState.failure?.let { failure ->
             // The model run failed; the cards below are still there to pick from (PRD R21).
             Row(
