@@ -31,6 +31,7 @@ function suggestion(over: Partial<TaskSuggestion>): TaskSuggestion {
     intervalDifferenceNote: "",
     mergesStaticIndex: -1,
     preselect: true,
+    originKind: "ai_document",
     ...over,
   };
 }

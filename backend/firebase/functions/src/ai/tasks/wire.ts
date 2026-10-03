@@ -13,6 +13,7 @@ import type {
   SuggestTasksRequest,
   SuggestTasksResult,
   SuggestedRule,
+  SuggestionOrigin,
   TaskSourceKind as TaskSourceKindName,
 } from "./model.js";
 
@@ -107,8 +108,7 @@ export function resultToProto(result: SuggestTasksResult): SuggestTasksResultPro
         matchesExistingTaskId: s.matchesExistingTaskId ? { value: s.matchesExistingTaskId } : undefined,
         intervalDifferenceNote: s.intervalDifferenceNote,
         preselect: s.preselect,
-        // Every suggestion the pipeline writes is the model's; curated items join in #1265.
-        originKind: s.sourceDocument ? TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT : TaskOriginKind.TASK_ORIGIN_KIND_AI_THING,
+        originKind: ORIGIN_KINDS[s.originKind],
       }),
     ),
     documents: result.documents.map((d) => ({
@@ -206,6 +206,12 @@ const SOURCE_KINDS: Record<TaskSourceKindName, TaskSourceKind> = {
   manufacturer_schedule: TaskSourceKind.TASK_SOURCE_KIND_MANUFACTURER_SCHEDULE,
   common_practice: TaskSourceKind.TASK_SOURCE_KIND_COMMON_PRACTICE,
   logs: TaskSourceKind.TASK_SOURCE_KIND_LOGS,
+};
+
+const ORIGIN_KINDS: Record<SuggestionOrigin, TaskOriginKind> = {
+  pre_curated: TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED,
+  ai_thing: TaskOriginKind.TASK_ORIGIN_KIND_AI_THING,
+  ai_document: TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT,
 };
 
 const DOC_TYPES: Record<DocTypeName, DocType> = {

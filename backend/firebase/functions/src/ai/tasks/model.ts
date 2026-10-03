@@ -7,6 +7,9 @@ export type ComplianceKind = "routine" | "service_bulletin" | "airworthiness_dir
 
 export type TaskSourceKind = "document" | "manufacturer_schedule" | "common_practice" | "logs";
 
+/** Where a suggestion came from (`TaskOriginKind` on the wire): the team's curated list or the model. */
+export type SuggestionOrigin = "pre_curated" | "ai_thing" | "ai_document";
+
 export type SuggestedRule =
   | { kind: "time"; every: number; unit: "days" | "months" | "years" }
   | { kind: "meter"; meterKey: string; interval: number }
@@ -140,6 +143,8 @@ export type TaskSuggestion = {
   /** Index into `context.staticPack` this replaces, or -1 (R25). */
   mergesStaticIndex: number;
   preselect: boolean;
+  /** `pre_curated` for a curated item left as it was (design §6.8); the model's otherwise. */
+  originKind: SuggestionOrigin;
 };
 
 export type SuggestTasksResult = {

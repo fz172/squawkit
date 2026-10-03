@@ -3,7 +3,7 @@ import type { DocType, SuggestionContext, TaskSuggestion } from "../model.js";
 import type { Confidence, FlatFirstDue, FlatRule, SourceInterval } from "../stageTypes.js";
 
 /** A suggestion between the tailor and the result, carrying what the validators check it against. */
-export type Draft = Omit<TaskSuggestion, "suggestionId"> & {
+export type Draft = Omit<TaskSuggestion, "suggestionId" | "originKind"> & {
   /** The tailor's rules, typed into `rules` by the schema rule. */
   rawRules: FlatRule[];
   /** The tailor's first-due anchors, made absolute by the first-due rule. */

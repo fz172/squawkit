@@ -211,6 +211,7 @@ describe("task pipeline without documents", () => {
         lastDone: { logId: "log-1", date: "2026-05-02", reading: { meterKey: "engine_hours", value: 380 } },
         // Common practice is never pre-selected on an airplane (R27).
         preselect: false,
+        originKind: "ai_thing",
       }),
     ]);
     expect(h.stages.map(([s]) => s)).toEqual(["recalling_schedule", "tailoring", "validating"]);
@@ -295,6 +296,7 @@ describe("task pipeline with documents", () => {
       pageRef: "p. 2",
       sourceDocument: "blob-ad",
       preselect: true,
+      originKind: "ai_document",
     });
     expect(out.result.documents).toEqual([
       {
