@@ -38,6 +38,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
@@ -56,6 +57,7 @@ import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.TimeRule
@@ -71,6 +73,9 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pac
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_already_tracked
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_first_due_date
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_first_due_either
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_first_due_meter
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
@@ -287,7 +292,13 @@ fun StarterPackRoute(
                   subtitle = if (item.isAlreadyTracked) {
                     item.trackedSummary(uiState.template)
                   } else {
-                    item.suggestion.summary(uiState.template)
+                    val due = uiState.firstDues
+                      .firstOrNull { it.suggestionId == item.suggestion.suggestion_id?.value_ }
+                      ?.due
+                      ?.firstDueText(uiState.template)
+                    listOfNotNull(item.suggestion.summary(uiState.template), due)
+                      .filter { it.isNotEmpty() }
+                      .joinToString("\n")
                   },
                   checked = item.selected,
                   enabled = !uiState.isSaving && !item.isAlreadyTracked,
@@ -328,6 +339,22 @@ fun StarterPackRoute(
         )
       }
     }
+  }
+}
+
+/** "First due 10/03/2027 or at 512 hrs, whichever comes first"; null for on-condition or none. */
+@Composable
+private fun DueMetadata.firstDueText(template: ThingTemplate?): String? {
+  val date = nextDueDate?.toDisplayFormat()
+  val reading = nextDueEngine?.let(::formatInterval)
+  val unit = nextDueMeterKey?.let { template.meter(it)?.unit_label ?: it }.orEmpty()
+  return when {
+    isOnCondition -> null
+    date != null && reading != null ->
+      stringResource(Res.string.starter_pack_first_due_either, date, reading, unit)
+    date != null -> stringResource(Res.string.starter_pack_first_due_date, date)
+    reading != null -> stringResource(Res.string.starter_pack_first_due_meter, reading, unit)
+    else -> null
   }
 }
 
