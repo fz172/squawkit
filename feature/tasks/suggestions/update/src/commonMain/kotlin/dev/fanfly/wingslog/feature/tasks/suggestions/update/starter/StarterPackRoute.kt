@@ -3,16 +3,22 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -25,6 +31,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
@@ -56,6 +63,8 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pac
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggesting
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_either
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_days
@@ -158,6 +167,30 @@ fun StarterPackRoute(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
+          if (uiState.canSuggest) {
+            OutlinedButton(onClick = viewModel::onSuggest, enabled = !uiState.isSaving) {
+              Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.padding(end = Spacing.small))
+                Text(stringResource(Res.string.starter_pack_suggest, LexiconFormatter.plural(taskNoun)))
+              }
+            }
+          }
+          if (uiState.isSuggesting) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+              CircularProgressIndicator(modifier = Modifier.size(Spacing.large), strokeWidth = 2.dp)
+              Text(
+                text = stringResource(
+                  Res.string.starter_pack_suggesting,
+                  LocalThingLexicon.current.thingNoun.singular,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
           GroupedRowGroup(
             rows = uiState.items.mapIndexed { index, item ->
               {

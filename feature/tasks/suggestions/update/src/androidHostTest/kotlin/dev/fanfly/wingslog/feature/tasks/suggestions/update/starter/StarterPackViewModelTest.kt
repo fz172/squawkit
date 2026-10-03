@@ -11,7 +11,9 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.id.SuggestionId
@@ -92,6 +94,7 @@ class StarterPackViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   private val suggestions = mockk<TaskSuggestionManager>(relaxUnitFun = true)
+  private val entry = mockk<TaskSuggestionEntry> { every { observe(THING_ID) } returns flowOf(SuggestEntry.Available) }
 
   private fun viewModel(
     starterTasks: List<StarterTask>,
@@ -120,6 +123,7 @@ class StarterPackViewModelTest {
         isTaskSuggestionsSupported = serverSource,
       ),
       suggestionManager = suggestions,
+      suggestEntry = entry,
       savedStateHandle = SavedStateHandle(
         buildMap {
           put(Screen.THING_ID, THING_ID)
@@ -399,9 +403,76 @@ class StarterPackViewModelTest {
     coVerify(exactly = 1) { suggestions.dismiss(JOB) }
   }
 
+  @Test
+  fun theCuratedListOffersSuggestTasksWhereTheThingIsDescribedEnough() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    val described = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    assertThat(described.uiState.value.canSuggest).isTrue()
+
+    every { entry.observe(THING_ID) } returns flowOf(SuggestEntry.MissingIdentity(listOf("Model")))
+    val thin = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    assertThat(thin.uiState.value.canSuggest).isFalse()
+
+    // Not on the app's pack, and not once the model run is the one shown.
+    val appPack = viewModel(pack)
+    advanceUntilIdle()
+    assertThat(appPack.uiState.value.canSuggest).isFalse()
+    serving(SuggestionRun.Working(JOB, null, null, curatedList))
+    val suggesting = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+    assertThat(suggesting.uiState.value.canSuggest).isFalse()
+    assertThat(suggesting.uiState.value.isSuggesting).isTrue()
+  }
+
+  @Test
+  fun suggestTasksStartsTheModelRunAndFollowsItFromTheCuratedCards() = runTest(dispatcher) {
+    val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns AiStartResult.Started(JOB, joined = false)
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false) } returns AiStartResult.Started(AI_JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    val vm = viewModel(pack, serverSource = true)
+    runs.emit(SuggestionRun.Ready(JOB, curatedList))
+    advanceUntilIdle()
+
+    vm.onSuggest()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.canSuggest).isFalse()
+    assertThat(vm.uiState.value.isSuggesting).isTrue()
+    coVerify { suggestions.dismiss(JOB) }
+
+    runs.emit(SuggestionRun.Working(AI_JOB, "tailoring", null, curatedList))
+    advanceUntilIdle()
+    assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly("Annual", "Oil change", "ELT").inOrder()
+
+    val merged = SuggestTasksResult(suggestions = listOf(TaskSuggestion(suggestion_id = SuggestionId(value_ = "s1"), title = "Spark plugs")) + curatedList.suggestions)
+    runs.emit(SuggestionRun.Ready(AI_JOB, merged))
+    advanceUntilIdle()
+    assertThat(vm.uiState.value.isSuggesting).isFalse()
+    assertThat(vm.uiState.value.items.first().suggestion.title).isEqualTo("Spark plugs")
+  }
+
+  @Test
+  fun aSuggestTasksThatDoesNotStartLeavesTheButton() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false) } returns AiStartResult.Refused(AiErrorCode.UNAVAILABLE, null)
+
+    vm.onSuggest()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.canSuggest).isTrue()
+    assertThat(vm.uiState.value.isSuggesting).isFalse()
+    coVerify(exactly = 0) { suggestions.dismiss(any()) }
+  }
+
   private companion object {
     const val THING_ID = "thing-1"
     val JOB = AiJobId("job-1")
+    val AI_JOB = AiJobId("job-2")
   }
 
   @Test

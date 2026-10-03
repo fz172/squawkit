@@ -17,7 +17,9 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
@@ -54,6 +56,7 @@ class StarterPackViewModel(
   private val analytics: AnalyticsManager,
   private val capability: AppCapability,
   private val suggestionManager: TaskSuggestionManager,
+  private val suggestEntry: TaskSuggestionEntry,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -68,6 +71,9 @@ class StarterPackViewModel(
 
   /** The run the cards come from, on the server source; null on the app's pack. */
   private var run: SuggestionRun? = null
+
+  /** The job the cards follow: the one this screen started last. */
+  private var followedJob: AiJobId? = null
 
   init {
     viewModelScope.launch {
@@ -100,13 +106,21 @@ class StarterPackViewModel(
       _uiState.update { it.copy(isLoading = false, isDone = true) }
       return
     }
+    followedJob = started.jobId
+    // The curated list came without the model; the user can ask for it here (PRD R1), where the
+    // Thing is described well enough (R5).
+    if (curatedOnly && suggestEntry.observe(thingId).first() == SuggestEntry.Available) {
+      _uiState.update { it.copy(canSuggest = true) }
+    }
     var counted = false
     suggestionManager.observeRun(thingId).collect { latest ->
       // Until the listener catches up with the job just started, the newest it knows is older.
-      if (latest.jobIdOrNull != started.jobId) return@collect
+      if (latest.jobIdOrNull != followedJob) return@collect
       run = latest
       val result = latest.resultOrNull
       val finished = latest !is SuggestionRun.Working
+      // A curated-only run is finished from the start, so only a model run reads as working.
+      _uiState.update { it.copy(isSuggesting = !finished) }
       if (result == null) {
         // A template with no curated list, and no model answer (yet).
         if (finished) _uiState.update { it.copy(isLoading = false, isDone = it.items.isEmpty()) }
@@ -117,6 +131,28 @@ class StarterPackViewModel(
         counted = true
         offered(template, result.suggestions.size)
       }
+    }
+  }
+
+  /**
+   * *Suggest tasks* on the curated list: starts the model run, whose first result is the same
+   * curated list, so the cards stay while it works and its answer replaces them (design §9.2).
+   * Documents join with the sources sheet (T22).
+   */
+  fun onSuggest() {
+    if (!uiState.value.canSuggest) return
+    _uiState.update { it.copy(canSuggest = false, isSuggesting = true) }
+    viewModelScope.launch {
+      val curatedRun = run
+      val started = suggestionManager.start(thingId, entryPoint = Screen.StarterPack.MODE_STARTER, curatedOnly = false)
+      if (started !is AiStartResult.Started) {
+        logger.i { "Suggest tasks did not start: $started" }
+        _uiState.update { it.copy(canSuggest = true, isSuggesting = false) }
+        return@launch
+      }
+      followedJob = started.jobId
+      // The curated-only run is finished with; the new one carries the same list.
+      curatedRun?.jobIdOrNull?.takeIf { it != started.jobId }?.let { suggestionManager.dismiss(it) }
     }
   }
 
