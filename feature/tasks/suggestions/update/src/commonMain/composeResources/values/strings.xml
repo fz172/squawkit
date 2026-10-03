@@ -2,7 +2,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="starter_pack_screen_title">Recommended <xliff:g example="Tasks">%1$s</xliff:g></string>
   <string name="starter_pack_title">Add recommended <xliff:g example="tasks">%1$s</xliff:g>?</string>
-  <string name="starter_pack_subtitle">A starting schedule for this <xliff:g example="home">%1$s</xliff:g>. Untick anything that doesn’t apply — every item stays editable afterwards.</string>
+  <string name="starter_pack_subtitle">A starting schedule for this <xliff:g example="home">%1$s</xliff:g></string>
   <string name="starter_pack_disclaimer">Recommendations, not requirements. Confirm each interval against the manufacturer’s service manual for your <xliff:g example="car">%1$s</xliff:g>.</string>
   <string name="starter_pack_add">Add <xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g></string>
   <string name="starter_pack_skip">Skip</string>

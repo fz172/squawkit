@@ -290,7 +290,7 @@ message SuggestTasksRequest {
   SuggestionContext context = 3;
   repeated SourceDocumentRef documents = 4;
   string entry_point = 5;              // analytics only
-  bool curated_only = 6;               // no model call: creation and the empty list (§9.1)
+  bool curated_only = 6;               // no model call: the empty task list (§9.1)
 }
 message SourceDocumentRef {
   AttachmentId blob_id = 1; string name = 2; string mime_type = 3;
@@ -824,8 +824,8 @@ Built in T15:
 - **Truncation:** at most 500 logs, newest first. Then the oldest tenth is dropped at a time until
   the encoded request is under 400 KiB.
 - **No starter pack (2026-10-02).** The builder no longer sends the template's starter tasks; the
-  server has the curated list (§6.8). It sets `curated_only` for the runs creation and the empty
-  task list start on their own (§9.1), so AI runs only when the user asks for it.
+  server has the curated list (§6.8). It sets `curated_only` for the run the empty task list
+  starts on its own (§9.1), so AI runs only when the user asks for it.
 
 ### 7.3 `TaskSuggestionManager`
 
@@ -976,11 +976,12 @@ default, `suggest`, `document`) and an optional `attachmentId` (R4).
 
 ### 9.1 Entry points
 
-- **Creation step 4** and the **empty task list**: `mode=starter` (existing routes). Since
-  2026-10-02 the screen starts a `curated_only` run on opening (PRD R1) rather than showing a
-  built-in pack. No model call: AI runs only when the user taps *Suggest tasks* there, which opens
-  the sources sheet as `mode=suggest` does (#1263 makes the mode an enum).
-- **Guests** skip the screen after creation and go to the Thing (PRD R47).
+- **The empty task list**: `mode=starter`. Since 2026-10-02 the screen starts a `curated_only` run
+  on opening (PRD R1) rather than showing a built-in pack. No model call: AI runs only when the
+  user taps *Suggest tasks* there, which opens the sources sheet as `mode=suggest` does (#1263
+  makes the mode an enum).
+- **Not after creating a Thing** (2026-10-03): the create form closes onto the new Thing, and
+  suggestions start from its task tab.
 - **Task list action** (R2): new `ThingOverviewAction.SuggestTasksClick` → `mode=suggest`.
 - **Add task → Tasks from a document** (R3): `mode=document` (sources sheet opens with the picker).
 - **Attachment row → Find tasks in this document** (R4, P1): `mode=document&attachmentId=`.
@@ -1361,7 +1362,7 @@ dependency order.
     4. Backend: `startAiJob` writes the curated list into the job, and curated-only jobs (§5.1).
     5. Backend: the worker merges AI suggestions with the curated list.
     6. App data layer: `Working` with a result, `aiSkipped`, the mapper's origin, `curated_only`.
-    7. App screens: creation and the empty task list start a curated-only run instead of showing
+    7. App screens: the empty task list starts a curated-only run instead of showing
        the pack; *Suggest tasks* there starts the AI run (no automatic AI, 2026-10-02).
     8. Templates: `starter_tasks` removed (version bump, field reserved), with the app code that
        read it.

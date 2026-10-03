@@ -75,10 +75,10 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rul
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_years
 
 /**
- * The starter-pack step (PRD §4.9, §8.1 step 4): per-item checkboxes, and Skip as a real button.
+ * The recommended tasks (PRD §4.9): per-item checkboxes, and Skip as a real button.
  *
- * Reached from the create form's hand-off and from an empty Tasks tab. Either way the form that
- * opened it is gone from the stack, so finishing pops straight to the shell.
+ * Reached from the Tasks tab (its empty state, or *Suggest tasks*), never after creating a Thing
+ * (2026-10-03), so finishing pops straight back to the shell.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable

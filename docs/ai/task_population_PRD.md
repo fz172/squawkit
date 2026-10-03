@@ -87,10 +87,9 @@ program, so accuracy matters for more than convenience.
 
 ## 4. Users and Stories
 
-- **Aircraft owner, new Thing.** Adds a 1978 C172N, O-320-H2AD, 3,400 TT, with logs imported. The
-  curated airplane tasks appear within a second of saving, with *Suggest tasks* above them. The
-  owner taps it, skips the documents, and the AI suggestions join the list a few minutes later. It
-  ends with the annual, 100-hour, oil and filter, ELT battery, transponder
+- **Aircraft owner, new Thing.** Adds a 1978 C172N, O-320-H2AD, 3,400 TT, with logs imported. The owner opens the empty task tab: the curated airplane tasks appear within a second, with *Suggest
+  tasks* above them. The owner taps it, skips the documents, and the AI suggestions join the list a
+  few minutes later. It ends with the annual, 100-hour, oil and filter, ELT battery, transponder
   and pitot-static checks. Each has its first due worked out from current tach, and each carries a
   source chip.
 - **Motorcycle owner.** Creates a 2025 Triumph Bonneville T100 at 1,200 mi and uploads the
@@ -120,14 +119,14 @@ which case it is the first follow-up; **P2** is designed for, not built.
 
 ### 5.1 Entry points
 
-- **R1 (P0). After creating a Thing, and on an empty task list.** Both routes that opened the
-  starter pack (`EditThingScreen` after create, and the task list's empty state) now ask the
-  server for the curated suggestions only (R9a): instant, free, and no model call. **AI never
-  runs on its own.** The screen offers *Suggest tasks* above the curated cards, which opens the
-  same flow as anywhere else (sources sheet with optional documents, R6), and the AI suggestions
-  then join the curated ones (R25). (Revised 2026-10-02, decision 19: the screen used to show the
-  template's built-in pack with *Suggest tasks* above it. The curated cards now come from the
-  server; the rest is unchanged.)
+- **R1 (P0). From the task tab only.** Creating a Thing ends on the Thing; no suggestions screen
+  follows it (revised 2026-10-03). Suggested tasks are added from the Thing's task tab: the empty
+  list's recommended tasks and the *Suggest tasks* action (R2). The empty list asks the server for
+  the curated suggestions only (R9a): instant, free, and no model call. **AI never runs on its
+  own.** The screen offers *Suggest tasks* above the curated cards, which opens the same flow as
+  anywhere else (sources sheet with optional documents, R6), and the AI suggestions then join the
+  curated ones (R25). (Revised 2026-10-02, decision 19: the screen used to show the template's
+  built-in pack with *Suggest tasks* above it, and it also followed creating a Thing.)
 - **R2 (P0). Task list, any time.** A *Suggest tasks* action on a non-empty task list opens the same
   flow, filtered against existing tasks (R24).
 - **R3 (P0). Add task → from a document.** The add-task flow offers *Tasks from a document*, which
@@ -360,8 +359,7 @@ Three mechanisms, kept separate, per
   every entry point) needs a signed-in, non-anonymous account. The free tier in R46 means free
   *for signed-in accounts*, not free for guests.
   - **Client.** A guest gets no suggestions, curated ones included (revised 2026-10-02, decision
-    19: a guest used to see the built-in starter pack). After creating a Thing, a guest goes
-    straight to it. *Suggest tasks* and *Tasks from a document* are visible and open a sign-in /
+    19: a guest used to see the built-in starter pack). *Suggest tasks* and *Tasks from a document* are visible and open a sign-in /
     link-account prompt instead of the flow, the
     same account-gate pattern as the data-log upload (data log PRD R40). Web has no guest mode, so
     this state exists only on mobile.
@@ -412,8 +410,8 @@ Three mechanisms, kept separate, per
 
 Mocks come with the design doc. The flow in words:
 
-1. **New Thing or empty task list** → the curated cards, with *Suggest tasks* above them. **Task
-   list** → *Suggest tasks* (or add task → *Tasks from a document*).
+1. **Empty task list** → the curated cards, with *Suggest tasks* above them. **Task list** →
+   *Suggest tasks* (or add task → *Tasks from a document*). Creating a Thing opens neither.
 2. **Sources sheet** (R6). One row per component with *Upload* and *Skip*, and the Pro gate on
    upload for a free owner. The primary action is *Suggest*.
 3. **Working** (R19, R19a). The step being worked on is named, and the user can leave. Any entry
@@ -612,8 +610,8 @@ Settled 2026-09-27.
 19. **The suggestion RPC is the only source of suggestions** (2026-10-02). The template's built-in
     starter pack leaves the app and becomes the server's curated lists (R9a), returned by every run
     ahead of the AI's and merged with them on the server (R25). Guests and offline devices get none
-    (R47, R51). AI never runs on its own: creating a Thing shows the curated list, and AI runs only
-    when the user taps *Suggest tasks* (R1). Curated suggestions carry the `PRE_CURATED` origin, which replaces
+    (R47, R51). AI never runs on its own: the empty task tab shows the curated list, and AI runs only
+    when the user taps *Suggest tasks* (R1). Creating a Thing opens no suggestions (2026-10-03). Curated suggestions carry the `PRE_CURATED` origin, which replaces
     `TEMPLATE_STARTER` under the same number.
 
 ### Still open

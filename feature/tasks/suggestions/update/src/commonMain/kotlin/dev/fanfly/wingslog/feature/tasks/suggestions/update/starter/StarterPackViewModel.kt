@@ -35,7 +35,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Step 4 of creating a Thing (PRD §8.1), and the empty task list: the recommended tasks, offered.
+ * The empty task list's recommended tasks, and the task list's *Suggest tasks* (PRD R1, R2). Not a
+ * step after creating a Thing since 2026-10-03.
  *
  * Two sources until the v1 flag removal (T25):
  * - **The app's starter pack**, off the Thing's own DNA, where suggestions are not supported yet

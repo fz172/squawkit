@@ -44,11 +44,10 @@ sealed class Screen(val route: String) {
   }
 
   /**
-   * The template's recommended schedule, offered once the Thing exists (PRD §4.9), and the AI
-   * suggestions that join it (docs/ai/task_population_design.md §9.1). Reached from the create
-   * form's hand-off and an empty Tasks tab (`starter`, the default, so both existing routes are
-   * unchanged) and from the task list's *Suggest tasks* action (`suggest`). The pack is read off the
-   * Thing's own DNA, so the id and the mode are all the route carries.
+   * The template's recommended schedule (PRD §4.9), and the AI suggestions that join it
+   * (docs/ai/task_population_design.md §9.1). Reached from an empty Tasks tab (`starter`, the
+   * default) and from the task list's *Suggest tasks* action (`suggest`); not after creating a
+   * Thing (2026-10-03). The id and the mode are all the route carries.
    */
   data object StarterPack : Screen("starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}") {
     const val MODE_STARTER = "starter"

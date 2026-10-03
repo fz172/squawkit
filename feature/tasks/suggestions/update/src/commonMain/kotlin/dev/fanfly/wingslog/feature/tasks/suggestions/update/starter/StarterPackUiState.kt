@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 
 data class StarterPackUiState(
   /**
-   * How the screen was opened (`Screen.StarterPack.MODE_*`): `starter` from creation and the empty
+   * How the screen was opened (`Screen.StarterPack.MODE_*`): `starter` from the empty
    * list, `suggest` from the task list's *Suggest tasks* (design §9.1). T17 renders the difference.
    */
   val mode: String = Screen.StarterPack.MODE_STARTER,
