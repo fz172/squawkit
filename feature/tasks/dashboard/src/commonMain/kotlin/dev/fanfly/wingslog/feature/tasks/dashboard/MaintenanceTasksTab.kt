@@ -42,6 +42,8 @@ import org.koin.core.parameter.parametersOf
 fun MaintenanceTasksTab(
   state: ThingOverviewUiState.Success,
   onAction: (ThingOverviewAction) -> Unit,
+  /** Opens the account upgrade, for a guest's *Suggest tasks* (PRD R47). */
+  onLinkAccount: () -> Unit = {},
   /** Jumped-to task (from a log's Affected Tasks): switch to its sub-view and scroll to it. */
   scrollToTaskId: String? = null,
   showHeader: Boolean = true,
@@ -65,6 +67,9 @@ fun MaintenanceTasksTab(
       },
     )
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
+  val suggestViewModel: SuggestTasksEntryViewModel =
+    koinViewModel(key = "suggest:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
+  val suggestEntry by suggestViewModel.entry.collectAsStateWithLifecycle()
   val taskFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange
   val activeTasks = tabState.activeTasks
@@ -120,6 +125,16 @@ fun MaintenanceTasksTab(
       .padding(bottom = navPillAndFabClearance),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
+    // Any time on a list that has tasks (PRD R2). An empty list offers the starter pack instead,
+    // which carries its own Suggest tasks (R1).
+    if (state.activeTasks.isNotEmpty() || state.completedTasks.isNotEmpty()) {
+      SuggestTasksAction(
+        entry = suggestEntry,
+        onSuggest = { onAction(ThingOverviewAction.SuggestTasksClick(state.thing.id)) },
+        onSignIn = onLinkAccount,
+        onEditThing = { onAction(ThingOverviewAction.EditClick(state.thing.id)) },
+      )
+    }
     ComplianceSection(
       activeTasks = activeTasks,
       completedTasks = completedTasks,
