@@ -1,3 +1,4 @@
+import { AiJobStatus } from "../generated/proto/rpc/ai_job/ai_job.js";
 import {
   thingTabForRecordType,
   activityNotificationId,
@@ -180,4 +181,53 @@ export function toDataMap(data: PushData, recipientUid: string): Record<string, 
     ) as Record<string, string>),
     recipientUid,
   };
+}
+
+export type SuggestionsMessageInput = {
+  thingId: string;
+  /** The Thing's display label; `""` when it will not resolve. */
+  tailNumber: string;
+  /** How the run ended. */
+  status: AiJobStatus;
+};
+
+/**
+ * "Suggestions are ready" (PRD R20): an AI suggestion run ended, for the person who started it.
+ * One per Thing in the tray, so a newer run's push replaces an older one. The tap opens the Thing's
+ * suggestions screen (`suggestions:<thingId>`, design §17), which shows the held answer.
+ *
+ * On the collaboration channel and never high priority: it is news the user asked for, not an
+ * alert. `recordType` is the Thing's own, since the message is about no record in it.
+ */
+export function suggestionsPushData(input: SuggestionsMessageInput): PushData {
+  return {
+    class: "collaboration",
+    channel: "COLLABORATION",
+    notificationId: `suggestions:${input.thingId}`,
+    highPriority: "false",
+    aircraftId: input.thingId,
+    recordType: RECORD_TYPE.AIRCRAFT,
+    tapTarget: `suggestions:${input.thingId}`,
+    titleKey: "notification_suggestions_title",
+    bodyKey: suggestionsBodyKey(input.status),
+    tailNumber: input.tailNumber,
+    actorName: "",
+  };
+}
+
+/**
+ * The body's string key for how the run ended. The push names a string, as every push here does,
+ * rather than carrying the status: both renderers (the app's `strings.xml`, the iOS extension's
+ * Swift switch) work from keys, and an unknown key degrades to an empty body on an old client
+ * where an unknown status number would need its own fallback.
+ */
+export function suggestionsBodyKey(status: AiJobStatus): string {
+  switch (status) {
+    case AiJobStatus.AI_JOB_STATUS_SUCCEEDED:
+      return "notification_suggestions_body_ready";
+    case AiJobStatus.AI_JOB_STATUS_EMPTY:
+      return "notification_suggestions_body_empty";
+    default:
+      return "notification_suggestions_body_failed";
+  }
 }

@@ -3,7 +3,11 @@ import { SuggestTasksResult as SuggestTasksResultProto } from "../../generated/p
 import { AiError } from "../errors.js";
 import { createProvider } from "../providers/registry.js";
 import type { AiProvider } from "../providers/types.js";
-import type { AiPipeline } from "../worker.js";
+import type { AiJobFinish, AiPipeline } from "../worker.js";
+import { ENTITY_SEGMENT_THING } from "../../config/entitySegment.js";
+import { readThingLabel } from "../../notifications/onRecordWritten.js";
+import { suggestionsPushData } from "../../notifications/pushMessages.js";
+import { enabledTokensFor, sendPush } from "../../notifications/pushSender.js";
 import { curatedSuggestions } from "./curatedResult.js";
 import type { SuggestTasksResult, TaskSuggestion } from "./model.js";
 import { runTaskPipeline } from "./pipeline.js";
@@ -21,8 +25,10 @@ import { requestFromProto, resultToProto } from "./wire.js";
  */
 export function createTaskSuggestionPipeline(
   providerFor: (id: string) => AiProvider = vertexProvider,
+  notifyFinished: (finish: AiJobFinish) => Promise<void> = pushFinished,
 ): AiPipeline {
   return {
+    onFinished: notifyFinished,
     async run(request, context) {
       const decoded = requestFromProto(SuggestTasksRequestProto.decode(request));
       if (decoded.documents.length > 0) {
@@ -87,6 +93,21 @@ export function withCurated(
     ...result,
     suggestions: [...result.suggestions, ...curated.filter((_, i) => !covered.has(i) && !dropped.has(i))],
   };
+}
+
+/**
+ * The R20 push: the run ended, whatever the outcome, so the person who started it can come back
+ * to it. Only a model run gets here; a curated-only job never reaches the worker. A device with no
+ * enabled token is simply not told.
+ */
+export async function pushFinished(finish: AiJobFinish): Promise<void> {
+  const targets = await enabledTokensFor(finish.ref.callerUid);
+  if (targets.length === 0) return;
+  const tailNumber = await readThingLabel(finish.job.hostUid, finish.job.thingId, ENTITY_SEGMENT_THING);
+  await sendPush(
+    targets,
+    suggestionsPushData({ thingId: finish.job.thingId, tailNumber, status: finish.status }),
+  );
 }
 
 /**

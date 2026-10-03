@@ -17,7 +17,7 @@ import { RECALL_SCHEMA, TAILOR_SCHEMA } from "../../src/ai/tasks/schemas.js";
 import type { RecallOutput, TailorOutput } from "../../src/ai/tasks/stageTypes.js";
 import { createTaskSuggestionPipeline } from "../../src/ai/tasks/taskSuggestionPipeline.js";
 import { GENERATION_VERSION } from "../../src/ai/tasks/version.js";
-import { handleAiJob, type AiWorkerDeps } from "../../src/ai/worker.js";
+import { handleAiJob, type AiJobFinish, type AiWorkerDeps } from "../../src/ai/worker.js";
 import { AiJobKind, AiJobStatus } from "../../src/generated/proto/rpc/ai_job/ai_job.js";
 import {
   SuggestTasksRequest,
@@ -127,10 +127,15 @@ function requestFor({ host, thing }: Ids, make = "Sling"): string {
   return Buffer.from(SuggestTasksRequest.encode(request).finish()).toString("base64");
 }
 
-async function runJob(ids: Ids, providerFor: (id: string) => AiProvider, make?: string): Promise<AiJobRef> {
+async function runJob(
+  ids: Ids,
+  providerFor: (id: string) => AiProvider,
+  make?: string,
+  finished: AiJobFinish[] = [],
+): Promise<AiJobRef> {
   const deps: AiWorkerDeps = {
     now: () => NOW,
-    pipelineFor: () => createTaskSuggestionPipeline(providerFor),
+    pipelineFor: () => createTaskSuggestionPipeline(providerFor, async (finish) => void finished.push(finish)),
     cache: new FirestorePipelineCache(() => NOW),
   };
   const { jobId } = await handleStartAiJob(
@@ -237,6 +242,31 @@ describe("the task-suggestion pipeline in the worker", () => {
     expect(titles[0]).toBe("Oil and filter change");
     expect(titles).not.toContain("Oil change");
     expect(titles).toHaveLength(curatedListFor("airplane").length);
+  });
+
+  it("tells the person who started it how the run ended, once, after the outcome is written (R20)", async () => {
+    const ids = await seedThing();
+    const finished: AiJobFinish[] = [];
+
+    const ref = await runJob(ids, scriptedProviders().providerFor, `Sling-${randomUUID()}`, finished);
+
+    expect(finished).toHaveLength(1);
+    expect(finished[0]).toMatchObject({ ref, status: AiJobStatus.AI_JOB_STATUS_SUCCEEDED });
+    expect(finished[0].job.thingId).toBe(ids.thing);
+  });
+
+  it("tells them when the run failed too", async () => {
+    const finished: AiJobFinish[] = [];
+    const failing = (id: string): AiProvider => ({
+      id,
+      async generate() {
+        throw new Error("Vertex is down");
+      },
+    });
+
+    await runJob(await seedThing(), failing, `Sling-${randomUUID()}`, finished);
+
+    expect(finished.map((f) => f.status)).toEqual([AiJobStatus.AI_JOB_STATUS_FAILED]);
   });
 
   it("leaves out the curated items the model says do not fit this Thing", async () => {
