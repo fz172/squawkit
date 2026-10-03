@@ -1,0 +1,95 @@
+{
+  "templateId": "bike",
+  "items": [
+    {
+      "title": "Lube the chain",
+      "description": "More often in wet or dusty conditions. A dry chain wears the whole drivetrain.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 150
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Check chain wear",
+      "description": "Replace at 0.5% stretch before it takes the cassette and chainrings with it.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Check brake pads & cables",
+      "description": "Pad thickness, cable fray, hydraulic feel.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Full tune-up",
+      "description": "Bearings, derailleur adjustment, wheel true, bolt torque.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Refresh tubeless sealant",
+      "description": "Tubeless tires only. Sealant dries out whether or not you ride.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "preselect": false,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Suspension service",
+      "description": "Fork and shock, per the manufacturer's hour interval.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "ride_hours",
+          "interval": 50
+        }
+      ],
+      "preselect": false,
+      "sourceKind": "common_practice",
+      "citation": ""
+    }
+  ]
+}

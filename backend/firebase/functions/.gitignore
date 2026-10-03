@@ -14,3 +14,5 @@ node_modules/
 !tsconfig.json
 # Eval cases are source (fictitious Things, no real uids).
 !eval/cases/*/*.json
+# Curated suggestion lists are source (design §6.8).
+!src/ai/tasks/curated/*.json

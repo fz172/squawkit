@@ -1,0 +1,163 @@
+{
+  "templateId": "home",
+  "items": [
+    {
+      "title": "Replace HVAC filter",
+      "description": "Every season, sooner with pets. A clogged filter is the most common cause of a struggling system.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 3,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "HVAC service",
+      "description": "Spring and fall — before the cooling and heating seasons.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "seasonal",
+          "months": [
+            4,
+            10
+          ],
+          "dayOfMonth": 0
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Clean gutters",
+      "description": "Spring and fall. Overflowing gutters send water into the foundation.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "seasonal",
+          "months": [
+            4,
+            10
+          ],
+          "dayOfMonth": 0
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Smoke & CO detector batteries",
+      "description": "Replace the batteries and press the test button on every unit.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Flush water heater",
+      "description": "Drains the sediment that shortens the tank's life and its efficiency.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Clean dryer vent",
+      "description": "Lint in the duct is a fire risk, not just a slow dryer.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Refrigerator water filter",
+      "description": "Or per the fridge's own indicator.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Sprinkler blowout",
+      "description": "Before the first freeze, if the house has an irrigation system.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "seasonal",
+          "months": [
+            10
+          ],
+          "dayOfMonth": 0
+        }
+      ],
+      "preselect": false,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Chimney sweep & inspection",
+      "description": "If the house has a wood-burning fireplace or stove. Creosote is a fire risk.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": false,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Septic pump-out",
+      "description": "If the house is on septic. Every three to five years depending on household size.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 36,
+          "unit": "months"
+        }
+      ],
+      "preselect": false,
+      "sourceKind": "common_practice",
+      "citation": ""
+    }
+  ]
+}
