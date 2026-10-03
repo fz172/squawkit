@@ -4,7 +4,6 @@ package dev.fanfly.wingslog.rpc.suggest_tasks;
 
 import "id/ids.proto";
 import "task/maintenance_task.proto";
-import "task/starter_task.proto";
 import "task/task_origin.proto";
 import "thing/meter_reading.proto";
 import "thing/spec.proto";
@@ -35,6 +34,9 @@ message SuggestTasksRequest {
     repeated SourceDocumentRef documents = 4;
     // Which entry point started the run. Analytics only.
     string entry_point = 5;
+    // Return the curated suggestions only, with no model call: the Thing lacks the identity PRD R5
+    // asks for. The run ends at once and never counts toward the daily limit (design §5.1).
+    bool curated_only = 6;
 }
 
 // A document the client uploaded before starting the run, as an ordinary blob.
@@ -58,9 +60,10 @@ message SuggestionContext {
     // §7.2).
     repeated LogSummary logs = 7;
     bool logs_truncated = 8;
-    // The template's starter pack, so a suggestion can replace the static card it improves on
-    // (PRD R25).
-    repeated StarterTask static_pack = 9;
+    // The app's starter pack, for the server to merge against. The server has its own curated list
+    // since 2026-10-02 (design §6.8).
+    reserved 9;
+    reserved "static_pack";
     // The template's word for a task, for the prompt.
     string lexicon_task_noun = 10;
 }
@@ -156,14 +159,19 @@ message TaskSuggestion {
     // An existing task this duplicates; the review shows it as Already tracked (PRD R24).
     MaintenanceTaskId matches_existing_task_id = 17;
     string interval_difference_note = 18;
-    // The `static_pack` index this replaces, or -1 for none (PRD R25).
-    int32 merges_static_index = 19;
+    // The `static_pack` index a suggestion replaced. The server merges since 2026-10-02 (R25).
+    reserved 19;
+    reserved "merges_static_index";
     // Whether the review ticks it by default. The server applies PRD R27.
     bool preselect = 20;
     // Set only on a one-time item that says when it falls due.
     FirstDue first_due = 21;
     // The document pages it cites, 1-based PDF page numbers, for opening the document there (R30).
     repeated int32 source_pages = 22;
+    // PRE_CURATED for a curated item left as it was, AI_THING or AI_DOCUMENT for the rest, a
+    // curated item an AI suggestion covered included (design §6.8). The mapper copies it onto the
+    // task's origin.
+    TaskOriginKind origin_kind = 23;
 }
 
 // When a one-time item first falls due, whichever comes first. The mapper writes it to the task's

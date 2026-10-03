@@ -3,8 +3,8 @@ syntax = "proto3";
 option java_package = "dev.fanfly.wingslog.task";
 option java_multiple_files = true;
 
-// Carried on ThingTemplate.starter_tasks (thing/template.proto) and on the suggest_tasks RPC's
-// static pack. Lives beside the task it becomes. No proto `package`, so moving the file changes
+// Carried on ThingTemplate.starter_tasks (thing/template.proto) until the server's curated lists
+// replace it (#1265, design §6.8). Lives beside the task it becomes. No proto `package`, so moving the file changes
 // nothing on the wire or in a stored Thing.
 
 // A task offered at creation so a new Thing is not an empty shell. PRD §4.9; the §13 metric that

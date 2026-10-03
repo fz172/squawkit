@@ -13,7 +13,6 @@ import dev.fanfly.wingslog.rpc.suggesttasks.LogSummary
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
-import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Component
@@ -59,7 +58,6 @@ class SuggestionContextBuilderTest {
       MeterDef(key = "engine_hours", unit_label = "hrs", component_slot_key = "engine"),
       MeterDef(key = "hobbs", unit_label = "hrs"),
     ),
-    starter_tasks = listOf(StarterTask(title = "Annual", interval_months = 12)),
   )
 
   private val thing = Thing(
@@ -124,7 +122,7 @@ class SuggestionContextBuilderTest {
   }
 
   @Test
-  fun `names the Thing and its host tree, and carries the template and its pack`() = runTest {
+  fun `names the Thing and its host tree, and carries the template`() = runTest {
     val request = builder(hostUid = "the-host").build(THING, "overview")
 
     assertThat(request.thing_id?.value_).isEqualTo(THING)
@@ -132,7 +130,6 @@ class SuggestionContextBuilderTest {
     assertThat(request.entry_point).isEqualTo("overview")
     assertThat(request.context?.template_id?.value_).isEqualTo("airplane")
     assertThat(request.context?.template_version).isEqualTo(13)
-    assertThat(request.context?.static_pack?.map { it.title }).containsExactly("Annual")
     assertThat(request.context?.lexicon_task_noun).isNotEmpty()
   }
 

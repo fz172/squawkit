@@ -21,8 +21,14 @@ import {
   complianceTypeToJSON,
   InspectionRule,
 } from "../../task/maintenance_task";
-import { StarterTask } from "../../task/starter_task";
-import { TaskSourceKind, taskSourceKindFromJSON, taskSourceKindToJSON } from "../../task/task_origin";
+import {
+  TaskOriginKind,
+  taskOriginKindFromJSON,
+  taskOriginKindToJSON,
+  TaskSourceKind,
+  taskSourceKindFromJSON,
+  taskSourceKindToJSON,
+} from "../../task/task_origin";
 import { MeterReading } from "../../thing/meter_reading";
 import { Spec } from "../../thing/spec";
 
@@ -113,6 +119,11 @@ export interface SuggestTasksRequest {
   documents: SourceDocumentRef[];
   /** Which entry point started the run. Analytics only. */
   entryPoint: string;
+  /**
+   * Return the curated suggestions only, with no model call: the Thing lacks the identity PRD R5
+   * asks for. The run ends at once and never counts toward the daily limit (design §5.1).
+   */
+  curatedOnly: boolean;
 }
 
 /** A document the client uploaded before starting the run, as an ordinary blob. */
@@ -138,11 +149,6 @@ export interface SuggestionContext {
    */
   logs: LogSummary[];
   logsTruncated: boolean;
-  /**
-   * The template's starter pack, so a suggestion can replace the static card it improves on
-   * (PRD R25).
-   */
-  staticPack: StarterTask[];
   /** The template's word for a task, for the prompt. */
   lexiconTaskNoun: string;
 }
@@ -233,8 +239,6 @@ export interface TaskSuggestion {
   /** An existing task this duplicates; the review shows it as Already tracked (PRD R24). */
   matchesExistingTaskId: MaintenanceTaskId | undefined;
   intervalDifferenceNote: string;
-  /** The `static_pack` index this replaces, or -1 for none (PRD R25). */
-  mergesStaticIndex: number;
   /** Whether the review ticks it by default. The server applies PRD R27. */
   preselect: boolean;
   /** Set only on a one-time item that says when it falls due. */
@@ -243,6 +247,12 @@ export interface TaskSuggestion {
     | undefined;
   /** The document pages it cites, 1-based PDF page numbers, for opening the document there (R30). */
   sourcePages: number[];
+  /**
+   * PRE_CURATED for a curated item left as it was, AI_THING or AI_DOCUMENT for the rest, a
+   * curated item an AI suggestion covered included (design §6.8). The mapper copies it onto the
+   * task's origin.
+   */
+  originKind: TaskOriginKind;
 }
 
 /**
@@ -268,7 +278,14 @@ export interface LastDoneEvidence {
 }
 
 function createBaseSuggestTasksRequest(): SuggestTasksRequest {
-  return { thingId: undefined, hostUid: undefined, context: undefined, documents: [], entryPoint: "" };
+  return {
+    thingId: undefined,
+    hostUid: undefined,
+    context: undefined,
+    documents: [],
+    entryPoint: "",
+    curatedOnly: false,
+  };
 }
 
 export const SuggestTasksRequest: MessageFns<SuggestTasksRequest> = {
@@ -287,6 +304,9 @@ export const SuggestTasksRequest: MessageFns<SuggestTasksRequest> = {
     }
     if (message.entryPoint !== "") {
       writer.uint32(42).string(message.entryPoint);
+    }
+    if (message.curatedOnly !== false) {
+      writer.uint32(48).bool(message.curatedOnly);
     }
     return writer;
   },
@@ -338,6 +358,14 @@ export const SuggestTasksRequest: MessageFns<SuggestTasksRequest> = {
           message.entryPoint = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.curatedOnly = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -368,6 +396,11 @@ export const SuggestTasksRequest: MessageFns<SuggestTasksRequest> = {
         : isSet(object.entry_point)
         ? globalThis.String(object.entry_point)
         : "",
+      curatedOnly: isSet(object.curatedOnly)
+        ? globalThis.Boolean(object.curatedOnly)
+        : isSet(object.curated_only)
+        ? globalThis.Boolean(object.curated_only)
+        : false,
     };
   },
 
@@ -388,6 +421,9 @@ export const SuggestTasksRequest: MessageFns<SuggestTasksRequest> = {
     if (message.entryPoint !== "") {
       obj.entryPoint = message.entryPoint;
     }
+    if (message.curatedOnly !== false) {
+      obj.curatedOnly = message.curatedOnly;
+    }
     return obj;
   },
 
@@ -407,6 +443,7 @@ export const SuggestTasksRequest: MessageFns<SuggestTasksRequest> = {
       : undefined;
     message.documents = object.documents?.map((e) => SourceDocumentRef.fromPartial(e)) || [];
     message.entryPoint = object.entryPoint ?? "";
+    message.curatedOnly = object.curatedOnly ?? false;
     return message;
   },
 };
@@ -559,7 +596,6 @@ function createBaseSuggestionContext(): SuggestionContext {
     existingTasks: [],
     logs: [],
     logsTruncated: false,
-    staticPack: [],
     lexiconTaskNoun: "",
   };
 }
@@ -589,9 +625,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
     }
     if (message.logsTruncated !== false) {
       writer.uint32(64).bool(message.logsTruncated);
-    }
-    for (const v of message.staticPack) {
-      StarterTask.encode(v!, writer.uint32(74).fork()).join();
     }
     if (message.lexiconTaskNoun !== "") {
       writer.uint32(82).string(message.lexiconTaskNoun);
@@ -670,14 +703,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
           message.logsTruncated = reader.bool();
           continue;
         }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
-
-          message.staticPack.push(StarterTask.decode(reader, reader.uint32()));
-          continue;
-        }
         case 10: {
           if (tag !== 82) {
             break;
@@ -723,11 +748,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
         : isSet(object.logs_truncated)
         ? globalThis.Boolean(object.logs_truncated)
         : false,
-      staticPack: globalThis.Array.isArray(object?.staticPack)
-        ? object.staticPack.map((e: any) => StarterTask.fromJSON(e))
-        : globalThis.Array.isArray(object?.static_pack)
-        ? object.static_pack.map((e: any) => StarterTask.fromJSON(e))
-        : [],
       lexiconTaskNoun: isSet(object.lexiconTaskNoun)
         ? globalThis.String(object.lexiconTaskNoun)
         : isSet(object.lexicon_task_noun)
@@ -762,9 +782,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
     if (message.logsTruncated !== false) {
       obj.logsTruncated = message.logsTruncated;
     }
-    if (message.staticPack?.length) {
-      obj.staticPack = message.staticPack.map((e) => StarterTask.toJSON(e));
-    }
     if (message.lexiconTaskNoun !== "") {
       obj.lexiconTaskNoun = message.lexiconTaskNoun;
     }
@@ -786,7 +803,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
     message.existingTasks = object.existingTasks?.map((e) => ExistingTask.fromPartial(e)) || [];
     message.logs = object.logs?.map((e) => LogSummary.fromPartial(e)) || [];
     message.logsTruncated = object.logsTruncated ?? false;
-    message.staticPack = object.staticPack?.map((e) => StarterTask.fromPartial(e)) || [];
     message.lexiconTaskNoun = object.lexiconTaskNoun ?? "";
     return message;
   },
@@ -1628,10 +1644,10 @@ function createBaseTaskSuggestion(): TaskSuggestion {
     lastDone: undefined,
     matchesExistingTaskId: undefined,
     intervalDifferenceNote: "",
-    mergesStaticIndex: 0,
     preselect: false,
     firstDue: undefined,
     sourcePages: [],
+    originKind: 0,
   };
 }
 
@@ -1691,9 +1707,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
     if (message.intervalDifferenceNote !== "") {
       writer.uint32(146).string(message.intervalDifferenceNote);
     }
-    if (message.mergesStaticIndex !== 0) {
-      writer.uint32(152).int32(message.mergesStaticIndex);
-    }
     if (message.preselect !== false) {
       writer.uint32(160).bool(message.preselect);
     }
@@ -1705,6 +1718,9 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
       writer.int32(v);
     }
     writer.join();
+    if (message.originKind !== 0) {
+      writer.uint32(184).int32(message.originKind);
+    }
     return writer;
   },
 
@@ -1859,14 +1875,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
           message.intervalDifferenceNote = reader.string();
           continue;
         }
-        case 19: {
-          if (tag !== 152) {
-            break;
-          }
-
-          message.mergesStaticIndex = reader.int32();
-          continue;
-        }
         case 20: {
           if (tag !== 160) {
             break;
@@ -1900,6 +1908,14 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
           }
 
           break;
+        }
+        case 23: {
+          if (tag !== 184) {
+            break;
+          }
+
+          message.originKind = reader.int32() as any;
+          continue;
         }
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -1978,11 +1994,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
         : isSet(object.interval_difference_note)
         ? globalThis.String(object.interval_difference_note)
         : "",
-      mergesStaticIndex: isSet(object.mergesStaticIndex)
-        ? globalThis.Number(object.mergesStaticIndex)
-        : isSet(object.merges_static_index)
-        ? globalThis.Number(object.merges_static_index)
-        : 0,
       preselect: isSet(object.preselect) ? globalThis.Boolean(object.preselect) : false,
       firstDue: isSet(object.firstDue)
         ? FirstDue.fromJSON(object.firstDue)
@@ -1994,6 +2005,11 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
         : globalThis.Array.isArray(object?.source_pages)
         ? object.source_pages.map((e: any) => globalThis.Number(e))
         : [],
+      originKind: isSet(object.originKind)
+        ? taskOriginKindFromJSON(object.originKind)
+        : isSet(object.origin_kind)
+        ? taskOriginKindFromJSON(object.origin_kind)
+        : 0,
     };
   },
 
@@ -2053,9 +2069,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
     if (message.intervalDifferenceNote !== "") {
       obj.intervalDifferenceNote = message.intervalDifferenceNote;
     }
-    if (message.mergesStaticIndex !== 0) {
-      obj.mergesStaticIndex = Math.round(message.mergesStaticIndex);
-    }
     if (message.preselect !== false) {
       obj.preselect = message.preselect;
     }
@@ -2064,6 +2077,9 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
     }
     if (message.sourcePages?.length) {
       obj.sourcePages = message.sourcePages.map((e) => Math.round(e));
+    }
+    if (message.originKind !== 0) {
+      obj.originKind = taskOriginKindToJSON(message.originKind);
     }
     return obj;
   },
@@ -2100,12 +2116,12 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
         ? MaintenanceTaskId.fromPartial(object.matchesExistingTaskId)
         : undefined;
     message.intervalDifferenceNote = object.intervalDifferenceNote ?? "";
-    message.mergesStaticIndex = object.mergesStaticIndex ?? 0;
     message.preselect = object.preselect ?? false;
     message.firstDue = (object.firstDue !== undefined && object.firstDue !== null)
       ? FirstDue.fromPartial(object.firstDue)
       : undefined;
     message.sourcePages = object.sourcePages?.map((e) => e) || [];
+    message.originKind = object.originKind ?? 0;
     return message;
   },
 };

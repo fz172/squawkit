@@ -8,7 +8,7 @@ import {
   SuggestTasksResult as SuggestTasksResultProto,
 } from "../../src/generated/proto/rpc/suggest_tasks/suggest_tasks.js";
 import { ComplianceType } from "../../src/generated/proto/task/maintenance_task.js";
-import { TaskSourceKind } from "../../src/generated/proto/task/task_origin.js";
+import { TaskOriginKind, TaskSourceKind } from "../../src/generated/proto/task/task_origin.js";
 import { airplaneContext } from "./fixtures.js";
 
 /** The wire form of fixtures.ts's airplane, as the app's SuggestionContextBuilder will send it. */
@@ -51,10 +51,6 @@ function airplaneRequestProto(): SuggestTasksRequestProto {
         },
       ],
       logsTruncated: false,
-      staticPack: [
-        { title: "Oil change", componentSlotKey: "engine" },
-        { title: "ELT inspection", componentSlotKey: "" },
-      ],
       lexiconTaskNoun: "inspection",
     },
   });
@@ -67,7 +63,8 @@ describe("requestFromProto", () => {
 
     expect(requestFromProto(SuggestTasksRequestProto.decode(bytes))).toEqual({
       thingId: "thing-1",
-      context: airplaneContext(),
+      // The app sends no starter pack since #1265; the server's curated list fills it later.
+      context: { ...airplaneContext(), staticPack: [] },
       documents: [],
     });
   });
@@ -77,40 +74,6 @@ describe("requestFromProto", () => {
     proto.context!.meters[0] = { ...proto.context!.meters[0], current: 0, hasCurrent: false };
 
     expect(requestFromProto(proto).context.meters[0].current).toBeNull();
-  });
-
-  it("turns a starter task's free-form rule fields into rules", () => {
-    const proto = airplaneRequestProto();
-    proto.context!.staticPack = [
-      {
-        title: "Gutters",
-        description: "Spring and fall",
-        defaultSelected: true,
-        meterKey: "",
-        interval: 0,
-        intervalMonths: 0,
-        componentSlotKey: "",
-        months: [4, 10],
-      },
-      {
-        title: "Oil",
-        description: "",
-        defaultSelected: true,
-        meterKey: "odometer",
-        interval: 5000,
-        intervalMonths: 6,
-        componentSlotKey: "",
-        months: [],
-      },
-    ];
-
-    expect(requestFromProto(proto).context.staticPack.map((p) => p.rules)).toEqual([
-      [{ kind: "seasonal", months: [4, 10], dayOfMonth: 0 }],
-      [
-        { kind: "time", every: 6, unit: "months" },
-        { kind: "meter", meterKey: "odometer", interval: 5000 },
-      ],
-    ]);
   });
 });
 
@@ -199,11 +162,12 @@ describe("resultToProto", () => {
       rules: [{ meterRule: { meterKey: "engine_hours", interval: 200 } }],
       lastDone: { logId: { value: "log-1" }, date: "2026-05-02", reading: { meterKey: "engine_hours", value: 380 } },
       matchesExistingTaskId: undefined,
-      mergesStaticIndex: -1,
       preselect: true,
+      originKind: TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT,
     });
     expect(second).toMatchObject({
       sourceDocument: undefined,
+      originKind: TaskOriginKind.TASK_ORIGIN_KIND_AI_THING,
       lastDone: undefined,
       firstDue: { date: "2026-12-01", meter: undefined },
       matchesExistingTaskId: { value: "task-annual" },

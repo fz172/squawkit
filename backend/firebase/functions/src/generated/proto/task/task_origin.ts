@@ -20,7 +20,12 @@ export const protobufPackage = "";
  */
 export enum TaskOriginKind {
   TASK_ORIGIN_KIND_UNSPECIFIED = 0,
-  TASK_ORIGIN_KIND_TEMPLATE_STARTER = 1,
+  /**
+   * TASK_ORIGIN_KIND_PRE_CURATED - A curated suggestion: one from the list the team keeps per template on the server (design
+   * §6.8). Was TEMPLATE_STARTER, the app's own starter pack, until 2026-10-02; same number, and
+   * tasks are stored as binary protos, so nothing stored changes.
+   */
+  TASK_ORIGIN_KIND_PRE_CURATED = 1,
   /** TASK_ORIGIN_KIND_AI_THING - A suggestion run with no documents. */
   TASK_ORIGIN_KIND_AI_THING = 2,
   TASK_ORIGIN_KIND_AI_DOCUMENT = 3,
@@ -37,8 +42,8 @@ export function taskOriginKindFromJSON(object: any): TaskOriginKind {
     case "TASK_ORIGIN_KIND_UNSPECIFIED":
       return TaskOriginKind.TASK_ORIGIN_KIND_UNSPECIFIED;
     case 1:
-    case "TASK_ORIGIN_KIND_TEMPLATE_STARTER":
-      return TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER;
+    case "TASK_ORIGIN_KIND_PRE_CURATED":
+      return TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED;
     case 2:
     case "TASK_ORIGIN_KIND_AI_THING":
       return TaskOriginKind.TASK_ORIGIN_KIND_AI_THING;
@@ -62,8 +67,8 @@ export function taskOriginKindToJSON(object: TaskOriginKind): string {
   switch (object) {
     case TaskOriginKind.TASK_ORIGIN_KIND_UNSPECIFIED:
       return "TASK_ORIGIN_KIND_UNSPECIFIED";
-    case TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER:
-      return "TASK_ORIGIN_KIND_TEMPLATE_STARTER";
+    case TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED:
+      return "TASK_ORIGIN_KIND_PRE_CURATED";
     case TaskOriginKind.TASK_ORIGIN_KIND_AI_THING:
       return "TASK_ORIGIN_KIND_AI_THING";
     case TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT:

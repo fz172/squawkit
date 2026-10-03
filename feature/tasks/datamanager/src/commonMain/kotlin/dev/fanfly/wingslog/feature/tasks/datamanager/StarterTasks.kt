@@ -19,8 +19,8 @@ import com.squareup.wire.Instant as WireInstant
  * The ordinary [MaintenanceTask] an accepted starter task becomes (PRD §4.9).
  *
  * Editable and deletable like one typed in; only its `origin` says it came from the template's pack
- * (TEMPLATE_STARTER, docs/ai/task_population_design.md §4.1), which lets analytics compare how long
- * static and AI suggestions survive. The id is left for `TaskDataManager.addTask` to assign. Both
+ * (PRE_CURATED, docs/ai/task_population_design.md §4.1), which lets analytics compare how long
+ * curated and AI suggestions survive. The id is left for `TaskDataManager.addTask` to assign. Both
  * halves of the pack's rule survive when both are set, so "every 5,000 mi or 6 months" is two rules
  * and the due engine takes the earlier.
  */
@@ -32,7 +32,7 @@ fun StarterTask.toMaintenanceTask(
   notes = description,
   component = componentTypeForSlot(component_slot_key, template),
   origin = TaskOrigin(
-    kind = TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER,
+    kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED,
     suggested_at = createdAt
   ),
   type = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,

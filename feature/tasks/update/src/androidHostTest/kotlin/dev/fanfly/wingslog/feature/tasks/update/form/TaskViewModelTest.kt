@@ -408,7 +408,7 @@ class TaskViewModelTest {
   @Test
   fun saveEditedTask_keepsTheStoredOrigin() = runTest(testDispatcher) {
     // The form never shows the origin, so the rebuilt card must carry it over (PRD R35).
-    val origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER)
+    val origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
     val stored = skippedCard(forceDueEngine = 0f).copy(origin = origin)
     every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(listOf(stored))
     coEvery { inspectionDataManager.updateTask(TEST_THING_ID, any()) } returns Result.success(true)

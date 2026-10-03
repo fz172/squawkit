@@ -146,7 +146,7 @@ class StarterPackViewModelTest {
     written.forEach { assertThat(it.rules.single().time_rule?.creation_date).isNotNull() }
     assertThat(written.map { it.origin?.kind }
                  .distinct())
-      .containsExactly(TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER)
+      .containsExactly(TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
     assertThat(
       analytics.paramsFor("starter_tasks_accepted")
         .single()
