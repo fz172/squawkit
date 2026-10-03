@@ -2,7 +2,9 @@ package dev.fanfly.wingslog.feature.tasks.update.form
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
@@ -423,6 +425,24 @@ class TaskViewModelTest {
     assertThat(persisted.captured.origin).isEqualTo(origin)
   }
 
+  @Test
+  fun saveEditedTask_reportsAnEditToASuggestedTask() = runTest(testDispatcher) {
+    // PRD R50: how suggested tasks survive. A rename is a details edit.
+    val analytics = RecordingAnalyticsManager()
+    val stored = skippedCard(forceDueEngine = 0f)
+      .copy(origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_AI_THING))
+    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(listOf(stored))
+    coEvery { inspectionDataManager.updateTask(TEST_THING_ID, any()) } returns Result.success(true)
+    val viewModel = buildViewModelForEdit(analytics)
+    advanceUntilIdle()
+
+    viewModel.saveEditedTaskFrom(stored.copy(title = "Renamed"))
+    advanceUntilIdle()
+
+    assertThat(analytics.paramsFor("task_origin_edited").single())
+      .containsAtLeastEntriesIn(mapOf("kind" to "ai_thing", "field_group" to "details"))
+  }
+
   // ---- helpers ----
 
   private fun skippedCard(forceDueEngine: Float) = MaintenanceTask(
@@ -466,7 +486,7 @@ class TaskViewModelTest {
       savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to TEST_THING_ID)),
     )
 
-  private fun buildViewModelForEdit(): TaskViewModel =
+  private fun buildViewModelForEdit(analytics: AnalyticsManager = NoOpAnalyticsManager): TaskViewModel =
     TaskViewModel(
       inspectionDataManager = inspectionDataManager,
       attachmentManager = attachmentManager,
@@ -475,7 +495,7 @@ class TaskViewModelTest {
       subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       taskDueManager = taskDueManager,
-      analytics = NoOpAnalyticsManager,
+      analytics = analytics,
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       savedStateHandle = SavedStateHandle(
         mapOf(

@@ -77,6 +77,7 @@ sealed interface AnalyticsEvent {
     TASK_SUGGESTIONS_SHOWN("task_suggestions_shown"),
     TASK_SUGGESTIONS_ACCEPTED("task_suggestions_accepted"),
     TASK_SUGGESTIONS_FAILED("task_suggestions_failed"),
+    TASK_ORIGIN_EDITED("task_origin_edited"),
     ;
   }
 
@@ -131,6 +132,7 @@ sealed interface AnalyticsEvent {
     AI_COUNT("ai_count"),
     // A bucket for the same reason as DURATION_BUCKET: one row per run is no dimension.
     LATENCY_BUCKET("latency_bucket"),
+    FIELD_GROUP("field_group"),
     ;
   }
 }

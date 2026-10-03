@@ -458,3 +458,21 @@ object SuggestionBuckets {
     else -> "5m+"
   }
 }
+
+/**
+ * A suggested task was edited after it was added (PRD R50): how well suggestions survive contact
+ * with the owner. [originKind] is the task's origin (`ai_thing`, `ai_document`, `pre_curated`, …),
+ * and [fieldGroup] what changed: `schedule`, `details`, `compliance`, or several joined with `+`.
+ */
+data class TaskOriginEdited(
+  override val templateId: String,
+  val originKind: String,
+  val fieldGroup: String,
+) : ThingScopedEvent {
+  override val name = Name.TASK_ORIGIN_EDITED
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.KIND to originKind,
+    Param.FIELD_GROUP to fieldGroup,
+  )
+}
