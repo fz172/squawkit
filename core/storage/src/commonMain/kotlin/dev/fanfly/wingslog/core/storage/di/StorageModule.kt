@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.DriverFactory
 import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.core.storage.LocalAccountMigratorImpl
 import dev.fanfly.wingslog.core.storage.TombstoneGc
@@ -125,6 +126,8 @@ val storageModule: Module = module {
   }
 
   single<BlobReferenceScanner> { BlobReferenceScanner(get<WingsLogDatabase>()) }
+
+  single<EntitySyncObserver> { EntitySyncObserver(get<WingsLogDatabase>()) }
 
   single<TombstoneGc> {
     TombstoneGc(

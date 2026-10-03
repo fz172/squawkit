@@ -742,6 +742,18 @@ Reads through existing managers: `FleetManager.loadThing`, `TaskDataManager.obse
 request is under 400 KiB or 500 entries, setting `logs_truncated`. `hostUid` comes from
 `ThingScopeResolver.resolveNow(thingId)`, never from the signed-in uid.
 
+Built in T15:
+
+- **What is sent:** spec fields the template declares and does not mark `is_identifier`.
+  User-invented `custom_N` fields are left out, since nothing declares what they hold. Components
+  (children included) carry make, model and their slot's non-identifying specs, never the serial.
+  A meter's current value is the highest reading across components (a twin's two engines).
+- **A log has no title.** `MaintenanceLog` has none, so `LogSummary.title` is empty and the work
+  description carries what was done. The log's technician, serial, attachments and squawks are
+  never read into the summary.
+- **Truncation:** at most 500 logs, newest first. Then the oldest tenth is dropped at a time until
+  the encoded request is under 400 KiB.
+
 ### 7.3 `TaskSuggestionManager`
 
 ```kotlin
@@ -760,6 +772,20 @@ meanwhile. `accept` writes each task with `TaskDataManager.addTask`
 (one write per task, like the starter pack; a failure drops only its own card), then `close`s the
 job and releases unaccepted documents (§8.2).
 
+As built (T15), changes from the sketch:
+
+- **`start` returns `AiStartResult`** (§7.1) and takes the entry point as a string, until T16 names
+  them. `eligibility` takes no `withDocuments` until T21.
+- **The Thing's sync wait** uses `EntitySyncObserver` (`core/storage`, a read of the row's `dirty`
+  flag). It waits up to 20 s, then starts anyway and lets the server decide.
+- **`SuggestionRun` lives in `suggestions/datamanager`, not `model`:** its `Failed` carries
+  `core/ai`'s `AiErrorCode`, and a `model` module may depend only on `core:model`.
+  `AcceptedSuggestion(suggestion, edited)` is in `model`; `edited` is T18's.
+- **`firstDue(thingId, suggestion)`** returns the due engine's `DueMetadata` for the mapped task,
+  computed with no logs: none is tied to a suggestion, so the schedule runs from now.
+- **Not here:** the origin line on the task detail (R35's display) and the edit analytics are
+  T17's.
+
 ### 7.4 `SuggestionMapper`: `TaskSuggestion` → `MaintenanceTask`
 
 - title, description (+ `component_hint` prepended when set), rules, `is_one_time`, compliance
@@ -770,8 +796,9 @@ job and releases unaccepted documents (§8.2).
 - `first_due` → `force_due_date` and/or `force_due_meter` on a one-time task (PRD §7).
 - `TimeRule.creation_date` = accept time; `due_on_anniversary` from template capabilities, as
   `toMaintenanceTask` does.
-- `last_done` → `force_complied_status { complied_date, complied_meter }`. The due engine applies it
-  because a brand-new task has no linked log (TaskDueManagerImpl:253).
+- `last_done` is **not** read (owner's decision, 2026-10-02): no suggestion is tied to a log, so a new
+  task gets no `force_complied_status` from one, and its schedule runs from acceptance. The server
+  strips `last_done` anyway (§6.0).
 - `source_document` → the document's `Attachment` proto copied into `attachments` (same id, path,
   sha: one blob, R37).
 - **First-due preview** (R29): the review card runs `TaskDueManager.computeNextDue(mapped, logs)`

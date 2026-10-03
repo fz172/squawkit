@@ -96,6 +96,12 @@ SELECT id, payload, updated_at, writer_uid
 FROM entity
 WHERE collection = :collection AND scope_path = :scope AND id = :id AND deleted = 0;
 
+-- Whether one row still waits to be pushed. EntitySyncObserver uses it to hold a request the server
+-- will check against Firestore (an AI run on a Thing made seconds ago) until the row is there.
+selectDirtyFlag:
+SELECT dirty FROM entity
+WHERE collection = :collection AND scope_path = :scope AND id = :id;
+
 upsert:
 INSERT OR REPLACE INTO entity(
   collection, scope_path, id, payload, payload_schema,
