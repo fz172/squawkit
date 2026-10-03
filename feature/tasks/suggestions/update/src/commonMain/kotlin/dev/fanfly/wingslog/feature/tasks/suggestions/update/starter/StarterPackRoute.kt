@@ -49,6 +49,7 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meter
+import dev.fanfly.wingslog.core.template.slotLabel
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
@@ -290,30 +291,45 @@ fun StarterPackRoute(
               }
             }
           }
-          GroupedRowGroup(
-            rows = uiState.items.mapIndexed { index, item ->
-              {
-                GroupedCheckboxRow(
-                  title = item.suggestion.title,
-                  subtitle = if (item.isAlreadyTracked) {
-                    item.trackedSummary(uiState.template)
-                  } else {
-                    val due = uiState.firstDues
-                      .firstOrNull { it.suggestionId == item.suggestion.suggestion_id?.value_ }
-                      ?.due
-                      ?.firstDueText(uiState.template)
-                    listOfNotNull(item.suggestion.summary(uiState.template), due)
-                      .filter { it.isNotEmpty() }
-                      .joinToString("\n")
-                  },
-                  checked = item.selected,
-                  enabled = !uiState.isSaving && !item.isAlreadyTracked,
-                  supporting = { SourceChip(item.suggestion) { sourceShown = item.suggestion } },
-                  onCheckedChange = { viewModel.onToggle(index) },
-                )
-              }
-            },
-          )
+          val groups = groupsOf(uiState.items)
+          groups.forEach { group ->
+            // Headed only when there is more than one group to tell apart (PRD R25).
+            if (groups.size > 1) {
+              Text(
+                text = if (group.slotKey.isEmpty()) {
+                  LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun)
+                } else {
+                  uiState.template.slotLabel(group.slotKey, ifAbsent = group.slotKey)
+                },
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+            GroupedRowGroup(
+              rows = group.cards.map { (index, item) ->
+                {
+                  GroupedCheckboxRow(
+                    title = item.suggestion.title,
+                    subtitle = if (item.isAlreadyTracked) {
+                      item.trackedSummary(uiState.template)
+                    } else {
+                      val due = uiState.firstDues
+                        .firstOrNull { it.suggestionId == item.suggestion.suggestion_id?.value_ }
+                        ?.due
+                        ?.firstDueText(uiState.template)
+                      listOfNotNull(item.suggestion.summary(uiState.template), due)
+                        .filter { it.isNotEmpty() }
+                        .joinToString("\n")
+                    },
+                    checked = item.selected,
+                    enabled = !uiState.isSaving && !item.isAlreadyTracked,
+                    supporting = { SourceChip(item.suggestion) { sourceShown = item.suggestion } },
+                    onCheckedChange = { viewModel.onToggle(index) },
+                  )
+                }
+              },
+            )
+          }
           // R31: said once, and only when the model drafted some of what is on screen.
           if (uiState.items.any { it.suggestion.isFromAi() }) {
             Text(
