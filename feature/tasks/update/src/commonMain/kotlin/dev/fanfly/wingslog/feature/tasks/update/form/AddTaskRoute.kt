@@ -9,18 +9,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
+import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_TASK_DRAFT
 import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.task_added
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 @Composable
 fun AddTaskRoute(
@@ -81,6 +83,17 @@ fun AddTaskRoute(
       snackbarHostState = snackbarHostState,
       onCancel = { navController.popBackStack() },
       onSave = { card ->
+        val draft = viewModel.draft
+        if (draft != null) {
+          // Draft mode (task population T18): hand the edited task back to the screen that opened
+          // the form, which writes it. The suggestion's origin and documents stay with it.
+          navController.previousBackStackEntry?.savedStateHandle?.set(
+            CROSS_SCREEN_TASK_DRAFT,
+            card.copy(origin = draft.origin, attachments = draft.attachments).toDraftArg(),
+          )
+          navController.popBackStack()
+          return@AddTaskScreen
+        }
         viewModel.saveNewTask(
           title = card.title,
           type = card.type,
@@ -102,7 +115,9 @@ fun AddTaskRoute(
           }
         )
       },
-      attachmentSection = {
+      attachmentSection = attachments@{
+        // A draft's documents come with its suggestion and are not edited here.
+        if (viewModel.draft != null) return@attachments
         AttachmentFormSection(
           visibleAttachments = pendingAttachments.visible(),
           isAnonymous = viewModel.isAnonymous,

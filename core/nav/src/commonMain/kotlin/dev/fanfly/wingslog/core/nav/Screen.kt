@@ -19,6 +19,14 @@ sealed class Screen(val route: String) {
 
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
 
+    /**
+     * The add-task form's draft mode (task population T18): [TASK_DRAFT] is the task it opens
+     * pre-filled from, and [CROSS_SCREEN_TASK_DRAFT] the edited task it hands back, both encoded
+     * by `toDraftArg`. The form writes nothing in this mode; the screen that opened it does.
+     */
+    const val TASK_DRAFT = "draft"
+    const val CROSS_SCREEN_TASK_DRAFT = "task_draft_result"
+
     /** A Thing the shell should switch to once a dialog closes — set by the create form. */
     const val CROSS_SCREEN_SELECT_THING_ID = "select_thing_id"
   }
@@ -84,8 +92,10 @@ sealed class Screen(val route: String) {
   }
 
   data object AddMaintenanceTask :
-    Screen("maintenance_task_create/{$THING_ID}") {
-    fun createRoute(thingId: String) = "maintenance_task_create/$thingId"
+    Screen("maintenance_task_create/{$THING_ID}?$TASK_DRAFT={$TASK_DRAFT}") {
+    /** [draft]: a task to start from, in draft mode (see [TASK_DRAFT]); null for a new one. */
+    fun createRoute(thingId: String, draft: String? = null) =
+      if (draft == null) "maintenance_task_create/$thingId" else "maintenance_task_create/$thingId?$TASK_DRAFT=$draft"
   }
 
   data object EditMaintenanceTask :

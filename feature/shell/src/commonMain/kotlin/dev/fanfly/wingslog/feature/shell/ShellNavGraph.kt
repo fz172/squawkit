@@ -93,9 +93,16 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   }
   selectionDialog(
     route = Screen.AddMaintenanceTask.route,
-    arguments = listOf(navArgument(Screen.THING_ID) {
-      type = NavType.StringType
-    }),
+    arguments = listOf(
+      navArgument(Screen.THING_ID) {
+        type = NavType.StringType
+      },
+      navArgument(Screen.TASK_DRAFT) {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+      },
+    ),
     dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
