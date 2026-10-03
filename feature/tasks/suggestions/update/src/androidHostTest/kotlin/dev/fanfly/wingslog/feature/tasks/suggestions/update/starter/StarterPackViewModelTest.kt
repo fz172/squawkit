@@ -305,7 +305,7 @@ class StarterPackViewModelTest {
 
   @Test
   fun theSuggestModeStartsTheModelRun() = runTest(dispatcher) {
-    serving(SuggestionRun.Working(JOB, null, null, curatedList))
+    serving(SuggestionRun.Idle, SuggestionRun.Working(JOB, null, null, curatedList))
 
     viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
     advanceUntilIdle()
@@ -696,6 +696,51 @@ class StarterPackViewModelTest {
     assertThat(analytics.paramsFor("task_suggestions_accepted").single()).containsAtLeastEntriesIn(
       mapOf("curated_count" to "1", "ai_count" to "1"),
     )
+  }
+
+  // Returning to a held answer (PRD R19): leaving does not lose the model's cards.
+
+  @Test
+  fun reopeningTheListShowsTheHeldModelAnswerInsteadOfStartingOver() = runTest(dispatcher) {
+    val answer = SuggestTasksResult(suggestions = listOf(ai("s1", "Tire rotation")) + curatedList.suggestions)
+    serving(SuggestionRun.Ready(JOB, answer))
+
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    coVerify(exactly = 0) { suggestions.start(any(), any(), any()) }
+    assertThat(vm.uiState.value.items.map { it.suggestion.title }).contains("Tire rotation")
+    assertThat(vm.uiState.value.canSuggest).isFalse()
+    // Reported when it first arrived, not again on every return.
+    assertThat(analytics.countOf("task_suggestions_shown")).isEqualTo(0)
+  }
+
+  @Test
+  fun leavingKeepsTheModelAnswerButClosesACuratedOnlyRun() = runTest(dispatcher) {
+    val answer = SuggestTasksResult(suggestions = listOf(ai("s1", "Tire rotation")) + curatedList.suggestions)
+    serving(SuggestionRun.Ready(JOB, answer))
+    val withAnswer = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    withAnswer.onSkip()
+    advanceUntilIdle()
+    coVerify(exactly = 0) { suggestions.dismiss(any()) }
+
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    val curatedOnly = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    curatedOnly.onSkip()
+    advanceUntilIdle()
+    coVerify(exactly = 1) { suggestions.dismiss(JOB) }
+  }
+
+  @Test
+  fun anEarlierEmptyOrFailedModelRunIsNotHeldSoTheListStartsAfresh() = runTest(dispatcher) {
+    serving(SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR, curatedList))
+
+    viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    coVerify { suggestions.start(THING_ID, Screen.StarterPack.MODE_STARTER, curatedOnly = true) }
   }
 
   private companion object {

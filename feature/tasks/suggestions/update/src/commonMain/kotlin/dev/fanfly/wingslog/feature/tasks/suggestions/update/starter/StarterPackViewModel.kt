@@ -32,13 +32,16 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.model.toSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * The empty task list's recommended tasks, and the task list's *Suggest tasks* (PRD R1, R2). Not a
@@ -132,6 +135,19 @@ class StarterPackViewModel(
   }
 
   private suspend fun showRun(template: ThingTemplate?) {
+    // R19: the model's answer is held for a day until the user acts on it. Opening the list again
+    // shows it rather than starting over: a new run would hide it behind a newer job, and a second
+    // model run the same day is refused anyway (R49).
+    // The listener answers at once, from cache if need be; a slow one is not worth waiting on.
+    val earlier = withTimeoutOrNull(RESUME_WAIT) { suggestionManager.observeRun(thingId).firstOrNull() }
+    if (earlier != null && earlier.holdsModelAnswer()) {
+      modelRequested = true
+      followedJob = earlier.jobIdOrNull
+      // Already reported when it first arrived.
+      if (earlier !is SuggestionRun.Working) reportedJob = followedJob
+      follow(template)
+      return
+    }
     val curatedOnly = uiState.value.mode == Screen.StarterPack.MODE_STARTER
     modelRequested = !curatedOnly
     val started = suggestionManager.start(
@@ -156,6 +172,11 @@ class StarterPackViewModel(
     ) {
       _uiState.update { it.copy(canSuggest = true) }
     }
+    follow(template)
+  }
+
+  /** Follows [followedJob] for as long as the screen is open, into the cards and their states. */
+  private suspend fun follow(template: ThingTemplate?) {
     var counted = false
     suggestionManager.observeRun(thingId)
       .collect { latest ->
@@ -324,10 +345,11 @@ class StarterPackViewModel(
 
   /** "Skip" is a first-class answer (PRD §8.1), and it leaves no trace but the offered event. */
   fun onSkip() {
-    // A finished run is closed; one still working carries on, and its push brings the user back
-    // (PRD R19, R20).
+    // A curated-only or failed run is closed. The model's answer is kept for the day (R19), so
+    // leaving and coming back finds it; one still working carries on, and its push brings the
+    // user back (R20). Accepting is what closes an answer.
     val current = run
-    if (current != null && current !is SuggestionRun.Working) {
+    if (current != null && !current.holdsModelAnswer()) {
       viewModelScope.launch {
         current.jobIdOrNull?.let {
           suggestionManager.dismiss(
@@ -439,6 +461,9 @@ class StarterPackViewModel(
   private companion object {
     val logger = Logger.withTag("StarterPackViewModel")
 
+    /** How long opening the list waits to learn whether a model answer is held (R19). */
+    val RESUME_WAIT = 2.seconds
+
     /** The entry point a model run asked from the curated list reports (R50). */
     const val SUGGEST_MORE = "suggest_more"
 
@@ -460,6 +485,15 @@ class StarterPackViewModel(
         )
       }
     }
+
+    /**
+     * A model run working, or one whose answer has the model's cards in it: what the user would
+     * lose by closing it or by starting another. A curated-only run, an empty or failed model run,
+     * and no run at all hold nothing of the kind.
+     */
+    fun SuggestionRun.holdsModelAnswer(): Boolean =
+      this is SuggestionRun.Working ||
+        resultOrNull?.suggestions.orEmpty().any { it.isFromModel() }
 
     /** The run's job, whatever its state; null when there is no run. */
     val SuggestionRun.jobIdOrNull: AiJobId?

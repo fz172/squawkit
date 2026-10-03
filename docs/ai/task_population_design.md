@@ -982,6 +982,11 @@ default, `suggest`, `document`) and an optional `attachmentId` (R4).
   on opening (PRD R1) rather than showing a built-in pack. No model call: AI runs only when the user
   taps *Suggest tasks* there, which opens the sources sheet as `mode=suggest` does (#1263 makes the
   mode an enum).
+- **A held answer comes back** (fixed 2026-10-03). The model's answer is kept until it is
+  accepted or replaced, for up to its 24 h TTL (PRD R19): leaving the screen does not close it,
+  and opening either mode shows it instead of starting a run, which would hide it behind a newer
+  job and, since that day's run is used, return only the curated list. A curated-only, empty or
+  failed run is closed on leaving, and an empty or failed one is not resumed.
 - **Not after creating a Thing** (2026-10-03): the create form closes onto the new Thing, and
   suggestions start from its task tab.
 - **Task list action** (R2): new `ThingOverviewAction.SuggestTasksClick` → `mode=suggest`.
