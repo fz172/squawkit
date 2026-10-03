@@ -1119,3 +1119,6 @@ feature/developeroptions/aiecho	ai_echo_failed	Failed: %1$s
 feature/developeroptions/aiecho	ai_echo_mismatch	Came back changed
 feature/developeroptions/aiecho	ai_echo_timed_out	No result after 2 minutes
 feature/developeroptions/aiecho	ai_echo_no_thing	Add a Thing first
+feature/tasks/dashboard	suggest_tasks_action	Suggest %1$s
+feature/tasks/dashboard	suggest_tasks_sign_in	Sign in to get suggestions for this list
+feature/tasks/dashboard	suggest_tasks_missing_identity	Add %1$s to get suggestions

@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="overview_needs_attention">Needs attention</string>
+  <string name="suggest_tasks_action">Suggest <xliff:g example="inspections">%1$s</xliff:g></string>
+  <string name="suggest_tasks_sign_in">Sign in to get suggestions for this list</string>
+  <string name="suggest_tasks_missing_identity">Add <xliff:g example="Make, Model">%1$s</xliff:g> to get suggestions</string>
 </resources>

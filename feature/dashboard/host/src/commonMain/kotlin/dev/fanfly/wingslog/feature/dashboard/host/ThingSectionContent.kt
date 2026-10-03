@@ -202,6 +202,7 @@ fun ThingSectionContent(
           MaintenanceTasksTab(
             state = state,
             onAction = onAction,
+            onLinkAccount = onLinkAccount,
             scrollToTaskId = pendingTaskScrollTarget,
             // The shell top bar already shows the section title; avoid duplicating it.
             showHeader = false,
