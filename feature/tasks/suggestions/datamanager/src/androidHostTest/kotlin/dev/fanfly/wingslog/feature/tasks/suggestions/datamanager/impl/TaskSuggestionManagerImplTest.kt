@@ -27,8 +27,10 @@ import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
 import dev.fanfly.wingslog.rpc.suggesttasks.LastDoneEvidence
+import dev.fanfly.wingslog.rpc.suggesttasks.LogSummary
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksRequest
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
+import dev.fanfly.wingslog.rpc.suggesttasks.SuggestionContext
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TaskOriginKind
@@ -123,6 +125,24 @@ class TaskSuggestionManagerImplTest {
       builder.build(THING, "overview")
       client.start(AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, any())
     }
+  }
+
+  @Test
+  fun `asks for the curated suggestions alone, without the logs`() = runTest {
+    val request = SuggestTasksRequest(
+      thing_id = ThingId(value_ = THING),
+      context = SuggestionContext(logs = listOf(LogSummary(work_description = "Oil change")), logs_truncated = true),
+    )
+    coEvery { builder.build(THING, "created") } returns request
+    val sent = slot<ByteString>()
+    coEvery { client.start(any(), capture(sent)) } returns AiStartResult.Started(JOB, joined = false)
+
+    manager.start(THING, "created", curatedOnly = true)
+
+    val decoded = SuggestTasksRequest.ADAPTER.decode(sent.captured)
+    assertThat(decoded.curated_only).isTrue()
+    assertThat(decoded.context?.logs).isEmpty()
+    assertThat(decoded.context?.logs_truncated).isFalse()
   }
 
   @Test

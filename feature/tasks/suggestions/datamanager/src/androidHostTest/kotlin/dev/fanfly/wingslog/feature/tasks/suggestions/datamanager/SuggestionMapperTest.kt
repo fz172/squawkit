@@ -98,6 +98,14 @@ class SuggestionMapperTest {
   }
 
   @Test
+  fun `takes the origin the server gives, curated included`() {
+    val curated = suggestion.copy(origin_kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
+
+    assertThat(mapper.toTask(curated, airplane, "tasks-4").origin?.kind)
+      .isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
+  }
+
+  @Test
   fun `a document suggestion carries its document, the same blob`() {
     val manual = Attachment(id = "blob-mm", name = "Rotax MM.pdf", sha256 = "abc")
     val cited = suggestion.copy(source_document = AttachmentId(value_ = "blob-mm"))

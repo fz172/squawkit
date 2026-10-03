@@ -24,8 +24,12 @@ interface TaskSuggestionManager {
   /**
    * Starts a run, or joins the caller's own run in flight. Waits for the Thing to reach the server
    * first, because the server refuses one it cannot find (§5.3). [entryPoint] is for analytics.
+   *
+   * [curatedOnly] asks for the Thing's curated suggestions alone, with no model call: what creation
+   * and the empty task list show before the user asks for AI (design §9.1). Such a run ends at once
+   * and never uses up the day.
    */
-  suspend fun start(thingId: String, entryPoint: String): AiStartResult
+  suspend fun start(thingId: String, entryPoint: String, curatedOnly: Boolean = false): AiStartResult
 
   /** The caller's latest run on [thingId]; [SuggestionRun.Idle] when there is none. */
   fun observeRun(thingId: String): Flow<SuggestionRun>
