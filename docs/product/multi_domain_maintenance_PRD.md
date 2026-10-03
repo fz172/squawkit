@@ -70,9 +70,8 @@ is wrong*,
 > What does
 > **not** transfer is the aircraft's shape: a fixed `Airframe / Engine / Propeller` component tree,
 > three
-> hardcoded hour counters, `tail_number` on the root message, aviation-tuned due thresholds, and ~
-> 230
-> user-facing strings that say "aircraft," "tail number," "engine hours," or "AOG." All of it moves
+> hardcoded hour counters, `tail_number` on the root message, aviation-tuned due thresholds, and
+> ~230 user-facing strings that say "aircraft," "tail number," "engine hours," or "AOG." All of it moves
 > into a
 > **template config**. Everything else stays exactly as it is.
 
@@ -417,9 +416,8 @@ escapes the app's own surfaces, which is why it is a whole string rather than a 
 > about which
 > lifecycle a random TODO belongs to. Rather than build a second concept, ambiguous domains get the
 > existing
-> squawk lifecycle under a word that doesn't presuppose failure: `defect` resolves to **"
-attention"** for Home and
-> Custom, where "something needs attention" covers both a broken gate and a chore nobody scheduled.
+> squawk lifecycle under a word that doesn't presuppose failure: `defect` resolves to
+> **"attention"** for Home and Custom, where "something needs attention" covers both a broken gate and a chore nobody scheduled.
 > Aviation and
 > the other vehicle presets keep a defect-shaped word (issue, squawk) because for them the
 > one-off-task-vs-defect
@@ -625,8 +623,8 @@ compliance chip. Same screen, same ViewModel, same proto — one config.
 
 ### 4.9 Starter task packs
 
-A template may ship a recommended schedule. At creation the user is offered it as one opt-in step (
-"Add 8 recommended chores?") with per-item checkboxes, and can add it later from an empty Tasks tab.
+A template may ship a recommended schedule. At creation the user is offered it as one opt-in step
+("Add 8 recommended chores?") with per-item checkboxes, and can add it later from an empty Tasks tab.
 Items are created as ordinary `MaintenanceTask` rows — editable, deletable, in no way special
 afterwards.
 

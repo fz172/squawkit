@@ -185,7 +185,7 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R16 (P0). Order of trust.** User documents first, then model knowledge. A task found in a
   document is never overridden by model knowledge.
 - **R17 (P0). Source kinds.** Each suggestion carries exactly one:
-    - *From your document*: the document title, revision (when printed) and page (s).
+    - *From your document*: the document title, revision (when printed) and page(s).
     - *Manufacturer schedule*: model knowledge attributed to a named publication ("Lycoming SI
       1014M") that the user did not supply. Shown as *verify against your manual*.
     - *Common practice*: general practice for the type, not attributed to a publication.
@@ -275,8 +275,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R30 (P1).** For a document the user can access, the citation opens the document at the cited
   page.
 - **R31 (P0). Disclosure.** The screen states once, plainly, that suggestions are drafted by AI from
-  the listed sources and that the manufacturer's documents govern. Rationale reads as advice (
-  "Lycoming recommends…"), never as obligation. The one exception is a user-supplied AD or SB, which
+  the listed sources and that the manufacturer's documents govern. Rationale reads as advice
+  ("Lycoming recommends…"), never as obligation. The one exception is a user-supplied AD or SB, which
   is quoted as the document's own requirement.
 - **R32 (P1). Report a wrong suggestion.** The report goes to the team with the suggestion and its
   citation, but not the document, and feeds the evaluation set.
@@ -529,7 +529,7 @@ the airplane preset is enabled.
 **Document-sourced cases:**
 
 - Recall of ≥ 90% of the manual's scheduled items.
-- ≥ 95% of the items present have the correct interval (s) and units. Phase 0 closed at 92%
+- ≥ 95% of the items present have the correct interval(s) and units. Phase 0 closed at 92%
   (2026-10-01): the misses are almost all on the multi-manual airplane, and the A&P review (§9.3)
   checks aviation intervals before the airplane preset ships.
 - ≥ 95% of citations point to the page containing the item.
