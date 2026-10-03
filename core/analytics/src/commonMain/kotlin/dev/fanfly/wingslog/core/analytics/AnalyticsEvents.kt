@@ -384,3 +384,77 @@ object DataLogBuckets {
 
   private const val MEGABYTE = 1024L * 1024
 }
+
+/**
+ * The user asked the model for suggestions (PRD R50): *Suggest tasks* on the task list, or
+ * *Suggest more* on the curated list. Not the curated-only list, which `StarterTasksOffered`
+ * counts. [entryPoint] is where it was asked from.
+ */
+data class TaskSuggestionsRequested(
+  override val templateId: String,
+  val entryPoint: String,
+  val documentCount: Int,
+) : ThingScopedEvent {
+  override val name = Name.TASK_SUGGESTIONS_REQUESTED
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.SOURCE to entryPoint,
+    Param.DOCUMENT_COUNT to documentCount.toString(),
+  )
+}
+
+/**
+ * A model run's answer reached the screen, with how many cards were the curated list's and how
+ * many the model's, and how long it took from asking (R19's minutes are the thing to watch).
+ */
+data class TaskSuggestionsShown(
+  override val templateId: String,
+  val curatedCount: Int,
+  val aiCount: Int,
+  val latencySeconds: Long,
+) : ThingScopedEvent {
+  override val name = Name.TASK_SUGGESTIONS_SHOWN
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.CURATED_COUNT to curatedCount.toString(),
+    Param.AI_COUNT to aiCount.toString(),
+    Param.LATENCY_BUCKET to SuggestionBuckets.latency(latencySeconds),
+  )
+}
+
+/** Suggestions from the server were added, split by origin so curated and AI survival compare. */
+data class TaskSuggestionsAccepted(
+  override val templateId: String,
+  val curatedCount: Int,
+  val aiCount: Int,
+) : ThingScopedEvent {
+  override val name = Name.TASK_SUGGESTIONS_ACCEPTED
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.CURATED_COUNT to curatedCount.toString(),
+    Param.AI_COUNT to aiCount.toString(),
+  )
+}
+
+/** A model run was refused or failed; [reason] is the §5.7 code ("unavailable" when offline). */
+data class TaskSuggestionsFailed(
+  override val templateId: String,
+  val reason: String,
+) : ThingScopedEvent {
+  override val name = Name.TASK_SUGGESTIONS_FAILED
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.REASON to reason,
+  )
+}
+
+/** How long a model run took to answer, coarsely: a cache hit, a quick run, minutes, many. */
+object SuggestionBuckets {
+
+  fun latency(seconds: Long): String = when {
+    seconds < 10 -> "0-10s"
+    seconds < 60 -> "10-60s"
+    seconds < 5 * 60 -> "1-5m"
+    else -> "5m+"
+  }
+}

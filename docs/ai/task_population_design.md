@@ -1110,6 +1110,19 @@ form when a task with an AI origin is saved changed. Shown and accepted counts a
 kind as well as source kind. `StarterTasksOffered` / `Accepted` stop firing with the app's starter
 pack (2026-10-02); their names stay, since the taxonomy is append-only.
 
+As built (T17, 2026-10-03), on the server path only:
+
+- `task_suggestions_requested`: `source` (the entry point: `suggest` from the task list,
+  `suggest_more` from the curated list), `document_count`. The curated-only list is not a request;
+  `starter_tasks_offered` counts it.
+- `task_suggestions_shown`: `curated_count`, `ai_count`, `latency_bucket` (0-10s, 10-60s, 1-5m,
+  5m+), once per model run, when it ends SUCCEEDED or EMPTY. The client cannot see a cache hit or
+  log truncation, so neither is sent; latency stands in for the first.
+- `task_suggestions_accepted`: `curated_count`, `ai_count`. Edits are T18's.
+- `task_suggestions_failed`: `reason`, the §5.7 code in lower case (`unavailable` offline), for a
+  refused model start and a FAILED run, once per job.
+- `starter_tasks_offered` / `accepted` still fire on both paths until the flag removal (T25).
+
 ## 12. Evaluation harness (phase 0)
 
 ### 12.1 Shape

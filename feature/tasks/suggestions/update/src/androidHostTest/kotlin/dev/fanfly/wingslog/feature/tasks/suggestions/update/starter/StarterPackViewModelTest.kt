@@ -606,6 +606,98 @@ class StarterPackViewModelTest {
     coVerify(exactly = 0) { suggestions.firstDue(THING_ID, tracked) }
   }
 
+  private fun ai(id: String, title: String) = TaskSuggestion(
+    suggestion_id = SuggestionId(value_ = id),
+    title = title,
+    origin_kind = TaskOriginKind.TASK_ORIGIN_KIND_AI_THING,
+  )
+
+  @Test
+  fun aModelRunReportsRequestedThenShownOnceWithTheSplit() = runTest(dispatcher) {
+    val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+    coEvery { suggestions.start(THING_ID, any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+
+    val answer = SuggestTasksResult(suggestions = listOf(ai("s1", "Spark plugs")) + curatedList.suggestions)
+    runs.emit(SuggestionRun.Ready(JOB, answer))
+    advanceUntilIdle()
+    runs.emit(SuggestionRun.Ready(JOB, answer)) // a listener re-delivery is not a second answer
+    advanceUntilIdle()
+
+    assertThat(analytics.paramsFor("task_suggestions_requested").single()).containsAtLeastEntriesIn(
+      mapOf("source" to "suggest", "document_count" to "0"),
+    )
+    assertThat(analytics.paramsFor("task_suggestions_shown").single()).containsAtLeastEntriesIn(
+      mapOf("curated_count" to "3", "ai_count" to "1", "latency_bucket" to "0-10s"),
+    )
+  }
+
+  @Test
+  fun theCuratedListAloneIsNotAModelRequest() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(JOB, curatedList))
+
+    viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(analytics.countOf("task_suggestions_requested")).isEqualTo(0)
+    assertThat(analytics.countOf("task_suggestions_shown")).isEqualTo(0)
+  }
+
+  @Test
+  fun suggestMoreReportsItsOwnEntryPointAndARefusalReportsWhy() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false) } returns AiStartResult.Refused(AiErrorCode.UNAVAILABLE, null)
+
+    vm.onSuggest()
+    advanceUntilIdle()
+
+    assertThat(analytics.paramsFor("task_suggestions_failed").single()).containsEntry("reason", "unavailable")
+
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false) } returns AiStartResult.Started(AI_JOB, joined = false)
+    vm.onSuggest()
+    advanceUntilIdle()
+    assertThat(analytics.paramsFor("task_suggestions_requested").single()).containsEntry("source", "suggest_more")
+  }
+
+  @Test
+  fun aFailedRunIsReportedOnce() = runTest(dispatcher) {
+    val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+    coEvery { suggestions.start(THING_ID, any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+
+    runs.emit(SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR, curatedList))
+    advanceUntilIdle()
+    runs.emit(SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR, curatedList))
+    advanceUntilIdle()
+
+    assertThat(analytics.paramsFor("task_suggestions_failed").single()).containsEntry("reason", "provider_error")
+  }
+
+  @Test
+  fun acceptingReportsTheCuratedAndAiSplit() = runTest(dispatcher) {
+    val answer = SuggestTasksResult(suggestions = listOf(ai("s1", "Spark plugs")) + curatedList.suggestions)
+    val ready = SuggestionRun.Ready(JOB, answer)
+    serving(ready)
+    coEvery { suggestions.accept(THING_ID, ready, any()) } returns 2
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+    vm.onToggle(0)
+    vm.onToggle(1)
+
+    vm.onAccept()
+    advanceUntilIdle()
+
+    assertThat(analytics.paramsFor("task_suggestions_accepted").single()).containsAtLeastEntriesIn(
+      mapOf("curated_count" to "1", "ai_count" to "1"),
+    )
+  }
+
   private companion object {
     const val THING_ID = "thing-1"
     val JOB = AiJobId("job-1")

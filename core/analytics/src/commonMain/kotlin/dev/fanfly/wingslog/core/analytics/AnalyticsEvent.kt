@@ -71,6 +71,12 @@ sealed interface AnalyticsEvent {
     DATA_LOG_IMPORTED("data_log_imported"),
     DATA_LOG_IMPORT_FAILED("data_log_import_failed"),
     DATA_LOG_OPENED("data_log_opened"),
+
+    // --- Task suggestions (docs/ai/task_population_design.md §11, PRD R50) ---
+    TASK_SUGGESTIONS_REQUESTED("task_suggestions_requested"),
+    TASK_SUGGESTIONS_SHOWN("task_suggestions_shown"),
+    TASK_SUGGESTIONS_ACCEPTED("task_suggestions_accepted"),
+    TASK_SUGGESTIONS_FAILED("task_suggestions_failed"),
     ;
   }
 
@@ -118,6 +124,13 @@ sealed interface AnalyticsEvent {
     DURATION_BUCKET("duration_bucket"),
     SIZE_BUCKET("size_bucket"),
     SERIES_COUNT("series_count"),
+
+    // --- Task suggestions ---
+    DOCUMENT_COUNT("document_count"),
+    CURATED_COUNT("curated_count"),
+    AI_COUNT("ai_count"),
+    // A bucket for the same reason as DURATION_BUCKET: one row per run is no dimension.
+    LATENCY_BUCKET("latency_bucket"),
     ;
   }
 }

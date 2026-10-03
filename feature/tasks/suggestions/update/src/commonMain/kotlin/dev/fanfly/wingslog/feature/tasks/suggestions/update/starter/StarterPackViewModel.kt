@@ -4,11 +4,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.StarterTasksAccepted
 import dev.fanfly.wingslog.core.analytics.StarterTasksOffered
+import dev.fanfly.wingslog.core.analytics.TaskSuggestionsAccepted
+import dev.fanfly.wingslog.core.analytics.TaskSuggestionsFailed
+import dev.fanfly.wingslog.core.analytics.TaskSuggestionsRequested
+import dev.fanfly.wingslog.core.analytics.TaskSuggestionsShown
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.datetime.toWireInstant
@@ -26,13 +31,14 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.toSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.thing.ThingTemplate
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 
 /**
  * The empty task list's recommended tasks, and the task list's *Suggest tasks* (PRD R1, R2). Not a
@@ -59,6 +65,7 @@ class StarterPackViewModel(
   private val suggestionManager: TaskSuggestionManager,
   private val suggestEntry: TaskSuggestionEntry,
   savedStateHandle: SavedStateHandle,
+  private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
   val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
@@ -79,6 +86,10 @@ class StarterPackViewModel(
 
   /** The user asked for the model, here or from *Suggest tasks*, rather than the curated list alone. */
   private var modelRequested = false
+
+  /** When the model was last asked, for the shown event's latency; and which job it was. */
+  private var requestedAt: Instant? = null
+  private var reportedJob: AiJobId? = null
 
   init {
     viewModelScope.launch {
@@ -132,10 +143,12 @@ class StarterPackViewModel(
       // Nothing to show: the screen closes, and the task tab says why (PRD R21, R51).
       logger.i { "No suggestions to show: $started" }
       val reason = (started as AiStartResult.Refused).reason
+      if (modelRequested) failed(reason)
       _uiState.update { it.copy(isLoading = false, isDone = true, closingError = reason) }
       return
     }
     followedJob = started.jobId
+    if (modelRequested) requested(uiState.value.mode)
     // The curated list came without the model; the user can ask for it here (PRD R1), where the
     // Thing is described well enough (R5).
     if (curatedOnly && suggestEntry.observe(thingId)
@@ -157,6 +170,7 @@ class StarterPackViewModel(
         // Only a model run can come back with nothing to say; a curated-only one that is empty is
         // a template with no list.
         val notEnough = latest is SuggestionRun.Empty && modelRequested
+        if (finished && modelRequested) report(latest)
         _uiState.update {
           it.copy(
             isSuggesting = !finished,
@@ -254,10 +268,12 @@ class StarterPackViewModel(
       if (started !is AiStartResult.Started) {
         logger.i { "The model run did not start: $started" }
         val reason = (started as AiStartResult.Refused).reason
+        failed(reason)
         _uiState.update { onRefused(it.copy(isSuggesting = false, notice = reason)) }
         return@launch
       }
       followedJob = started.jobId
+      requested(SUGGEST_MORE)
       // The run on screen (curated-only, or failed) is finished with; the new one carries the
       // same curated list.
       curatedRun?.jobIdOrNull?.takeIf { it != started.jobId }
@@ -356,10 +372,59 @@ class StarterPackViewModel(
     val result = current.resultOrNull ?: return 0
     val ready =
       current as? SuggestionRun.Ready ?: SuggestionRun.Ready(jobId, result)
-    return suggestionManager.accept(
+    val written = suggestionManager.accept(
       thingId,
       ready,
       chosen.map { AcceptedSuggestion(it.suggestion) })
+    if (written > 0) {
+      analytics.log(
+        TaskSuggestionsAccepted(
+          templateId = uiState.value.template?.id.orEmpty(),
+          curatedCount = chosen.count { !it.suggestion.isFromModel() },
+          aiCount = chosen.count { it.suggestion.isFromModel() },
+        ),
+      )
+    }
+    return written
+  }
+
+  /** R50: the model was asked; its answer or failure is reported once per job by [report]. */
+  private fun requested(entryPoint: String) {
+    requestedAt = clock.now()
+    analytics.log(
+      TaskSuggestionsRequested(
+        templateId = uiState.value.template?.id.orEmpty(),
+        entryPoint = entryPoint,
+        documentCount = 0,
+      ),
+    )
+  }
+
+  private fun report(finished: SuggestionRun) {
+    val jobId = finished.jobIdOrNull ?: return
+    if (jobId == reportedJob) return
+    reportedJob = jobId
+    when (finished) {
+      is SuggestionRun.Failed -> failed(finished.reason)
+      else -> {
+        val cards = finished.resultOrNull?.suggestions.orEmpty()
+        val latency = requestedAt?.let { (clock.now() - it).inWholeSeconds } ?: 0L
+        analytics.log(
+          TaskSuggestionsShown(
+            templateId = uiState.value.template?.id.orEmpty(),
+            curatedCount = cards.count { !it.isFromModel() },
+            aiCount = cards.count { it.isFromModel() },
+            latencySeconds = latency,
+          ),
+        )
+      }
+    }
+  }
+
+  private fun failed(reason: AiErrorCode) {
+    analytics.log(
+      TaskSuggestionsFailed(templateId = uiState.value.template?.id.orEmpty(), reason = reason.name.lowercase()),
+    )
   }
 
   private fun offered(template: ThingTemplate?, count: Int) {
@@ -373,6 +438,9 @@ class StarterPackViewModel(
 
   private companion object {
     val logger = Logger.withTag("StarterPackViewModel")
+
+    /** The entry point a model run asked from the curated list reports (R50). */
+    const val SUGGEST_MORE = "suggest_more"
 
     /**
      * Cards for [result], none checked to start (PRD R27, revised 2026-10-03: the user checks what
