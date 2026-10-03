@@ -1,6 +1,5 @@
 import { SuggestTasksRequest as SuggestTasksRequestProto } from "../../generated/proto/rpc/suggest_tasks/suggest_tasks.js";
 import { SuggestTasksResult as SuggestTasksResultProto } from "../../generated/proto/rpc/suggest_tasks/suggest_tasks.js";
-import { AiError } from "../errors.js";
 import { createProvider } from "../providers/registry.js";
 import type { AiProvider } from "../providers/types.js";
 import { documentAiProcessor } from "../../config/env.js";
@@ -14,6 +13,7 @@ import { enabledTokensFor, sendPush } from "../../notifications/pushSender.js";
 import { curatedSuggestions } from "./curatedResult.js";
 import type { SuggestTasksResult, TaskSuggestion } from "./model.js";
 import { runTaskPipeline } from "./pipeline.js";
+import { loadJobDocument } from "./documentLoader.js";
 import { requestFromProto, resultToProto } from "./wire.js";
 
 /**
@@ -23,8 +23,8 @@ import { requestFromProto, resultToProto } from "./wire.js";
  * stages on the providers `ai_config/global` names, and encodes the result proto back. Stage
  * updates, cost records and the Firestore cache go through the worker's context.
  *
- * Documents are refused until T21 wires stages 1–2: `kinds.ts` stops them at start, and this
- * refuses them again so no path can run them half-wired.
+ * Documents (T21) are read from the Thing's own blobs, within `ai_config.maxDocumentBytes`, and
+ * image-only pages through Document AI OCR when the functions config names a processor.
  */
 export function createTaskSuggestionPipeline(
   providerFor: (id: string) => AiProvider = vertexProvider,
@@ -34,9 +34,6 @@ export function createTaskSuggestionPipeline(
     onFinished: notifyFinished,
     async run(request, context) {
       const decoded = requestFromProto(SuggestTasksRequestProto.decode(request));
-      if (decoded.documents.length > 0) {
-        throw new AiError("provider_error", "document runs are not enabled yet (T21)");
-      }
       // The tailor reads the curated list as its starter items, index for index, so a suggestion
       // can say which one it covers (design §6.4, §6.8).
       const curated = curatedSuggestions(decoded.context);
@@ -50,9 +47,9 @@ export function createTaskSuggestionPipeline(
         fast: providerFor(context.config.fastProvider),
         strong: providerFor(context.config.strongProvider),
         cache: context.cache,
-        loadDocument: async () => {
-          throw new AiError("document_missing", "no document runs yet");
-        },
+        // The Thing's own blobs, never a path the request names (design §8.1, T21).
+        loadDocument: (ref) =>
+          loadJobDocument({ hostUid: context.job.hostUid, thingId: context.job.thingId }, ref, context.config.maxDocumentBytes),
         ocr: productionOcr(),
         onStage: (stage, arg) => context.reportStage(stage, arg),
         onCall: (record) => context.recordCall(record),

@@ -612,9 +612,12 @@ the bake-off's (§12.5): keyword locating, table pages as PDF, recall on the fas
 - **No suggestion is tied to a log** (2026-10-02). `withoutLogLinks` clears every suggestion's
   `lastDone` before the result is encoded, so no log id reaches the app. The tailor prompt still
   asks for `lastDoneLogId` until its next revision (a `GENERATION_VERSION` bump and an eval run).
-- **Documents wait for T21.** `kinds.ts` marks the task kind `acceptsDocuments: false`, so
-  `startAiJob` refuses a request with documents and `getAiEligibility` reports
-  `documentsAllowed: false` even for a Pro owner. The pipeline refuses them again.
+- **Documents (T21, 2026-10-03).** The task kind accepts documents, for a Pro owner. `startAiJob`
+  refuses one the app sizes over `maxDocumentBytes` before any spend. The worker reads each from
+  the Thing's own blob (`documentLoader.ts`), refusing it as `document_too_large` over the cap or
+  `document_missing` when it is absent or its bytes do not match its sha256. Image-only pages go
+  to Document AI OCR when `DOCUMENT_AI_PROCESSOR` is set in the functions config. Stage-2 cache
+  entries are written as before, on a SUCCEEDED job only.
 
 ### 6.1 Stage 1: read
 

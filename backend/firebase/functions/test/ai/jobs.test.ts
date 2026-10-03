@@ -46,15 +46,24 @@ async function seedSharedThing({ host, member, thing }: Ids): Promise<void> {
   await adminDb.doc(thingShareDocPath(host, thing)).set({ memberRoles: { [host]: "owner", [member]: "technician" } });
 }
 
-function encoded({ host, thing }: Ids, documents = 0, templateId = "", curatedOnly = false): string {
+function encoded({ host, thing }: Ids, documents = 0, templateId = "", curatedOnly = false, documentBytes = 1024): string {
   const request = SuggestTasksRequest.fromPartial({
     thingId: { value: thing },
     hostUid: { value: host },
-    documents: Array.from({ length: documents }, (_, i) => ({ name: `doc-${i}.pdf` })),
+    documents: Array.from({ length: documents }, (_, i) => ({ name: `doc-${i}.pdf`, sizeBytes: documentBytes })),
     context: { templateId: { value: templateId } },
     curatedOnly,
   });
   return Buffer.from(SuggestTasksRequest.encode(request).finish()).toString("base64");
+}
+
+async function makePro(uid: string): Promise<void> {
+  await adminDb.doc(subscriptionDocPath(uid)).set({
+    status: SUBSCRIPTION_STATUS.PRO,
+    lifecycle: SUBSCRIPTION_LIFECYCLE.ACTIVE,
+    willRenew: true,
+    currentPeriodEndMillis: NOW.getTime() + 30 * 24 * 60 * MINUTE,
+  });
 }
 
 function recorder(): { dispatched: AiJobRef[]; dispatch: (ref: AiJobRef) => Promise<void> } {
@@ -283,8 +292,7 @@ describe("startAiJob", () => {
         currentPeriodEndMillis: NOW.getTime() + 30 * 24 * 60 * MINUTE,
       });
     }
-    // The cap is the config's, for any kind that takes documents; echo does, task suggestions do
-    // not until T21.
+    // The cap is the config's, for any kind that takes documents.
     const withDocs = (t: Ids, n: number) =>
       handleStartAiJob(
         req(t.host, { kind: AiJobKind.AI_JOB_KIND_ECHO, request: encoded(t, n) }),
@@ -296,11 +304,31 @@ describe("startAiJob", () => {
     expect((await errorOf(withDocs(over, DEFAULT_AI_CONFIG.maxDocumentsPerRun + 1))).code).toBe("invalid-argument");
   });
 
-  it("refuses documents on task suggestions until document runs are wired (T21)", async () => {
+  it("takes documents on a Pro owner's task run, and refuses a free owner's (T21)", async () => {
+    const pro = ids();
+    const free = ids();
+    await seedSharedThing(pro);
+    await seedSharedThing(free);
+    await makePro(pro.host);
+
+    const ok = await handleStartAiJob(req(pro.host, { kind: KIND, request: encoded(pro, 1) }), recorder().dispatch, NOW);
+    const refused = handleStartAiJob(req(free.host, { kind: KIND, request: encoded(free, 1) }), recorder().dispatch, NOW);
+
+    expect(ok.joined).toBe(false);
+    expect((await errorOf(refused)).details).toMatchObject({ code: "owner_not_pro" });
+  });
+
+  it("refuses a document over maxDocumentBytes before any spend", async () => {
     const t = ids();
     await seedSharedThing(t);
-    const call = handleStartAiJob(req(t.host, { kind: KIND, request: encoded(t, 1) }), recorder().dispatch, NOW);
-    expect((await errorOf(call)).code).toBe("invalid-argument");
+    await makePro(t.host);
+    const { dispatched, dispatch } = recorder();
+    const tooBig = encoded(t, 1, "", false, DEFAULT_AI_CONFIG.maxDocumentBytes + 1);
+
+    const error = await errorOf(handleStartAiJob(req(t.host, { kind: KIND, request: tooBig }), dispatch, NOW));
+
+    expect(error.details).toMatchObject({ code: "document_too_large" });
+    expect(dispatched).toEqual([]);
   });
 
   it.each([
@@ -323,16 +351,11 @@ describe("startAiJob", () => {
 });
 
 describe("getAiEligibility", () => {
-  it("offers no documents on task suggestions yet, even to a Pro owner", async () => {
+  it("offers documents on task suggestions to a Pro owner (T21)", async () => {
     const t = ids();
     await seedSharedThing(t);
-    await adminDb.doc(subscriptionDocPath(t.host)).set({
-      status: SUBSCRIPTION_STATUS.PRO,
-      lifecycle: SUBSCRIPTION_LIFECYCLE.ACTIVE,
-      willRenew: true,
-      currentPeriodEndMillis: NOW.getTime() + 30 * 24 * 60 * MINUTE,
-    });
-    expect(await eligibility(t.host, t)).toMatchObject({ allowed: true, documentsAllowed: false });
+    await makePro(t.host);
+    expect(await eligibility(t.host, t)).toMatchObject({ allowed: true, documentsAllowed: true });
   });
 
   it("allows a member and says whether documents are open", async () => {

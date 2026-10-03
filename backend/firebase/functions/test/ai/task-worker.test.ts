@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -13,8 +13,8 @@ import {
 import { FirestorePipelineCache } from "../../src/ai/firestoreCache.js";
 import { handleStartAiJob } from "../../src/ai/jobs.js";
 import type { AiGenerateRequest, AiProvider } from "../../src/ai/providers/types.js";
-import { RECALL_SCHEMA, TAILOR_SCHEMA } from "../../src/ai/tasks/schemas.js";
-import type { RecallOutput, TailorOutput } from "../../src/ai/tasks/stageTypes.js";
+import { EXTRACT_SCHEMA, RECALL_SCHEMA, TAILOR_SCHEMA } from "../../src/ai/tasks/schemas.js";
+import type { ExtractOutput, RecallOutput, TailorOutput } from "../../src/ai/tasks/stageTypes.js";
 import { createTaskSuggestionPipeline } from "../../src/ai/tasks/taskSuggestionPipeline.js";
 import { GENERATION_VERSION } from "../../src/ai/tasks/version.js";
 import { handleAiJob, type AiJobFinish, type AiWorkerDeps } from "../../src/ai/worker.js";
@@ -26,6 +26,10 @@ import {
 import { thingShareDocPath } from "../../src/sharing/sharingModels.js";
 import { TaskOriginKind, TaskSourceKind } from "../../src/generated/proto/task/task_origin.js";
 import { curatedListFor } from "../../src/ai/tasks/curated.js";
+import { PDFDocument, StandardFonts } from "pdf-lib";
+import { adminStorage } from "../../src/config/firebaseAdmin.js";
+import { blobObjectPath } from "../../src/storage/blobBroker.js";
+import { SUBSCRIPTION_LIFECYCLE, SUBSCRIPTION_STATUS, subscriptionDocPath } from "../../src/subscription/entitlementModel.js";
 import { adminDb, req } from "../helpers.js";
 
 // T14: a task-suggestion job without documents, from startAiJob through the worker and the real
@@ -290,5 +294,117 @@ describe("the task-suggestion pipeline in the worker", () => {
     const job = (await adminDb.doc(aiJobDocPath(ref.callerUid, ref.jobId)).get()).data();
     expect(job?.status).toBe(AiJobStatus.AI_JOB_STATUS_EMPTY);
     expect(titlesOf(job!.result)).toEqual(curatedListFor("airplane").map((c) => c.title));
+  });
+});
+
+// T21: a run with a document, from the Thing's blob in Storage through the real pipeline.
+describe("a task-suggestion run with a document", () => {
+  const EXTRACTION: ExtractOutput = {
+    document: {
+      manufacturer: "Rotax",
+      models: ["915 iS"],
+      title: "Rotax 915 iS Maintenance Manual",
+      revision: "3",
+      docType: "maintenance_manual",
+      referenceNumber: null,
+    },
+    items: [
+      {
+        title: "Replace spark plugs",
+        description: "",
+        checklist: [],
+        intervals: [{ value: 200, unit: "hours" }],
+        isOneTime: false,
+        pages: [2],
+        printedPageRef: "5-12",
+        componentHint: "engine",
+        type: "routine",
+        referenceNumber: null,
+        complianceAuthority: null,
+      },
+    ],
+  };
+  const FROM_DOCUMENT: TailorOutput = {
+    suggestions: [{ ...TAILORED.suggestions[0], candidateIds: ["d0.0"], lastDoneLogId: null }],
+    documents: [{ index: 0, matchesThing: true }],
+    notApplicable: [],
+  };
+
+  /** Answers extract, recall and tailor by schema. */
+  function documentProviders(): (id: string) => AiProvider {
+    return (id) => ({
+      id,
+      async generate(request: AiGenerateRequest) {
+        const json =
+          request.schema === EXTRACT_SCHEMA
+            ? EXTRACTION
+            : request.schema === RECALL_SCHEMA
+              ? RECALLED
+              : request.schema === TAILOR_SCHEMA
+                ? FROM_DOCUMENT
+                : null;
+        if (json == null) throw new Error("unexpected stage");
+        return { json, usage: { inputTokens: 1_000, outputTokens: 100, costMicros: 700 } };
+      },
+    });
+  }
+
+  async function manual(): Promise<Uint8Array> {
+    const pdf = await PDFDocument.create();
+    const font = await pdf.embedFont(StandardFonts.Helvetica);
+    pdf.addPage().drawText("Rotax 915 iS Maintenance Manual, revision 3", { x: 40, y: 700, font, size: 10 });
+    pdf.addPage().drawText("5-12 Scheduled maintenance: replace spark plugs every 200 hours.", { x: 40, y: 700, font, size: 10 });
+    return pdf.save();
+  }
+
+  it("reads the Thing's document and cites it", async () => {
+    const ids = await seedThing();
+    await adminDb.doc(subscriptionDocPath(ids.host)).set({
+      status: SUBSCRIPTION_STATUS.PRO,
+      lifecycle: SUBSCRIPTION_LIFECYCLE.ACTIVE,
+      willRenew: true,
+      currentPeriodEndMillis: NOW.getTime() + 30 * 24 * 60 * 60 * 1000,
+    });
+    const bytes = await manual();
+    const blobId = `b-${randomUUID()}`;
+    await adminStorage.bucket().file(blobObjectPath(ids.host, ids.thing, blobId)).save(Buffer.from(bytes));
+    const base = SuggestTasksRequest.decode(Buffer.from(requestFor(ids, `Sling-${randomUUID()}`), "base64"));
+    const request = SuggestTasksRequest.encode({
+      ...base,
+      documents: [
+        {
+          blobId: { value: blobId },
+          name: "Rotax MM.pdf",
+          mimeType: "application/pdf",
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+          sizeBytes: bytes.length,
+        },
+      ],
+    }).finish();
+    const deps: AiWorkerDeps = {
+      now: () => NOW,
+      pipelineFor: () => createTaskSuggestionPipeline(documentProviders(), async () => {}),
+      cache: new FirestorePipelineCache(() => NOW),
+    };
+
+    const { jobId } = await handleStartAiJob(
+      req(ids.host, { kind: KIND, request: Buffer.from(request).toString("base64") }),
+      async (ref) => handleAiJob(ref, deps),
+      NOW,
+    );
+
+    const job = (await adminDb.doc(aiJobDocPath(ids.host, jobId)).get()).data();
+    expect(job?.status).toBe(AiJobStatus.AI_JOB_STATUS_SUCCEEDED);
+    const result = SuggestTasksResult.decode(Buffer.from(job!.result, "base64"));
+    expect(result.suggestions[0]).toMatchObject({
+      title: "Replace spark plugs",
+      sourceKind: TaskSourceKind.TASK_SOURCE_KIND_DOCUMENT,
+      sourceDocument: { value: blobId },
+      originKind: TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT,
+      sourcePages: [2],
+    });
+    expect(result.documents).toEqual([
+      expect.objectContaining({ blobId: { value: blobId }, title: "Rotax 915 iS Maintenance Manual", matchesThing: true }),
+    ]);
   });
 });
