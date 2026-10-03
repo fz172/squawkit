@@ -156,6 +156,58 @@ export function aiAccessError(decision: Extract<AiAccessDecision, { allowed: fal
 }
 
 /**
+ * Refusals a run can step around by returning only the curated suggestions (design §5.1, PRD R9a):
+ * they protect model spend, and curated suggestions cost none. Every other refusal stands.
+ */
+export const CURATED_FALLBACK_CODES: ReadonlySet<AiErrorCode> = new Set(["disabled", "daily_limit", "spend_ceiling"]);
+
+/** Why a curated-only run's AI did not run, and when it can, for `daily_limit` and `spend_ceiling`. */
+export type AiSkipped = { code: AiErrorCode; nextAvailableAt: Date | null };
+
+/** What `startAiJob` does: run the model, return the curated suggestions alone, or refuse. */
+export type AiStartPlan =
+  | { run: "ai"; access: Extract<AiAccessDecision, { allowed: true }> }
+  | { run: "curated"; skipped: AiSkipped | null }
+  | { run: "refused"; decision: Extract<AiAccessDecision, { allowed: false }> };
+
+/**
+ * The start policy over `decideAiAccess`'s answer. A request for curated suggestions only, or one
+ * the model is refused for a `CURATED_FALLBACK_CODES` reason, returns the curated list, but only to
+ * a member: `disabled` is decided before membership, so it is checked here again. `skipped` says
+ * why the model did not run; it is null when only curated suggestions were asked for.
+ */
+export function planAiStart(
+  decision: AiAccessDecision,
+  isMember: boolean,
+  request: { curatedOnly: boolean; offersCuratedOnly: boolean },
+): AiStartPlan {
+  const fallback = !decision.allowed && CURATED_FALLBACK_CODES.has(decision.code);
+  if (request.offersCuratedOnly && (request.curatedOnly || fallback)) {
+    if (!isMember) {
+      return { run: "refused", decision: { allowed: false, code: "not_member", nextAvailableAt: null, documentsAllowed: false } };
+    }
+    if (request.curatedOnly) return { run: "curated", skipped: null };
+    const denied = decision as Extract<AiAccessDecision, { allowed: false }>;
+    return { run: "curated", skipped: { code: denied.code, nextAvailableAt: denied.nextAvailableAt } };
+  }
+  return decision.allowed ? { run: "ai", access: decision } : { run: "refused", decision };
+}
+
+/** `authorizeAiCall` for `startAiJob`: the same checks, planned by `planAiStart`. */
+export async function authorizeAiStart(
+  request: CallableRequest<unknown>,
+  target: { hostUid: string; thingId: string; withDocuments: boolean; curatedOnly: boolean; offersCuratedOnly: boolean },
+  now: Date = new Date(),
+): Promise<Exclude<AiStartPlan, { run: "refused" }> & { callerUid: string }> {
+  const { uid } = requireSignedInApp(request);
+  const access: AiAccessRequest = { callerUid: uid, hostUid: target.hostUid, thingId: target.thingId, withDocuments: target.withDocuments };
+  const facts = await loadAiAccessFacts(access, now);
+  const plan = planAiStart(decideAiAccess(access, facts, now), facts.isMember, target);
+  if (plan.run === "refused") throw aiAccessError(plan.decision);
+  return { ...plan, callerUid: uid };
+}
+
+/**
  * The checks every AI callable runs, in order: signed in with an allowed app and not a guest, then
  * `decideAiAccess`. Throws an HttpsError whose `details.code` is the §5.7 code.
  */
