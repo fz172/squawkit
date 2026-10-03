@@ -92,6 +92,12 @@ class StarterPackViewModel(
   /** The user asked for the model, here or from *Suggest tasks*, rather than the curated list alone. */
   private var modelRequested = false
 
+  /**
+   * The titles of the tasks the Thing has, normalized, read once on opening: a suggestion for one
+   * of them is not shown (owner's decision, 2026-10-03; PRD R24).
+   */
+  private var trackedTitles: Set<String> = emptySet()
+
   /** When the model was last asked, for the shown event's latency; and which job it was. */
   private var requestedAt: Instant? = null
   private var reportedJob: AiJobId? = null
@@ -108,6 +114,8 @@ class StarterPackViewModel(
           lexicon = templateRegistry.lexiconFor(template)
         )
       }
+      trackedTitles = taskDataManager.observeTasks(thingId).first()
+        .mapTo(mutableSetOf()) { normalizeTitle(it.title) }
       if (capability.isTaskSuggestionsSupported) showRun(template) else showPack(
         template
       )
@@ -124,6 +132,7 @@ class StarterPackViewModel(
           starterTask = task
         )
       }
+      .filter { it.isShown() }
     // Nothing to offer — a stale route, or a pack removed by a DNA refresh. Not an offer, so not
     // counted as one.
     _uiState.update {
@@ -225,12 +234,12 @@ class StarterPackViewModel(
             items = itemsOf(
               result,
               state.items
-            )
+            ).filter { it.isShown() }
           )
         }
         if (!counted) {
           counted = true
-          offered(template, result.suggestions.size)
+          offered(template, uiState.value.items.size)
         }
       }
   }
@@ -255,6 +264,14 @@ class StarterPackViewModel(
   fun onNoticeShown() {
     _uiState.update { it.copy(notice = null) }
   }
+
+  /**
+   * Shown unless the Thing already has it: the server says so (the model by meaning, a curated item
+   * by title), or a task with the same title, ignoring case and spacing, is on the Thing. The second
+   * check also covers the app's own pack, which the server never sees.
+   */
+  private fun StarterPackItem.isShown(): Boolean =
+    !isAlreadyTracked && normalizeTitle(suggestion.title) !in trackedTitles
 
   /** *Add details* after an empty run: the run is done with; the screen gives way to the Thing's edit form. */
   fun onAddDetails() {
@@ -297,7 +314,7 @@ class StarterPackViewModel(
    */
   suspend fun draftFor(index: Int): String? {
     val item = uiState.value.items.getOrNull(index) ?: return null
-    if (item.starterTask != null || item.isAlreadyTracked) return null
+    if (item.starterTask != null) return null
     editingId = item.suggestion.suggestion_id?.value_ ?: return null
     val draft = item.edited ?: suggestionManager.draftOf(
       thingId,
@@ -325,8 +342,7 @@ class StarterPackViewModel(
     _uiState.update { state ->
       state.copy(
         items = state.items.mapIndexed { i, item ->
-          // An already-tracked card cannot be added again (PRD R24).
-          if (i == index && !item.isAlreadyTracked) item.copy(selected = !item.selected) else item
+          if (i == index) item.copy(selected = !item.selected) else item
         }
       )
     }
@@ -517,6 +533,9 @@ class StarterPackViewModel(
     fun SuggestionRun.holdsModelAnswer(): Boolean =
       this is SuggestionRun.Working ||
         resultOrNull?.suggestions.orEmpty().any { it.isFromModel() }
+
+    /** A title as the tracked check compares it: trimmed, single-spaced, lower case. */
+    fun normalizeTitle(title: String): String = title.trim().replace(Regex("\\s+"), " ").lowercase()
 
     /** The run's job, whatever its state; null when there is no run. */
     val SuggestionRun.jobIdOrNull: AiJobId?

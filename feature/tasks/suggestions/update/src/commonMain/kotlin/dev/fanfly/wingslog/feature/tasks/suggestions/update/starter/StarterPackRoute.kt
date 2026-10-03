@@ -64,7 +64,6 @@ import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
-import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -80,7 +79,6 @@ import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_already_tracked
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_edited
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
@@ -339,15 +337,13 @@ fun StarterPackRoute(
                   val edited = item.edited
                   GroupedCheckboxRow(
                     title = edited?.title ?: item.suggestion.title,
-                    subtitle = if (item.isAlreadyTracked) {
-                      item.trackedSummary(uiState.template)
-                    } else if (edited != null) {
+                    subtitle = if (edited != null) {
                       edited.editedSummary(uiState.template)
                     } else {
                       item.suggestion.summary(uiState.template)
                     },
                     checked = item.selected,
-                    enabled = !uiState.isSaving && !item.isAlreadyTracked,
+                    enabled = !uiState.isSaving,
                     supporting = {
                       Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -357,7 +353,7 @@ fun StarterPackRoute(
                           sourceShown = item.suggestion
                         }
                         // R28: change it before adding it, in the task form.
-                        if (item.starterTask == null && !item.isAlreadyTracked) {
+                        if (item.starterTask == null) {
                           TextButton(
                             enabled = !uiState.isSaving,
                             onClick = {
@@ -411,19 +407,6 @@ fun StarterPackRoute(
       }
     }
   }
-}
-
-/**
- * "Already tracked · You track this every 12 months; the manual says 6" (PRD R24): the server's
- * note when the intervals differ, else the suggestion's own schedule.
- */
-@Composable
-private fun StarterPackItem.trackedSummary(template: ThingTemplate?): String {
-  val detail =
-    suggestion.interval_difference_note.ifBlank { suggestion.summary(template) }
-  return listOf(stringResource(Res.string.starter_pack_already_tracked), detail)
-    .filter { it.isNotBlank() }
-    .joinToString(" · ")
 }
 
 /**
