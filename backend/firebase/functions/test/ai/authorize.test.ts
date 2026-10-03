@@ -27,7 +27,9 @@ import {
 } from "../../src/subscription/entitlementModel.js";
 import { adminDb, req } from "../helpers.js";
 
-const NOW = new Date("2026-10-15T12:00:00Z");
+// A month no other test charges: the worker tests write real spend to `ai_spend/202610` in
+// parallel against the same emulator, which would cross this file's tiny ceilings.
+const NOW = new Date("2026-03-15T12:00:00Z");
 const HOUR = 60 * 60 * 1000;
 const ENABLED: AiConfig = {
   ...DEFAULT_AI_CONFIG,
@@ -111,7 +113,7 @@ describe("decideAiAccess", () => {
 
   it("resets spend at the next UTC month", () => {
     expect(decideAiAccess(request, facts({ spend: spent(100, 0) }), NOW)).toMatchObject({
-      nextAvailableAt: new Date("2026-11-01T00:00:00Z"),
+      nextAvailableAt: new Date("2026-04-01T00:00:00Z"),
     });
     expect(startOfNextUtcMonth(new Date("2026-12-31T23:00:00Z"))).toEqual(new Date("2027-01-01T00:00:00Z"));
   });
