@@ -261,8 +261,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
   h or 12 months"), first-due (R29), and a source chip. Tapping the chip shows the full citation and
   the one-line rationale.
 - **R27 (P0). Nothing is pre-selected** (revised 2026-10-03). Every card, curated or AI, starts
-  unchecked, and the user checks what they need; until then the Add button reads "Check {tasks} to
-  add". (It used to pre-select document and log suggestions, and the rest except on the airplane
+  unchecked, and the user checks what they need. The button just reads "Add", disabled until
+  something is checked. (It used to pre-select document and log suggestions, and the rest except on the airplane
   template.)
 - **R28 (P1). Update before accepting.** A suggestion's title, intervals and first-due can be
   changed before it is accepted, using the normal task form pre-filled. Saving there counts as

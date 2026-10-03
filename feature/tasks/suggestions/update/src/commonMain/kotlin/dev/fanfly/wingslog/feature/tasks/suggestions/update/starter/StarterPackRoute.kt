@@ -67,12 +67,10 @@ import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_none
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_already_tracked
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
@@ -94,6 +92,7 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rul
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_year
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_years
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_ai_disclosure
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The recommended tasks (PRD §4.9): per-item checkboxes, and Skip as a real button.
@@ -119,10 +118,12 @@ fun StarterPackRoute(
     uiState.lexicon.taskNoun.let { if (uiState.acceptedCount == 1) it.singular else it.plural },
   )
   // Said on the task tab, in this Thing's words, when the screen closes with nothing to show.
-  val closingMessage = uiState.closingError?.message(uiState.lexicon.thingNoun.singular)
+  val closingMessage =
+    uiState.closingError?.message(uiState.lexicon.thingNoun.singular)
   LaunchedEffect(uiState.isDone) {
     if (!uiState.isDone) return@LaunchedEffect
-    val message = if (uiState.acceptedCount > 0) addedMessage else closingMessage
+    val message =
+      if (uiState.acceptedCount > 0) addedMessage else closingMessage
     if (message != null) {
       navController.previousBackStackEntry?.savedStateHandle?.set(
         CROSS_SCREEN_SUCCESS_MESSAGE,
@@ -243,7 +244,10 @@ fun StarterPackRoute(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.weight(1f),
               )
-              TextButton(onClick = viewModel::onRetry, enabled = !uiState.isSaving) {
+              TextButton(
+                onClick = viewModel::onRetry,
+                enabled = !uiState.isSaving
+              ) {
                 Text(stringResource(CoreRes.string.retry))
               }
             }
@@ -298,7 +302,10 @@ fun StarterPackRoute(
                 text = if (group.slotKey.isEmpty()) {
                   LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun)
                 } else {
-                  uiState.template.slotLabel(group.slotKey, ifAbsent = group.slotKey)
+                  uiState.template.slotLabel(
+                    group.slotKey,
+                    ifAbsent = group.slotKey
+                  )
                 },
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -316,13 +323,20 @@ fun StarterPackRoute(
                         .firstOrNull { it.suggestionId == item.suggestion.suggestion_id?.value_ }
                         ?.due
                         ?.firstDueText(uiState.template)
-                      listOfNotNull(item.suggestion.summary(uiState.template), due)
+                      listOfNotNull(
+                        item.suggestion.summary(uiState.template),
+                        due
+                      )
                         .filter { it.isNotEmpty() }
                         .joinToString("\n")
                     },
                     checked = item.selected,
                     enabled = !uiState.isSaving && !item.isAlreadyTracked,
-                    supporting = { SourceChip(item.suggestion) { sourceShown = item.suggestion } },
+                    supporting = {
+                      SourceChip(item.suggestion) {
+                        sourceShown = item.suggestion
+                      }
+                    },
                     onCheckedChange = { viewModel.onToggle(index) },
                   )
                 }
@@ -350,16 +364,8 @@ fun StarterPackRoute(
         }
         BottomButtons(
           modifier = Modifier.align(Alignment.BottomCenter),
-          // Nothing is checked to start (PRD R27): say what to do rather than "Add 0".
-          primaryLabel = if (uiState.selectedCount == 0) {
-            stringResource(Res.string.starter_pack_add_none, taskNoun.plural)
-          } else {
-            stringResource(
-              Res.string.starter_pack_add,
-              uiState.selectedCount,
-              if (uiState.selectedCount == 1) taskNoun.singular else taskNoun.plural,
-            )
-          },
+          // Just "Add": the checkboxes already say what will be added.
+          primaryLabel = stringResource(CoreRes.string.add),
           primaryEnabled = uiState.selectedCount > 0 && !uiState.isSaving,
           isPrimaryFunctionInProgress = uiState.isSaving,
           onPrimaryClick = { viewModel.onAccept() },
@@ -377,13 +383,25 @@ fun StarterPackRoute(
 private fun DueMetadata.firstDueText(template: ThingTemplate?): String? {
   val date = nextDueDate?.toDisplayFormat()
   val reading = nextDueEngine?.let(::formatInterval)
-  val unit = nextDueMeterKey?.let { template.meter(it)?.unit_label ?: it }.orEmpty()
+  val unit = nextDueMeterKey?.let { template.meter(it)?.unit_label ?: it }
+    .orEmpty()
   return when {
     isOnCondition -> null
     date != null && reading != null ->
-      stringResource(Res.string.starter_pack_first_due_either, date, reading, unit)
+      stringResource(
+        Res.string.starter_pack_first_due_either,
+        date,
+        reading,
+        unit
+      )
+
     date != null -> stringResource(Res.string.starter_pack_first_due_date, date)
-    reading != null -> stringResource(Res.string.starter_pack_first_due_meter, reading, unit)
+    reading != null -> stringResource(
+      Res.string.starter_pack_first_due_meter,
+      reading,
+      unit
+    )
+
     else -> null
   }
 }
@@ -394,7 +412,8 @@ private fun DueMetadata.firstDueText(template: ThingTemplate?): String? {
  */
 @Composable
 private fun StarterPackItem.trackedSummary(template: ThingTemplate?): String {
-  val detail = suggestion.interval_difference_note.ifBlank { suggestion.summary(template) }
+  val detail =
+    suggestion.interval_difference_note.ifBlank { suggestion.summary(template) }
   return listOf(stringResource(Res.string.starter_pack_already_tracked), detail)
     .filter { it.isNotBlank() }
     .joinToString(" · ")
