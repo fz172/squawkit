@@ -1126,3 +1126,20 @@ feature/tasks/suggestions/update	starter_rule_every_days	Every %1$d days
 feature/tasks/suggestions/update	starter_pack_suggest	Suggest more %1$s
 feature/tasks/suggestions/update	starter_pack_suggesting	Tailoring these to your %1$s…
 feature/tasks/suggestions/update	starter_pack_add_none	Check %1$s to add
+feature/tasks/suggestions/update	ai_error_sign_in_required	Sign in to get suggestions
+feature/tasks/suggestions/update	ai_error_disabled	Suggestions are turned off for now. Try again later.
+feature/tasks/suggestions/update	ai_error_not_member	You no longer have access to this %1$s
+feature/tasks/suggestions/update	ai_error_owner_not_pro	Documents need the owner’s Pro plan
+feature/tasks/suggestions/update	ai_error_daily_limit	Today’s suggestions for this %1$s are used. Try again tomorrow.
+feature/tasks/suggestions/update	ai_error_run_in_progress	Suggestions are already being prepared for this %1$s
+feature/tasks/suggestions/update	ai_error_spend_ceiling	Suggestions are paused until next month
+feature/tasks/suggestions/update	ai_error_document_missing	A document didn’t finish uploading. Try again.
+feature/tasks/suggestions/update	ai_error_document_too_large	A document is too large to read
+feature/tasks/suggestions/update	ai_error_document_unreadable	A document couldn’t be read
+feature/tasks/suggestions/update	ai_error_no_schedule_found	No maintenance schedule was found in the documents
+feature/tasks/suggestions/update	ai_error_provider_error	The suggestion service isn’t answering. Try again in a moment.
+feature/tasks/suggestions/update	ai_error_invalid_output	Something went wrong preparing suggestions. Try again.
+feature/tasks/suggestions/update	ai_error_stale	That run stopped before it finished. Try again.
+feature/tasks/suggestions/update	ai_error_unavailable	No internet connection
+feature/tasks/suggestions/update	ai_error_app_unverified	This copy of the app couldn’t be verified
+feature/tasks/suggestions/update	ai_error_unknown	Something went wrong. Try again.

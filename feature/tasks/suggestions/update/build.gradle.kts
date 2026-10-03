@@ -41,6 +41,7 @@ kotlin {
       implementation(project(":core:analytics"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:ai"))
+      implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:datetime"))

@@ -125,9 +125,10 @@ class StarterPackViewModel(
       curatedOnly = curatedOnly
     )
     if (started !is AiStartResult.Started) {
-      // A guest, a connection that failed, a refusal: nothing to show. T17 says which.
+      // Nothing to show: the screen closes, and the task tab says why (PRD R21, R51).
       logger.i { "No suggestions to show: $started" }
-      _uiState.update { it.copy(isLoading = false, isDone = true) }
+      val reason = (started as AiStartResult.Refused).reason
+      _uiState.update { it.copy(isLoading = false, isDone = true, closingError = reason) }
       return
     }
     followedJob = started.jobId
@@ -146,14 +147,17 @@ class StarterPackViewModel(
         run = latest
         val result = latest.resultOrNull
         val finished = latest !is SuggestionRun.Working
+        val failure = (latest as? SuggestionRun.Failed)?.reason
         // A curated-only run is finished from the start, so only a model run reads as working.
-        _uiState.update { it.copy(isSuggesting = !finished) }
+        _uiState.update { it.copy(isSuggesting = !finished, failure = failure) }
         if (result == null) {
-          // A template with no curated list, and no model answer (yet).
+          // A template with no curated list, and no model answer (yet). A failure with no cards
+          // to fall back on closes the screen, and the task tab says why.
           if (finished) _uiState.update {
             it.copy(
               isLoading = false,
-              isDone = it.items.isEmpty()
+              isDone = it.items.isEmpty(),
+              closingError = failure.takeIf { _ -> it.items.isEmpty() },
             )
           }
           return@collect
@@ -181,7 +185,22 @@ class StarterPackViewModel(
    */
   fun onSuggest() {
     if (!uiState.value.canSuggest) return
-    _uiState.update { it.copy(canSuggest = false, isSuggesting = true) }
+    startModelRun(onRefused = { it.copy(canSuggest = true) })
+  }
+
+  /** *Try again* after a failed model run: starts a new one over the cards still on screen. */
+  fun onRetry() {
+    if (uiState.value.failure == null) return
+    startModelRun(onRefused = { it })
+  }
+
+  /** The refusal of *Suggest more* or *Try again*, once shown. */
+  fun onNoticeShown() {
+    _uiState.update { it.copy(notice = null) }
+  }
+
+  private fun startModelRun(onRefused: (StarterPackUiState) -> StarterPackUiState) {
+    _uiState.update { it.copy(canSuggest = false, isSuggesting = true, failure = null) }
     viewModelScope.launch {
       val curatedRun = run
       val started = suggestionManager.start(
@@ -190,12 +209,14 @@ class StarterPackViewModel(
         curatedOnly = false
       )
       if (started !is AiStartResult.Started) {
-        logger.i { "Suggest tasks did not start: $started" }
-        _uiState.update { it.copy(canSuggest = true, isSuggesting = false) }
+        logger.i { "The model run did not start: $started" }
+        val reason = (started as AiStartResult.Refused).reason
+        _uiState.update { onRefused(it.copy(isSuggesting = false, notice = reason)) }
         return@launch
       }
       followedJob = started.jobId
-      // The curated-only run is finished with; the new one carries the same list.
+      // The run on screen (curated-only, or failed) is finished with; the new one carries the
+      // same curated list.
       curatedRun?.jobIdOrNull?.takeIf { it != started.jobId }
         ?.let { suggestionManager.dismiss(it) }
     }
