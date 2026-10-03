@@ -1303,7 +1303,7 @@ Ordering rules the phases alone do not show:
 
 ## 17. Open questions
 
-- **Provider data terms** (PRD §12): gates phase C.
+- ~~**Provider data terms**~~ (PRD §12): settled 2026-10-03 (T19), privacy policy section 15.
 - **Limit numbers** in `ai_config` (the spend ceilings are placeholders until phase 0 cost data).
 - ~~**Push deep link**~~: decided 2026-10-03 (T26). The push opens the Thing's suggestions screen
   directly (tap target `suggestions:<thingId>`), which shows the held answer (§9.1). One push per

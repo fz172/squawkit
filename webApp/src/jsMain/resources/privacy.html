@@ -148,14 +148,14 @@
     <header>
         <div class="eyebrow">SquawkIt</div>
         <h1>Terms of Use &amp; Privacy Policy</h1>
-        <p class="updated">Last updated: 6 September 2026</p>
+        <p class="updated">Last updated: 3 October 2026</p>
     </header>
 
     <p class="lede">
         SquawkIt is an aircraft maintenance logbook and fleet-management app for pilots,
         owners, and mechanics. This page has two parts. The <strong>Terms of Use</strong>
         (sections 1–8) set out the agreement between you and SquawkIt, including how the
-        SquawkIt Pro subscription works. The <strong>Privacy Policy</strong> (sections 9–19)
+        SquawkIt Pro subscription works. The <strong>Privacy Policy</strong> (sections 9–20)
         explains what data we hold, how it is stored and synced, what happens when you export
         your records, and how we use diagnostic logging to keep the app reliable.
     </p>
@@ -258,7 +258,7 @@
     <h2>8. Ending the agreement</h2>
     <p>
         You can stop using SquawkIt at any time, and you can delete your account and data from
-        the app (section 17). We may suspend or close accounts that break these terms. Sections
+        the app (section 18). We may suspend or close accounts that break these terms. Sections
         3, 6, and 7 survive termination.
     </p>
 
@@ -283,6 +283,10 @@
         </li>
         <li><strong>Diagnostic data.</strong> Technical information generated as the app runs —
             described in section 14.
+        </li>
+        <li><strong>AI task suggestion data.</strong> Only if you ask SquawkIt to suggest
+            maintenance tasks: a description of that thing (an aircraft, car, home or other)
+            sent to an AI model, and the suggestions it drafts — described in section 15.
         </li>
     </ul>
 
@@ -335,9 +339,9 @@
         record store, synced to Cloud Firestore under your account, as described in section
         3. We do not sell it, use it to serve ads, or share it with third parties, except:
         (a) with Google/Firebase, which processes it on our behalf to provide authentication
-        and sync (section 15); and (b) your email address, if you request an emailed export,
+        and sync (section 16); and (b) your email address, if you request an emailed export,
         is passed to our transactional email provider solely to deliver that export to you
-        (sections 12 and 15). You can request deletion of this data as described in section 17.
+        (sections 12 and 16). You can request deletion of this data as described in section 18.
     </p>
 
     <h2>11. How your data is stored</h2>
@@ -392,8 +396,9 @@
         <li>
             The message we hand to the push service carries the aircraft tail number, the other
             member's display name, how many changes they made, and — when a squawk is raised to high
-            priority or AOG — that squawk's title. This is the only place SquawkIt passes your
-            content to a service outside Firebase, which is why these messages are kept short and
+            priority or AOG — that squawk's title. Apart from AI task suggestions, which you ask for
+            (section 15), this is the only place SquawkIt passes your content to a service outside
+            Firebase, which is why these messages are kept short and
             deliberately carry no attachments, certificate details, maintenance log contents, or
             record descriptions.
         </li>
@@ -402,7 +407,9 @@
         You control this in <em>Settings &rarr; Notifications</em>, by class (aircraft, squawks,
         tasks, logbook, and the urgency classes) or with the master switch, and separately per
         device. Switching a class off stops the message being sent at all, not merely hidden on
-        arrival. Aircraft you have not shared with anyone generate no push notifications of any kind.
+        arrival. Aircraft you have not shared with anyone generate no push notifications of this kind;
+        the only push it can get is the one telling you that suggestions you asked for are ready
+        (section 15).
     </p>
 
     <h2>12. Data exports</h2>
@@ -469,11 +476,75 @@
         all, so nothing about them leaves your device.
     </p>
 
-    <h2>15. Service providers</h2>
+    <h2 id="ai-suggestions">15. AI task suggestions</h2>
+    <p>
+        SquawkIt can suggest maintenance tasks for anything you track in it: an aircraft, car,
+        motorcycle, bike, boat, home, or a thing of your own kind (a “thing” below). Some
+        suggestions come from a list we write and keep for each kind of thing. Others are drafted
+        by an AI model, and
+        <strong>only when you ask</strong>, by tapping <em>Suggest tasks</em> or <em>Suggest
+        more</em>. Suggestions need a signed-in account and a connection; nothing is sent for a
+        guest account or while offline.
+    </p>
+    <p>
+        <strong>What is sent.</strong> When you ask, the app sends our backend a description of
+        that one thing: its kind; its specifications such as make, model and year,
+        <em>without</em> identifiers such as a tail number, VIN, address or serial numbers; its
+        components' make and model; its meter readings; the tasks it already has (title,
+        schedule, type and reference number); and a summary of its maintenance log entries
+        (date, readings, the work done and the component). It never includes technician names,
+        certificate numbers, costs, attachments or comments, and nothing from your other
+        things, your profile, or other members of a shared thing. SquawkIt does not
+        currently send documents or attachments to the AI.
+    </p>
+    <p>
+        Opening the suggested task list also sends that description, without the log entries,
+        to our backend so it can fit our own list to your thing. That request goes to no AI
+        model.
+    </p>
+    <p>
+        <strong>Who processes it.</strong> Our backend passes that description to Google's Gemini
+        model on Google Cloud Vertex AI, in our own Google Cloud project, to draft the
+        suggestions. Under Google's terms for Vertex AI:
+    </p>
+    <ul>
+        <li>Google does not use this data to train or fine-tune any AI model without our
+            permission.</li>
+        <li>Google may keep the request and its answer in memory, not on disk, for up to 24
+            hours to answer faster, isolated to our project.</li>
+        <li>If Google's automated safety systems flag a request as possible abuse, Google may log
+            it for up to 90 days so that authorized Google staff can review it. It is not used to
+            train models.</li>
+    </ul>
+    <p>
+        <strong>What we keep.</strong> The request itself is deleted when the run finishes; if a
+        run is interrupted, it expires after 24 hours. The suggestions are kept under your account
+        so you can come back to them, until you add them, and expire after 24 hours. To answer
+        faster and at lower cost, we
+        keep the general maintenance schedule the model gives for a make and model; it is built
+        from the model's own knowledge and holds nothing that identifies you or your thing.
+        For each thing we also keep when its last suggestion run succeeded, to apply the
+        daily limit, and for each model call a cost record with no content and no account
+        identifier, kept for about 13 months.
+    </p>
+    <p>
+        <strong>The ready notification.</strong> AI suggestions can take a few minutes, so when a
+        run you started ends, we send a notification to your devices through Firebase Cloud
+        Messaging and Apple Push Notification service. It carries the thing's name (or tail number)
+        and whether the suggestions are ready; nothing else about it.
+    </p>
+    <p>
+        <strong>Suggestions are drafts.</strong> Nothing is added to your thing until you choose
+        it. Check every suggestion against the manufacturer's documents, which govern; section 6
+        applies to them as to everything else in SquawkIt.
+    </p>
+
+    <h2>16. Service providers</h2>
     <p>
         We rely on Google Firebase for authentication, cloud database, file storage, and
         diagnostics; on Google and Apple for sign-in; and on RevenueCat to manage and
-        validate SquawkIt Pro subscriptions (section 13). When you request an emailed export
+        validate SquawkIt Pro subscriptions (section 13); and on Google Cloud Vertex AI to draft AI
+        task suggestions when you ask for them (section 15). When you request an emailed export
         (section 12), the download link is delivered through a transactional email provider
         (Resend), which receives only the destination email address and the export delivery
         content needed to send that message. These providers process data on our behalf,
@@ -481,7 +552,7 @@
         not use your content, or your account data, to serve third-party advertising.
     </p>
 
-    <h2>16. Your choices</h2>
+    <h2>17. Your choices</h2>
     <ul>
         <li>Use the app offline; sync only happens when you are signed in and connected.</li>
         <li>Export and download your records at any time.</li>
@@ -494,7 +565,7 @@
         </li>
     </ul>
 
-    <h2>17. Deleting your account</h2>
+    <h2>18. Deleting your account</h2>
     <p>
         You can delete your account and the data associated with it directly in the app:
         go to <strong>Settings → Delete Account</strong>. This immediately requests deletion
@@ -508,14 +579,14 @@
             Deletion Request</a>.
     </p>
 
-    <h2>18. Changes to these terms and this policy</h2>
+    <h2>19. Changes to these terms and this policy</h2>
     <p>
         We may update this page as the app evolves. When we make material changes, we will
         revise the “Last updated” date above and, where appropriate, notify you in the app.
         Continuing to use SquawkIt after a change means you accept the updated terms.
     </p>
 
-    <h2 id="contact">19. Contact</h2>
+    <h2 id="contact">20. Contact</h2>
     <p>
         Questions about these terms, this policy, or your data? Email
         <a href="mailto:fanfly.dev@gmail.com">fanfly.dev@gmail.com</a>.
