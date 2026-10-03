@@ -139,12 +139,8 @@ class StarterPackViewModelTest {
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.isLoading).isFalse()
-    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(
-      true,
-      true,
-      false
-    )
-      .inOrder()
+    // Nothing checked to start, whatever the pack's default (PRD R27, 2026-10-03).
+    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(false, false, false)
     assertThat(analytics.countOf("starter_tasks_offered")).isEqualTo(1)
     assertThat(
       analytics.paramsFor("starter_tasks_offered")
@@ -193,8 +189,8 @@ class StarterPackViewModelTest {
   fun acceptingWritesTheCheckedOnesAndCountsOnlyThose() = runTest(dispatcher) {
     val vm = viewModel(pack)
     advanceUntilIdle()
-    vm.onToggle(0) // drop the filter
-    vm.onToggle(2) // keep the septic one after all
+    vm.onToggle(1) // the gutters
+    vm.onToggle(2) // and the septic one
 
     vm.onAccept()
     advanceUntilIdle()
@@ -247,6 +243,8 @@ class StarterPackViewModelTest {
       Result.failure(IllegalStateException("offline"))
     val vm = viewModel(pack)
     advanceUntilIdle()
+    vm.onToggle(0)
+    vm.onToggle(1)
 
     vm.onAccept()
     advanceUntilIdle()
@@ -286,7 +284,7 @@ class StarterPackViewModelTest {
   }
 
   @Test
-  fun theStarterModeAsksForTheCuratedListAndShowsItTickedAsTheServerSays() = runTest(dispatcher) {
+  fun theStarterModeAsksForTheCuratedListAndShowsItWithNothingChecked() = runTest(dispatcher) {
     serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, curatedList))
 
     val vm = viewModel(pack, serverSource = true)
@@ -295,7 +293,8 @@ class StarterPackViewModelTest {
     coVerify { suggestions.start(THING_ID, Screen.StarterPack.MODE_STARTER, curatedOnly = true) }
     assertThat(vm.uiState.value.isLoading).isFalse()
     assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly("Annual", "Oil change", "ELT").inOrder()
-    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(true, true, false).inOrder()
+    // The server's preselect is not read: the user checks what they need (PRD R27).
+    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(false, false, false)
     assertThat(analytics.paramsFor("starter_tasks_offered").single()).containsEntry("task_count", "3")
   }
 
@@ -317,7 +316,7 @@ class StarterPackViewModelTest {
     val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
     runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
     advanceUntilIdle()
-    vm.onToggle(0) // untick the annual
+    vm.onToggle(0) // check the annual
 
     val merged = SuggestTasksResult(
       suggestions = listOf(
@@ -330,7 +329,8 @@ class StarterPackViewModelTest {
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly("Oil and filter", "Annual", "ELT").inOrder()
-    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(true, false, false).inOrder()
+    // The annual stays checked; the model's new card starts unchecked, as every card does.
+    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(false, true, false).inOrder()
     // Offered once, when cards first showed.
     assertThat(analytics.countOf("starter_tasks_offered")).isEqualTo(1)
   }
@@ -354,6 +354,8 @@ class StarterPackViewModelTest {
     coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns 2
     val vm = viewModel(pack, serverSource = true)
     advanceUntilIdle()
+    vm.onToggle(0)
+    vm.onToggle(1)
 
     vm.onAccept()
     advanceUntilIdle()

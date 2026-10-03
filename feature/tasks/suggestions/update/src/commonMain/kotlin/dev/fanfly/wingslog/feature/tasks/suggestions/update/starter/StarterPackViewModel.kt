@@ -100,7 +100,8 @@ class StarterPackViewModel(
       .mapIndexed { index, task ->
         StarterPackItem(
           suggestion = task.toSuggestion(index),
-          selected = task.default_selected,
+          // Nothing is checked to start (PRD R27, revised 2026-10-03).
+          selected = false,
           starterTask = task
         )
       }
@@ -309,22 +310,20 @@ class StarterPackViewModel(
     val logger = Logger.withTag("StarterPackViewModel")
 
     /**
-     * Cards for [result], ticked as the server says (R27), except that a card already on screen
-     * keeps the user's choice when the model's answer replaces the curated list.
+     * Cards for [result], none checked to start (PRD R27, revised 2026-10-03: the user checks what
+     * they need, and the server's `preselect` is not read). A card already on screen keeps the
+     * user's check when the model's answer replaces the curated list.
      */
     fun itemsOf(
       result: SuggestTasksResult,
       shown: List<StarterPackItem>
     ): List<StarterPackItem> {
-      val shownIds =
-        shown.mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
       val chosenIds = shown.filter { it.selected }
         .mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
       return result.suggestions.map { suggestion ->
-        val id = suggestion.suggestion_id?.value_
         StarterPackItem(
           suggestion = suggestion,
-          selected = if (id in shownIds) id in chosenIds else suggestion.preselect
+          selected = suggestion.suggestion_id?.value_ in chosenIds
         )
       }
     }

@@ -623,8 +623,9 @@ compliance chip. Same screen, same ViewModel, same proto — one config.
 
 ### 4.9 Starter task packs
 
-A template may ship a recommended schedule. At creation the user is offered it as one opt-in step
-("Add 8 recommended chores?") with per-item checkboxes, and can add it later from an empty Tasks tab.
+A template may ship a recommended schedule. The user picks from it on the Thing's Tasks tab, with
+per-item checkboxes and nothing checked to start. (Revised 2026-10-03: it is no longer offered as a
+step after creating a Thing; see [`task_population_PRD.md`](../ai/task_population_PRD.md) R1, R27.)
 Items are created as ordinary `MaintenanceTask` rows — editable, deletable, in no way special
 afterwards.
 
