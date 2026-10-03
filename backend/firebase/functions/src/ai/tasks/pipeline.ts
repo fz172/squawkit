@@ -178,6 +178,7 @@ export async function runTaskPipeline(
     ({ rawRules: _raw, rawFirstDue: _due, lastDoneLogId: _log, confidence: _c, evidence: _e, ...s }, i) => ({
       suggestionId: `s${i + 1}`,
       ...s,
+      originKind: s.sourceDocument ? "ai_document" : "ai_thing",
     }),
   );
   return { status: "succeeded", result: result(suggestions, identified) };

@@ -131,9 +131,10 @@ describe("resultToProto", () => {
     intervalDifferenceNote: "",
     mergesStaticIndex: -1,
     preselect: true,
+    originKind: "ai_document",
   };
   const result: SuggestTasksResult = {
-    suggestions: [suggestion, { ...suggestion, suggestionId: "s2", sourceDocument: "", lastDone: null, firstDue: { date: "2026-12-01", meter: null }, matchesExistingTaskId: "task-annual" }],
+    suggestions: [suggestion, { ...suggestion, suggestionId: "s2", sourceDocument: "", originKind: "ai_thing", lastDone: null, firstDue: { date: "2026-12-01", meter: null }, matchesExistingTaskId: "task-annual" }],
     documents: [
       {
         blobId: "blob-ad",
@@ -175,5 +176,11 @@ describe("resultToProto", () => {
     expect(decoded.documents).toEqual([
       expect.objectContaining({ blobId: { value: "blob-ad" }, docType: DocType.DOC_TYPE_AIRWORTHINESS_DIRECTIVE, matchesThing: true }),
     ]);
+  });
+
+  it("encodes a curated suggestion as PRE_CURATED", () => {
+    const curated = resultToProto({ ...result, suggestions: [{ ...suggestion, sourceDocument: "", originKind: "pre_curated" }] });
+
+    expect(curated.suggestions[0].originKind).toBe(TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED);
   });
 });
