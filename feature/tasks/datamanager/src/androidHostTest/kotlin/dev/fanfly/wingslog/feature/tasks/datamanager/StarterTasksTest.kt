@@ -134,7 +134,7 @@ class StarterTasksTest {
     val card = StarterTask(title = "HVAC filter", interval_months = 3)
       .toMaintenanceTask(CanonicalTemplates.HOME, now)
 
-    assertThat(card.origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_TEMPLATE_STARTER)
+    assertThat(card.origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
     assertThat(card.origin?.suggested_at).isEqualTo(now)
   }
 

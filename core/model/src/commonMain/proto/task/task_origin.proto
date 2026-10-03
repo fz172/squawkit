@@ -13,7 +13,10 @@ option java_multiple_files = true;
 // not "made by hand" (PRD R34). UNSPECIFIED is never written.
 enum TaskOriginKind {
     TASK_ORIGIN_KIND_UNSPECIFIED = 0;
-    TASK_ORIGIN_KIND_TEMPLATE_STARTER = 1;
+    // A curated suggestion: one from the list the team keeps per template on the server (design
+    // §6.8). Was TEMPLATE_STARTER, the app's own starter pack, until 2026-10-02; same number, and
+    // tasks are stored as binary protos, so nothing stored changes.
+    TASK_ORIGIN_KIND_PRE_CURATED = 1;
     // A suggestion run with no documents.
     TASK_ORIGIN_KIND_AI_THING = 2;
     TASK_ORIGIN_KIND_AI_DOCUMENT = 3;

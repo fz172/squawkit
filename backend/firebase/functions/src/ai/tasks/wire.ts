@@ -3,9 +3,8 @@ import type {
   SuggestTasksRequest as SuggestTasksRequestProto,
   TaskSuggestion as TaskSuggestionProto,
 } from "../../generated/proto/rpc/suggest_tasks/suggest_tasks.js";
-import type { StarterTask } from "../../generated/proto/task/starter_task.js";
 import { ComplianceType, type InspectionRule } from "../../generated/proto/task/maintenance_task.js";
-import { TaskSourceKind } from "../../generated/proto/task/task_origin.js";
+import { TaskOriginKind, TaskSourceKind } from "../../generated/proto/task/task_origin.js";
 import type { MeterReading } from "../../generated/proto/thing/meter_reading.js";
 import type {
   ComplianceKind,
@@ -60,7 +59,9 @@ export function requestFromProto(proto: SuggestTasksRequestProto): SuggestTasksR
         componentSlotKey: l.componentSlotKey,
       })),
       logsTruncated: c?.logsTruncated ?? false,
-      staticPack: (c?.staticPack ?? []).map(staticPackItemFromProto),
+      // The app no longer sends its starter pack; the curated list fills this from the server's
+      // own files (#1265, design §6.8).
+      staticPack: [],
       lexiconTaskNoun: c?.lexiconTaskNoun ?? "",
     },
     documents: proto.documents.map((d) => ({
@@ -105,8 +106,9 @@ export function resultToProto(result: SuggestTasksResult): SuggestTasksResultPro
           : undefined,
         matchesExistingTaskId: s.matchesExistingTaskId ? { value: s.matchesExistingTaskId } : undefined,
         intervalDifferenceNote: s.intervalDifferenceNote,
-        mergesStaticIndex: s.mergesStaticIndex,
         preselect: s.preselect,
+        // Every suggestion the pipeline writes is the model's; curated items join in #1265.
+        originKind: s.sourceDocument ? TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT : TaskOriginKind.TASK_ORIGIN_KIND_AI_THING,
       }),
     ),
     documents: result.documents.map((d) => ({
@@ -167,15 +169,6 @@ export function ruleToProto(rule: SuggestedRule): InspectionRule {
     case "on_condition":
       return { onConditionRule: { description: rule.description } };
   }
-}
-
-/** A template starter task as a static-pack item: its free-form rule fields become rules. */
-function staticPackItemFromProto(task: StarterTask) {
-  const rules: SuggestedRule[] = [];
-  if (task.months.length > 0) rules.push({ kind: "seasonal", months: task.months, dayOfMonth: 0 });
-  if (task.intervalMonths > 0) rules.push({ kind: "time", every: task.intervalMonths, unit: "months" });
-  if (task.meterKey && task.interval > 0) rules.push({ kind: "meter", meterKey: task.meterKey, interval: task.interval });
-  return { title: task.title, description: task.description, componentSlotKey: task.componentSlotKey, rules };
 }
 
 function readingFromProto(r: MeterReading): MeterReadingValue {

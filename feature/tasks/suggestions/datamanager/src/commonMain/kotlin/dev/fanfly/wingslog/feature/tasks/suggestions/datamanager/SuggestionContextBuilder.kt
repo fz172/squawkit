@@ -78,7 +78,6 @@ class SuggestionContextBuilder(
           reference_number = task.reference_number,
         )
       },
-      static_pack = template.starter_tasks,
       lexicon_task_noun = templateRegistry.lexiconFor(template).taskNoun.singular,
     )
     val base = SuggestTasksRequest(
