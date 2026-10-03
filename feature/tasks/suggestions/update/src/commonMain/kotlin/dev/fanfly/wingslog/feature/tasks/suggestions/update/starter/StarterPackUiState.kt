@@ -16,6 +16,10 @@ data class StarterPackUiState(
   val template: ThingTemplate? = null,
   val lexicon: Lexicon = GenericLexicon.LEXICON,
   val items: List<StarterPackItem> = emptyList(),
+  /** The server's curated list is shown and the model can be asked to add to it (PRD R1). */
+  val canSuggest: Boolean = false,
+  /** A model run is working; its answer will replace the cards. */
+  val isSuggesting: Boolean = false,
   val isSaving: Boolean = false,
   /** Set once the step is over, either way; how many were written says which way. */
   val isDone: Boolean = false,
