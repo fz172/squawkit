@@ -260,9 +260,10 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R26 (P0). Each card shows** the title, the schedule in plain words and lexicon terms ("Every 100
   h or 12 months"), first-due (R29), and a source chip. Tapping the chip shows the full citation and
   the one-line rationale.
-- **R27 (P0). Pre-selection.** Suggestions from a document or from the logs are pre-selected.
-  *Manufacturer schedule* and *Common practice* suggestions are pre-selected except on the airplane
-  template, where they never are.
+- **R27 (P0). Nothing is pre-selected** (revised 2026-10-03). Every card, curated or AI, starts
+  unchecked, and the user checks what they need; until then the Add button reads "Check {tasks} to
+  add". (It used to pre-select document and log suggestions, and the rest except on the airplane
+  template.)
 - **R28 (P1). Update before accepting.** A suggestion's title, intervals and first-due can be
   changed before it is accepted, using the normal task form pre-filled. Saving there counts as
   accepted-with-edits.

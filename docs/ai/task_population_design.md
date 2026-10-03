@@ -714,7 +714,9 @@ Each rule is a pure function with its own tests (§14). In order:
    but never typed as anything but routine.
 5. **Dedup ids:** `matches_existing_task_id` must be an id in `context.existing_tasks`, else
    cleared; `mergesCuratedIndex` must be in range, else −1.
-6. **Pre-selection (R27):** DOCUMENT and LOGS → true; others → true except on template `airplane`;
+6. **Pre-selection (R27):** *the app has not read `preselect` since 2026-10-03, when R27 became
+   "nothing pre-selected"; the server still sets it, for a later revision to drop.* DOCUMENT and
+   LOGS → true; others → true except on template `airplane`;
    `matches_thing = false` documents → false; Already tracked → false; a one-time item whose
    first-due reading the Thing has already passed → false (shown, since it may not have been done,
    but not ticked).
