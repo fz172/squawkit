@@ -116,9 +116,23 @@ export type AiJobDoc = {
   updatedAt: Timestamp;
   /** TTL field. `createdAt` + AI_JOB_TTL_MS. */
   expiresAt: Timestamp;
-  /** Base64 of the kind's result proto (`SuggestTasksResult`), set on SUCCEEDED and EMPTY. */
+  /**
+   * Base64 of the kind's result proto (`SuggestTasksResult`), set on SUCCEEDED and EMPTY. A task
+   * job also carries its curated suggestions here from the moment it is written (design §6.8).
+   */
   result: string | null;
   error: AiJobErrorDoc | null;
+  /**
+   * Set on a curated-only job whose model was refused (`disabled`, `daily_limit`,
+   * `spend_ceiling`): why, and when it can run again. Null otherwise, including a job that asked
+   * for curated suggestions only (design §5.1).
+   */
+  aiSkipped: AiSkippedDoc | null;
+};
+
+export type AiSkippedDoc = {
+  code: AiErrorCode;
+  nextAvailableAt: Timestamp | null;
 };
 
 /** The `AiJobError` proto as fields, so the client reads it without decoding anything. */

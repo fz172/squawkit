@@ -7,7 +7,7 @@ import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { AiJobStatus } from "../generated/proto/rpc/ai_job/ai_job.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
-import { authorizeAiCall, decideAiAccess, loadAiAccessFacts } from "./authorize.js";
+import { authorizeAiStart, decideAiAccess, loadAiAccessFacts, type AiSkipped } from "./authorize.js";
 import {
   AI_JOB_INPUT_TTL_MS,
   AI_JOB_TTL_MS,
@@ -159,11 +159,24 @@ export async function handleStartAiJob(
   if (target.documentCount > 0 && !spec.acceptsDocuments) {
     throw new HttpsError("invalid-argument", "This kind of run takes no documents yet.");
   }
-  const access = await authorizeAiCall(request, { hostUid, thingId, withDocuments: target.documentCount > 0 }, now);
-  if (target.documentCount > access.config.maxDocumentsPerRun) {
-    throw new HttpsError("invalid-argument", `At most ${access.config.maxDocumentsPerRun} documents.`);
+  if (target.documentCount > 0 && target.curatedOnly) {
+    throw new HttpsError("invalid-argument", "A curated-only run takes no documents.");
   }
-  const uid = access.callerUid;
+  const plan = await authorizeAiStart(
+    request,
+    {
+      hostUid,
+      thingId,
+      withDocuments: target.documentCount > 0,
+      curatedOnly: target.curatedOnly,
+      offersCuratedOnly: spec.offersCuratedOnly,
+    },
+    now,
+  );
+  if (plan.run === "ai" && target.documentCount > plan.access.config.maxDocumentsPerRun) {
+    throw new HttpsError("invalid-argument", `At most ${plan.access.config.maxDocumentsPerRun} documents.`);
+  }
+  const uid = plan.callerUid;
   const initial = spec.initialResult(bytes);
 
   const usageRef = adminDb.doc(aiUsageDocPath(hostUid, thingId));
@@ -171,13 +184,19 @@ export async function handleStartAiJob(
     const usageSnap = await tx.get(usageRef);
     const inFlight = await readInFlight(usageSnap.data() as AiUsageDoc | undefined, (ref) => tx.get(ref), now);
     if (inFlight.state === "active") {
-      if (inFlight.ref.callerUid === uid) return { jobId: inFlight.ref.jobId, joined: true };
+      // The caller's own run already carries the curated suggestions, so curated-only joins it too.
+      if (inFlight.ref.callerUid === uid) return { jobId: inFlight.ref.jobId, joined: true, dispatch: false };
       throw new HttpsError("failed-precondition", "run_in_progress", { code: "run_in_progress", nextAvailableAt: null });
     }
     if (inFlight.state === "stale") markFailed(tx, inFlight.ref, "stale", now);
 
     const jobRef = adminDb.collection(aiJobsCollectionPath(uid)).doc();
     const created = Timestamp.fromDate(now);
+    if (plan.run === "curated") {
+      // Ends here: no input, no worker, and the Thing is not held, since nothing runs (§5.1).
+      tx.set(jobRef, curatedOnlyJob({ kind, hostUid, thingId, initial, skipped: plan.skipped, created, now }));
+      return { jobId: jobRef.id, joined: false, dispatch: false };
+    }
     const job: AiJobDoc = {
       kind,
       hostUid,
@@ -191,6 +210,7 @@ export async function handleStartAiJob(
       // The curated suggestions, before the worker starts (design §6.8).
       result: initial == null ? null : Buffer.from(initial).toString("base64"),
       error: null,
+      aiSkipped: null,
     };
     const input: AiJobInputDoc = {
       kind,
@@ -203,10 +223,10 @@ export async function handleStartAiJob(
     const inFlightJob: AiJobRef = { callerUid: uid, jobId: jobRef.id };
     if (usageSnap.exists) tx.update(usageRef, { inFlightJob });
     else tx.set(usageRef, { lastSuccessAt: null, inFlightJob } satisfies AiUsageDoc);
-    return { jobId: jobRef.id, joined: false };
+    return { jobId: jobRef.id, joined: false, dispatch: true };
   });
 
-  if (!outcome.joined) {
+  if (outcome.dispatch) {
     const ref = { callerUid: uid, jobId: outcome.jobId };
     try {
       await dispatch(ref);
@@ -217,7 +237,40 @@ export async function handleStartAiJob(
       throw new HttpsError("unavailable", "provider_error", { code: "provider_error", nextAvailableAt: null });
     }
   }
-  return outcome;
+  return { jobId: outcome.jobId, joined: outcome.joined };
+}
+
+/**
+ * A job that ends as it is written, with the curated suggestions alone: SUCCEEDED, or EMPTY for a
+ * template with no curated list. It never counts toward the daily limit, since only the worker
+ * sets `lastSuccessAt`.
+ */
+function curatedOnlyJob(job: {
+  kind: AiJobDoc["kind"];
+  hostUid: string;
+  thingId: string;
+  initial: Uint8Array | null;
+  skipped: AiSkipped | null;
+  created: Timestamp;
+  now: Date;
+}): AiJobDoc {
+  return {
+    kind: job.kind,
+    hostUid: job.hostUid,
+    thingId: job.thingId,
+    status: job.initial == null ? AiJobStatus.AI_JOB_STATUS_EMPTY : AiJobStatus.AI_JOB_STATUS_SUCCEEDED,
+    stage: null,
+    stageArg: null,
+    createdAt: job.created,
+    updatedAt: job.created,
+    expiresAt: Timestamp.fromMillis(job.now.getTime() + AI_JOB_TTL_MS),
+    result: job.initial == null ? null : Buffer.from(job.initial).toString("base64"),
+    error: null,
+    aiSkipped: job.skipped && {
+      code: job.skipped.code,
+      nextAvailableAt: job.skipped.nextAvailableAt && Timestamp.fromDate(job.skipped.nextAvailableAt),
+    },
+  };
 }
 
 function parseStartRequest(data: unknown): {

@@ -436,7 +436,10 @@ Curated suggestions (2026-10-02, §6.8) change `startAiJob` for the task kind:
   the caller nothing to work around, so instead of throwing, `startAiJob` writes a job that is
   already SUCCEEDED, with the curated list and `aiSkipped {code, nextAvailableAt}`, and enqueues
   nothing. So does a request with `curated_only`. Such a job takes no `inFlightJob`, so it never
-  holds the Thing, and never sets `lastSuccessAt`.
+  holds the Thing, and never sets `lastSuccessAt`. With no curated list (custom) it is EMPTY. A
+  curated-only request while the caller's own run is in flight joins that run, which carries the
+  same list, so the newer job never hides the running one from `observeLatest`. Membership is
+  checked again here, because `disabled` is decided before it (`planAiStart`, T29).
 - **Every other refusal still throws:** `sign_in_required`, `not_member`, `run_in_progress`,
   `owner_not_pro`, an invalid request. `getAiEligibility` is unchanged, so an entry point still
   knows ahead of time that AI will not run.

@@ -46,12 +46,13 @@ async function seedSharedThing({ host, member, thing }: Ids): Promise<void> {
   await adminDb.doc(thingShareDocPath(host, thing)).set({ memberRoles: { [host]: "owner", [member]: "technician" } });
 }
 
-function encoded({ host, thing }: Ids, documents = 0, templateId = ""): string {
+function encoded({ host, thing }: Ids, documents = 0, templateId = "", curatedOnly = false): string {
   const request = SuggestTasksRequest.fromPartial({
     thingId: { value: thing },
     hostUid: { value: host },
     documents: Array.from({ length: documents }, (_, i) => ({ name: `doc-${i}.pdf` })),
     context: { templateId: { value: templateId } },
+    curatedOnly,
   });
   return Buffer.from(SuggestTasksRequest.encode(request).finish()).toString("base64");
 }
@@ -72,6 +73,9 @@ async function errorOf(promise: Promise<unknown>): Promise<HttpsError> {
 
 const start = (uid: string, t: Ids, dispatch = recorder().dispatch, now = NOW) =>
   handleStartAiJob(req(uid, { kind: KIND, request: encoded(t) }), dispatch, now);
+
+const startRequest = (uid: string, request: string, dispatch = recorder().dispatch) =>
+  handleStartAiJob(req(uid, { kind: KIND, request }), dispatch, NOW);
 
 const eligibility = (uid: string, t: Ids, provider?: string) =>
   handleGetAiEligibility(req(uid, { kind: KIND, thingId: t.thing, hostUid: t.host, withDocuments: false }, provider), NOW);
@@ -202,11 +206,69 @@ describe("startAiJob", () => {
   it("passes authorization's refusal through", async () => {
     const t = ids();
     await seedSharedThing(t);
+
+    expect((await errorOf(start(randomUUID(), t))).details).toMatchObject({ code: "not_member" });
+  });
+
+  it("returns the curated suggestions alone when the day's run is used, saying when AI is back (R9a)", async () => {
+    const t = ids();
+    await seedSharedThing(t);
     await adminDb.doc(aiUsageDocPath(t.host, t.thing)).set({
       lastSuccessAt: Timestamp.fromMillis(NOW.getTime() - 60 * MINUTE),
       inFlightJob: null,
     });
-    expect((await errorOf(start(t.host, t))).details).toMatchObject({ code: "daily_limit" });
+    const { dispatched, dispatch } = recorder();
+
+    const { jobId, joined } = await startRequest(t.host, encoded(t, 0, "airplane"), dispatch);
+
+    expect(joined).toBe(false);
+    expect(dispatched).toEqual([]);
+    const job = (await adminDb.doc(aiJobDocPath(t.host, jobId)).get()).data();
+    expect(job?.status).toBe(AiJobStatus.AI_JOB_STATUS_SUCCEEDED);
+    expect(job?.aiSkipped.code).toBe("daily_limit");
+    expect(job?.aiSkipped.nextAvailableAt.toMillis()).toBe(NOW.getTime() + 23 * 60 * MINUTE);
+    expect(SuggestTasksResult.decode(Buffer.from(job?.result, "base64")).suggestions).toHaveLength(curatedListFor("airplane").length);
+  });
+
+  it("ends a curated-only request at once: no input, no worker, the Thing not held", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    const { dispatched, dispatch } = recorder();
+
+    const { jobId } = await startRequest(t.host, encoded(t, 0, "airplane", true), dispatch);
+
+    expect(dispatched).toEqual([]);
+    const job = (await adminDb.doc(aiJobDocPath(t.host, jobId)).get()).data();
+    expect(job).toMatchObject({ status: AiJobStatus.AI_JOB_STATUS_SUCCEEDED, aiSkipped: null, error: null });
+    expect((await adminDb.doc(aiJobInputDocPath(t.host, jobId)).get()).exists).toBe(false);
+    expect((await adminDb.doc(aiUsageDocPath(t.host, t.thing)).get()).get("inFlightJob") ?? null).toBeNull();
+    // Nothing held, so an AI run can start straight after.
+    expect((await start(t.host, t)).joined).toBe(false);
+  });
+
+  it("ends a curated-only request EMPTY for a template with no curated list", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+
+    const { jobId } = await startRequest(t.host, encoded(t, 0, "custom", true));
+
+    const job = (await adminDb.doc(aiJobDocPath(t.host, jobId)).get()).data();
+    expect(job).toMatchObject({ status: AiJobStatus.AI_JOB_STATUS_EMPTY, result: null });
+  });
+
+  it("joins the caller's own run in flight on a curated-only request, which carries the same list", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    const running = await start(t.host, t);
+
+    expect(await startRequest(t.host, encoded(t, 0, "airplane", true))).toEqual({ jobId: running.jobId, joined: true });
+  });
+
+  it("still refuses a curated-only request from outside the share", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+
+    expect((await errorOf(startRequest(randomUUID(), encoded(t, 0, "airplane", true)))).details).toMatchObject({ code: "not_member" });
   });
 
   it("allows the configured number of documents and refuses one more", async () => {
