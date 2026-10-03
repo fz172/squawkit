@@ -368,12 +368,14 @@ class StarterPackViewModelTest {
 
   @Test
   fun aRefusedStartClosesTheScreenWithNothingOffered() = runTest(dispatcher) {
-    serving(started = AiStartResult.Refused(AiErrorCode.SIGN_IN_REQUIRED, null))
+    serving(started = AiStartResult.Refused(AiErrorCode.UNAVAILABLE, null))
 
     val vm = viewModel(pack, serverSource = true)
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.isDone).isTrue()
+    // The task tab says why: "No internet connection" (PRD R51).
+    assertThat(vm.uiState.value.closingError).isEqualTo(AiErrorCode.UNAVAILABLE)
     assertThat(analytics.countOf("starter_tasks_offered")).isEqualTo(0)
   }
 
@@ -468,7 +470,47 @@ class StarterPackViewModelTest {
 
     assertThat(vm.uiState.value.canSuggest).isTrue()
     assertThat(vm.uiState.value.isSuggesting).isFalse()
+    assertThat(vm.uiState.value.notice).isEqualTo(AiErrorCode.UNAVAILABLE)
     coVerify(exactly = 0) { suggestions.dismiss(any()) }
+
+    vm.onNoticeShown()
+    assertThat(vm.uiState.value.notice).isNull()
+  }
+
+  @Test
+  fun aFailedModelRunKeepsTheCuratedCardsAndOffersTryAgain() = runTest(dispatcher) {
+    val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false) } returns AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    runs.emit(SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR, curatedList))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.failure).isEqualTo(AiErrorCode.PROVIDER_ERROR)
+    assertThat(vm.uiState.value.isDone).isFalse()
+    assertThat(vm.uiState.value.items).hasSize(3)
+
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false) } returns AiStartResult.Started(AI_JOB, joined = false)
+    vm.onRetry()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.failure).isNull()
+    assertThat(vm.uiState.value.isSuggesting).isTrue()
+    coVerify { suggestions.dismiss(JOB) }
+    runs.emit(SuggestionRun.Working(AI_JOB, "tailoring", null, curatedList))
+    advanceUntilIdle()
+    assertThat(vm.uiState.value.failure).isNull()
+  }
+
+  @Test
+  fun aFailedRunWithNothingToShowClosesAndSaysWhy() = runTest(dispatcher) {
+    serving(SuggestionRun.Failed(JOB, AiErrorCode.STALE, result = null))
+
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isDone).isTrue()
+    assertThat(vm.uiState.value.closingError).isEqualTo(AiErrorCode.STALE)
   }
 
   private companion object {

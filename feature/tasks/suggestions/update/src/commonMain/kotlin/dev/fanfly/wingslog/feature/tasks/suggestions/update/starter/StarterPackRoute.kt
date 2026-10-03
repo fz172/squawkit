@@ -20,12 +20,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -56,6 +60,8 @@ import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_none
@@ -98,16 +104,20 @@ fun StarterPackRoute(
     uiState.acceptedCount,
     uiState.lexicon.taskNoun.let { if (uiState.acceptedCount == 1) it.singular else it.plural },
   )
+  // Said on the task tab, in this Thing's words, when the screen closes with nothing to show.
+  val closingMessage = uiState.closingError?.message(uiState.lexicon.thingNoun.singular)
   LaunchedEffect(uiState.isDone) {
     if (!uiState.isDone) return@LaunchedEffect
-    if (uiState.acceptedCount > 0) {
+    val message = if (uiState.acceptedCount > 0) addedMessage else closingMessage
+    if (message != null) {
       navController.previousBackStackEntry?.savedStateHandle?.set(
         CROSS_SCREEN_SUCCESS_MESSAGE,
-        addedMessage,
+        message,
       )
     }
     navController.popBackStack()
   }
+  val snackbarHostState = remember { SnackbarHostState() }
 
   // The Thing's own words, not the shell's: on the create path the switcher may still point at a
   // different Thing, and the ambient lexicon with it.
@@ -118,8 +128,15 @@ fun StarterPackRoute(
       ?: CurrentThingTemplate.ALL_ENABLED),
   ) {
     val taskNoun = LocalThingLexicon.current.taskNoun
+    val noticeMessage = uiState.notice?.message()
+    LaunchedEffect(noticeMessage) {
+      if (noticeMessage == null) return@LaunchedEffect
+      snackbarHostState.showSnackbar(noticeMessage)
+      viewModel.onNoticeShown()
+    }
     Scaffold(
       modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+      snackbarHost = { SnackbarHost(snackbarHostState) },
       topBar = {
         ConstrainedTopBar(ContentWidth.Form) {
           WingsLogTopAppBar(
@@ -168,6 +185,23 @@ fun StarterPackRoute(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
+          uiState.failure?.let { failure ->
+            // The model run failed; the cards below are still there to pick from (PRD R21).
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+              Text(
+                text = failure.message(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.weight(1f),
+              )
+              TextButton(onClick = viewModel::onRetry, enabled = !uiState.isSaving) {
+                Text(stringResource(CoreRes.string.retry))
+              }
+            }
+          }
           if (uiState.canSuggest) {
             OutlinedButton(
               onClick = viewModel::onSuggest,

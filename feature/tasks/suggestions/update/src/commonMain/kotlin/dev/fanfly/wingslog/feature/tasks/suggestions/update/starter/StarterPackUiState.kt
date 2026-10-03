@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
+import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
@@ -20,10 +21,16 @@ data class StarterPackUiState(
   val canSuggest: Boolean = false,
   /** A model run is working; its answer will replace the cards. */
   val isSuggesting: Boolean = false,
+  /** The model run failed; the cards stay, with this and *Try again* above them (PRD R21). */
+  val failure: AiErrorCode? = null,
+  /** Why *Suggest more* or *Try again* did not start; shown once, as a snackbar. */
+  val notice: AiErrorCode? = null,
   val isSaving: Boolean = false,
   /** Set once the step is over, either way; how many were written says which way. */
   val isDone: Boolean = false,
   val acceptedCount: Int = 0,
+  /** Why the screen closed with nothing to show, for the task tab to say (PRD R21, R51). */
+  val closingError: AiErrorCode? = null,
 ) {
   val selectedCount: Int get() = items.count { it.selected }
 }
