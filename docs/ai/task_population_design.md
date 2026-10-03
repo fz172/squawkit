@@ -663,6 +663,9 @@ Input: the candidate items from 2 and 3, the `SuggestionContext`. The model:
 - marks `matches_existing_task_id` and `interval_difference_note` against existing tasks (R24);
 - marks the curated item each suggestion covers (`mergesCuratedIndex`, R25), which the merge in §6.8
   replaces;
+- lists the curated items that cannot apply to this Thing in `notApplicable`, each with a reason
+  (an engine oil change or spark plugs on a battery-electric car), which the merge leaves out
+  (tasks-5, 2026-10-03);
 - may cite a log as `last_done` evidence; since 2026-10-02 the server strips it from every result
   (R29: no suggestion is tied to a log), so the logs only shape what is suggested;
 - sets `matches_thing` per document (R8a).
@@ -761,8 +764,10 @@ the server as **curated lists**, and every task run returns its template's list,
   ends there.
 - **Merged, in the worker.** The tailor sees the curated list as the starter items it already reads
   (the prompt's "Starter-pack items" section keeps its name until the next prompt revision). Each AI
-  suggestion may name the curated item it covers. The final list is every AI suggestion, followed by
-  every curated item no suggestion covered, so the screen never loses a card it showed.
+  suggestion may name the curated item it covers, and the tailor may rule a curated item out for
+  this Thing (§6.4). The final list is every AI suggestion, followed by every curated item no
+  suggestion covered and the tailor did not rule out. Until the model answers, the screen shows the
+  whole curated list; a ruled-out card goes when the answer arrives.
 - **The AI's outcome is the job's status.** SUCCEEDED, EMPTY and FAILED keep their meaning, but the
   result of each holds the curated list at least, so the app shows curated cards under an empty or
   failed state too.

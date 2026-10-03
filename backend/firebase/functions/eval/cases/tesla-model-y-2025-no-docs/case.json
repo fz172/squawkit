@@ -1,0 +1,146 @@
+{
+  "id": "tesla-model-y-2025-no-docs",
+  "description": "A battery-electric Tesla with no documents: the curated car list carries ICE items (engine oil, engine air filter, coolant) and a motorcycle chain, which the tailor should rule out (tasks-5).",
+  "kind": "no_document",
+  "request": {
+    "thingId": "thing-tesla",
+    "context": {
+      "templateId": "automotive",
+      "templateVersion": 12,
+      "specs": [
+        {
+          "key": "make",
+          "label": "Make",
+          "value": "Tesla"
+        },
+        {
+          "key": "model",
+          "label": "Model",
+          "value": "Model Y"
+        },
+        {
+          "key": "year",
+          "label": "Year",
+          "value": "2025"
+        }
+      ],
+      "components": [],
+      "meters": [
+        {
+          "key": "odometer",
+          "unitLabel": "mi",
+          "componentSlotKey": "",
+          "current": 1200
+        }
+      ],
+      "existingTasks": [],
+      "logs": [],
+      "logsTruncated": false,
+      "staticPack": [
+        {
+          "title": "Engine oil & filter",
+          "description": "Whichever comes first. Check the manual for the oil grade and the interval that applies to your engine.",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 6,
+              "unit": "months"
+            },
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 5000
+            }
+          ]
+        },
+        {
+          "title": "Tire rotation",
+          "description": "Evens out wear across all four tires. Cars and trucks only.",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 6000
+            }
+          ]
+        },
+        {
+          "title": "Engine air filter",
+          "description": "Sooner on dusty roads; a clogged filter costs power and fuel.",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Cabin air filter",
+          "description": "Keeps the ventilation clean. Cars and trucks only.",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Brake fluid flush",
+          "description": "Brake fluid absorbs water over time and loses its boiling point.",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 24,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Coolant flush",
+          "description": "Long-life coolants run further \u2014 confirm the interval in the manual.",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 60,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Registration renewal",
+          "description": "Annual in most places; adjust to your state or province.",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "time",
+              "every": 12,
+              "unit": "months"
+            }
+          ]
+        },
+        {
+          "title": "Chain lube & adjustment",
+          "description": "Motorcycles with a chain final drive. Sooner after rain.",
+          "componentSlotKey": "",
+          "rules": [
+            {
+              "kind": "meter",
+              "meterKey": "odometer",
+              "interval": 500
+            }
+          ]
+        }
+      ],
+      "lexiconTaskNoun": "service"
+    },
+    "documents": []
+  }
+}

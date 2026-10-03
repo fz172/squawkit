@@ -53,7 +53,7 @@ export function createTaskSuggestionPipeline(
       });
       return {
         status: outcome.status,
-        result: SuggestTasksResultProto.encode(resultToProto(withCurated(withoutLogLinks(outcome.result), curated))).finish(),
+        result: SuggestTasksResultProto.encode(resultToProto(withCurated(withoutLogLinks(outcome.result), curated, outcome.curatedNotApplicable))).finish(),
       };
     },
   };
@@ -72,12 +72,21 @@ export function withoutLogLinks(result: SuggestTasksResult): SuggestTasksResult 
 
 /**
  * The AI's suggestions, then every curated one no suggestion covers (design §6.8, PRD R25): the
- * screen showed the curated list from the start, and loses only the cards the AI replaced. On an
- * EMPTY run, that is the whole curated list.
+ * screen showed the curated list from the start, and loses only the cards the AI replaced, and
+ * those it judged not to fit this Thing ([notApplicable], an engine oil change on an EV). On an
+ * EMPTY run with no tailor, that is the whole curated list.
  */
-export function withCurated(result: SuggestTasksResult, curated: TaskSuggestion[]): SuggestTasksResult {
+export function withCurated(
+  result: SuggestTasksResult,
+  curated: TaskSuggestion[],
+  notApplicable: number[] = [],
+): SuggestTasksResult {
   const covered = new Set(result.suggestions.map((s) => s.mergesStaticIndex).filter((i) => i >= 0));
-  return { ...result, suggestions: [...result.suggestions, ...curated.filter((_, i) => !covered.has(i))] };
+  const dropped = new Set(notApplicable);
+  return {
+    ...result,
+    suggestions: [...result.suggestions, ...curated.filter((_, i) => !covered.has(i) && !dropped.has(i))],
+  };
 }
 
 /**

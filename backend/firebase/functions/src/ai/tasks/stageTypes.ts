@@ -117,4 +117,9 @@ export type TailoredSuggestion = {
 export type TailorOutput = {
   suggestions: TailoredSuggestion[];
   documents: Array<{ index: number; matchesThing: boolean }>;
+  /**
+   * Starter-pack (curated) items that do not fit this thing, with why: an engine oil change on a
+   * battery-electric car (tasks-5).
+   */
+  notApplicable: Array<{ index: number; reason: string }>;
 };
