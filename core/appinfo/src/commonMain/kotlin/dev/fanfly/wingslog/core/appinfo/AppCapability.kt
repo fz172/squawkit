@@ -31,6 +31,12 @@ data class AppCapability(
   val termsUrl: String? = null,
   /** This build's store listing, for "Rate SquawkIt"; null where there is no store (web). */
   val storeListingUrl: String? = null,
+  /**
+   * AI task suggestions (docs/ai/task_population_design.md §10, PRD R48): every entry point checks
+   * it. True on developer builds only until v1 is complete, then this field is deleted (T25).
+   * Defaults closed, so a hand-built fixture never turns it on by accident.
+   */
+  val isTaskSuggestionsSupported: Boolean = false,
 )
 
 /**
