@@ -26,13 +26,13 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.toSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 
 /**
  * The empty task list's recommended tasks, and the task list's *Suggest tasks* (PRD R1, R2). Not a
@@ -65,7 +65,8 @@ class StarterPackViewModel(
 
   private val _uiState = MutableStateFlow(
     StarterPackUiState(
-      mode = savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE) ?: Screen.StarterPack.MODE_STARTER,
+      mode = savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE)
+        ?: Screen.StarterPack.MODE_STARTER,
     ),
   )
   val uiState = _uiState.asStateFlow()
@@ -82,25 +83,46 @@ class StarterPackViewModel(
         .filterNotNull()
         .first()
         .template
-      _uiState.update { it.copy(template = template, lexicon = templateRegistry.lexiconFor(template)) }
-      if (capability.isTaskSuggestionsSupported) showRun(template) else showPack(template)
+      _uiState.update {
+        it.copy(
+          template = template,
+          lexicon = templateRegistry.lexiconFor(template)
+        )
+      }
+      if (capability.isTaskSuggestionsSupported) showRun(template) else showPack(
+        template
+      )
     }
   }
 
   private fun showPack(template: ThingTemplate?) {
     val items = template?.starter_tasks.orEmpty()
       .mapIndexed { index, task ->
-        StarterPackItem(suggestion = task.toSuggestion(index), selected = task.default_selected, starterTask = task)
+        StarterPackItem(
+          suggestion = task.toSuggestion(index),
+          selected = task.default_selected,
+          starterTask = task
+        )
       }
     // Nothing to offer — a stale route, or a pack removed by a DNA refresh. Not an offer, so not
     // counted as one.
-    _uiState.update { it.copy(isLoading = false, items = items, isDone = items.isEmpty()) }
+    _uiState.update {
+      it.copy(
+        isLoading = false,
+        items = items,
+        isDone = items.isEmpty()
+      )
+    }
     if (items.isNotEmpty()) offered(template, items.size)
   }
 
   private suspend fun showRun(template: ThingTemplate?) {
     val curatedOnly = uiState.value.mode == Screen.StarterPack.MODE_STARTER
-    val started = suggestionManager.start(thingId, entryPoint = uiState.value.mode, curatedOnly = curatedOnly)
+    val started = suggestionManager.start(
+      thingId,
+      entryPoint = uiState.value.mode,
+      curatedOnly = curatedOnly
+    )
     if (started !is AiStartResult.Started) {
       // A guest, a connection that failed, a refusal: nothing to show. T17 says which.
       logger.i { "No suggestions to show: $started" }
@@ -110,29 +132,45 @@ class StarterPackViewModel(
     followedJob = started.jobId
     // The curated list came without the model; the user can ask for it here (PRD R1), where the
     // Thing is described well enough (R5).
-    if (curatedOnly && suggestEntry.observe(thingId).first() == SuggestEntry.Available) {
+    if (curatedOnly && suggestEntry.observe(thingId)
+        .first() == SuggestEntry.Available
+    ) {
       _uiState.update { it.copy(canSuggest = true) }
     }
     var counted = false
-    suggestionManager.observeRun(thingId).collect { latest ->
-      // Until the listener catches up with the job just started, the newest it knows is older.
-      if (latest.jobIdOrNull != followedJob) return@collect
-      run = latest
-      val result = latest.resultOrNull
-      val finished = latest !is SuggestionRun.Working
-      // A curated-only run is finished from the start, so only a model run reads as working.
-      _uiState.update { it.copy(isSuggesting = !finished) }
-      if (result == null) {
-        // A template with no curated list, and no model answer (yet).
-        if (finished) _uiState.update { it.copy(isLoading = false, isDone = it.items.isEmpty()) }
-        return@collect
+    suggestionManager.observeRun(thingId)
+      .collect { latest ->
+        // Until the listener catches up with the job just started, the newest it knows is older.
+        if (latest.jobIdOrNull != followedJob) return@collect
+        run = latest
+        val result = latest.resultOrNull
+        val finished = latest !is SuggestionRun.Working
+        // A curated-only run is finished from the start, so only a model run reads as working.
+        _uiState.update { it.copy(isSuggesting = !finished) }
+        if (result == null) {
+          // A template with no curated list, and no model answer (yet).
+          if (finished) _uiState.update {
+            it.copy(
+              isLoading = false,
+              isDone = it.items.isEmpty()
+            )
+          }
+          return@collect
+        }
+        _uiState.update { state ->
+          state.copy(
+            isLoading = false,
+            items = itemsOf(
+              result,
+              state.items
+            )
+          )
+        }
+        if (!counted) {
+          counted = true
+          offered(template, result.suggestions.size)
+        }
       }
-      _uiState.update { state -> state.copy(isLoading = false, items = itemsOf(result, state.items)) }
-      if (!counted) {
-        counted = true
-        offered(template, result.suggestions.size)
-      }
-    }
   }
 
   /**
@@ -145,7 +183,11 @@ class StarterPackViewModel(
     _uiState.update { it.copy(canSuggest = false, isSuggesting = true) }
     viewModelScope.launch {
       val curatedRun = run
-      val started = suggestionManager.start(thingId, entryPoint = Screen.StarterPack.MODE_STARTER, curatedOnly = false)
+      val started = suggestionManager.start(
+        thingId,
+        entryPoint = Screen.StarterPack.MODE_STARTER,
+        curatedOnly = false
+      )
       if (started !is AiStartResult.Started) {
         logger.i { "Suggest tasks did not start: $started" }
         _uiState.update { it.copy(canSuggest = true, isSuggesting = false) }
@@ -153,7 +195,8 @@ class StarterPackViewModel(
       }
       followedJob = started.jobId
       // The curated-only run is finished with; the new one carries the same list.
-      curatedRun?.jobIdOrNull?.takeIf { it != started.jobId }?.let { suggestionManager.dismiss(it) }
+      curatedRun?.jobIdOrNull?.takeIf { it != started.jobId }
+        ?.let { suggestionManager.dismiss(it) }
     }
   }
 
@@ -174,7 +217,11 @@ class StarterPackViewModel(
     viewModelScope.launch {
       _uiState.update { it.copy(isSaving = true) }
       val current = run
-      val written = if (current == null) writePack(chosen, state.template) else writeRun(current, chosen)
+      val written =
+        if (current == null) writePack(chosen, state.template) else writeRun(
+          current,
+          chosen
+        )
       if (written > 0) {
         analytics.log(
           StarterTasksAccepted(
@@ -199,7 +246,13 @@ class StarterPackViewModel(
     // (PRD R19, R20).
     val current = run
     if (current != null && current !is SuggestionRun.Working) {
-      viewModelScope.launch { current.jobIdOrNull?.let { suggestionManager.dismiss(it) } }
+      viewModelScope.launch {
+        current.jobIdOrNull?.let {
+          suggestionManager.dismiss(
+            it
+          )
+        }
+      }
     }
     _uiState.update { it.copy(isDone = true) }
   }
@@ -208,29 +261,48 @@ class StarterPackViewModel(
    * One write per card, and a failure drops only its own card: the pack is a convenience, not a
    * transaction, and a half-written pack is still a better Tasks tab than an empty one.
    */
-  private suspend fun writePack(chosen: List<StarterPackItem>, template: ThingTemplate?): Int {
+  private suspend fun writePack(
+    chosen: List<StarterPackItem>,
+    template: ThingTemplate?
+  ): Int {
     val now = Clock.System.now()
     val createdAt = toWireInstant(now.epochSeconds, now.nanosecondsOfSecond)
-    return chosen.mapNotNull { it.starterTask }.count { task ->
-      taskDataManager.addTask(thingId, task.toMaintenanceTask(template, createdAt))
-        .onFailure { logger.w(it) { "Starter task '${task.title}' was not written" } }
-        .isSuccess
-    }
+    return chosen.mapNotNull { it.starterTask }
+      .count { task ->
+        taskDataManager.addTask(
+          thingId,
+          task.toMaintenanceTask(template, createdAt)
+        )
+          .onFailure { logger.w(it) { "Starter task '${task.title}' was not written" } }
+          .isSuccess
+      }
   }
 
   /**
    * Through the manager, which maps each as the server describes it and closes the run. Accepting
    * while the model still works takes the cards on screen and ends the run.
    */
-  private suspend fun writeRun(current: SuggestionRun, chosen: List<StarterPackItem>): Int {
+  private suspend fun writeRun(
+    current: SuggestionRun,
+    chosen: List<StarterPackItem>
+  ): Int {
     val jobId = current.jobIdOrNull ?: return 0
     val result = current.resultOrNull ?: return 0
-    val ready = current as? SuggestionRun.Ready ?: SuggestionRun.Ready(jobId, result)
-    return suggestionManager.accept(thingId, ready, chosen.map { AcceptedSuggestion(it.suggestion) })
+    val ready =
+      current as? SuggestionRun.Ready ?: SuggestionRun.Ready(jobId, result)
+    return suggestionManager.accept(
+      thingId,
+      ready,
+      chosen.map { AcceptedSuggestion(it.suggestion) })
   }
 
   private fun offered(template: ThingTemplate?, count: Int) {
-    analytics.log(StarterTasksOffered(templateId = template?.id.orEmpty(), taskCount = count))
+    analytics.log(
+      StarterTasksOffered(
+        templateId = template?.id.orEmpty(),
+        taskCount = count
+      )
+    )
   }
 
   private companion object {
@@ -240,12 +312,20 @@ class StarterPackViewModel(
      * Cards for [result], ticked as the server says (R27), except that a card already on screen
      * keeps the user's choice when the model's answer replaces the curated list.
      */
-    fun itemsOf(result: SuggestTasksResult, shown: List<StarterPackItem>): List<StarterPackItem> {
-      val shownIds = shown.mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
-      val chosenIds = shown.filter { it.selected }.mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
+    fun itemsOf(
+      result: SuggestTasksResult,
+      shown: List<StarterPackItem>
+    ): List<StarterPackItem> {
+      val shownIds =
+        shown.mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
+      val chosenIds = shown.filter { it.selected }
+        .mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
       return result.suggestions.map { suggestion ->
         val id = suggestion.suggestion_id?.value_
-        StarterPackItem(suggestion = suggestion, selected = if (id in shownIds) id in chosenIds else suggestion.preselect)
+        StarterPackItem(
+          suggestion = suggestion,
+          selected = if (id in shownIds) id in chosenIds else suggestion.preselect
+        )
       }
     }
 
