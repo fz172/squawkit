@@ -1305,8 +1305,9 @@ Ordering rules the phases alone do not show:
 
 - **Provider data terms** (PRD §12): gates phase C.
 - **Limit numbers** in `ai_config` (the spend ceilings are placeholders until phase 0 cost data).
-- **Push deep link**: whether the notification opens the review directly or the Thing's task list
-  with the review on top (phase C, T26).
+- ~~**Push deep link**~~: decided 2026-10-03 (T26). The push opens the Thing's suggestions screen
+  directly (tap target `suggestions:<thingId>`), which shows the held answer (§9.1). One push per
+  Thing in the tray; title "{Thing} · Suggestions", body by outcome: ready, nothing to add, failed.
 
 ## 18. Task breakdown
 

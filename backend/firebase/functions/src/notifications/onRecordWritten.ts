@@ -371,7 +371,7 @@ async function fanOut(
  * Empty is passed through rather than substituted with the id: the title is "%1$s · Squawks", and a
  * raw UUID there is worse than a title that simply reads "Squawks".
  */
-async function readThingLabel(
+export async function readThingLabel(
   hostUid: string,
   thingId: string,
   segment: EntitySegment,

@@ -181,3 +181,37 @@ export function toDataMap(data: PushData, recipientUid: string): Record<string, 
     recipientUid,
   };
 }
+
+/** How a suggestion run ended, as the push names it. */
+export type SuggestionsOutcome = "ready" | "empty" | "failed";
+
+export type SuggestionsMessageInput = {
+  thingId: string;
+  /** The Thing's display label; `""` when it will not resolve. */
+  tailNumber: string;
+  outcome: SuggestionsOutcome;
+};
+
+/**
+ * "Suggestions are ready" (PRD R20): an AI suggestion run ended, for the person who started it.
+ * One per Thing in the tray, so a newer run's push replaces an older one. The tap opens the Thing's
+ * suggestions screen (`suggestions:<thingId>`, design §17), which shows the held answer.
+ *
+ * On the collaboration channel and never high priority: it is news the user asked for, not an
+ * alert. `recordType` is the Thing's own, since the message is about no record in it.
+ */
+export function suggestionsPushData(input: SuggestionsMessageInput): PushData {
+  return {
+    class: "collaboration",
+    channel: "COLLABORATION",
+    notificationId: `suggestions:${input.thingId}`,
+    highPriority: "false",
+    aircraftId: input.thingId,
+    recordType: RECORD_TYPE.AIRCRAFT,
+    tapTarget: `suggestions:${input.thingId}`,
+    titleKey: "notification_suggestions_title",
+    bodyKey: `notification_suggestions_body_${input.outcome}`,
+    tailNumber: input.tailNumber,
+    actorName: "",
+  };
+}
