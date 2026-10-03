@@ -290,7 +290,7 @@ message SuggestTasksRequest {
   SuggestionContext context = 3;
   repeated SourceDocumentRef documents = 4;
   string entry_point = 5;              // analytics only
-  bool curated_only = 6;               // no model call: the Thing lacks R5's identity (§6.8)
+  bool curated_only = 6;               // no model call: creation and the empty list (§9.1)
 }
 message SourceDocumentRef {
   AttachmentId blob_id = 1; string name = 2; string mime_type = 3;
@@ -821,7 +821,8 @@ Built in T15:
 - **Truncation:** at most 500 logs, newest first. Then the oldest tenth is dropped at a time until
   the encoded request is under 400 KiB.
 - **No starter pack (2026-10-02).** The builder no longer sends the template's starter tasks; the
-  server has the curated list (§6.8). It sets `curated_only` when the Thing lacks R5's identity.
+  server has the curated list (§6.8). It sets `curated_only` for the runs creation and the empty
+  task list start on their own (§9.1), so AI runs only when the user asks for it.
 
 ### 7.3 `TaskSuggestionManager`
 
@@ -973,8 +974,9 @@ default, `suggest`, `document`) and an optional `attachmentId` (R4).
 ### 9.1 Entry points
 
 - **Creation step 4** and the **empty task list**: `mode=starter` (existing routes). Since
-  2026-10-02 the screen starts a run on opening (PRD R1) rather than showing a built-in pack, so it
-  differs from `mode=suggest` only in where it returns to; #1263 makes the mode an enum.
+  2026-10-02 the screen starts a `curated_only` run on opening (PRD R1) rather than showing a
+  built-in pack. No model call: AI runs only when the user taps *Suggest tasks* there, which opens
+  the sources sheet as `mode=suggest` does (#1263 makes the mode an enum).
 - **Guests** skip the screen after creation and go to the Thing (PRD R47).
 - **Task list action** (R2): new `ThingOverviewAction.SuggestTasksClick` → `mode=suggest`.
 - **Add task → Tasks from a document** (R3): `mode=document` (sources sheet opens with the picker).
@@ -996,9 +998,10 @@ and a start by another member fails with `run_in_progress` instead of joining a 
 
 ```
 ┌ Recommended tasks ─────────────────────────────┐
-│  ◌ Tailoring these to your plane…              │  ← the run started on opening
+│ ✦ Suggest tasks for this plane          [ › ]  │  ← opens the sources sheet (§9.3)
+│   Uses the specs, meters, logs and documents   │
 │ ────────────────────────────────────────────── │
-│ ☑ Annual inspection            Every 12 months │  ← curated, from the job's first result
+│ ☑ Annual inspection            Every 12 months │  ← curated, from a curated_only run
 │ ☑ Oil change                   Every 50 h      │
 │ ☐ ELT battery                  Every 24 months │
 │                                                │
@@ -1006,9 +1009,11 @@ and a start by another member fails with `run_in_progress` instead of joining a 
 └────────────────────────────────────────────────┘
 ```
 
-The curated cards come from the job, not the app. When the AI ends, its cards join the list and
-replace the curated ones they cover (§6.8). A curated-only job shows the same list with one line
-saying why: "AI suggestions are available again at 3:10 pm".
+The curated cards come from a `curated_only` job, not the app; it ends at once and costs nothing.
+*Suggest tasks* starts an AI run, whose first result is the same curated list (the cards do not
+flicker), and when the AI ends its cards join the list and replace the curated ones they cover
+(§6.8). A run whose AI was refused (daily limit, ceiling, kill switch) shows the same list with one
+line saying why: "AI suggestions are available again at 3:10 pm".
 
 ### 9.3 Sources sheet (PRD R6)
 
@@ -1353,7 +1358,8 @@ dependency order.
     4. Backend: `startAiJob` writes the curated list into the job, and curated-only jobs (§5.1).
     5. Backend: the worker merges AI suggestions with the curated list.
     6. App data layer: `Working` with a result, `aiSkipped`, the mapper's origin, `curated_only`.
-    7. App screens: creation and the empty task list start a run instead of showing the pack.
+    7. App screens: creation and the empty task list start a curated-only run instead of showing
+       the pack; *Suggest tasks* there starts the AI run (no automatic AI, 2026-10-02).
     8. Templates: `starter_tasks` removed (version bump, field reserved), with the app code that
        read it.
 
