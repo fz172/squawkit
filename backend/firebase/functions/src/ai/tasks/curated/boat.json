@@ -1,0 +1,130 @@
+{
+  "templateId": "boat",
+  "items": [
+    {
+      "title": "Engine oil & filter",
+      "description": "Whichever comes first. Check the manual for the interval that applies to your engine.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        },
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 100
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Raw-water pump impeller",
+      "description": "Rubber vanes fail without warning and take the engine's cooling with them.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Lower unit / gear oil",
+      "description": "Milky oil means a failed seal — check the drained oil before refilling.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Winterize",
+      "description": "Before the first freeze: drain or antifreeze the raw-water side, fog the engine, stabilize the fuel.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Sacrificial anodes",
+      "description": "Replace at half gone. Sooner in a marina with stray current.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Bottom paint & hull inspection",
+      "description": "Antifouling, through-hulls, and a look at the running gear while it is out.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Safety gear check",
+      "description": "Fire extinguisher gauge, flare expiry dates, life jacket condition.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Registration renewal",
+      "description": "Annual in most places; some states register for two or three years.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    }
+  ]
+}

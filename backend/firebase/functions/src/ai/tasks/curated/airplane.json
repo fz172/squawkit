@@ -1,0 +1,95 @@
+{
+  "templateId": "airplane",
+  "items": [
+    {
+      "title": "Conditional inspection",
+      "description": "Experimental aircraft: the operating limitations require a condition inspection within the preceding 12 calendar months, to the scope of 14 CFR Part 43 Appendix D, by the holder of the repairman certificate or an A&P.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": "14 CFR Part 43 Appendix D"
+    },
+    {
+      "title": "100-hour inspection",
+      "description": "Only if operated for hire or used for flight instruction for hire (14 CFR 91.409(b)).",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "airframe_hours",
+          "interval": 100
+        }
+      ],
+      "preselect": false,
+      "sourceKind": "common_practice",
+      "citation": "14 CFR 91.409(b)"
+    },
+    {
+      "title": "ELT inspection",
+      "description": "Emergency locator transmitter inspected within the preceding 12 calendar months (14 CFR 91.207(d)).",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": "14 CFR 91.207(d)"
+    },
+    {
+      "title": "Transponder test",
+      "description": "Tested and inspected within the preceding 24 calendar months (14 CFR 91.413).",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 24,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": "14 CFR 91.413"
+    },
+    {
+      "title": "Altimeter & pitot-static test",
+      "description": "Required for IFR operations; within the preceding 24 calendar months (14 CFR 91.411).",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 24,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": "14 CFR 91.411"
+    },
+    {
+      "title": "Oil change",
+      "description": "Oil and filter every 50 engine hours. Sooner if the engine manual says so, or if the airplane sits between flights.",
+      "componentSlotKey": "engine",
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "engine_hours",
+          "interval": 50
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    }
+  ]
+}

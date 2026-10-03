@@ -1,0 +1,130 @@
+{
+  "templateId": "automotive",
+  "items": [
+    {
+      "title": "Engine oil & filter",
+      "description": "Whichever comes first. Check the manual for the oil grade and the interval that applies to your engine.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 6,
+          "unit": "months"
+        },
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 5000
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Tire rotation",
+      "description": "Evens out wear across all four tires. Cars and trucks only.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 6000
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Engine air filter",
+      "description": "Sooner on dusty roads; a clogged filter costs power and fuel.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Cabin air filter",
+      "description": "Keeps the ventilation clean. Cars and trucks only.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Brake fluid flush",
+      "description": "Brake fluid absorbs water over time and loses its boiling point.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 24,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Coolant flush",
+      "description": "Long-life coolants run further — confirm the interval in the manual.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 60,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Registration renewal",
+      "description": "Annual in most places; adjust to your state or province.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "time",
+          "every": 12,
+          "unit": "months"
+        }
+      ],
+      "preselect": true,
+      "sourceKind": "common_practice",
+      "citation": ""
+    },
+    {
+      "title": "Chain lube & adjustment",
+      "description": "Motorcycles with a chain final drive. Sooner after rain.",
+      "componentSlotKey": "",
+      "rules": [
+        {
+          "kind": "meter",
+          "meterKey": "odometer",
+          "interval": 500
+        }
+      ],
+      "preselect": false,
+      "sourceKind": "common_practice",
+      "citation": ""
+    }
+  ]
+}
