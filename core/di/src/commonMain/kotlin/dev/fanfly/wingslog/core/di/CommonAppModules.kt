@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.di
 import dev.fanfly.wingslog.core.ai.di.aiModule
 import dev.fanfly.wingslog.core.analytics.di.analyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
+import dev.fanfly.wingslog.core.connectivity.di.connectivityModule
 import dev.fanfly.wingslog.core.crash.di.crashModule
 import dev.fanfly.wingslog.core.firebase.functions.functionsModule
 import dev.fanfly.wingslog.core.lifecycle.di.lifecycleModule
@@ -65,6 +66,7 @@ val commonAppModules: List<Module> = listOf(
   functionsModule,
   // The AI backend client (docs/ai/task_population_design.md §7.1).
   aiModule,
+  connectivityModule,
   authModule,
   storageModule,
   platformStorageModule,

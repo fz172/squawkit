@@ -1,0 +1,36 @@
+package dev.fanfly.wingslog.core.connectivity
+
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+/** The default network's state, from `ConnectivityManager`, for the life of the process. */
+internal class AndroidConnectivityMonitor(context: Context) : ConnectivityMonitor {
+
+  private val manager = context.getSystemService(ConnectivityManager::class.java)
+
+  private val online = MutableStateFlow(manager.hasInternet(manager.activeNetwork))
+  override val isOnline: StateFlow<Boolean> = online.asStateFlow()
+
+  init {
+    manager.registerDefaultNetworkCallback(
+      object : ConnectivityManager.NetworkCallback() {
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+          online.value = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        }
+
+        override fun onLost(network: Network) {
+          online.value = false
+        }
+      },
+    )
+  }
+
+  private fun ConnectivityManager.hasInternet(network: Network?): Boolean =
+    network != null && getNetworkCapabilities(network)
+      ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+}
