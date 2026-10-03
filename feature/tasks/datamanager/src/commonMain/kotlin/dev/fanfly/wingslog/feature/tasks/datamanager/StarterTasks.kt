@@ -93,3 +93,15 @@ fun componentTypeForSlot(
     slotKey == SlotKeys.PROPELLER -> ComponentType.COMPONENT_PROPELLER
     else -> ComponentType.COMPONENT_AIRFRAME
   }
+
+/**
+ * The component slot a task on [type] is filed against, the inverse of [componentTypeForSlot]: what
+ * an existing task or a log tells the AI pipeline (design §4.2). Airframe and unknown are the Thing
+ * itself, an empty key.
+ */
+fun slotKeyFor(type: ComponentType): String =
+  when (type) {
+    ComponentType.COMPONENT_ENGINE -> SlotKeys.ENGINE
+    ComponentType.COMPONENT_PROPELLER -> SlotKeys.PROPELLER
+    else -> ""
+  }
