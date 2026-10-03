@@ -15,18 +15,14 @@ import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMapper
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
-import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
-import dev.fanfly.wingslog.rpc.suggesttasks.LastDoneEvidence
 import dev.fanfly.wingslog.rpc.suggesttasks.LogSummary
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksRequest
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
@@ -34,7 +30,6 @@ import dev.fanfly.wingslog.rpc.suggesttasks.SuggestionContext
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TaskOriginKind
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -60,7 +55,6 @@ class TaskSuggestionManagerImplTest {
     every { loadThing(THING) } returns flowOf(Thing(id = THING, template = template))
   }
   private val taskData = mockk<TaskDataManager> { every { observeTasks(THING) } returns flowOf(emptyList()) }
-  private val dueManager = mockk<TaskDueManager>()
   private val registry = mockk<TemplateRegistry>()
   private val scopes = mockk<ThingScopeResolver> {
     coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe("host", THING)
@@ -68,7 +62,7 @@ class TaskSuggestionManagerImplTest {
   private val sync = mockk<EntitySyncObserver> { coEvery { awaitSynced(any(), any(), any(), any()) } returns true }
 
   private val manager = TaskSuggestionManagerImpl(
-    client, builder, SuggestionMapper(), fleet, taskData, dueManager, registry, scopes, sync,
+    client, builder, SuggestionMapper(), fleet, taskData, registry, scopes, sync,
   )
 
   private val suggestion = TaskSuggestion(title = "Replace spark plugs", component_slot_key = "engine")
@@ -231,21 +225,6 @@ class TaskSuggestionManagerImplTest {
 
     assertThat(count).isEqualTo(1)
     coVerify(exactly = 1) { client.close(JOB) }
-  }
-
-  @Test
-  fun `previews the first due from the due engine, from now, with no log tied to it`() = runTest {
-    val due = DueMetadata(nextDueEngine = 610f, nextDueMeterKey = "engine_hours")
-    val mapped = slot<MaintenanceTask>()
-    val logsSeen = slot<List<MaintenanceLog>>()
-    every { dueManager.computeNextDue(capture(mapped), capture(logsSeen), any()) } returns due
-    val done = suggestion.copy(
-      last_done = LastDoneEvidence(log_id = MaintenanceLogId(value_ = "log-1"), date = "2026-05-02"),
-    )
-
-    assertThat(manager.firstDue(THING, done)).isEqualTo(due)
-    assertThat(mapped.captured.force_complied_status).isNull()
-    assertThat(logsSeen.captured).isEmpty()
   }
 
   @Test

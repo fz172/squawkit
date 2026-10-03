@@ -5,7 +5,6 @@ import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
@@ -34,13 +33,6 @@ interface TaskSuggestionManager {
 
   /** The caller's latest run on [thingId]; [SuggestionRun.Idle] when there is none. */
   fun observeRun(thingId: String): Flow<SuggestionRun>
-
-  /**
-   * When [suggestion] would first fall due if accepted now, from the due engine itself (R29): the
-   * suggestion is mapped exactly as [accept] maps it, so the preview cannot disagree with the task.
-   * No log counts as its last compliance, so the schedule runs from now.
-   */
-  suspend fun firstDue(thingId: String, suggestion: TaskSuggestion): DueMetadata
 
   /**
    * [suggestion] as the task [accept] would write, for the task form to start from when the user
