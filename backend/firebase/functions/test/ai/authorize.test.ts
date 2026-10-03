@@ -8,6 +8,7 @@ import {
   AI_DAILY_LIMIT_MS,
   authorizeAiCall,
   decideAiAccess,
+  planAiStart,
   startOfNextUtcMonth,
   type AiAccessFacts,
   type AiAccessRequest,
@@ -19,6 +20,7 @@ import {
   aiUsageDocPath,
   type AiConfig,
 } from "../../src/ai/collections.js";
+import type { AiErrorCode } from "../../src/ai/errors.js";
 import { thingShareDocPath } from "../../src/sharing/sharingModels.js";
 import {
   SUBSCRIPTION_LIFECYCLE,
@@ -123,6 +125,41 @@ describe("decideAiAccess", () => {
       code: "daily_limit",
       documentsAllowed: true,
     });
+  });
+});
+
+describe("planAiStart", () => {
+  const allowed = { allowed: true, ownerTier: "free", config: { ...DEFAULT_AI_CONFIG, enabled: true }, documentsAllowed: false } as const;
+  const denied = (code: AiErrorCode, nextAvailableAt: Date | null = null) =>
+    ({ allowed: false, code, nextAvailableAt, documentsAllowed: false }) as const;
+  const tasks = { curatedOnly: false, offersCuratedOnly: true };
+  const later = new Date("2026-03-16T12:00:00Z");
+
+  it("runs the model when access allows it", () => {
+    expect(planAiStart(allowed, true, tasks)).toEqual({ run: "ai", access: allowed });
+  });
+
+  it("returns the curated list alone, with no reason, when only that was asked for", () => {
+    expect(planAiStart(allowed, true, { ...tasks, curatedOnly: true })).toEqual({ run: "curated", skipped: null });
+    expect(planAiStart(denied("daily_limit", later), true, { ...tasks, curatedOnly: true })).toEqual({ run: "curated", skipped: null });
+  });
+
+  it.each(["disabled", "daily_limit", "spend_ceiling"] as const)("steps around %s with the curated list, saying why", (code) => {
+    expect(planAiStart(denied(code, later), true, tasks)).toEqual({ run: "curated", skipped: { code, nextAvailableAt: later } });
+  });
+
+  it.each(["not_member", "owner_not_pro"] as const)("lets %s stand", (code) => {
+    expect(planAiStart(denied(code), true, tasks)).toEqual({ run: "refused", decision: denied(code) });
+  });
+
+  it("refuses a non-member even when the kill switch hid membership", () => {
+    expect(planAiStart(denied("disabled"), false, tasks)).toEqual({ run: "refused", decision: denied("not_member") });
+    expect(planAiStart(allowed, false, { ...tasks, curatedOnly: true })).toEqual({ run: "refused", decision: denied("not_member") });
+  });
+
+  it("never falls back for a kind with no curated list", () => {
+    const echo = { curatedOnly: false, offersCuratedOnly: false };
+    expect(planAiStart(denied("daily_limit", later), true, echo)).toEqual({ run: "refused", decision: denied("daily_limit", later) });
   });
 });
 

@@ -14,6 +14,8 @@ export type AiJobTarget = {
   hostUid: string;
   thingId: string;
   documentCount: number;
+  /** The request asks for the curated suggestions only, with no model call (design §9.1). */
+  curatedOnly: boolean;
 };
 
 export type AiJobKindSpec = {
@@ -33,6 +35,11 @@ export type AiJobKindSpec = {
    * the kind has none, or the Thing's template has no curated list.
    */
   initialResult(request: Uint8Array): Uint8Array | null;
+  /**
+   * Whether the kind can end at once with its initial result alone: on request, or when the model
+   * is refused for a reason curated suggestions do not need (design §5.1).
+   */
+  offersCuratedOnly: boolean;
 };
 
 function suggestTasksTarget(request: Uint8Array): AiJobTarget {
@@ -41,6 +48,7 @@ function suggestTasksTarget(request: Uint8Array): AiJobTarget {
     hostUid: decoded.hostUid?.value ?? "",
     thingId: decoded.thingId?.value ?? "",
     documentCount: decoded.documents.length,
+    curatedOnly: decoded.curatedOnly,
   };
 }
 
@@ -57,6 +65,7 @@ const SPECS: AiJobKindSpec[] = [
     countsTowardDailyLimit: true,
     acceptsDocuments: false,
     initialResult: curatedTaskResult,
+    offersCuratedOnly: true,
   },
   // The developer round trip takes a task request too, so a client tests the real encoding.
   {
@@ -65,6 +74,7 @@ const SPECS: AiJobKindSpec[] = [
     countsTowardDailyLimit: false,
     acceptsDocuments: true,
     initialResult: () => null,
+    offersCuratedOnly: false,
   },
 ];
 

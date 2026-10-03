@@ -4,7 +4,8 @@ import { AiError } from "../errors.js";
 import { createProvider } from "../providers/registry.js";
 import type { AiProvider } from "../providers/types.js";
 import type { AiPipeline } from "../worker.js";
-import type { SuggestTasksResult } from "./model.js";
+import { curatedSuggestions } from "./curatedResult.js";
+import type { SuggestTasksResult, TaskSuggestion } from "./model.js";
 import { runTaskPipeline } from "./pipeline.js";
 import { requestFromProto, resultToProto } from "./wire.js";
 
@@ -27,7 +28,16 @@ export function createTaskSuggestionPipeline(
       if (decoded.documents.length > 0) {
         throw new AiError("provider_error", "document runs are not enabled yet (T21)");
       }
-      const outcome = await runTaskPipeline(decoded, {
+      // The tailor reads the curated list as its starter items, index for index, so a suggestion
+      // can say which one it covers (design §6.4, §6.8).
+      const curated = curatedSuggestions(decoded.context);
+      const staticPack = curated.map(({ title, description, componentSlotKey, rules }) => ({
+        title,
+        description,
+        componentSlotKey,
+        rules,
+      }));
+      const outcome = await runTaskPipeline({ ...decoded, context: { ...decoded.context, staticPack } }, {
         fast: providerFor(context.config.fastProvider),
         strong: providerFor(context.config.strongProvider),
         cache: context.cache,
@@ -43,7 +53,7 @@ export function createTaskSuggestionPipeline(
       });
       return {
         status: outcome.status,
-        result: SuggestTasksResultProto.encode(resultToProto(withoutLogLinks(outcome.result))).finish(),
+        result: SuggestTasksResultProto.encode(resultToProto(withCurated(withoutLogLinks(outcome.result), curated))).finish(),
       };
     },
   };
@@ -58,6 +68,16 @@ export function createTaskSuggestionPipeline(
  */
 export function withoutLogLinks(result: SuggestTasksResult): SuggestTasksResult {
   return { ...result, suggestions: result.suggestions.map((s) => ({ ...s, lastDone: null })) };
+}
+
+/**
+ * The AI's suggestions, then every curated one no suggestion covers (design §6.8, PRD R25): the
+ * screen showed the curated list from the start, and loses only the cards the AI replaced. On an
+ * EMPTY run, that is the whole curated list.
+ */
+export function withCurated(result: SuggestTasksResult, curated: TaskSuggestion[]): SuggestTasksResult {
+  const covered = new Set(result.suggestions.map((s) => s.mergesStaticIndex).filter((i) => i >= 0));
+  return { ...result, suggestions: [...result.suggestions, ...curated.filter((_, i) => !covered.has(i))] };
 }
 
 /**
