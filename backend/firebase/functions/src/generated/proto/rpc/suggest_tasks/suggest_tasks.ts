@@ -120,8 +120,9 @@ export interface SuggestTasksRequest {
   /** Which entry point started the run. Analytics only. */
   entryPoint: string;
   /**
-   * Return the curated suggestions only, with no model call: the Thing lacks the identity PRD R5
-   * asks for. The run ends at once and never counts toward the daily limit (design §5.1).
+   * Return the curated suggestions only, with no model call: the runs that creation and the empty
+   * task list start on their own (design §9.1). AI runs only when the user asks. The run ends at
+   * once and never counts toward the daily limit (design §5.1).
    */
   curatedOnly: boolean;
 }
