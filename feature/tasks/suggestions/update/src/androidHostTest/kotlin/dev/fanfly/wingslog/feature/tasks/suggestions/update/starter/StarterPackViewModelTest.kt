@@ -7,9 +7,13 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.MeterRule
+import dev.fanfly.wingslog.task.SeasonalRule
 import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.task.TaskOriginKind
+import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -124,6 +128,36 @@ class StarterPackViewModelTest {
         )
       )
     assertThat(analytics.countOf("starter_tasks_accepted")).isEqualTo(0)
+  }
+
+  @Test
+  fun eachStarterTaskShowsAsTheCuratedSuggestionTheServerWouldSend() = runTest(dispatcher) {
+    val oil = StarterTask(
+      title = "Oil change",
+      description = "Oil and filter",
+      meter_key = "odometer",
+      interval = 5000f,
+      interval_months = 6,
+      component_slot_key = "engine",
+      months = listOf(10, 4, 4, 13),
+      default_selected = true,
+    )
+    val vm = viewModel(listOf(pack[0], oil))
+    advanceUntilIdle()
+
+    val shown = vm.uiState.value.items[1].suggestion
+    assertThat(shown.suggestion_id?.value_).isEqualTo("c1")
+    assertThat(shown.title).isEqualTo("Oil change")
+    assertThat(shown.description).isEqualTo("Oil and filter")
+    assertThat(shown.component_slot_key).isEqualTo("engine")
+    assertThat(shown.preselect).isTrue()
+    assertThat(shown.origin_kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
+    assertThat(shown.rules).containsExactly(
+      InspectionRule(seasonal_rule = SeasonalRule(months = listOf(4, 10))),
+      InspectionRule(time_rule = TimeRule(interval_months = 6)),
+      InspectionRule(meter_rule = MeterRule(meter_key = "odometer", interval = 5000f)),
+    ).inOrder()
+    assertThat(vm.uiState.value.items[1].starterTask).isEqualTo(oil)
   }
 
   @Test
