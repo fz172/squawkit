@@ -19,6 +19,10 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_thing_updated
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title_squawk_created
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_suggestions_body_empty
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_suggestions_body_failed
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_suggestions_body_ready
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_suggestions_title
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
 
 /**
@@ -59,11 +63,21 @@ private suspend fun PushPayload.renderTitle(lexicon: Lexicon): String =
         lexicon.squawkNoun.singular,
       )
 
+    // PRD R20: "N123AA · Suggestions", the Thing's label first, as the activity titles have it.
+    "notification_suggestions_title" -> getString(Res.string.notification_suggestions_title, tailNumber)
+
     else -> ""
   }
 
 private suspend fun PushPayload.renderBody(lexicon: Lexicon): String =
   when (bodyKey) {
+    // How a suggestion run the user started ended (PRD R20); the tap opens it either way.
+    "notification_suggestions_body_ready" ->
+      getString(Res.string.notification_suggestions_body_ready, lexicon.taskNoun.plural)
+
+    "notification_suggestions_body_empty" -> getString(Res.string.notification_suggestions_body_empty)
+    "notification_suggestions_body_failed" -> getString(Res.string.notification_suggestions_body_failed)
+
     // "%1$s: %2$s VERB a %3$s\n\n%4$s" — tail, actor, the record's own noun, then its own title on
     // its own line. One concrete notification per write (design decision, 2026-08-27) — there is no
     // count and nothing here is ever a summary.

@@ -471,6 +471,19 @@ class AdaptiveShellViewModelTest {
   // record variants additionally publish a scroll target instead of opening the record's edit form.
 
   @Test
+  fun notificationTap_suggestions_selectsThingAndItsTasksWithNoScrollTarget() =
+    runTest(testDispatcher) {
+      fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
+      val vm = viewModel()
+
+      vm.onNotificationTap(NotificationTapTarget.Suggestions(thingId = "a2"))
+
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
+      assertThat(vm.uiState.value.section).isEqualTo(ShellSection.TASKS)
+      assertThat(vm.pendingScrollTargetId.value).isNull()
+    }
+
+  @Test
   fun notificationTap_squawk_selectsThingSectionAndScrollTarget() =
     runTest(testDispatcher) {
       fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))

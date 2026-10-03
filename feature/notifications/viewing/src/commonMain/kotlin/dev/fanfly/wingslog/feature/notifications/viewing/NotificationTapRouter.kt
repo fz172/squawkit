@@ -72,6 +72,8 @@ object NotificationTapRouter {
     is NotificationTapTarget.Thing ->
       "$SCHEME://$HOST/thing/${target.thingId}" + (target.tab?.let { "?tab=$it" }
         ?: "")
+
+    is NotificationTapTarget.Suggestions -> "$SCHEME://$HOST/suggestions/${target.thingId}"
   }
 
   private fun decode(uri: String): NotificationTapTarget? {
@@ -107,6 +109,7 @@ object NotificationTapRouter {
         ?.let { NotificationTapTarget.DataLog(thingId, DataLogId(it)) }
 
       "thing" -> NotificationTapTarget.Thing(thingId, tab)
+      "suggestions" -> NotificationTapTarget.Suggestions(thingId)
       else -> null
     }
   }

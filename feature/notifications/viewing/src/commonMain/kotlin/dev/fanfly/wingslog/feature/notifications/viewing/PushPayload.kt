@@ -129,6 +129,8 @@ data class PushPayload(
         }
           ?: NotificationTapTarget.Thing(thingId, tab = "datalogs")
 
+        "suggestions" -> NotificationTapTarget.Suggestions(thingId)
+
         else -> null
       }
     }

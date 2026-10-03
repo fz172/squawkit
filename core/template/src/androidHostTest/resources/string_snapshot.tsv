@@ -1163,3 +1163,7 @@ feature/tasks/suggestions/update	suggestion_source_logs	From your logs
 feature/tasks/suggestions/update	suggestion_source_verify	Verify against your manual.
 feature/tasks/suggestions/update	suggestion_source_page	Page %1$s
 feature/tasks/suggestions/update	suggestion_ai_disclosure	Suggestions are drafted by AI from the sources shown on each one. The manufacturer’s documents govern.
+feature/notifications/sharedassets	notification_suggestions_title	%1$s · Suggestions
+feature/notifications/sharedassets	notification_suggestions_body_ready	Your suggested %1$s are ready to review
+feature/notifications/sharedassets	notification_suggestions_body_empty	Not enough to go on. Add details for better suggestions.
+feature/notifications/sharedassets	notification_suggestions_body_failed	Suggestions didn’t finish. Try again from the task list.
