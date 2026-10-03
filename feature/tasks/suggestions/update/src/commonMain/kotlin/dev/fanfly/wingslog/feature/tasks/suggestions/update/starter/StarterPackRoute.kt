@@ -29,7 +29,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -60,6 +62,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
@@ -90,6 +93,7 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rul
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_months
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_year
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_years
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_ai_disclosure
 
 /**
  * The recommended tasks (PRD §4.9): per-item checkboxes, and Skip as a real button.
@@ -139,6 +143,8 @@ fun StarterPackRoute(
   ) {
     val taskNoun = LocalThingLexicon.current.taskNoun
     val noticeMessage = uiState.notice?.message()
+    var sourceShown by remember { mutableStateOf<TaskSuggestion?>(null) }
+    sourceShown?.let { SourceSheet(it) { sourceShown = null } }
     LaunchedEffect(noticeMessage) {
       if (noticeMessage == null) return@LaunchedEffect
       snackbarHostState.showSnackbar(noticeMessage)
@@ -302,11 +308,20 @@ fun StarterPackRoute(
                   },
                   checked = item.selected,
                   enabled = !uiState.isSaving && !item.isAlreadyTracked,
+                  supporting = { SourceChip(item.suggestion) { sourceShown = item.suggestion } },
                   onCheckedChange = { viewModel.onToggle(index) },
                 )
               }
             },
           )
+          // R31: said once, and only when the model drafted some of what is on screen.
+          if (uiState.items.any { it.suggestion.isFromAi() }) {
+            Text(
+              text = stringResource(Res.string.suggestion_ai_disclosure),
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
           // PRD §4.9's liability posture: recommendations, never authority.
           Text(
             text = stringResource(
@@ -357,6 +372,11 @@ private fun DueMetadata.firstDueText(template: ThingTemplate?): String? {
     else -> null
   }
 }
+
+/** Drafted by the model, from a document or the Thing (R31), rather than from the curated list. */
+private fun TaskSuggestion.isFromAi(): Boolean =
+  origin_kind == TaskOriginKind.TASK_ORIGIN_KIND_AI_THING ||
+    origin_kind == TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT
 
 /**
  * "Already tracked · You track this every 12 months; the manual says 6" (PRD R24): the server's
