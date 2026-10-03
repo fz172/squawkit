@@ -1,3 +1,4 @@
+import { AiJobStatus } from "../generated/proto/rpc/ai_job/ai_job.js";
 import {
   thingTabForRecordType,
   activityNotificationId,
@@ -182,14 +183,12 @@ export function toDataMap(data: PushData, recipientUid: string): Record<string, 
   };
 }
 
-/** How a suggestion run ended, as the push names it. */
-export type SuggestionsOutcome = "ready" | "empty" | "failed";
-
 export type SuggestionsMessageInput = {
   thingId: string;
   /** The Thing's display label; `""` when it will not resolve. */
   tailNumber: string;
-  outcome: SuggestionsOutcome;
+  /** How the run ended. */
+  status: AiJobStatus;
 };
 
 /**
@@ -210,8 +209,25 @@ export function suggestionsPushData(input: SuggestionsMessageInput): PushData {
     recordType: RECORD_TYPE.AIRCRAFT,
     tapTarget: `suggestions:${input.thingId}`,
     titleKey: "notification_suggestions_title",
-    bodyKey: `notification_suggestions_body_${input.outcome}`,
+    bodyKey: suggestionsBodyKey(input.status),
     tailNumber: input.tailNumber,
     actorName: "",
   };
+}
+
+/**
+ * The body's string key for how the run ended. The push names a string, as every push here does,
+ * rather than carrying the status: both renderers (the app's `strings.xml`, the iOS extension's
+ * Swift switch) work from keys, and an unknown key degrades to an empty body on an old client
+ * where an unknown status number would need its own fallback.
+ */
+export function suggestionsBodyKey(status: AiJobStatus): string {
+  switch (status) {
+    case AiJobStatus.AI_JOB_STATUS_SUCCEEDED:
+      return "notification_suggestions_body_ready";
+    case AiJobStatus.AI_JOB_STATUS_EMPTY:
+      return "notification_suggestions_body_empty";
+    default:
+      return "notification_suggestions_body_failed";
+  }
 }

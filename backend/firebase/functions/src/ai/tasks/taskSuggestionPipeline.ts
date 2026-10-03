@@ -5,9 +5,8 @@ import { createProvider } from "../providers/registry.js";
 import type { AiProvider } from "../providers/types.js";
 import type { AiJobFinish, AiPipeline } from "../worker.js";
 import { ENTITY_SEGMENT_THING } from "../../config/entitySegment.js";
-import { AiJobStatus } from "../../generated/proto/rpc/ai_job/ai_job.js";
 import { readThingLabel } from "../../notifications/onRecordWritten.js";
-import { suggestionsPushData, type SuggestionsOutcome } from "../../notifications/pushMessages.js";
+import { suggestionsPushData } from "../../notifications/pushMessages.js";
 import { enabledTokensFor, sendPush } from "../../notifications/pushSender.js";
 import { curatedSuggestions } from "./curatedResult.js";
 import type { SuggestTasksResult, TaskSuggestion } from "./model.js";
@@ -107,20 +106,8 @@ export async function pushFinished(finish: AiJobFinish): Promise<void> {
   const tailNumber = await readThingLabel(finish.job.hostUid, finish.job.thingId, ENTITY_SEGMENT_THING);
   await sendPush(
     targets,
-    suggestionsPushData({ thingId: finish.job.thingId, tailNumber, outcome: outcomeOf(finish.status) }),
+    suggestionsPushData({ thingId: finish.job.thingId, tailNumber, status: finish.status }),
   );
-}
-
-/** SUCCEEDED is ready to review, EMPTY had nothing to add, anything else failed. */
-export function outcomeOf(status: AiJobStatus): SuggestionsOutcome {
-  switch (status) {
-    case AiJobStatus.AI_JOB_STATUS_SUCCEEDED:
-      return "ready";
-    case AiJobStatus.AI_JOB_STATUS_EMPTY:
-      return "empty";
-    default:
-      return "failed";
-  }
 }
 
 /**
