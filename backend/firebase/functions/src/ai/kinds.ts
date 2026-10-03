@@ -20,6 +20,11 @@ export type AiJobKindSpec = {
   decodeTarget(request: Uint8Array): AiJobTarget;
   /** Whether a SUCCEEDED run sets `lastSuccessAt` (PRD R49). */
   countsTowardDailyLimit: boolean;
+  /**
+   * Whether this deploy runs the kind with documents. False for task suggestions until T21 wires
+   * stages 1–2: start refuses a request with documents, and eligibility offers none.
+   */
+  acceptsDocuments: boolean;
 };
 
 function suggestTasksTarget(request: Uint8Array): AiJobTarget {
@@ -32,9 +37,19 @@ function suggestTasksTarget(request: Uint8Array): AiJobTarget {
 }
 
 const SPECS: AiJobKindSpec[] = [
-  { kind: AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, decodeTarget: suggestTasksTarget, countsTowardDailyLimit: true },
+  {
+    kind: AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
+    decodeTarget: suggestTasksTarget,
+    countsTowardDailyLimit: true,
+    acceptsDocuments: false,
+  },
   // The developer round trip takes a task request too, so a client tests the real encoding.
-  { kind: AiJobKind.AI_JOB_KIND_ECHO, decodeTarget: suggestTasksTarget, countsTowardDailyLimit: false },
+  {
+    kind: AiJobKind.AI_JOB_KIND_ECHO,
+    decodeTarget: suggestTasksTarget,
+    countsTowardDailyLimit: false,
+    acceptsDocuments: true,
+  },
 ];
 
 /** The spec for a kind a client sent, or null for a kind this deploy does not know. */

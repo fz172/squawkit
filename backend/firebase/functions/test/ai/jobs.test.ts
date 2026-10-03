@@ -196,11 +196,24 @@ describe("startAiJob", () => {
         currentPeriodEndMillis: NOW.getTime() + 30 * 24 * 60 * MINUTE,
       });
     }
+    // The cap is the config's, for any kind that takes documents; echo does, task suggestions do
+    // not until T21.
     const withDocs = (t: Ids, n: number) =>
-      handleStartAiJob(req(t.host, { kind: KIND, request: encoded(t, n) }), recorder().dispatch, NOW);
+      handleStartAiJob(
+        req(t.host, { kind: AiJobKind.AI_JOB_KIND_ECHO, request: encoded(t, n) }),
+        recorder().dispatch,
+        NOW,
+      );
 
     expect((await withDocs(allowed, DEFAULT_AI_CONFIG.maxDocumentsPerRun)).joined).toBe(false);
     expect((await errorOf(withDocs(over, DEFAULT_AI_CONFIG.maxDocumentsPerRun + 1))).code).toBe("invalid-argument");
+  });
+
+  it("refuses documents on task suggestions until document runs are wired (T21)", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    const call = handleStartAiJob(req(t.host, { kind: KIND, request: encoded(t, 1) }), recorder().dispatch, NOW);
+    expect((await errorOf(call)).code).toBe("invalid-argument");
   });
 
   it.each([
@@ -223,6 +236,18 @@ describe("startAiJob", () => {
 });
 
 describe("getAiEligibility", () => {
+  it("offers no documents on task suggestions yet, even to a Pro owner", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    await adminDb.doc(subscriptionDocPath(t.host)).set({
+      status: SUBSCRIPTION_STATUS.PRO,
+      lifecycle: SUBSCRIPTION_LIFECYCLE.ACTIVE,
+      willRenew: true,
+      currentPeriodEndMillis: NOW.getTime() + 30 * 24 * 60 * MINUTE,
+    });
+    expect(await eligibility(t.host, t)).toMatchObject({ allowed: true, documentsAllowed: false });
+  });
+
   it("allows a member and says whether documents are open", async () => {
     const t = ids();
     await seedSharedThing(t);
