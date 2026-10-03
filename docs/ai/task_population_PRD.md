@@ -241,10 +241,12 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R28 (P1). Update before accepting.** A suggestion's title, intervals and first-due can be
   changed before it is accepted, using the normal task form pre-filled. Saving there counts as
   accepted-with-edits.
-- **R29 (P0). First due.** Computed on the **client** by the existing due engine, not by the model.
-  The model returns the rule and, when it finds it, the last-done evidence (log entry id, date,
-  meter reading). The new task is then seeded with a `ForceCompliedStatus`. With no evidence the
-  card says *No record of this being done* and uses the default for a new task.
+- **R29 (P0). First due.** Computed on the **client** by the existing due engine, not by the model,
+  from when the task is accepted, as for any new task.
+  **No suggestion is tied to a log** (decided 2026-10-02). The log summaries go to the model as
+  context and may shape what it suggests, but a suggestion never names a log as when it was last
+  done, and no new task is seeded with a `ForceCompliedStatus` from one. The server strips any
+  last-done evidence from the result before it reaches the app.
 - **R30 (P1).** For a document the user can access, the citation opens the document at the cited
   page.
 - **R31 (P0). Disclosure.** The screen states once, plainly, that suggestions are drafted by AI from
@@ -394,7 +396,6 @@ The design doc owns the wire schema.
 | Identity   | title, description / rationale, component slot key, component id | `title`, `notes`, `component`                                                  |
 | Schedule   | one or more rules, one-time flag, first-due for one-time items   | `rules`, `is_one_time`, `force_due_date` / `force_due_meter`                   |
 | Compliance | type, reference number, authority, details                       | `type`, `reference_number`, `compliance_authority`, `compliance_details` (R18) |
-| Evidence   | last-done log entry id, date, meter reading                      | `force_complied_status` (R29)                                                  |
 | Origin     | source kind, citation, document + page, generation version       | `TaskOrigin` (R34), `attachments` (R37)                                        |
 | Dedup      | existing task it matches, interval-difference note               | picker only (R24)                                                              |
 
@@ -549,8 +550,9 @@ Settled 2026-09-27.
 5. **All seven presets in v1**, with an A&P review for aviation.
 6. **Refresh is manual.** Spec changes trigger nothing.
 7. **Origin persists on the task** (R34).
-8. **First due uses meters and logs**, and log summaries are sent without personal data (R12,
-   R29).
+8. **Logs shape suggestions but are never tied to one** (2026-10-02). Log summaries are sent without
+   personal data (R12) as context; no suggestion carries a last-done log, and first due runs from
+   acceptance (R29).
 9. **Gating: no-document suggestions free, documents Pro.**
 10. **Shared Things: any member can run it, on the owner's entitlement.**
 11. **Documents are kept only as the user's attachment.** One blob is shared by every task it

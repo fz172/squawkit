@@ -63,7 +63,8 @@ const TAILORED: TailorOutput = {
       ],
       isOneTime: false,
       firstDue: [],
-      lastDoneLogId: null,
+      // The model points at a log; the result must not (owner's decision, 2026-10-02).
+      lastDoneLogId: "log-1",
       matchesExistingTaskId: null,
       intervalDifferenceNote: null,
       mergesStaticIndex: null,
@@ -110,6 +111,15 @@ function requestFor({ host, thing }: Ids, make = "Sling"): string {
       components: [{ slotKey: "engine", make: "Rotax", model: "915 iS", spec: [] }],
       meters: [{ key: "engine_hours", unitLabel: "hrs", componentSlotKey: "engine", current: 410, hasCurrent: true }],
       lexiconTaskNoun: "inspection",
+      logs: [
+        {
+          id: { value: "log-1" },
+          date: "2026-05-02",
+          readings: [{ meterKey: "engine_hours", value: 380 }],
+          workDescription: "Replaced spark plugs",
+          componentSlotKey: "engine",
+        },
+      ],
     },
   });
   return Buffer.from(SuggestTasksRequest.encode(request).finish()).toString("base64");
@@ -151,6 +161,8 @@ describe("the task-suggestion pipeline in the worker", () => {
         componentSlotKey: "engine",
         rules: [{ meterRule: { meterKey: "engine_hours", interval: 200 } }],
         sourceKind: TaskSourceKind.TASK_SOURCE_KIND_COMMON_PRACTICE,
+        // Logs shaped the run, but no suggestion is tied to one.
+        lastDone: undefined,
       }),
     ]);
 

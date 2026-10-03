@@ -573,6 +573,9 @@ the bake-off's (§12.5): keyword locating, table pages as PDF, recall on the fas
 - **Rules on the wire** are the app's `InspectionRule`. A suggested time rule leaves
   `creation_date` and `due_on_anniversary` for the client to stamp at accept (§7.4). An existing
   task's linked or immediate rule has no flat form and is left out of the model's context.
+- **No suggestion is tied to a log** (2026-10-02). `withoutLogLinks` clears every suggestion's
+  `lastDone` before the result is encoded, so no log id reaches the app. The tailor prompt still asks
+  for `lastDoneLogId` until its next revision (a `GENERATION_VERSION` bump and an eval run).
 - **Documents wait for T21.** `kinds.ts` marks the task kind `acceptsDocuments: false`, so
   `startAiJob` refuses a request with documents and `getAiEligibility` reports
   `documentsAllowed: false` even for a Pro owner. The pipeline refuses them again.
@@ -624,7 +627,8 @@ Input: the candidate items from 2 and 3, the `SuggestionContext`. The model:
   `component_hint` in words when the Thing has several instances of the slot;
 - marks `matches_existing_task_id` and `interval_difference_note` against existing tasks (R24);
 - marks `merges_static_index` against the static pack (R25);
-- finds `last_done` evidence in the log summaries (R29), citing the log id;
+- may cite a log as `last_done` evidence; since 2026-10-02 the server strips it from every result
+  (R29: no suggestion is tied to a log), so the logs only shape what is suggested;
 - sets `matches_thing` per document (R8a).
 
 Each suggestion lists the candidate ids it merges (`d<doc>.<item>`, `r<item>`). Source kind,
@@ -690,7 +694,7 @@ h).
 
 Three more checks run with them: rule 1 files a suggestion whose slot the Thing does not fill at
 Thing level (R22); `last_done` must name a log in `context.logs`, whose date and reading are copied
-from that log (R29); and a one-time item's first due (R22) is made absolute. The tailor anchors it
+from that log (R29; the worker then strips `last_done` from the result, see §6.0); and a one-time item's first due (R22) is made absolute. The tailor anchors it
 as a reading counted from new ("first service at 600 mi"), a meter distance from now ("within 25 h")
 or a time from today ("within 3 months"); the validator resolves each against
 `context.meters` and today, keeping the earliest date and the earliest reading, and drops anchors on
