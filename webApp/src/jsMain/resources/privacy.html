@@ -285,8 +285,8 @@
             described in section 14.
         </li>
         <li><strong>AI task suggestion data.</strong> Only if you ask SquawkIt to suggest
-            maintenance tasks: a description of that aircraft sent to an AI model, and the
-            suggestions it drafts — described in section 15.
+            maintenance tasks: a description of that thing (an aircraft, car, home or other)
+            sent to an AI model, and the suggestions it drafts — described in section 15.
         </li>
     </ul>
 
@@ -408,8 +408,8 @@
         tasks, logbook, and the urgency classes) or with the master switch, and separately per
         device. Switching a class off stops the message being sent at all, not merely hidden on
         arrival. Aircraft you have not shared with anyone generate no push notifications of this kind;
-        the only push such an aircraft can get is the one telling you that suggestions you asked for
-        are ready (section 15).
+        the only push it can get is the one telling you that suggestions you asked for are ready
+        (section 15).
     </p>
 
     <h2>12. Data exports</h2>
@@ -478,26 +478,28 @@
 
     <h2 id="ai-suggestions">15. AI task suggestions</h2>
     <p>
-        SquawkIt can suggest maintenance tasks for an aircraft. Some come from a list we write and
-        keep for each kind of aircraft. Others are drafted by an AI model, and
+        SquawkIt can suggest maintenance tasks for anything you track in it: an aircraft, car,
+        motorcycle, bike, boat, home, or a thing of your own kind (a “thing” below). Some
+        suggestions come from a list we write and keep for each kind of thing. Others are drafted
+        by an AI model, and
         <strong>only when you ask</strong>, by tapping <em>Suggest tasks</em> or <em>Suggest
         more</em>. Suggestions need a signed-in account and a connection; nothing is sent for a
         guest account or while offline.
     </p>
     <p>
         <strong>What is sent.</strong> When you ask, the app sends our backend a description of
-        that one aircraft: its kind; its specifications such as make, model and year,
-        <em>without</em> identifiers such as the tail number, VIN or serial numbers; its
+        that one thing: its kind; its specifications such as make, model and year,
+        <em>without</em> identifiers such as a tail number, VIN, address or serial numbers; its
         components' make and model; its meter readings; the tasks it already has (title,
         schedule, type and reference number); and a summary of its maintenance log entries
         (date, readings, the work done and the component). It never includes technician names,
         certificate numbers, costs, attachments or comments, and nothing from your other
-        aircraft, your profile, or other members of a shared aircraft. SquawkIt does not
+        things, your profile, or other members of a shared thing. SquawkIt does not
         currently send documents or attachments to the AI.
     </p>
     <p>
         Opening the suggested task list also sends that description, without the log entries,
-        to our backend so it can fit our own list to your aircraft. That request goes to no AI
+        to our backend so it can fit our own list to your thing. That request goes to no AI
         model.
     </p>
     <p>
@@ -520,19 +522,19 @@
         so you can come back to them, until you add them, and expire after 24 hours. To answer
         faster and at lower cost, we
         keep the general maintenance schedule the model gives for a make and model; it is built
-        from the model's own knowledge and holds nothing that identifies you or your aircraft.
-        For each aircraft we also keep when its last suggestion run succeeded, to apply the
+        from the model's own knowledge and holds nothing that identifies you or your thing.
+        For each thing we also keep when its last suggestion run succeeded, to apply the
         daily limit, and for each model call a cost record with no content and no account
         identifier, kept for about 13 months.
     </p>
     <p>
         <strong>The ready notification.</strong> AI suggestions can take a few minutes, so when a
         run you started ends, we send a notification to your devices through Firebase Cloud
-        Messaging and Apple Push Notification service. It carries the aircraft's tail number and
-        whether the suggestions are ready; nothing else about the aircraft.
+        Messaging and Apple Push Notification service. It carries the thing's name (or tail number)
+        and whether the suggestions are ready; nothing else about it.
     </p>
     <p>
-        <strong>Suggestions are drafts.</strong> Nothing is added to your aircraft until you choose
+        <strong>Suggestions are drafts.</strong> Nothing is added to your thing until you choose
         it. Check every suggestion against the manufacturer's documents, which govern; section 6
         applies to them as to everything else in SquawkIt.
     </p>
