@@ -20,6 +20,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.ForceCompliedStatus
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -443,6 +444,27 @@ class TaskViewModelTest {
       .containsAtLeastEntriesIn(mapOf("kind" to "ai_thing", "field_group" to "details"))
   }
 
+  @Test
+  fun draftMode_startsFromTheDraftAndKnowsIt() = runTest(testDispatcher) {
+    // Task population T18: a suggestion opened for editing before it is added.
+    val draft = MaintenanceTask(
+      title = "Tire rotation",
+      notes = "Every 6,250 mi",
+      origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_AI_THING),
+    )
+
+    val viewModel = buildViewModelForNew(draft)
+    advanceUntilIdle()
+
+    assertThat(viewModel.draft).isEqualTo(draft)
+    assertThat(viewModel.formState.value.title).isEqualTo("Tire rotation")
+  }
+
+  @Test
+  fun newTask_isNotADraft() = runTest(testDispatcher) {
+    assertThat(buildViewModelForNew().draft).isNull()
+  }
+
   // ---- helpers ----
 
   private fun skippedCard(forceDueEngine: Float) = MaintenanceTask(
@@ -472,7 +494,7 @@ class TaskViewModelTest {
       onSuccess = {},
     )
 
-  private fun buildViewModelForNew(): TaskViewModel =
+  private fun buildViewModelForNew(draft: MaintenanceTask? = null): TaskViewModel =
     TaskViewModel(
       inspectionDataManager = inspectionDataManager,
       attachmentManager = attachmentManager,
@@ -483,7 +505,12 @@ class TaskViewModelTest {
       taskDueManager = taskDueManager,
       analytics = NoOpAnalyticsManager,
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
-      savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to TEST_THING_ID)),
+      savedStateHandle = SavedStateHandle(
+        buildMap {
+          put(Screen.THING_ID, TEST_THING_ID)
+          draft?.let { put(Screen.TASK_DRAFT, it.toDraftArg()) }
+        },
+      ),
     )
 
   private fun buildViewModelForEdit(analytics: AnalyticsManager = NoOpAnalyticsManager): TaskViewModel =

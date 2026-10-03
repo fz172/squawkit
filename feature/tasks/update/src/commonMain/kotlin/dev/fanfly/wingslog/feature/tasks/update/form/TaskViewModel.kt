@@ -32,6 +32,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.ScheduleState
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.ForceCompliedStatus
@@ -53,11 +54,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 class TaskViewModel(
   private val inspectionDataManager: TaskDataManager,
@@ -75,6 +76,12 @@ class TaskViewModel(
   val thingId: String =
     checkNotNull(savedStateHandle[Screen.THING_ID])
   val cardId: String? = savedStateHandle[Screen.CARD_ID]
+
+  /**
+   * The task the form was opened with in draft mode (task population T18), or null. The form
+   * starts from it and hands the edited task back rather than saving anything.
+   */
+  val draft: MaintenanceTask? = savedStateHandle.get<String>(Screen.TASK_DRAFT)?.let(::taskFromDraftArg)
 
   private val _uiState = MutableStateFlow<TaskUiState>(TaskUiState.Loading)
   val uiState: StateFlow<TaskUiState> = _uiState.asStateFlow()
@@ -119,6 +126,10 @@ class TaskViewModel(
   val filesAtLimit: Boolean get() = attachmentForm.filesAtLimit
 
   init {
+    draft?.let {
+      formSeeded = true
+      _formState.value = TaskFormState.fromTask(it)
+    }
     loadData()
     viewModelScope.launch {
       // The attachment gate is thing-scoped (§9.7): on a foreign host's thing the host pays and
