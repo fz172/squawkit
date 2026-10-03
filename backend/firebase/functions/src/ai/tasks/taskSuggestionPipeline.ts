@@ -4,6 +4,7 @@ import { AiError } from "../errors.js";
 import { createProvider } from "../providers/registry.js";
 import type { AiProvider } from "../providers/types.js";
 import type { AiPipeline } from "../worker.js";
+import type { SuggestTasksResult } from "./model.js";
 import { runTaskPipeline } from "./pipeline.js";
 import { requestFromProto, resultToProto } from "./wire.js";
 
@@ -42,10 +43,21 @@ export function createTaskSuggestionPipeline(
       });
       return {
         status: outcome.status,
-        result: SuggestTasksResultProto.encode(resultToProto(outcome.result)).finish(),
+        result: SuggestTasksResultProto.encode(resultToProto(withoutLogLinks(outcome.result))).finish(),
       };
     },
   };
+}
+
+/**
+ * The result with no suggestion tied to a log (owner's decision, 2026-10-02). Logs go to the model
+ * as context and may shape what it suggests, but a suggestion never names one as when it was last
+ * done, so a new task's schedule runs from when it is accepted. The tailor prompt still asks for
+ * `lastDoneLogId` until its next revision (a GENERATION_VERSION bump and an eval run); this keeps
+ * whatever it answers from leaving the server.
+ */
+export function withoutLogLinks(result: SuggestTasksResult): SuggestTasksResult {
+  return { ...result, suggestions: result.suggestions.map((s) => ({ ...s, lastDone: null })) };
 }
 
 /**
