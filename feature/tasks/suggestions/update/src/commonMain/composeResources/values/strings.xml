@@ -20,7 +20,6 @@
   <string name="starter_pack_skipped_until">AI suggestions for this <xliff:g example="plane">%1$s</xliff:g> are available again at <xliff:g example="3:10 PM">%2$s</xliff:g></string>
   <string name="starter_pack_not_enough">Not enough to go on for this <xliff:g example="plane">%1$s</xliff:g>. Add details, such as its make and model, for better suggestions.</string>
   <string name="starter_pack_add_details">Add details</string>
-  <string name="starter_pack_already_tracked">Already tracked</string>
   <!-- Where a suggestion comes from (PRD R17, R26) and the AI disclosure (R31). -->
   <string name="suggestion_source_document">From your document</string>
   <string name="suggestion_source_manufacturer">Manufacturer schedule</string>

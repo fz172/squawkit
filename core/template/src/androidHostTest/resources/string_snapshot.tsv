@@ -1152,7 +1152,6 @@ feature/tasks/suggestions/update	starter_pack_stage_hint	This can take a few min
 feature/tasks/suggestions/update	starter_pack_skipped_until	AI suggestions for this %1$s are available again at %2$s
 feature/tasks/suggestions/update	starter_pack_not_enough	Not enough to go on for this %1$s. Add details, such as its make and model, for better suggestions.
 feature/tasks/suggestions/update	starter_pack_add_details	Add details
-feature/tasks/suggestions/update	starter_pack_already_tracked	Already tracked
 feature/tasks/suggestions/update	suggestion_source_document	From your document
 feature/tasks/suggestions/update	suggestion_source_manufacturer	Manufacturer schedule
 feature/tasks/suggestions/update	suggestion_source_common_practice	Common practice

@@ -94,6 +94,8 @@ class StarterPackViewModelTest {
       written += card.captured
       Result.success(true)
     }
+    // The Thing has no tasks unless a test says so.
+    every { taskDataManager.observeTasks(THING_ID) } returns flowOf(emptyList())
   }
 
   @After
@@ -578,17 +580,37 @@ class StarterPackViewModelTest {
   }
 
   @Test
-  fun anAlreadyTrackedCardCannotBeChecked() = runTest(dispatcher) {
+  fun aSuggestionTheServerSaysIsTrackedIsNotShown() = runTest(dispatcher) {
     val tracked = curated("c0", "Annual").copy(matches_existing_task_id = MaintenanceTaskId(value_ = "task-annual"))
     serving(SuggestionRun.Ready(JOB, SuggestTasksResult(suggestions = listOf(tracked, curated("c1", "Oil change")))))
+
     val vm = viewModel(pack, serverSource = true)
     advanceUntilIdle()
 
-    vm.onToggle(0)
-    vm.onToggle(1)
+    assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly("Oil change")
+    // Offered: what was shown.
+    assertThat(analytics.paramsFor("starter_tasks_offered").single()).containsEntry("task_count", "1")
+  }
 
-    assertThat(vm.uiState.value.items.map { it.isAlreadyTracked }).containsExactly(true, false).inOrder()
-    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(false, true).inOrder()
+  @Test
+  fun aSuggestionTitledLikeATaskTheThingHasIsNotShown() = runTest(dispatcher) {
+    every { taskDataManager.observeTasks(THING_ID) } returns flowOf(listOf(MaintenanceTask(id = "t1", title = "  oil   CHANGE ")))
+    serving(SuggestionRun.Ready(JOB, curatedList))
+
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly("Annual", "ELT").inOrder()
+  }
+
+  @Test
+  fun theAppsOwnPackAlsoHidesWhatTheThingHas() = runTest(dispatcher) {
+    every { taskDataManager.observeTasks(THING_ID) } returns flowOf(listOf(MaintenanceTask(id = "t1", title = "Clean gutters")))
+
+    val vm = viewModel(pack)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly("HVAC filter", "Septic pump-out").inOrder()
   }
 
   private fun ai(id: String, title: String) = TaskSuggestion(
@@ -752,16 +774,11 @@ class StarterPackViewModelTest {
   }
 
   @Test
-  fun anAppPackCardAndAnAlreadyTrackedOneCannotBeEdited() = runTest(dispatcher) {
+  fun anAppPackCardCannotBeEdited() = runTest(dispatcher) {
     val packVm = viewModel(pack)
     advanceUntilIdle()
-    assertThat(packVm.draftFor(0)).isNull()
 
-    val tracked = curated("c0", "Annual").copy(matches_existing_task_id = MaintenanceTaskId(value_ = "t"))
-    serving(SuggestionRun.Ready(JOB, SuggestTasksResult(suggestions = listOf(tracked))))
-    val serverVm = viewModel(pack, serverSource = true)
-    advanceUntilIdle()
-    assertThat(serverVm.draftFor(0)).isNull()
+    assertThat(packVm.draftFor(0)).isNull()
   }
 
   @Test
