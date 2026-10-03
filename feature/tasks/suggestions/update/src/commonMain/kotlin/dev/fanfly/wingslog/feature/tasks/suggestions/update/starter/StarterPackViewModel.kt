@@ -22,6 +22,8 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
+import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
+import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
@@ -302,6 +304,40 @@ class StarterPackViewModel(
     }
   }
 
+  /** The card the task form is open for, until its edit comes back (PRD R28). */
+  private var editingId: String? = null
+
+  /**
+   * The draft argument for changing card [index] in the task form before adding it (PRD R28):
+   * the user's earlier edit, or the suggestion as accepting would write it. Null for a card that
+   * cannot be changed: one from the app's own pack, or one already tracked.
+   */
+  suspend fun draftFor(index: Int): String? {
+    val item = uiState.value.items.getOrNull(index) ?: return null
+    if (item.starterTask != null || item.isAlreadyTracked) return null
+    editingId = item.suggestion.suggestion_id?.value_ ?: return null
+    val draft = item.edited ?: suggestionManager.draftOf(
+      thingId,
+      item.suggestion,
+      generationVersion = run?.resultOrNull?.generation_version.orEmpty(),
+    )
+    return draft.toDraftArg()
+  }
+
+  /** The task form handed back [draftArg]: that card is now the user's version, and checked. */
+  fun onEdited(draftArg: String) {
+    val edited = taskFromDraftArg(draftArg) ?: return
+    val id = editingId ?: return
+    editingId = null
+    _uiState.update { state ->
+      state.copy(
+        items = state.items.map { item ->
+          if (item.suggestion.suggestion_id?.value_ == id) item.copy(edited = edited, selected = true) else item
+        },
+      )
+    }
+  }
+
   fun onToggle(index: Int) {
     _uiState.update { state ->
       state.copy(
@@ -397,13 +433,14 @@ class StarterPackViewModel(
     val written = suggestionManager.accept(
       thingId,
       ready,
-      chosen.map { AcceptedSuggestion(it.suggestion) })
+      chosen.map { AcceptedSuggestion(it.suggestion, it.edited) })
     if (written > 0) {
       analytics.log(
         TaskSuggestionsAccepted(
           templateId = uiState.value.template?.id.orEmpty(),
           curatedCount = chosen.count { !it.suggestion.isFromModel() },
           aiCount = chosen.count { it.suggestion.isFromModel() },
+          editedCount = chosen.count { it.edited != null },
         ),
       )
     }
@@ -479,9 +516,12 @@ class StarterPackViewModel(
       val chosenIds = shown.filter { it.selected }
         .mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
       return result.suggestions.map { suggestion ->
+        val id = suggestion.suggestion_id?.value_
         StarterPackItem(
           suggestion = suggestion,
-          selected = suggestion.suggestion_id?.value_ in chosenIds
+          selected = id in chosenIds,
+          // The user's edit stays with its card when the model's answer replaces the list (R28).
+          edited = shown.firstOrNull { it.suggestion.suggestion_id?.value_ == id }?.edited,
         )
       }
     }

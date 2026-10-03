@@ -1167,3 +1167,4 @@ feature/notifications/sharedassets	notification_suggestions_title	%1$s · Sugges
 feature/notifications/sharedassets	notification_suggestions_body_ready	Your suggested %1$s are ready to review
 feature/notifications/sharedassets	notification_suggestions_body_empty	Not enough to go on. Add details for better suggestions.
 feature/notifications/sharedassets	notification_suggestions_body_failed	Suggestions didn’t finish. Try again from the task list.
+feature/tasks/suggestions/update	starter_pack_edited	Edited

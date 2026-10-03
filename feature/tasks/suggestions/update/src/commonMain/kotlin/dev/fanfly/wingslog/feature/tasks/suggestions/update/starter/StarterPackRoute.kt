@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -44,6 +45,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
+import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_TASK_DRAFT
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
@@ -66,18 +68,23 @@ import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.InspectionRule
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.add
+import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_already_tracked
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_edited
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_first_due_date
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_first_due_either
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_first_due_meter
@@ -116,6 +123,17 @@ fun StarterPackRoute(
   LifecycleResumeEffect(viewModel.thingId) {
     val hide = OnScreenTapTargets.show(NotificationTapTarget.Suggestions(viewModel.thingId))
     onPauseOrDispose { hide() }
+  }
+
+  // The task form's draft mode hands an edited card back here (PRD R28).
+  val scope = rememberCoroutineScope()
+  val editedDraft = navController.currentBackStackEntry?.savedStateHandle
+    ?.getStateFlow<String?>(CROSS_SCREEN_TASK_DRAFT, null)
+    ?.collectAsStateWithLifecycle()
+  LaunchedEffect(editedDraft?.value) {
+    val draft = editedDraft?.value ?: return@LaunchedEffect
+    viewModel.onEdited(draft)
+    navController.currentBackStackEntry?.savedStateHandle?.remove<String>(CROSS_SCREEN_TASK_DRAFT)
   }
 
   // Back is Skip: leaving without answering is declining, and the Thing already exists.
@@ -323,10 +341,13 @@ fun StarterPackRoute(
             GroupedRowGroup(
               rows = group.cards.map { (index, item) ->
                 {
+                  val edited = item.edited
                   GroupedCheckboxRow(
-                    title = item.suggestion.title,
+                    title = edited?.title ?: item.suggestion.title,
                     subtitle = if (item.isAlreadyTracked) {
                       item.trackedSummary(uiState.template)
+                    } else if (edited != null) {
+                      edited.editedSummary(uiState.template)
                     } else {
                       val due = uiState.firstDues
                         .firstOrNull { it.suggestionId == item.suggestion.suggestion_id?.value_ }
@@ -342,8 +363,27 @@ fun StarterPackRoute(
                     checked = item.selected,
                     enabled = !uiState.isSaving && !item.isAlreadyTracked,
                     supporting = {
-                      SourceChip(item.suggestion) {
-                        sourceShown = item.suggestion
+                      Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                      ) {
+                        SourceChip(item.suggestion) {
+                          sourceShown = item.suggestion
+                        }
+                        // R28: change it before adding it, in the task form.
+                        if (item.starterTask == null && !item.isAlreadyTracked) {
+                          TextButton(
+                            enabled = !uiState.isSaving,
+                            onClick = {
+                              scope.launch {
+                                val draft = viewModel.draftFor(index) ?: return@launch
+                                navController.navigate(
+                                  Screen.AddMaintenanceTask.createRoute(viewModel.thingId, draft),
+                                )
+                              }
+                            },
+                          ) { Text(stringResource(CoreRes.string.edit)) }
+                        }
                       }
                     },
                     onCheckedChange = { viewModel.onToggle(index) },
@@ -433,7 +473,18 @@ private fun StarterPackItem.trackedSummary(template: ThingTemplate?): String {
  * rule says nothing here, as the starter pack never did; an on-condition rule shows its own words.
  */
 @Composable
-private fun TaskSuggestion.summary(template: ThingTemplate?): String {
+private fun TaskSuggestion.summary(template: ThingTemplate?): String =
+  rulesSummary(rules, description, template)
+
+/** An edited card's line: "Edited · Every 6 months · its notes" (PRD R28). */
+@Composable
+private fun MaintenanceTask.editedSummary(template: ThingTemplate?): String =
+  listOf(stringResource(Res.string.starter_pack_edited), rulesSummary(rules, notes, template))
+    .filter { it.isNotEmpty() }
+    .joinToString(" · ")
+
+@Composable
+private fun rulesSummary(rules: List<InspectionRule>, description: String, template: ThingTemplate?): String {
   val calendar = rules.firstNotNullOfOrNull { it.time_rule }
     ?.let { calendarText(it) }
   val meter = rules.firstNotNullOfOrNull { it.meter_rule }

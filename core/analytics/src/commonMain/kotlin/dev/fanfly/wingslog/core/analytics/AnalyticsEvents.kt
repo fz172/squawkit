@@ -422,17 +422,22 @@ data class TaskSuggestionsShown(
   )
 }
 
-/** Suggestions from the server were added, split by origin so curated and AI survival compare. */
+/**
+ * Suggestions from the server were added, split by origin so curated and AI survival compare, and
+ * how many of them the user changed first (PRD R28).
+ */
 data class TaskSuggestionsAccepted(
   override val templateId: String,
   val curatedCount: Int,
   val aiCount: Int,
+  val editedCount: Int = 0,
 ) : ThingScopedEvent {
   override val name = Name.TASK_SUGGESTIONS_ACCEPTED
   override val params = mapOf(
     Param.TEMPLATE_ID to templateId,
     Param.CURATED_COUNT to curatedCount.toString(),
     Param.AI_COUNT to aiCount.toString(),
+    Param.EDITED_COUNT to editedCount.toString(),
   )
 }
 

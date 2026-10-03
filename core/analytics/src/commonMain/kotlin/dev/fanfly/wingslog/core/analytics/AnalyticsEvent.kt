@@ -133,6 +133,7 @@ sealed interface AnalyticsEvent {
     // A bucket for the same reason as DURATION_BUCKET: one row per run is no dimension.
     LATENCY_BUCKET("latency_bucket"),
     FIELD_GROUP("field_group"),
+    EDITED_COUNT("edited_count"),
     ;
   }
 }
