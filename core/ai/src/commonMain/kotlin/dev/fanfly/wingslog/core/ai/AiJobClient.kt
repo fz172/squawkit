@@ -57,9 +57,24 @@ data class AiJob(
   val stageArg: String?,
   val createdAt: Instant,
   val updatedAt: Instant,
-  /** The kind's result proto, encoded, on SUCCEEDED and EMPTY. */
+  /**
+   * The kind's result proto, encoded, on SUCCEEDED and EMPTY. A task job carries its curated
+   * suggestions here from the start, and keeps them when it fails (design §6.8).
+   */
   val result: ByteString?,
   val error: AiErrorCode?,
+  /** Set when the job returned its curated suggestions alone because the model was refused. */
+  val aiSkipped: AiSkipped? = null,
+)
+
+/**
+ * Why a job's model did not run, though the job succeeded with its curated suggestions (design
+ * §5.1): [AiErrorCode.DISABLED], [AiErrorCode.DAILY_LIMIT] or [AiErrorCode.SPEND_CEILING].
+ */
+data class AiSkipped(
+  val reason: AiErrorCode,
+  /** When the model can run again, for the daily limit and the spending ceiling. */
+  val nextAvailableAt: Instant?,
 )
 
 data class AiEligibility(
