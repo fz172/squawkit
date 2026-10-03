@@ -17,6 +17,16 @@ class NotificationTapRouterTest {
   // encode/decode round-trip — every NotificationTapTarget variant.
 
   @Test
+  fun encodeThenDeliver_suggestions_roundTrips() {
+    val target = NotificationTapTarget.Suggestions(thingId = "ac-1")
+
+    val delivered = NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
+
+    assertThat(delivered).isTrue()
+    assertThat(NotificationTapRouter.pending.value).isEqualTo(target)
+  }
+
+  @Test
   fun encodeThenDeliver_squawk_roundTrips() {
     val target =
       NotificationTapTarget.Squawk(thingId = "ac-1", squawkId = "sq-1")

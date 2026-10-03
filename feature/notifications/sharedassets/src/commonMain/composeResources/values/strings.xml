@@ -87,4 +87,9 @@
   <string name="squawk_priority_label_low">Low</string>
   <string name="squawk_priority_label_medium">Medium</string>
   <string name="squawk_priority_label_high">High</string>
+  <!-- A suggestion run ended (task population PRD R20). -->
+  <string name="notification_suggestions_title"><xliff:g example="N123AA">%1$s</xliff:g> · Suggestions</string>
+  <string name="notification_suggestions_body_ready">Your suggested <xliff:g example="inspections">%1$s</xliff:g> are ready to review</string>
+  <string name="notification_suggestions_body_empty">Not enough to go on. Add details for better suggestions.</string>
+  <string name="notification_suggestions_body_failed">Suggestions didn’t finish. Try again from the task list.</string>
 </resources>

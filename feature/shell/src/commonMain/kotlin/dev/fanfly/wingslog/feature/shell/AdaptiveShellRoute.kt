@@ -27,6 +27,7 @@ import dev.fanfly.wingslog.feature.dashboard.host.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProUpsellSheet
@@ -36,9 +37,9 @@ import dev.fanfly.wingslog.feature.thing.update.picker.PickThingTypeSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.dismiss
 import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The adaptive-shell destination body shared by every host: wires [AdaptiveShellViewModel]
@@ -141,6 +142,11 @@ fun AdaptiveShellRoute(
     val target = pendingTapTarget ?: return@LaunchedEffect
     viewModel.onNotificationTap(target)
     NotificationTapRouter.consume()
+    // A finished suggestion run (PRD R20): its screen, in the default mode, which shows the held
+    // answer and never starts a model run from a tap.
+    if (target is NotificationTapTarget.Suggestions) {
+      navController.navigate(Screen.StarterPack.createRoute(target.thingId))
+    }
   }
   val scrollTargetId by viewModel.pendingScrollTargetId.collectAsStateWithLifecycle()
 

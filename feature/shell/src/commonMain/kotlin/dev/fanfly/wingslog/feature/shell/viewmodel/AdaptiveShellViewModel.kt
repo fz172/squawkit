@@ -198,6 +198,12 @@ class AdaptiveShellViewModel(
         selectSection(ShellSection.DATA_LOGS)
         _pendingScrollTargetId.value = target.dataLogId.value
       }
+
+      // The suggestions screen opens over the Thing's tasks; the route navigates to it.
+      is NotificationTapTarget.Suggestions -> {
+        selectSection(ShellSection.TASKS)
+        _pendingScrollTargetId.value = null
+      }
     }
   }
 

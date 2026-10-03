@@ -19,6 +19,9 @@ extension PushPayload {
       return "Priority raised"
     case "notification_n1_title_squawk_created":
       return "New squawk"
+    // A suggestion run ended (task population PRD R20).
+    case "notification_suggestions_title":
+      return "\(tailNumber) · Suggestions"
     default:
       return ""
     }
@@ -40,6 +43,13 @@ extension PushPayload {
       return "\(tailNumber): \(actor()) created a new squawk issue\n\n\(recordTitle)"
     case "notification_n1_body_squawk_raised":
       return "\(tailNumber): \(actor()) raised the priority of 1 squawk issue\n\n\(recordTitle)"
+    // The extension has no Thing lexicon, so "tasks" stands in for the template's task noun.
+    case "notification_suggestions_body_ready":
+      return "Your suggested tasks are ready to review"
+    case "notification_suggestions_body_empty":
+      return "Not enough to go on. Add details for better suggestions."
+    case "notification_suggestions_body_failed":
+      return "Suggestions didn’t finish. Try again from the task list."
     default:
       return ""
     }

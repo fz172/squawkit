@@ -42,4 +42,10 @@ sealed interface NotificationTapTarget {
    */
   data class DataLog(override val thingId: String, val dataLogId: DataLogId) :
     NotificationTapTarget
+
+  /**
+   * A suggestion run ended (PRD R20): the Thing's suggestions screen, which shows the answer held
+   * for review (task population design §9.1, §17).
+   */
+  data class Suggestions(override val thingId: String) : NotificationTapTarget
 }

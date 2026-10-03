@@ -125,6 +125,13 @@ class PushPayloadParsingTest {
   }
 
   @Test
+  fun `parses a finished suggestion run as the Thing's suggestions (PRD R20)`() {
+    val parsed = PushPayload.parse(activityData(mapOf("tapTarget" to "suggestions:ac-1")))!!
+
+    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Suggestions("ac-1"))
+  }
+
+  @Test
   fun `degrades a record target with no id to that thing's list`() {
     // A tap that scrolls to nothing is survivable; losing the thing too is not.
     val parsed =
