@@ -30,6 +30,11 @@ Seven pieces, in dependency order. §15 sequences them and §18 breaks them into
    review, fallback, and gate states.
 7. **Provenance** (§4.1). `TaskOrigin` on `MaintenanceTask`.
 
+**Revised 2026-10-02 (PRD decision 19): the suggestion RPC is the only source of suggestions.** The
+template's built-in starter pack leaves the app. The server keeps curated lists per template, writes
+them into the job as soon as it starts, and merges the AI's suggestions with them (§6.8). Guests and
+offline devices get nothing.
+
 ### 1.1 Component diagram
 
 Green is new and amber is an existing piece this design changes. Existing, unchanged pieces are
@@ -222,7 +227,7 @@ backend/firebase/functions/eval/                        NEW evaluation harness (
 // task/task_origin.proto
 enum TaskOriginKind {
   TASK_ORIGIN_KIND_UNSPECIFIED = 0;   // never written; absent origin == written before origins existed
-  TASK_ORIGIN_KIND_TEMPLATE_STARTER = 1;
+  TASK_ORIGIN_KIND_PRE_CURATED = 1;   // a curated suggestion (§6.8); was TEMPLATE_STARTER
   TASK_ORIGIN_KIND_AI_THING = 2;      // suggestion run with no documents
   TASK_ORIGIN_KIND_AI_DOCUMENT = 3;
   TASK_ORIGIN_KIND_AI_LOG_BACKFILL = 4; // phase F
@@ -248,10 +253,13 @@ message TaskOrigin {
 }
 ```
 
-- `MaintenanceTask` gains `TaskOrigin origin = 16;`. Starter-pack accepts now also write
-  `TEMPLATE_STARTER` (cheap, and it lets analytics compare static vs AI survival), and a task made
+- `MaintenanceTask` gains `TaskOrigin origin = 16;`. An accepted curated suggestion writes
+  `PRE_CURATED` (cheap, and it lets analytics compare curated vs AI survival), and a task made
   by hand writes `USER`, so every new task says where it came from. Tasks written before this field
   have no origin and are not backfilled (PRD R34).
+- **`PRE_CURATED` was `TEMPLATE_STARTER`** (renamed 2026-10-02), the app's own starter pack. Same
+  number, same meaning: a task from a list the team wrote, not from a model. Tasks are stored as
+  binary protos, so stored values need no change.
 - `task_origin.proto` and `maintenance_task.proto` live in `proto/task/`, generating into
   `dev.fanfly.wingslog.task`. Neither declares a proto `package`, so the move changes source paths
   and Kotlin imports only: wire bytes and the stored `aircraft.MaintenanceTask` schema name are
@@ -282,6 +290,7 @@ message SuggestTasksRequest {
   SuggestionContext context = 3;
   repeated SourceDocumentRef documents = 4;
   string entry_point = 5;              // analytics only
+  bool curated_only = 6;               // no model call: the Thing lacks R5's identity (§6.8)
 }
 message SourceDocumentRef {
   AttachmentId blob_id = 1; string name = 2; string mime_type = 3;
@@ -295,7 +304,7 @@ message SuggestionContext {
   repeated ExistingTask existing_tasks = 6;   // id, title, component_slot_key, rules, type, reference_number
   repeated LogSummary logs = 7;               // id, date, readings, title, work_description, component_slot_key
   bool logs_truncated = 8;
-  repeated StarterTask static_pack = 9;       // for the merge (PRD R25)
+  reserved 9;                                 // was static_pack; the server has the curated list
   string lexicon_task_noun = 10;              // + the few nouns the prompt needs
 }
 message SuggestTasksResult {
@@ -317,8 +326,9 @@ message TaskSuggestion {
   LastDoneEvidence last_done = 16;            // log_id, date, MeterReading
   MaintenanceTaskId matches_existing_task_id = 17; // Already tracked (R24)
   string interval_difference_note = 18;
-  int32 merges_static_index = 19;             // -1 = none (R25)
+  reserved 19;                                // was merges_static_index; the server merges now
   bool preselect = 20;                        // server applies R27
+  TaskOriginKind origin_kind = 23;            // PRE_CURATED, AI_THING or AI_DOCUMENT (§6.8)
 }
 ```
 
@@ -333,6 +343,10 @@ message TaskSuggestion {
   `ComponentType`), the protos took the pipeline's version.
 - **The context has no field for PII.** `LogSummary` has no technician, cost, attachment or comment
   field, and `ComponentSummary` has no serial, so R12 cannot be violated by a builder bug.
+- **The server merges (2026-10-02).** The client used to send its starter pack as `static_pack`
+  and get back each suggestion's `merges_static_index`. The server now has the curated list
+  itself (§6.8) and returns one merged list, each suggestion saying its own `origin_kind`, so both
+  fields are reserved.
 - **The client sends the context**, rather than the server reading entity docs, because a Thing
   created a second ago on a local-first device may not have synced. The server still checks the ACL
   against `thing_shares` / the host tree.
@@ -343,7 +357,7 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 
 | Path                                            | Written by | Read by                       | Contents                                                                                                                                        | Lifetime                                                                                             |
 |-------------------------------------------------|------------|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| `ai_jobs/{callerUid}/job/{jobId}`               | functions  | caller (path uid == auth.uid) | kind, hostUid, thingId, status, stage, stageArg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error {code, detailKey} | TTL on `expiresAt` (24 h, R19); deleted on close                                                     |
+| `ai_jobs/{callerUid}/job/{jobId}`               | functions  | caller (path uid == auth.uid) | kind, hostUid, thingId, status, stage, stageArg, createdAt, updatedAt, expiresAt, result (base64 `SuggestTasksResult`), error {code, detailKey}, aiSkipped {code, nextAvailableAt} | TTL on `expiresAt` (24 h, R19); deleted on close                                                     |
 | `ai_jobs/{callerUid}/job/{jobId}/input/request` | functions  | functions                     | kind, base64 `SuggestTasksRequest`, createdAt, expiresAt                                                                                        | deleted by the worker when it finishes (no retention, §5.8); TTL on `expiresAt` (24 h) as a backstop |
 | `ai_usage/{hostUid}/thing/{thingId}`            | functions  | functions                     | `lastSuccessAt`, `inFlightJob {callerUid, jobId}`                                                                                               | permanent, tiny                                                                                      |
 | `ai_spend/{yyyymm}`                             | functions  | functions                     | `freeMicros`, `proMicros` (by owner tier), updatedAt; the month is UTC                                                                          | permanent                                                                                            |
@@ -351,6 +365,10 @@ Names, paths and field types are in `functions/src/ai/collections.ts`.
 | `ai_cache/{stage}/{version}/{hash}`             | functions  | functions                     | derived schedule items as JSON (§6.5), createdAt                                                                                                | until generation version bump                                                                        |
 | `ai_config/global`                              | team       | functions                     | `enabled`, `fastProvider`, `strongProvider`, `monthlyCeilingMicros {free, pro, total}`, `maxDocumentsPerRun`                                    | permanent                                                                                            |
 
+- **A result can come before the end** (2026-10-02). A task job carries the curated suggestions
+  in `result` from the moment it is written, QUEUED, and the worker replaces them with the merged
+  list when it ends (§6.8). A job whose AI never ran says why in `aiSkipped`, and when it may run
+  again for `daily_limit`.
 - **Enums are numbers.** `kind` and `status` hold the `AiJobKind` / `AiJobStatus` numbers, which the
   client reads with Wire's `fromValue`; a value it does not know reads as null, not as a wrong
   state.
@@ -410,6 +428,19 @@ Implemented in `functions/src/ai/jobs.ts` (T08):
   would let a second run start beside the first.
 - More documents than `maxDocumentsPerRun` is `invalid-argument`; the client caps at pick time.
 
+Curated suggestions (2026-10-02, §6.8) change `startAiJob` for the task kind:
+
+- **The job is written with its curated result.** The QUEUED job carries the curated list in
+  `result`, so the app shows it the moment its listener fires, before the worker starts.
+- **Some refusals become curated-only jobs.** `daily_limit`, `spend_ceiling` and `disabled` cost
+  the caller nothing to work around, so instead of throwing, `startAiJob` writes a job that is
+  already SUCCEEDED, with the curated list and `aiSkipped {code, nextAvailableAt}`, and enqueues
+  nothing. So does a request with `curated_only`. Such a job takes no `inFlightJob`, so it never
+  holds the Thing, and never sets `lastSuccessAt`.
+- **Every other refusal still throws:** `sign_in_required`, `not_member`, `run_in_progress`,
+  `owner_not_pro`, an invalid request. `getAiEligibility` is unchanged, so an entry point still
+  knows ahead of time that AI will not run.
+
 ### 5.2 Worker
 
 `runAiJob`: a task-queue function (`onTaskDispatched`), `timeoutSeconds: 1800`, `memory: "2GiB"`, no
@@ -420,7 +451,8 @@ registered pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggest
 
 1. Marks RUNNING, writes `stage` updates as the pipeline reports them ("reading_document", arg =
    document name) for the R19 progress text.
-2. On return, writes SUCCEEDED / EMPTY + result, or FAILED + error; clears `inFlightJob`; sets
+2. On return, writes SUCCEEDED / EMPTY + result, or FAILED + error (a task job's result keeps at
+   least the curated list in all three, §6.8); clears `inFlightJob`; sets
    `lastSuccessAt` only on SUCCEEDED (PRD decision 16); deletes the job's input.
 3. Calls the pipeline's `onFinished` hook; the task pipeline sends the R20 push there for every
    outcome, SUCCEEDED, EMPTY or FAILED (phase C)
@@ -618,15 +650,16 @@ Input: the candidate items from 2 and 3, the `SuggestionContext`. The model:
 
 - merges duplicates across sources (document beats recall, R16) and folds inspection-event items
   into one task (decision 3);
-- keeps the interval of a starter-pack item whose description cites the owner's regulations (the
+- keeps the interval of a curated item (§6.8) whose description cites the owner's regulations (the
   airplane template's 14 CFR 91.411 and 91.413 items at 24 months) even when a manual gives another,
   since a manual may follow a different country's rules (the Sling manual follows South Africa's);
-  otherwise a document's interval beats a starter-pack item's;
+  otherwise a document's interval beats a curated item's;
 - maps each to the template: meter keys from `context.meters` only, unit conversion with the source
   figure kept in the description (R23), a `component_slot_key` from the template's tree, and a
   `component_hint` in words when the Thing has several instances of the slot;
 - marks `matches_existing_task_id` and `interval_difference_note` against existing tasks (R24);
-- marks `merges_static_index` against the static pack (R25);
+- marks the curated item each suggestion covers (`mergesCuratedIndex`, R25), which the merge in
+  §6.8 replaces;
 - may cite a log as `last_done` evidence; since 2026-10-02 the server strips it from every result
   (R29: no suggestion is tied to a log), so the logs only shape what is suggested;
 - sets `matches_thing` per document (R8a).
@@ -677,7 +710,7 @@ Each rule is a pure function with its own tests (§14). In order:
    (title tokens or interval figures) is dropped. A `MANUFACTURER_SCHEDULE` citation is kept as text
    but never typed as anything but routine.
 5. **Dedup ids:** `matches_existing_task_id` must be an id in `context.existing_tasks`, else
-   cleared; `merges_static_index` must be in range, else −1.
+   cleared; `mergesCuratedIndex` must be in range, else −1.
 6. **Pre-selection (R27):** DOCUMENT and LOGS → true; others → true except on template `airplane`;
    `matches_thing = false` documents → false; Already tracked → false; a one-time item whose
    first-due reading the Thing has already passed → false (shown, since it may not have been done,
@@ -688,7 +721,7 @@ Each rule is a pure function with its own tests (§14). In order:
 
 A **source-backed rule** check runs after rule 2: a `DOCUMENT` suggestion keeps a time or meter rule
 only when one of its document candidates states a matching interval (days, months and years, and
-miles and kilometres, converted, within 3%) or the starter-pack item it merges has that rule. It
+miles and kilometres, converted, within 3%) or the curated item it merges has that rule. It
 removes calendar limits the tailor adds on its own ("100 h or 12 months" where the manual says 100
 h).
 
@@ -701,6 +734,40 @@ or a time from today ("within 3 months"); the validator resolves each against
 meters the Thing lacks. A due point counted from an unrecorded date (delivery) is left out. A
 document run in which no document yields any item fails
 `no_schedule_found` rather than falling back to recall alone.
+
+### 6.8 Curated suggestions (2026-10-02, PRD R9a)
+
+The suggestion RPC is the only source of suggestions. What the app's starter pack held now lives on
+the server as **curated lists**, and every task run returns its template's list, first.
+
+- **Files.** One per template id, `functions/src/ai/tasks/curated/{templateId}.json`, generated once
+  from the templates' `starter_tasks` and edited by hand from then on. Each item has the
+  suggestion's fields as the pipeline types name them (title, description, slot key, rules,
+  preselect) plus a source kind and citation the team writes per item. A 14 CFR 91.411 item
+  cites the regulation as text and is typed routine like every other curated item (R18). Deployed with the functions; changing one needs no app release. No list for
+  `custom`, or for a template id the server does not know.
+- **Fitted to the Thing, without a model.** A curated item goes through the deterministic
+  validators an AI item does (§6.7): rules on a meter the Thing lacks drop out (rule 2), a slot the
+  Thing does not fill files the item at Thing level, and pre-selection follows R27. An item whose
+  title matches an existing task's (case- and whitespace-normalized) is *Already tracked*.
+- **First, in `startAiJob`.** The QUEUED job carries the fitted list as its `result`, with
+  `generation_version` set, so the app shows it within a second (R19). A curated-only job (§5.1)
+  ends there.
+- **Merged, in the worker.** The tailor sees the curated list as the starter items it already reads
+  (the prompt's "Starter-pack items" section keeps its name until the next prompt revision). Each
+  AI suggestion may name the curated item it covers. The final list is every AI suggestion,
+  followed by every curated item no suggestion covered, so the screen never loses a card it showed.
+- **The AI's outcome is the job's status.** SUCCEEDED, EMPTY and FAILED keep their meaning, but the
+  result of each holds the curated list at least, so the app shows curated cards under an empty or
+  failed state too.
+- **Origin.** Each suggestion carries `origin_kind`: `PRE_CURATED` for a curated item left as it
+  was, `AI_THING` or `AI_DOCUMENT` for the rest, a covered curated item included. The mapper
+  copies it onto the task (§7.4).
+- **Suggestion ids** of curated items are stable for a template (`c<index>`), so a card keeps its
+  identity from the first list to the merged one when nothing covered it.
+- **Where the templates were.** `ThingTemplate.starter_tasks` is removed from the canonical
+  templates (a version bump) and the field number reserved. Things created earlier keep a copy in
+  their DNA, which nothing reads.
 
 ## 7. Client data layer
 
@@ -753,6 +820,8 @@ Built in T15:
   never read into the summary.
 - **Truncation:** at most 500 logs, newest first. Then the oldest tenth is dropped at a time until
   the encoded request is under 400 KiB.
+- **No starter pack (2026-10-02).** The builder no longer sends the template's starter tasks; the
+  server has the curated list (§6.8). It sets `curated_only` when the Thing lacks R5's identity.
 
 ### 7.3 `TaskSuggestionManager`
 
@@ -785,11 +854,16 @@ As built (T15), changes from the sketch:
   computed with no logs: none is tied to a suggestion, so the schedule runs from now.
 - **Not here:** the origin line on the task detail (R35's display) and the edit analytics are
   T17's.
+- **A run in progress can hold a result (2026-10-02).** `Working` carries the job's `result` when
+  it has one, the curated list (§6.8), so the screen shows cards while the AI works. `Empty` and
+  `Failed` carry it too. A job SUCCEEDED with `aiSkipped` is `Ready` with the skip reason and, for
+  the daily limit, when AI is available again.
 
 ### 7.4 `SuggestionMapper`: `TaskSuggestion` → `MaintenanceTask`
 
 - title, description (+ `component_hint` prepended when set), rules, `is_one_time`, compliance
-  fields, `origin` (§4.1).
+  fields, `origin` (§4.1). The origin kind is the suggestion's own `origin_kind` (§6.8); the mapper
+  no longer works it out from the source document.
 - `component`: `component_slot_key` → `ComponentType` via the function extracted from
   `StarterTasks.kt`. **Gap:** a task cannot name engine #2 (§2); the hint in the description is the
   v1 answer, and a component-instance field on tasks is out of scope.
@@ -898,7 +972,10 @@ default, `suggest`, `document`) and an optional `attachmentId` (R4).
 
 ### 9.1 Entry points
 
-- **Creation step 4** and the **empty task list**: `mode=starter` (existing routes, unchanged).
+- **Creation step 4** and the **empty task list**: `mode=starter` (existing routes). Since
+  2026-10-02 the screen starts a run on opening (PRD R1) rather than showing a built-in pack, so it
+  differs from `mode=suggest` only in where it returns to; #1263 makes the mode an enum.
+- **Guests** skip the screen after creation and go to the Thing (PRD R47).
 - **Task list action** (R2): new `ThingOverviewAction.SuggestTasksClick` → `mode=suggest`.
 - **Add task → Tasks from a document** (R3): `mode=document` (sources sheet opens with the picker).
 - **Attachment row → Find tasks in this document** (R4, P1): `mode=document&attachmentId=`.
@@ -915,20 +992,23 @@ While a run is in flight for the Thing, no entry point opens the sources sheet (
 `startAiJob` is the server-side backstop: a second start by the same caller returns the running job,
 and a start by another member fails with `run_in_progress` instead of joining a job it cannot read.
 
-### 9.2 Starter pack with suggestions
+### 9.2 Curated first (revised 2026-10-02)
 
 ```
 ┌ Recommended tasks ─────────────────────────────┐
-│ ✦ Suggest tasks for this plane          [ › ]  │  ← opens the sources sheet
-│   Uses the specs, meters and logs              │
+│  ◌ Tailoring these to your plane…              │  ← the run started on opening
 │ ────────────────────────────────────────────── │
-│ ☑ Annual inspection            Every 12 months │  ← static pack, as today
+│ ☑ Annual inspection            Every 12 months │  ← curated, from the job's first result
 │ ☑ Oil change                   Every 50 h      │
 │ ☐ ELT battery                  Every 24 months │
 │                                                │
 │              [ Skip ]   [ Add 2 tasks ]        │
 └────────────────────────────────────────────────┘
 ```
+
+The curated cards come from the job, not the app. When the AI ends, its cards join the list and
+replace the curated ones they cover (§6.8). A curated-only job shows the same list with one line
+saying why: "AI suggestions are available again at 3:10 pm".
 
 ### 9.3 Sources sheet (PRD R6)
 
@@ -956,7 +1036,7 @@ Opening the sheet calls `eligibility`. `daily_limit` replaces *Suggest* with "Av
 │    This can take a few minutes.                │
 │    You can leave; we’ll notify you when        │
 │    your suggestions are ready.                 │
-│  ☑ Annual inspection  (static cards stay)      │
+│  ☑ Annual inspection  (curated cards stay)     │
 └────────────────────────────────────────────────┘
 ```
 
@@ -987,10 +1067,12 @@ citation and rationale, and opens the document at the page for a document source
 ### 9.6 Other states
 
 - **Empty (R21a):** "Not enough to go on for this {thing}." with *Add details* and *Add a document*;
-  the static pack stays below (custom: the message is the screen).
+  the curated cards stay below (custom: the message is the screen).
 - **Failed (R21):** one line per error code (§5.7) with *Try again*.
-- **Guest (R47):** tapping *Suggest tasks* opens the existing link-account prompt.
-- **Offline (R51):** *Suggest tasks* disabled, "Needs a connection".
+- **Guest (R47):** tapping *Suggest tasks* opens the existing link-account prompt; nothing else
+  is shown.
+- **Offline (R51):** *Suggest tasks* stays enabled; a call that fails as `UNAVAILABLE` shows a
+  "No internet connection" snackbar, with no cards to fall back on (revised 2026-10-02).
 
 ## 10. Gating and capability
 
@@ -1013,7 +1095,9 @@ row in `AnalyticsTaxonomyTest`: `TaskSuggestionsRequested(entryPoint, documentCo
 `TaskSuggestionsShown(countBySource, cacheHit, latencyBucket, logsTruncated)`,
 `TaskSuggestionsAccepted(acceptedBySource, editedBySource)`,
 `TaskSuggestionsFailed(reason)` (reason = §5.7 code), `TaskOriginEdited(fieldGroup)` from the task
-form when a task with an AI origin is saved changed. `StarterTasksOffered` / `Accepted` keep firing.
+form when a task with an AI origin is saved changed. Shown and accepted counts are split by origin
+kind as well as source kind. `StarterTasksOffered` / `Accepted` stop firing with the app's starter
+pack (2026-10-02); their names stay, since the taxonomy is append-only.
 
 ## 12. Evaluation harness (phase 0)
 
@@ -1134,6 +1218,9 @@ for comparison. Their committed reports predate the Triumph key change.
     - `startAiJob` idempotent join for the same caller and `run_in_progress` for another member;
       worker lifecycle with a fake provider (status, stage, input deletion, `lastSuccessAt`).
     - Every §6.7 validator, table-driven, including AD verbatim match and downgrade.
+    - Curated lists (§6.8): every file parses and fits its template's meters and slots; the QUEUED
+      job carries them; `daily_limit`, `spend_ceiling`, `disabled` and `curated_only` give a
+      curated-only job; the merge keeps uncovered curated items and their ids.
     - `onThingRecordBlobsReleased`: two tasks share a blob, one drops it (kept), both drop it
       (collected); record delete path unchanged (existing `blob-cleanup` and `shared-blob-gc` tests
       extended).
@@ -1142,7 +1229,8 @@ for comparison. Their committed reports predate the Triumph key change.
     - `SuggestionContextBuilder`: no technician/serial/cost leaves the device; truncation order.
     - `SuggestionMapper`: rules, component mapping, force-complied, shared `Attachment`, origin.
     - `release`: owner exclusion; referenced blob kept; `BlobDeleteDriver` no longer calls Storage.
-    - VM state machine: static-first, merge, Already tracked, empty, failed, returning-user resume.
+    - VM state machine: curated-first, merge, Already tracked, empty, failed, curated-only,
+      returning-user resume.
 
 ## 15. Sequencing
 
@@ -1151,7 +1239,7 @@ for comparison. Their committed reports predate the Triumph key change.
 | **0** | 1–4: provider adapters and document reading, the pipeline as a library, the eval harness, the bake-off                                                       | §9.4 met by the chosen pair; §12.5 filled in                                                                                                         |
 | **A** | 5–10: protos, collections and rules, authorization, callables, worker, `core/ai`                                                                             | An echo job round-trips on all three hosts on developer builds (Developer Options → AI backend → Echo round trip, `feature/developeroptions/aiecho`) |
 | **B** | 11–12: server release trigger, client `release`                                                                                                              | Shared-blob tests green; one release cycle in production before D ships                                                                              |
-| **C** | 13–19 and 26: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy, push when a run finishes | No-document flow on all presets and hosts, developer builds                                                                                          |
+| **C** | 13–19, 26 and 29: module move, no-document pipeline wiring, data layer, entry points, screen states, pre-accept update, privacy policy, push when a run finishes, curated suggestions | No-document flow on all presets and hosts, developer builds                                                                                          |
 | **D** | 20–25: storage-rule deny, document pipeline wiring, sources sheet, the two P1 document items, flag removal                                                   | T100, Sling TSi and C172N + AD cases end to end; flag deleted; v1                                                                                    |
 | **E** | 27: wrong-suggestion report                                                                                                                                  | —                                                                                                                                                    |
 | **F** | 28: #1181 backfill intake (PRD §10.1)                                                                                                                        | —                                                                                                                                                    |
@@ -1236,7 +1324,7 @@ dependency order.
 
 13. **Module move.** `feature/tasks/suggestions/{model,datamanager,update}` through the five-step
     new-module checklist; the starter pack moves in and its tests move with it; starter accepts
-    write `TEMPLATE_STARTER` origin, and creating a task in the task form writes `USER` (§3, §4.1).
+    write `TEMPLATE_STARTER` origin (now `PRE_CURATED`), and creating a task in the task form writes `USER` (§3, §4.1).
 14. **Worker wiring, no documents.** Register the task pipeline (stages 3–5) in the worker, with a
     worker test on the fake provider. R9, R15, R19, R21.
 15. **Data layer.** `SuggestionContextBuilder` (truncation, no PII by construction),
@@ -1245,7 +1333,7 @@ dependency order.
 16. **Entry points.** `AppCapability.isTaskSuggestionsSupported`, the route `mode` argument,
     `ThingOverviewAction.SuggestTasksClick`, and the guest and offline gates on every entry point
     (§9.1, §10). R1, R2, R5, R47, R48, R51.
-17. **Screen states.** Static cards first, the merge, working, review with *Already tracked* and
+17. **Screen states.** Curated cards first and AI cards joining them (§6.8, §9.2), working, review with *Already tracked* and
     first-due lines, empty, failed, the disclosure, strings for every §5.7 code, and every §11
     analytics event including `TaskOriginEdited` from the task form, and the in-flight run opening
     the working state from every entry point (§9.1, §9.2, §9.4–9.6). R19a, R24–R27, R31, R50, R52.
@@ -1256,6 +1344,20 @@ dependency order.
 26. **Push when a run finishes (P0).** Moved here from phase E on 2026-10-01 and kept its number.
     The worker's `onFinished` hook sends it for every outcome, with the deep link decided in §17;
     the app drops it while that run's screen is open. R20.
+29. **Curated suggestions** (added 2026-10-02, PRD decision 19). The suggestion RPC becomes the only
+    source of suggestions (§6.8). One item, eight stacked PRs, before T17:
+    1. PRD and design (this section).
+    2. Protos: `PRE_CURATED` replaces `TEMPLATE_STARTER`; `TaskSuggestion.origin_kind` and
+       `SuggestTasksRequest.curated_only`; `static_pack` and `merges_static_index` reserved.
+    3. Backend: the curated files, generated from today's templates, with a loader and tests.
+    4. Backend: `startAiJob` writes the curated list into the job, and curated-only jobs (§5.1).
+    5. Backend: the worker merges AI suggestions with the curated list.
+    6. App data layer: `Working` with a result, `aiSkipped`, the mapper's origin, `curated_only`.
+    7. App screens: creation and the empty task list start a run instead of showing the pack.
+    8. Templates: `starter_tasks` removed (version bump, field reserved), with the app code that
+       read it.
+
+    R1, R9a, R19, R25, R47, R49, R51.
 
 **Phase D: documents**
 

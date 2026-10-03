@@ -6,7 +6,7 @@
 log entries (shares the AI backend), [#1183](https://github.com/fz172/squawkit/issues/1183) data log
 anomaly detection
 **Status:** 📋 Proposed
-**Last updated:** 2026-09-27
+**Last updated:** 2026-10-02 (the suggestion RPC is the only source of suggestions, decision 19)
 
 > **Naming.** Code, protos, and this document call the feature **suggested tasks**. The noun a user
 > sees ("task", "inspection", "chore") comes from the Thing's lexicon, never from code. New types
@@ -26,7 +26,8 @@ A new Thing starts with the template's starter pack (`template.starter_tasks`, o
 `StarterPackViewModel`). That pack is one list per preset. The motorcycle preset offers the same
 tasks to a Triumph and a Honda, and the airplane preset cannot know that a Rotax 915 iS has a
 different schedule from a Lycoming O-320. It also knows nothing about the Thing's meters, its
-history, or the tasks the owner already tracks.
+history, or the tasks the owner already tracks. And because it ships inside the app, changing it
+takes an app release. (Decision 19 moves that list to the server as *curated suggestions*, R9a.)
 
 The real schedule is in the manufacturer's documents, and for many Things it is spread across
 several:
@@ -46,7 +47,8 @@ program, so accuracy matters for more than convenience.
 ## 2. Goals
 
 - **G1.** One press turns a Thing into a reviewed list of suggested tasks, with intervals and
-  first-due, in the existing starter-pack picker.
+  first-due, on one review screen. Every suggestion, curated or AI, comes from the same server
+  call.
 - **G2.** A user-supplied document (manual, SB, AD, appliance manual) becomes its recurring tasks,
   and every task keeps the document attached as its source.
 - **G3.** Every suggestion says where it came from: document, revision and page for a document,
@@ -74,18 +76,22 @@ program, so accuracy matters for more than convenience.
 - **Checklist sub-items.** The task model has no checklist field, and v1 does not add one
   (decision 3).
 - **On-device models.** Generation runs on the backend.
-- **Guest use.** Guests (anonymous or local-only accounts) never reach the AI backend (R47).
-- **Offline extraction queue.** Generation needs a connection in v1 (§13).
+- **Guest use.** Guests (anonymous or local-only accounts) never reach the AI backend and get no
+  suggestions, curated ones included (R47).
+- **Offline suggestions.** Every suggestion needs a connection, curated ones included (R51). There
+  is no offline queue in v1 (§13).
 - **Intake from the paper-logbook backfill (#1181).** The hand-off contract is defined here (§10.1)
   and built in a later phase.
-- **Replacing the template starter pack.** The static pack stays as the offline and fallback path.
+- **A starter pack in the app.** The template's built-in starter pack is removed (decision 19). The
+  app keeps no list of tasks of its own to fall back on.
 
 ## 4. Users and Stories
 
 - **Aircraft owner, new Thing.** Adds a 1978 C172N, O-320-H2AD, 3,400 TT, with logs imported. The
-  starter pack offers *Suggest tasks*. The picker shows the annual, 100-hour, oil and filter, ELT
-  battery, transponder and pitot-static checks. Each has its first due worked out from current
-  tach and the last logged occurrence, and each carries a source chip.
+  curated airplane tasks appear within a second of saving, and the AI suggestions join them a few
+  minutes later. The list ends with the annual, 100-hour, oil and filter, ELT battery, transponder
+  and pitot-static checks. Each has its first due worked out from current tach, and each carries a
+  source chip.
 - **Motorcycle owner.** Creates a 2025 Triumph Bonneville T100 at 1,200 mi and uploads the
   owner's handbook. Gets the first service, the 10,000 mi / 12-month service, valve clearances,
   brake fluid and coolant, each citing a page. Unticks two and taps *Add*.
@@ -103,7 +109,8 @@ program, so accuracy matters for more than convenience.
 - **Technician on a shared Thing.** Uploads a manual to a plane shared with them. The owner's Pro
   entitlement decides whether document extraction is available, and the technician's own plan does
   not.
-- **Offline in a hangar.** Sees the static pack and a note that suggestions need a connection.
+- **Offline in a hangar.** Gets a "No internet connection" snackbar, and can add tasks by hand or
+  try again later.
 
 ## 5. Requirements
 
@@ -112,9 +119,12 @@ which case it is the first follow-up; **P2** is designed for, not built.
 
 ### 5.1 Entry points
 
-- **R1 (P0). Starter pack.** The starter-pack screen gains *Suggest tasks* above the static list.
-  This covers both existing routes to it: after creating a Thing (`EditThingScreen`) and the task
-  list's empty state (`ComplianceSection`). No separate AI prompt is added to the empty state.
+- **R1 (P0). After creating a Thing, and on an empty task list.** Both routes that opened the
+  starter pack (`EditThingScreen` after create, and the task list's empty state) now start a
+  suggestion run. The curated suggestions show at once and the AI suggestions follow (R9a, R19).
+  When the Thing lacks the identity R5 asks for, the run asks for curated suggestions only, so a
+  thinly described Thing still gets its template's list. (Revised 2026-10-02, decision 19: the
+  screen used to show the template's built-in pack with *Suggest tasks* above it.)
 - **R2 (P0). Task list, any time.** A *Suggest tasks* action on a non-empty task list opens the same
   flow, filtered against existing tasks (R24).
 - **R3 (P0). Add task → from a document.** The add-task flow offers *Tasks from a document*, which
@@ -139,6 +149,18 @@ which case it is the first follow-up; **P2** is designed for, not built.
   assignment from the document's title, and the user can change it.
 - **R9 (P0). No documents.** The user can proceed without any document. Generation then uses model
   knowledge only and is labelled per R17.
+- **R9a (P0). Curated suggestions.** The team keeps a list of tasks per template on the server (the
+  former starter pack, for a start). Every run returns the list for the Thing's template:
+  - **They arrive first,** within a second of the run starting and before any model call, and stay
+    on screen while the AI works.
+  - **They cost nothing.** No model call, so they never count toward the daily limit and are never
+    refused for the limit, a spending ceiling or the kill switch (R49). When AI cannot run, the run
+    returns the curated suggestions alone and says why.
+  - **AI improves them in place.** An AI suggestion for the same thing replaces the curated one
+    (R25).
+  - **They carry the `PRE_CURATED` origin** (R34) and their own source kind and citation, written by
+    the team (a 14 CFR item cites the regulation as text, and is still typed routine, R18).
+  - **Changing the list needs no app release.** The custom preset has no list.
 
 ### 5.3 Inputs sent to the backend
 
@@ -177,7 +199,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
   - A document-sourced suggestion whose cited page does not contain the item is dropped.
   - Domain-inherent rules (the annual, 14 CFR 91.409) may be named in rationale text but are still
     typed routine.
-- **R19 (P0). Progress.** A progress state appears within one second, naming the current step
+- **R19 (P0). Progress.** The curated suggestions (R9a) and a progress state appear within one
+  second, the progress naming the current step
   ("Reading Rotax 915 iS manual…"). A cache hit returns in under 5 seconds. An uncached run takes minutes and
   carries on after the user leaves the screen; with three documents it finishes in under 10
   minutes at p90. The result is held
@@ -192,14 +215,14 @@ which case it is the first follow-up; **P2** is designed for, not built.
   empty or failed, the person who started it gets a push notification that opens the result for that
   Thing. It is not shown while that person is already looking at the run's screen.
 - **R21 (P0).** A failed run writes nothing and says what failed: document unreadable, no schedule
-  found, limit reached, or service unavailable. The static starter pack stays available with an
-  inline retry.
+  found, limit reached, or service unavailable. The curated suggestions (R9a) stay available with
+  an inline retry.
 - **R21a (P0). Low confidence returns nothing.** On any preset, when the backend's confidence in the
   Thing's identity or in the schedule is too low, it returns no model suggestions rather than a
   guess. Examples are a custom Thing with only a name, or an obscure make and model. The review
   screen then says there wasn't enough to go on and offers *Add details* (the Thing's edit screen)
-  and *Add a document*. The static pack still shows where the template has one. The custom preset
-  has none, so the fallback is the whole screen there. The design doc defines the confidence
+  and *Add a document*. The curated suggestions still show where the template has them. The
+  custom preset has none, so the fallback is the whole screen there. The design doc defines the confidence
   signal. Weak items in an otherwise confident run are dropped individually, not shown as low
   confidence.
 
@@ -229,9 +252,11 @@ which case it is the first follow-up; **P2** is designed for, not built.
   component, whatever the wording) is shown as *Already tracked* and cannot be selected. If its
   interval differs, it carries a note ("You track this every 12 months; the manual says 6"). It
   never edits the existing task.
-- **R25 (P0). One merged list.** Suggestions open in the starter-pack picker, grouped by component,
-  with the static template items merged in. A static item and a suggestion for the same thing
-  become one card, showing the suggestion's source and interval.
+- **R25 (P0). One merged list, merged on the server.** Curated and AI suggestions come back as one
+  list, grouped by component. A curated item and an AI suggestion for the same thing become one
+  card, showing the AI suggestion's source and interval, except that a curated item citing the
+  owner's own regulation keeps its interval (design §6.4). The app merges nothing itself.
+  (Revised 2026-10-02: the app used to send its starter pack for the server to merge against.)
 - **R26 (P0). Each card shows** the title, the schedule in plain words and lexicon terms ("Every
   100 h or 12 months"), first-due (R29), and a source chip. Tapping the chip shows the full citation
   and the one-line rationale.
@@ -258,10 +283,10 @@ which case it is the first follow-up; **P2** is designed for, not built.
 
 ### 5.7 Accepting and provenance
 
-- **R33 (P0).** Accepting writes the selected tasks through the existing starter-pack path
-  (`TaskDataManager.addTask`), so they are local-first, sync, and share like any other task.
+- **R33 (P0).** Accepting writes the selected tasks with `TaskDataManager.addTask`, one write per
+  task, so they are local-first, sync, and share like any other task.
 - **R34 (P0). Persisted origin.** `MaintenanceTask` gains a `TaskOrigin` message holding:
-  - origin kind: manual, template starter, AI Thing-based, AI document, and later backfill;
+  - origin kind: manual, pre-curated (R9a), AI Thing-based, AI document, and later backfill;
   - the R17 source kind and citation text;
   - the source attachment id and page or section;
   - the generation version (prompt and model).
@@ -331,8 +356,10 @@ Three mechanisms, kept separate, per
 - **R47 (P0). Signed-in users only.** Every AI action (suggestions with or without documents, on
   every entry point) needs a signed-in, non-anonymous account. The free tier in R46 means free
   *for signed-in accounts*, not free for guests.
-  - **Client.** A guest sees the static starter pack exactly as today. *Suggest tasks* and *Tasks
-    from a document* are visible and open a sign-in / link-account prompt instead of the flow, the
+  - **Client.** A guest gets no suggestions, curated ones included (revised 2026-10-02, decision
+    19: a guest used to see the built-in starter pack). After creating a Thing, a guest goes
+    straight to it. *Suggest tasks* and *Tasks from a document* are visible and open a sign-in /
+    link-account prompt instead of the flow, the
     same account-gate pattern as the data-log upload (data log PRD R40). Web has no guest mode, so
     this state exists only on mobile.
   - **Server.** The callable function rejects unauthenticated and anonymous callers before any
@@ -344,6 +371,10 @@ Three mechanisms, kept separate, per
     Only a run that returns suggestions counts. Failed runs (R21), low-confidence empty runs (R21a)
     and cache hits do not, so a bad upload never locks the user out until tomorrow. When the
     day's run is used, the action says when it becomes available again.
+  - **Curated suggestions are outside every limit here** (R9a). A run refused for the daily limit,
+    a ceiling or the kill switch still returns them, with the reason and, for the daily limit, when
+    AI is available again. Nothing else changes: a guest, a non-member or a second run while one is
+    in flight is still refused outright.
   - Per-run limits: documents per run and file size. No page limit.
   - A monthly cost ceiling per tier and a project-wide spend ceiling. Past a ceiling, uncached runs
     are refused, the copy says when the limit resets, and cached results keep working.
@@ -363,11 +394,14 @@ Three mechanisms, kept separate, per
     document, backend).
   - `task_origin_edited`: an AI-origin task was edited later.
 
-  `StarterTasksOffered` / `StarterTasksAccepted` keep firing for the static items.
+  The shown and accepted counts are also split by origin (curated or AI). `StarterTasksOffered` /
+  `StarterTasksAccepted` stop firing with the app's starter pack; their names stay in the taxonomy,
+  which is append-only.
 - **R51 (P0). Offline.** The action stays visible and enabled offline (revised 2026-10-02: no
   connectivity check up front). When a suggestion call fails for want of a connection, the workflow
-  shows a "No internet connection" snackbar. Nothing about the feature blocks Thing creation, the
-  static pack or adding a task by hand.
+  shows a "No internet connection" snackbar, and there is nothing to fall back on: an offline
+  device gets no suggestions, curated ones included (decision 19). Nothing about the feature blocks
+  Thing creation or adding a task by hand.
 - **R52 (P0). Lexicon.** Every string naming a task, inspection or component resolves from the
   lexicon. The source labels are new `strings.xml` entries shared by all templates.
 
@@ -375,15 +409,16 @@ Three mechanisms, kept separate, per
 
 Mocks come with the design doc. The flow in words:
 
-1. **Starter pack or task list** → *Suggest tasks* (or add task → *Tasks from a document*).
+1. **New Thing, empty task list, or task list** → the run starts (after create and on the empty
+   list) or *Suggest tasks* starts it (or add task → *Tasks from a document*).
 2. **Sources sheet** (R6). One row per component with *Upload* and *Skip*, and the Pro gate on
    upload for a free owner. The primary action is *Suggest*.
 3. **Working** (R19, R19a). The step being worked on is named, and the user can leave. Any entry
    point opens this screen while the run is in flight, and a push brings the user back when it
    ends (R20).
-4. **Review.** The starter-pack picker, grouped by component, with static cards shown first, source
-   chips, *Already tracked* rows, first-due lines and the disclosure (R31). The Accept button stays
-   usable while cards load.
+4. **Review.** One list, grouped by component: the curated cards arrive first, and the AI cards
+   join them and replace the curated ones they improve. Source chips, *Already tracked* rows,
+   first-due lines and the disclosure (R31). The Accept button stays usable while cards load.
 5. **Add.** Tasks are written, and the user lands on the task list.
 
 The card reuses the starter-pack card. Colour and type follow `DESIGN.md`, and the source chip is
@@ -432,8 +467,8 @@ Security rules deny client access.
 ### 8.4 Module
 
 Suggestions get their own module, `feature/tasks/suggestions`. The starter-pack UI and ViewModel
-move there from `feature/tasks/update/.../starter/`; the pack's content stays in the template
-`.textproto` files. The callable client sits behind a manager interface in
+move there from `feature/tasks/update/.../starter/`. The pack's content moves out of the template
+`.textproto` files to the server's curated lists (R9a, decision 19). The callable client sits behind a manager interface in
 `feature/tasks/suggestions/datamanager`, which calls a shared `feature/ai` module for common AI
 logic if #1181 has created one. The design doc decides the submodule split. Nothing lands in `feature/thing` or `feature/dashboard/host`.
 
@@ -512,7 +547,7 @@ non-document source kind, and none is phrased as a requirement.
 | **0 — Evaluate**               | §9 run, provider chosen, design doc written                                             | §9.4 bar met on the evaluation set                                |
 | **A — Backend**                | Shared backend (§8.1) if #1181 has not shipped it; provider abstraction, cache, limits  | Valid suggestions for every evaluation case from a test harness   |
 | **B — Reference-aware delete** | R37–R40, across client and server, independent of AI                                    | Shared-blob tests green; in production before D                   |
-| **C — Suggestions**            | R1, R2, R5, R9–R13, R15–R19a, R20, R21–R29, R31, R33–R36, R45–R52, `AppCapability` on developer builds | No-document flow end to end on all hosts, all seven presets       |
+| **C — Suggestions**            | R1, R2, R5, R9, R9a, R10–R13, R15–R19a, R20, R21–R29, R31, R33–R36, R45–R52, `AppCapability` on developer builds | No-document flow end to end on all hosts, all seven presets       |
 | **D — Documents**              | R3, R4, R6–R8b, R14, R30, R37 wiring, R41, Pro paywall                                   | T100, Sling TSi and C172N + AD flows end to end; flag deleted; v1 |
 | **E — Follow-ups**             | R32, anything P1 that slipped                                                           | —                                                                 |
 | **F — Backfill intake**        | §10.1 once #1181's backfill exists                                                      | #1181 recurring items open this picker                            |
@@ -562,8 +597,8 @@ Settled 2026-09-27.
 12. **Server-side cache, no library UI** (R42–R44).
 13. **The provider is chosen by measurement** (§9), behind a provider abstraction.
 14. **Web-located documents and #1181 intake are later phases.**
-15. **Signed-in users only.** Guests see the static pack and a sign-in prompt, and the backend
-    rejects anonymous callers (R47).
+15. **Signed-in users only.** Guests see a sign-in prompt and no suggestions, and the backend
+    rejects anonymous callers (R47). (Guests used to see the static pack; decision 19.)
 16. **One successful run per Thing per day** (R49). Failed runs, empty low-confidence runs and
     cache hits do not count.
 17. **Low confidence returns nothing** on any preset, with a fallback that asks for details or a
@@ -571,6 +606,11 @@ Settled 2026-09-27.
 18. **Gemini 3.8 Flash for both tiers, on Vertex AI** (2026-10-01). Flash + Sonnet 5.5 scored a
     little higher and ran in half the time, but cost twice as much, and both take minutes. Results
     are in the design doc §12.5.
+19. **The suggestion RPC is the only source of suggestions** (2026-10-02). The template's built-in
+    starter pack leaves the app and becomes the server's curated lists (R9a), returned by every run
+    ahead of the AI's and merged with them on the server (R25). Guests and offline devices get none
+    (R47, R51). Curated suggestions carry the `PRE_CURATED` origin, which replaces
+    `TEMPLATE_STARTER` under the same number.
 
 ### Still open
 
