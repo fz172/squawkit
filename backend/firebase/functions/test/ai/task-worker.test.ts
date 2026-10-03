@@ -73,6 +73,7 @@ const TAILORED: TailorOutput = {
     },
   ],
   documents: [],
+  notApplicable: [],
 };
 
 /** Answers recall and tailor by schema, records which model it was asked as, and what it cost. */
@@ -236,6 +237,19 @@ describe("the task-suggestion pipeline in the worker", () => {
     expect(titles[0]).toBe("Oil and filter change");
     expect(titles).not.toContain("Oil change");
     expect(titles).toHaveLength(curatedListFor("airplane").length);
+  });
+
+  it("leaves out the curated items the model says do not fit this Thing", async () => {
+    // The EV case: an engine oil change makes no sense on a battery-electric car.
+    const oilIndex = curatedListFor("airplane").findIndex((c) => c.title === "Oil change");
+    const judging: TailorOutput = { ...TAILORED, notApplicable: [{ index: oilIndex, reason: "no engine oil" }] };
+    const { providerFor } = scriptedProviders(RECALLED, judging);
+
+    const ref = await runJob(await seedThing(), providerFor, `Sling-${randomUUID()}`);
+
+    const titles = titlesOf((await adminDb.doc(aiJobDocPath(ref.callerUid, ref.jobId)).get()).get("result"));
+    expect(titles).not.toContain("Oil change");
+    expect(titles).toHaveLength(curatedListFor("airplane").length); // the model's one, minus one curated
   });
 
   it("ends EMPTY with the whole curated list when the model has nothing confident", async () => {

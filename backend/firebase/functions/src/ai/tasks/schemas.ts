@@ -139,4 +139,5 @@ export const TAILOR_SCHEMA = object({
     }),
   ),
   documents: array(object({ index: INTEGER, matchesThing: BOOLEAN })),
+  notApplicable: array(object({ index: INTEGER, reason: STRING })),
 });

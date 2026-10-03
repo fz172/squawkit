@@ -91,9 +91,19 @@ export type PipelineDeps = {
   attachPdf?: boolean;
 };
 
+/**
+ * [curatedNotApplicable]: indexes into `context.staticPack` (the curated list) the tailor judged
+ * not to fit this thing (design §6.8), for the merge to leave out. Empty when the tailor did not
+ * run.
+ */
 export type PipelineOutcome =
-  | { status: "succeeded"; result: SuggestTasksResult }
-  | { status: "empty"; reason: "low_identity_confidence" | "nothing_survived"; result: SuggestTasksResult };
+  | { status: "succeeded"; result: SuggestTasksResult; curatedNotApplicable: number[] }
+  | {
+      status: "empty";
+      reason: "low_identity_confidence" | "nothing_survived";
+      result: SuggestTasksResult;
+      curatedNotApplicable: number[];
+    };
 
 /**
  * Per-stage output caps. Extract and tailor sit at Gemini 3.8 Flash's 65,536-token maximum: its
@@ -123,11 +133,11 @@ export async function runTaskPipeline(
   }
   const confident = recall.output.identityConfidence !== "low";
   if (documents.length === 0 && !confident) {
-    return { status: "empty", reason: "low_identity_confidence", result: result([], []) };
+    return { status: "empty", reason: "low_identity_confidence", result: result([], []), curatedNotApplicable: [] };
   }
   const recalled = confident ? recall.output.items : [];
   if (documents.length === 0 && recalled.length === 0) {
-    return { status: "empty", reason: "nothing_survived", result: result([], []) };
+    return { status: "empty", reason: "nothing_survived", result: result([], []), curatedNotApplicable: [] };
   }
 
   deps.onStage?.("tailoring");
@@ -140,6 +150,7 @@ export async function runTaskPipeline(
   })) as TailorOutput;
 
   deps.onStage?.("validating");
+  const curatedNotApplicable = notApplicableIndexes(tailored, request.context.staticPack.length);
   const matches = (index: number) =>
     tailored.documents.find((d) => d.index === index)?.matchesThing ?? true;
   const drafts = validate(buildDrafts(tailored.suggestions, documents, recalled), {
@@ -163,7 +174,7 @@ export async function runTaskPipeline(
     matchesThing: matches(d.index),
   }));
   if (drafts.length === 0) {
-    return { status: "empty", reason: "nothing_survived", result: result([], identified) };
+    return { status: "empty", reason: "nothing_survived", result: result([], identified), curatedNotApplicable };
   }
 
   // Only now, so a failed tailor never caches a bad extraction (§6.5).
@@ -181,7 +192,7 @@ export async function runTaskPipeline(
       originKind: s.sourceDocument ? "ai_document" : "ai_thing",
     }),
   );
-  return { status: "succeeded", result: result(suggestions, identified) };
+  return { status: "succeeded", result: result(suggestions, identified), curatedNotApplicable };
 }
 
 async function readAndExtract(
@@ -334,4 +345,12 @@ function cacheHitRecord(stage: "extract" | "recall", pages: number): PipelineCal
 
 function result(suggestions: TaskSuggestion[], documents: IdentifiedDocument[]): SuggestTasksResult {
   return { suggestions, documents, generationVersion: GENERATION_VERSION };
+}
+
+/** The tailor's not-applicable starter-pack indexes, in range and once each. */
+export function notApplicableIndexes(tailored: TailorOutput, packSize: number): number[] {
+  const indexes = tailored.notApplicable
+    .map((n) => n.index)
+    .filter((i) => Number.isInteger(i) && i >= 0 && i < packSize);
+  return [...new Set(indexes)].sort((a, b) => a - b);
 }

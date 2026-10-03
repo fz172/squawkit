@@ -50,8 +50,10 @@ function scripted(id: string, answers: Answers) {
       asked.push({ stage, req });
       const answer = answers[stage];
       if (!answer) throw new Error(`${id} was not scripted for ${stage}`);
-      const json = answer(req);
-      if (json instanceof Error) throw json;
+      const raw = answer(req);
+      if (raw instanceof Error) throw raw;
+      // A scripted tailor says nothing about the curated list unless the test does.
+      const json = stage === "tailor" ? { notApplicable: [], ...(raw as object) } : raw;
       return { json, usage };
     },
   };
@@ -220,6 +222,26 @@ describe("task pipeline without documents", () => {
       ["tailor", "strong-model", "strong"],
     ]);
     expect(h.cache.keys()).toEqual([expect.stringMatching(new RegExp(`^id/${GENERATION_VERSION}/[0-9a-f]{64}$`))]);
+  });
+
+  it("passes on the curated items the tailor says do not fit, in range and once each", async () => {
+    const h = harness({
+      recall: () => RECALLED,
+      tailor: (): TailorOutput => ({
+        suggestions: [tailored({})],
+        documents: [],
+        // The context's starter pack has two items; 5 is out of range.
+        notApplicable: [
+          { index: 0, reason: "battery-electric: no engine oil" },
+          { index: 5, reason: "invented" },
+          { index: 0, reason: "repeated" },
+        ],
+      }),
+    });
+
+    const out = await runTaskPipeline(request(), h.deps);
+
+    expect(out.curatedNotApplicable).toEqual([0]);
   });
 
   it("recalls on the strong model when asked to", async () => {

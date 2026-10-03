@@ -64,6 +64,7 @@ const TAILOR: TailorOutput = {
     },
   ],
   documents: [{ index: 0, matchesThing: true }],
+  notApplicable: [],
 };
 
 /** Answers each stage with a fixed output, standing in for a real model. */
