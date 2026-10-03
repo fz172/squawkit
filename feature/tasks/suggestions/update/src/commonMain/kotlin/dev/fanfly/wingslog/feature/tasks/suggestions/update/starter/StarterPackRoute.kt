@@ -168,10 +168,22 @@ fun StarterPackRoute(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
           if (uiState.canSuggest) {
-            OutlinedButton(onClick = viewModel::onSuggest, enabled = !uiState.isSaving) {
+            OutlinedButton(
+              onClick = viewModel::onSuggest,
+              enabled = !uiState.isSaving
+            ) {
               Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.padding(end = Spacing.small))
-                Text(stringResource(Res.string.starter_pack_suggest, LexiconFormatter.plural(taskNoun)))
+                Icon(
+                  Icons.Default.AutoAwesome,
+                  contentDescription = null,
+                  modifier = Modifier.padding(end = Spacing.small)
+                )
+                Text(
+                  stringResource(
+                    Res.string.starter_pack_suggest,
+                    LexiconFormatter.plural(taskNoun)
+                  )
+                )
               }
             }
           }
@@ -180,7 +192,10 @@ fun StarterPackRoute(
               verticalAlignment = Alignment.CenterVertically,
               horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
-              CircularProgressIndicator(modifier = Modifier.size(Spacing.large), strokeWidth = 2.dp)
+              CircularProgressIndicator(
+                modifier = Modifier.size(Spacing.large),
+                strokeWidth = 2.dp
+              )
               Text(
                 text = stringResource(
                   Res.string.starter_pack_suggesting,
@@ -240,7 +255,8 @@ fun StarterPackRoute(
  */
 @Composable
 private fun TaskSuggestion.summary(template: ThingTemplate?): String {
-  val calendar = rules.firstNotNullOfOrNull { it.time_rule }?.let { calendarText(it) }
+  val calendar = rules.firstNotNullOfOrNull { it.time_rule }
+    ?.let { calendarText(it) }
   val meter = rules.firstNotNullOfOrNull { it.meter_rule }
     ?.takeIf { it.meter_key.isNotEmpty() && it.interval > 0f }
     ?.let {
@@ -250,7 +266,8 @@ private fun TaskSuggestion.summary(template: ThingTemplate?): String {
         template.meter(it.meter_key)?.unit_label ?: it.meter_key,
       )
     }
-  val onCondition = rules.firstNotNullOfOrNull { it.on_condition_rule }?.description?.takeIf { it.isNotBlank() }
+  val onCondition =
+    rules.firstNotNullOfOrNull { it.on_condition_rule }?.description?.takeIf { it.isNotBlank() }
   val rule = when {
     meter != null && calendar != null -> stringResource(
       Res.string.starter_rule_either,
@@ -271,9 +288,17 @@ private fun calendarText(rule: TimeRule): String? {
   return when {
     months == 1 -> stringResource(Res.string.starter_rule_every_month)
     months == 12 -> stringResource(Res.string.starter_rule_every_year)
-    months > 0 && months % 12 == 0 -> stringResource(Res.string.starter_rule_every_years, months / 12)
+    months > 0 && months % 12 == 0 -> stringResource(
+      Res.string.starter_rule_every_years,
+      months / 12
+    )
+
     months > 0 -> stringResource(Res.string.starter_rule_every_months, months)
-    rule.interval_days > 0 -> stringResource(Res.string.starter_rule_every_days, rule.interval_days)
+    rule.interval_days > 0 -> stringResource(
+      Res.string.starter_rule_every_days,
+      rule.interval_days
+    )
+
     else -> null
   }
 }

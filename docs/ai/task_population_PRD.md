@@ -4,9 +4,8 @@
 **Design doc:** [`task_population_design.md`](task_population_design.md)
 **Sibling epics:** [#1181](https://github.com/fz172/squawkit/issues/1181) photo / paper logbook →
 log entries (shares the AI backend), [#1183](https://github.com/fz172/squawkit/issues/1183) data log
-anomaly detection
-**Status:** 📋 Proposed
-**Last updated:** 2026-10-02 (the suggestion RPC is the only source of suggestions, decision 19)
+anomaly detection **Status:** 📋 Proposed **Last updated:** 2026-10-02 (the suggestion RPC is the
+only source of suggestions, decision 19)
 
 > **Naming.** Code, protos, and this document call the feature **suggested tasks**. The noun a user
 > sees ("task", "inspection", "chore") comes from the Thing's lexicon, never from code. New types
@@ -32,32 +31,31 @@ takes an app release. (Decision 19 moves that list to the server as *curated sug
 The real schedule is in the manufacturer's documents, and for many Things it is spread across
 several:
 
-| Thing                                         | Where the schedule is                                                                      | What the owner does today                                    |
-|-----------------------------------------------|--------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| 2025 Triumph Bonneville T100                  | One table in the owner's handbook: first service, then every 10,000 mi or 12 months, …     | Types 20–40 tasks by hand, or keeps the handbook in a drawer |
-| Sling TSi, Rotax 915 iS, Airmaster propeller  | Three PDFs: airframe maintenance manual, Rotax maintenance manual, prop manual             | Builds a spreadsheet from three manuals, often wrongly       |
-| 1978 C172N, O-320-H2AD, an applicable AD      | Cessna service manual, Lycoming SIs, the AD itself                                         | Relies on the A&P at the annual                              |
-| House with a gas water heater and a septic    | Appliance manuals (often lost); the rest is common practice                                | Nothing, until something fails                               |
+| Thing                                        | Where the schedule is                                                                  | What the owner does today                                    |
+|----------------------------------------------|----------------------------------------------------------------------------------------|--------------------------------------------------------------|
+| 2025 Triumph Bonneville T100                 | One table in the owner's handbook: first service, then every 10,000 mi or 12 months, … | Types 20–40 tasks by hand, or keeps the handbook in a drawer |
+| Sling TSi, Rotax 915 iS, Airmaster propeller | Three PDFs: airframe maintenance manual, Rotax maintenance manual, prop manual         | Builds a spreadsheet from three manuals, often wrongly       |
+| 1978 C172N, O-320-H2AD, an applicable AD     | Cessna service manual, Lycoming SIs, the AD itself                                     | Relies on the A&P at the annual                              |
+| House with a gas water heater and a septic   | Appliance manuals (often lost); the rest is common practice                            | Nothing, until something fails                               |
 
 Reading a 300-page manual, finding the schedule and turning each line into a task with the right
-interval is work users will not do. It is also work a language model does well when it is given
-the document. For an S-LSA, the manufacturer's maintenance manual *is* the required maintenance
-program, so accuracy matters for more than convenience.
+interval is work users will not do. It is also work a language model does well when it is given the
+document. For an S-LSA, the manufacturer's maintenance manual *is* the required maintenance program,
+so accuracy matters for more than convenience.
 
 ## 2. Goals
 
 - **G1.** One press turns a Thing into a reviewed list of suggested tasks, with intervals and
-  first-due, on one review screen. Every suggestion, curated or AI, comes from the same server
-  call.
+  first-due, on one review screen. Every suggestion, curated or AI, comes from the same server call.
 - **G2.** A user-supplied document (manual, SB, AD, appliance manual) becomes its recurring tasks,
   and every task keeps the document attached as its source.
-- **G3.** Every suggestion says where it came from: document, revision and page for a document,
-  or *Common practice* for model knowledge. The source stays on the task after it is accepted.
+- **G3.** Every suggestion says where it came from: document, revision and page for a document, or
+  *Common practice* for model knowledge. The source stays on the task after it is accepted.
 - **G4.** A Thing made of several documented parts (airframe, engine, propeller) gets one merged
   list, grouped by component, without duplicates, and never duplicating a task the Thing already
   has.
-- **G5.** The model never invents regulation. An AD or SB task exists only because the user
-  supplied the document that states it.
+- **G5.** The model never invents regulation. An AD or SB task exists only because the user supplied
+  the document that states it.
 - **G6.** Nothing is written without the user's confirmation.
 - **G7.** Works on Android, iOS and web, for all seven presets (airplane, car, motorcycle, bike,
   boat, home, custom), for signed-in users only.
@@ -73,8 +71,8 @@ program, so accuracy matters for more than convenience.
   user presses *Suggest tasks* again (decision 6).
 - **Airworthiness determinations.** Suggestions are schedule proposals. Nothing says a Thing is or
   is not airworthy, and nothing is signed off.
-- **Checklist sub-items.** The task model has no checklist field, and v1 does not add one
-  (decision 3).
+- **Checklist sub-items.** The task model has no checklist field, and v1 does not add one (decision
+  3).
 - **On-device models.** Generation runs on the backend.
 - **Guest use.** Guests (anonymous or local-only accounts) never reach the AI backend and get no
   suggestions, curated ones included (R47).
@@ -87,14 +85,15 @@ program, so accuracy matters for more than convenience.
 
 ## 4. Users and Stories
 
-- **Aircraft owner, new Thing.** Adds a 1978 C172N, O-320-H2AD, 3,400 TT, with logs imported. The owner opens the empty task tab: the curated airplane tasks appear within a second, with *Suggest
+- **Aircraft owner, new Thing.** Adds a 1978 C172N, O-320-H2AD, 3,400 TT, with logs imported. The
+  owner opens the empty task tab: the curated airplane tasks appear within a second, with *Suggest
   tasks* above them. The owner taps it, skips the documents, and the AI suggestions join the list a
-  few minutes later. It ends with the annual, 100-hour, oil and filter, ELT battery, transponder
-  and pitot-static checks. Each has its first due worked out from current tach, and each carries a
+  few minutes later. It ends with the annual, 100-hour, oil and filter, ELT battery, transponder and
+  pitot-static checks. Each has its first due worked out from current tach, and each carries a
   source chip.
-- **Motorcycle owner.** Creates a 2025 Triumph Bonneville T100 at 1,200 mi and uploads the
-  owner's handbook. Gets the first service, the 10,000 mi / 12-month service, valve clearances,
-  brake fluid and coolant, each citing a page. Unticks two and taps *Add*.
+- **Motorcycle owner.** Creates a 2025 Triumph Bonneville T100 at 1,200 mi and uploads the owner's
+  handbook. Gets the first service, the 10,000 mi / 12-month service, valve clearances, brake fluid
+  and coolant, each citing a page. Unticks two and taps *Add*.
 - **LSA owner with three manuals.** The sources sheet asks for documents per component. The owner
   uploads the Sling MM, the Rotax 915 iS MM and the Airmaster manual, and gets a list grouped
   *Airframe / Engine / Propeller* with items like "Rotax 915 iS MM, rev 3, p. 5-12". The three PDFs
@@ -145,24 +144,24 @@ which case it is the first follow-up; **P2** is designed for, not built.
   the Thing fills (Airframe; Engine: Rotax 915 iS; Propeller: Airmaster). A Thing with a single part
   shows one row. Each row offers *Upload* and *Skip*. The primary action is *Suggest*.
 - **R7 (P0). Document forms.** A PDF (with or without a text layer), photos of pages (camera or
-  library). There is no page limit. The design doc sets the document-count and file-size limits
-  and the copy for exceeding them.
+  library). There is no page limit. The design doc sets the document-count and file-size limits and
+  the copy for exceeding them.
 - **R8 (P0). Component assignment.** Each document is assigned to a component. The app proposes the
   assignment from the document's title, and the user can change it.
 - **R9 (P0). No documents.** The user can proceed without any document. Generation then uses model
   knowledge only and is labelled per R17.
 - **R9a (P0). Curated suggestions.** The team keeps a list of tasks per template on the server (the
   former starter pack, for a start). Every run returns the list for the Thing's template:
-  - **They arrive first,** within a second of the run starting and before any model call, and stay
-    on screen while the AI works.
-  - **They cost nothing.** No model call, so they never count toward the daily limit and are never
-    refused for the limit, a spending ceiling or the kill switch (R49). When AI cannot run, the run
-    returns the curated suggestions alone and says why.
-  - **AI improves them in place.** An AI suggestion for the same thing replaces the curated one
-    (R25).
-  - **They carry the `PRE_CURATED` origin** (R34) and their own source kind and citation, written by
-    the team (a 14 CFR item cites the regulation as text, and is still typed routine, R18).
-  - **Changing the list needs no app release.** The custom preset has no list.
+    - **They arrive first,** within a second of the run starting and before any model call, and stay
+      on screen while the AI works.
+    - **They cost nothing.** No model call, so they never count toward the daily limit and are never
+      refused for the limit, a spending ceiling or the kill switch (R49). When AI cannot run, the
+      run returns the curated suggestions alone and says why.
+    - **AI improves them in place.** An AI suggestion for the same thing replaces the curated one
+      (R25).
+    - **They carry the `PRE_CURATED` origin** (R34) and their own source kind and citation, written
+      by the team (a 14 CFR item cites the regulation as text, and is still typed routine, R18).
+    - **Changing the list needs no app release.** The custom preset has no list.
 
 ### 5.3 Inputs sent to the backend
 
@@ -186,27 +185,26 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R16 (P0). Order of trust.** User documents first, then model knowledge. A task found in a
   document is never overridden by model knowledge.
 - **R17 (P0). Source kinds.** Each suggestion carries exactly one:
-  - *From your document*: the document title, revision (when printed) and page(s).
-  - *Manufacturer schedule*: model knowledge attributed to a named publication ("Lycoming SI
-    1014M") that the user did not supply. Shown as *verify against your manual*.
-  - *Common practice*: general practice for the type, not attributed to a publication.
-  - *From your logs*: a recurring item found in the Thing's own history (later also from #1181).
-- **R18 (P0). No invented regulation.** Enforced on the server after the model responds, not left
-  to the prompt:
-  - Without a document, `type` is always `ROUTINE_INSPECTION`, and `reference_number` and
-    `compliance_authority` are empty.
-  - With a document, `AIRWORTHINESS_DIRECTIVE` or `SERVICE_BULLETIN` is allowed only when the
-    document itself is that directive or bulletin, and `reference_number` must appear verbatim in
-    the document's text. Anything that fails is downgraded to routine and its reference dropped.
-  - A document-sourced suggestion whose cited page does not contain the item is dropped.
-  - Domain-inherent rules (the annual, 14 CFR 91.409) may be named in rationale text but are still
-    typed routine.
+    - *From your document*: the document title, revision (when printed) and page (s).
+    - *Manufacturer schedule*: model knowledge attributed to a named publication ("Lycoming SI
+      1014M") that the user did not supply. Shown as *verify against your manual*.
+    - *Common practice*: general practice for the type, not attributed to a publication.
+    - *From your logs*: a recurring item found in the Thing's own history (later also from #1181).
+- **R18 (P0). No invented regulation.** Enforced on the server after the model responds, not left to
+  the prompt:
+    - Without a document, `type` is always `ROUTINE_INSPECTION`, and `reference_number` and
+      `compliance_authority` are empty.
+    - With a document, `AIRWORTHINESS_DIRECTIVE` or `SERVICE_BULLETIN` is allowed only when the
+      document itself is that directive or bulletin, and `reference_number` must appear verbatim in
+      the document's text. Anything that fails is downgraded to routine and its reference dropped.
+    - A document-sourced suggestion whose cited page does not contain the item is dropped.
+    - Domain-inherent rules (the annual, 14 CFR 91.409) may be named in rationale text but are still
+      typed routine.
 - **R19 (P0). Progress.** The curated suggestions (R9a) and a progress state appear within one
-  second, the progress naming the current step
-  ("Reading Rotax 915 iS manual…"). A cache hit returns in under 5 seconds. An uncached run takes minutes and
-  carries on after the user leaves the screen; with three documents it finishes in under 10
-  minutes at p90. The result is held
-  server-side for that caller and Thing for up to 24 hours and deleted when fetched or accepted.
+  second, the progress naming the current step ("Reading Rotax 915 iS manual…"). A cache hit returns
+  in under 5 seconds. An uncached run takes minutes and carries on after the user leaves the screen;
+  with three documents it finishes in under 10 minutes at p90. The result is held server-side for
+  that caller and Thing for up to 24 hours and deleted when fetched or accepted.
 - **R19a (P0). One run at a time, shown wherever it is opened.** While a run is in flight for a
   Thing, no entry point (R1–R4) opens the sources sheet, so documents cannot be added, removed or
   uploaded again until the run finishes or fails. The person who started it sees its working screen
@@ -217,36 +215,36 @@ which case it is the first follow-up; **P2** is designed for, not built.
   empty or failed, the person who started it gets a push notification that opens the result for that
   Thing. It is not shown while that person is already looking at the run's screen.
 - **R21 (P0).** A failed run writes nothing and says what failed: document unreadable, no schedule
-  found, limit reached, or service unavailable. The curated suggestions (R9a) stay available with
-  an inline retry.
+  found, limit reached, or service unavailable. The curated suggestions (R9a) stay available with an
+  inline retry.
 - **R21a (P0). Low confidence returns nothing.** On any preset, when the backend's confidence in the
   Thing's identity or in the schedule is too low, it returns no model suggestions rather than a
   guess. Examples are a custom Thing with only a name, or an obscure make and model. The review
   screen then says there wasn't enough to go on and offers *Add details* (the Thing's edit screen)
-  and *Add a document*. The curated suggestions still show where the template has them. The
-  custom preset has none, so the fallback is the whole screen there. The design doc defines the confidence
+  and *Add a document*. The curated suggestions still show where the template has them. The custom
+  preset has none, so the fallback is the whole screen there. The design doc defines the confidence
   signal. Weak items in an otherwise confident run are dropped individually, not shown as low
   confidence.
 
 ### 5.5 What a suggestion contains
 
 - **R22 (P0).** Each suggestion maps onto `MaintenanceTask` with nothing lost (§7):
-  - **Title** and **description/rationale**. For an inspection event, the description holds the
-    checklist items as text with their page references (decision 3).
-  - **Component**, matched against the Thing's component tree by slot key and, where the slot is
-    filled, the specific component. If nothing matches, the task is filed at Thing level. A
-    suggestion never creates a component.
-  - **Schedule**: `TimeRule`, `MeterRule`, `SeasonalRule` or `OnConditionRule`. Two rules on one
-    task mean whichever comes first. `LinkedRule` and `ImmediateRule` are not produced in v1.
-  - **One-time items** (the first service at 500 mi, a non-recurring AD action) set `is_one_time`
-    and a first-due.
-  - **Compliance** fields per R18.
+    - **Title** and **description/rationale**. For an inspection event, the description holds the
+      checklist items as text with their page references (decision 3).
+    - **Component**, matched against the Thing's component tree by slot key and, where the slot is
+      filled, the specific component. If nothing matches, the task is filed at Thing level. A
+      suggestion never creates a component.
+    - **Schedule**: `TimeRule`, `MeterRule`, `SeasonalRule` or `OnConditionRule`. Two rules on one
+      task mean whichever comes first. `LinkedRule` and `ImmediateRule` are not produced in v1.
+    - **One-time items** (the first service at 500 mi, a non-recurring AD action) set `is_one_time`
+      and a first-due.
+    - **Compliance** fields per R18.
 - **R23 (P0). Units and meters.** Intervals are converted to the Thing's meter units, and the
-  source's own figure is kept in the description when it differs ("every 16,000 km
-  (10,000 mi)"). Meter rules use only meter keys the template defines; any other key is dropped
-  server-side. An interval in an untracked unit (cycles on a Thing with no cycle meter) goes into
-  the description, and the task falls back to its calendar rule or to on-condition. A home (no
-  meters) gets only calendar, seasonal or on-condition rules.
+  source's own figure is kept in the description when it differs ("every 16,000 km (10,000 mi)").
+  Meter rules use only meter keys the template defines; any other key is dropped server-side. An
+  interval in an untracked unit (cycles on a Thing with no cycle meter) goes into the description,
+  and the task falls back to its calendar rule or to on-condition. A home (no meters) gets only
+  calendar, seasonal or on-condition rules.
 
 ### 5.6 Review
 
@@ -257,11 +255,11 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R25 (P0). One merged list, merged on the server.** Curated and AI suggestions come back as one
   list, grouped by component. A curated item and an AI suggestion for the same thing become one
   card, showing the AI suggestion's source and interval, except that a curated item citing the
-  owner's own regulation keeps its interval (design §6.4). The app merges nothing itself.
-  (Revised 2026-10-02: the app used to send its starter pack for the server to merge against.)
-- **R26 (P0). Each card shows** the title, the schedule in plain words and lexicon terms ("Every
-  100 h or 12 months"), first-due (R29), and a source chip. Tapping the chip shows the full citation
-  and the one-line rationale.
+  owner's own regulation keeps its interval (design §6.4). The app merges nothing itself. (Revised
+  2026-10-02: the app used to send its starter pack for the server to merge against.)
+- **R26 (P0). Each card shows** the title, the schedule in plain words and lexicon terms ("Every 100
+  h or 12 months"), first-due (R29), and a source chip. Tapping the chip shows the full citation and
+  the one-line rationale.
 - **R27 (P0). Pre-selection.** Suggestions from a document or from the logs are pre-selected.
   *Manufacturer schedule* and *Common practice* suggestions are pre-selected except on the airplane
   template, where they never are.
@@ -269,17 +267,17 @@ which case it is the first follow-up; **P2** is designed for, not built.
   changed before it is accepted, using the normal task form pre-filled. Saving there counts as
   accepted-with-edits.
 - **R29 (P0). First due.** Computed on the **client** by the existing due engine, not by the model,
-  from when the task is accepted, as for any new task.
-  **No suggestion is tied to a log** (decided 2026-10-02). The log summaries go to the model as
-  context and may shape what it suggests, but a suggestion never names a log as when it was last
-  done, and no new task is seeded with a `ForceCompliedStatus` from one. The server strips any
-  last-done evidence from the result before it reaches the app.
+  from when the task is accepted, as for any new task. **No suggestion is tied to a log** (decided
+  2026-10-02). The log summaries go to the model as context and may shape what it suggests, but a
+  suggestion never names a log as when it was last done, and no new task is seeded with a
+  `ForceCompliedStatus` from one. The server strips any last-done evidence from the result before it
+  reaches the app.
 - **R30 (P1).** For a document the user can access, the citation opens the document at the cited
   page.
 - **R31 (P0). Disclosure.** The screen states once, plainly, that suggestions are drafted by AI from
-  the listed sources and that the manufacturer's documents govern. Rationale reads as advice
-  ("Lycoming recommends…"), never as obligation. The one exception is a user-supplied AD or SB,
-  which is quoted as the document's own requirement.
+  the listed sources and that the manufacturer's documents govern. Rationale reads as advice (
+  "Lycoming recommends…"), never as obligation. The one exception is a user-supplied AD or SB, which
+  is quoted as the document's own requirement.
 - **R32 (P1). Report a wrong suggestion.** The report goes to the team with the suggestion and its
   citation, but not the document, and feeds the evaluation set.
 
@@ -288,14 +286,14 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R33 (P0).** Accepting writes the selected tasks with `TaskDataManager.addTask`, one write per
   task, so they are local-first, sync, and share like any other task.
 - **R34 (P0). Persisted origin.** `MaintenanceTask` gains a `TaskOrigin` message holding:
-  - origin kind: manual, pre-curated (R9a), AI Thing-based, AI document, and later backfill;
-  - the R17 source kind and citation text;
-  - the source attachment id and page or section;
-  - the generation version (prompt and model).
+    - origin kind: manual, pre-curated (R9a), AI Thing-based, AI document, and later backfill;
+    - the R17 source kind and citation text;
+    - the source attachment id and page or section;
+    - the generation version (prompt and model).
 
   New id fields use boxed id messages (`id/ids.proto`). A task made by hand is written with the
-  manual (`USER`) kind. Tasks that already exist have no origin and render as they do today, with
-  no backfill.
+  manual (`USER`) kind. Tasks that already exist have no origin and render as they do today, with no
+  backfill.
 - **R35 (P0).** Task detail shows the origin as one quiet line ("From Rotax 915 iS MM · p. 5-12",
   "Suggested · Common practice"). Editing a task keeps its origin, and the edit is counted for
   analytics (R50).
@@ -305,16 +303,16 @@ which case it is the first follow-up; **P2** is designed for, not built.
 
 - **R37 (P0). One document, one blob.** A document that yields several tasks is stored **once**.
   Every task accepted from it carries an `Attachment` referencing the same blob, and no bytes are
-  copied. The document is uploaded to the Thing's blob scope (via `ThingScopeResolver`) when the
-  run starts, and becomes referenced when its first task is accepted. If no task is accepted, it is
+  copied. The document is uploaded to the Thing's blob scope (via `ThingScopeResolver`) when the run
+  starts, and becomes referenced when its first task is accepted. If no task is accepted, it is
   released and the orphan sweep reclaims it (design §8.1–8.2).
-- **R38 (P0). Reference-aware deletion.** Removing the document from one task, or deleting one
-  task, must not tombstone the blob while another live record in the Thing still references it.
-  - The server's `onRecordDeleted` (`blobsReferencedByLiveRecords`) and the device's
-    `TombstoneGc.stillReferenced` already skip blobs a live record names.
-  - **The client form path does not.** `AttachmentFormController.resolveForSave` (pending delete)
-    and `deleteSavedFiles` (parent delete) call `AttachmentManager.delete`. That tombstones the blob
-    at once and schedules the remote delete.
+- **R38 (P0). Reference-aware deletion.** Removing the document from one task, or deleting one task,
+  must not tombstone the blob while another live record in the Thing still references it.
+    - The server's `onRecordDeleted` (`blobsReferencedByLiveRecords`) and the device's
+      `TombstoneGc.stillReferenced` already skip blobs a live record names.
+    - **The client form path does not.** `AttachmentFormController.resolveForSave` (pending delete)
+      and `deleteSavedFiles` (parent delete) call `AttachmentManager.delete`. That tombstones the
+      blob at once and schedules the remote delete.
 
   v1 changes `AttachmentManager.delete` from "delete this blob" to "release this record's
   reference". The blob is tombstoned only when no other live payload in the Thing's scope names it.
@@ -324,85 +322,87 @@ which case it is the first follow-up; **P2** is designed for, not built.
 - **R39 (P0). Tests.** The remote storage sweep, the delete trigger and the device GC each get a
   case where two live tasks share one blob and one of them is deleted or drops the attachment. The
   blob survives, and it is collected when the second reference goes.
-- **R40 (P0).** `isDuplicateOnParent` stays per record. Attaching an existing blob to another
-  record (R4, R37) is a reference, not an upload, and does not trip it.
+- **R40 (P0).** `isDuplicateOnParent` stays per record. Attaching an existing blob to another record
+  (R4, R37) is a reference, not an upload, and does not trip it.
 - **R41 (P1).** Removing a shared document from one task says it stays on the N other tasks that use
   it.
 
 ### 5.9 Server-side cache
 
-- **R42 (P0).** The Thing-independent step of generation (document → schedule items, and
-  identity → common schedule) is cached server-side by **document fingerprint** (content hash plus
-  revision) and by **normalized identity** (template, make, model, year, component models). A cache
-  hit costs no model call for that step. Per-Thing tailoring (dedup, last-done matching, units)
+- **R42 (P0).** The Thing-independent step of generation (document → schedule items, and identity →
+  common schedule) is cached server-side by **document fingerprint** (content hash plus revision)
+  and by **normalized identity** (template, make, model, year, component models). A cache hit costs
+  no model call for that step. Per-Thing tailoring (dedup, last-done matching, units)
   always runs fresh.
 - **R43 (P0).** The cache holds derived schedule items and document metadata (title, manufacturer,
   revision, page count, fingerprint) only. It never stores a document's bytes or text, and holds no
   personal data (serials, tail numbers, meter readings, names, log content). No UI exposes it.
 - **R44 (P0).** A cached entry is written only after a successful run and carries its generation
-  version. Bumping the version invalidates entries, and a reported entry (R32) can be evicted by
-  the team.
+  version. Bumping the version invalidates entries, and a reported entry (R32) can be evicted by the
+  team.
 
 ### 5.10 Sharing, gating and limits
 
 Three mechanisms, kept separate, per
 [AGENTS.md § Gating](../../AGENTS.md#gating-three-mechanisms-kept-separate).
 
-- **R45 (P0). Who and whose.** Any member of the Thing can run it: the owner and technician
-  members, both of whom can already write tasks. The **Thing owner's** entitlement and quota decide
-  access, not the caller's. A member's paywall copy names the owner's plan.
+- **R45 (P0). Who and whose.** Any member of the Thing can run it: the owner and technician members,
+  both of whom can already write tasks. The **Thing owner's** entitlement and quota decide access,
+  not the caller's. A member's paywall copy names the owner's plan.
 - **R46 (P0). Entitlement.** Through `SubscriptionManager` (`SquawkIt Pro`), no new flag system:
-  - **Suggestions without documents (R9): free** to every signed-in account, as an onboarding hook.
-  - **Anything with a document (R3, R4, R6 uploads): Pro.** Free users see the entry points and a
-    paywall sheet.
+    - **Suggestions without documents (R9): free** to every signed-in account, as an onboarding
+      hook.
+    - **Anything with a document (R3, R4, R6 uploads): Pro.** Free users see the entry points and a
+      paywall sheet.
 - **R47 (P0). Signed-in users only.** Every AI action (suggestions with or without documents, on
-  every entry point) needs a signed-in, non-anonymous account. The free tier in R46 means free
-  *for signed-in accounts*, not free for guests.
-  - **Client.** A guest gets no suggestions, curated ones included (revised 2026-10-02, decision
-    19: a guest used to see the built-in starter pack). *Suggest tasks* and *Tasks from a document* are visible and open a sign-in /
-    link-account prompt instead of the flow, the
-    same account-gate pattern as the data-log upload (data log PRD R40). Web has no guest mode, so
-    this state exists only on mobile.
-  - **Server.** The callable function rejects unauthenticated and anonymous callers before any
-    model call or quota check, whatever the client shows.
+  every entry point) needs a signed-in, non-anonymous account. The free tier in R46 means free *for
+  signed-in accounts*, not free for guests.
+    - **Client.** A guest gets no suggestions, curated ones included (revised 2026-10-02, decision
+      19: a guest used to see the built-in starter pack). *Suggest tasks* and *Tasks from a
+      document* are visible and open a sign-in / link-account prompt instead of the flow, the same
+      account-gate pattern as the data-log upload (data log PRD R40). Web has no guest mode, so this
+      state exists only on mobile.
+    - **Server.** The callable function rejects unauthenticated and anonymous callers before any
+      model call or quota check, whatever the client shows.
 - **R48 (P0). Rollout.** An `AppCapability` flag, true on developer builds only until v1 is
   complete, then deleted. No `DeveloperFlags` entry.
 - **R49 (P0). Limits and cost.**
-  - **One successful run per Thing per day**, for free and Pro alike, with or without documents.
-    Only a run that returns suggestions counts. Failed runs (R21), low-confidence empty runs (R21a)
-    and cache hits do not, so a bad upload never locks the user out until tomorrow. When the
-    day's run is used, the action says when it becomes available again.
-  - **Curated suggestions are outside every limit here** (R9a). A run refused for the daily limit,
-    a ceiling or the kill switch still returns them, with the reason and, for the daily limit, when
-    AI is available again. Nothing else changes: a guest, a non-member or a second run while one is
-    in flight is still refused outright.
-  - Per-run limits: documents per run and file size. No page limit.
-  - A monthly cost ceiling per tier and a project-wide spend ceiling. Past a ceiling, uncached runs
-    are refused, the copy says when the limit resets, and cached results keep working.
-  - A server-side kill switch that turns uncached generation off without an app release.
-  - Each run logs tokens, cost, latency, cache hit or miss, provider and owner tier. Prompt and
-    document content are never logged.
+    - **One successful run per Thing per day**, for free and Pro alike, with or without documents.
+      Only a run that returns suggestions counts. Failed runs (R21), low-confidence empty runs
+      (R21a)
+      and cache hits do not, so a bad upload never locks the user out until tomorrow. When the day's
+      run is used, the action says when it becomes available again.
+    - **Curated suggestions are outside every limit here** (R9a). A run refused for the daily limit,
+      a ceiling or the kill switch still returns them, with the reason and, for the daily limit,
+      when AI is available again. Nothing else changes: a guest, a non-member or a second run while
+      one is in flight is still refused outright.
+    - Per-run limits: documents per run and file size. No page limit.
+    - A monthly cost ceiling per tier and a project-wide spend ceiling. Past a ceiling, uncached
+      runs are refused, the copy says when the limit resets, and cached results keep working.
+    - A server-side kill switch that turns uncached generation off without an app release.
+    - Each run logs tokens, cost, latency, cache hit or miss, provider and owner tier. Prompt and
+      document content are never logged.
 
 ### 5.11 Offline, lexicon, analytics
 
 - **R50 (P0). Analytics.** Thing-scoped events in the typed taxonomy of `core/analytics`, with no
   task titles, document text or specs:
-  - `task_suggestions_requested`: entry point, document count, template id.
-  - `task_suggestions_shown`: count per source kind, cache hit, latency bucket, truncated-history
-    flag.
-  - `task_suggestions_accepted`: accepted and accepted-with-edits counts per source kind.
-  - `task_suggestions_failed`: reason (offline, daily limit, entitlement, low confidence, unreadable
-    document, backend).
-  - `task_origin_edited`: an AI-origin task was edited later.
+    - `task_suggestions_requested`: entry point, document count, template id.
+    - `task_suggestions_shown`: count per source kind, cache hit, latency bucket, truncated-history
+      flag.
+    - `task_suggestions_accepted`: accepted and accepted-with-edits counts per source kind.
+    - `task_suggestions_failed`: reason (offline, daily limit, entitlement, low confidence,
+      unreadable document, backend).
+    - `task_origin_edited`: an AI-origin task was edited later.
 
   The shown and accepted counts are also split by origin (curated or AI). `StarterTasksOffered` /
   `StarterTasksAccepted` stop firing with the app's starter pack; their names stay in the taxonomy,
   which is append-only.
 - **R51 (P0). Offline.** The action stays visible and enabled offline (revised 2026-10-02: no
   connectivity check up front). When a suggestion call fails for want of a connection, the workflow
-  shows a "No internet connection" snackbar, and there is nothing to fall back on: an offline
-  device gets no suggestions, curated ones included (decision 19). Nothing about the feature blocks
-  Thing creation or adding a task by hand.
+  shows a "No internet connection" snackbar, and there is nothing to fall back on: an offline device
+  gets no suggestions, curated ones included (decision 19). Nothing about the feature blocks Thing
+  creation or adding a task by hand.
 - **R52 (P0). Lexicon.** Every string naming a task, inspection or component resolves from the
   lexicon. The source labels are new `strings.xml` entries shared by all templates.
 
@@ -415,11 +415,11 @@ Mocks come with the design doc. The flow in words:
 2. **Sources sheet** (R6). One row per component with *Upload* and *Skip*, and the Pro gate on
    upload for a free owner. The primary action is *Suggest*.
 3. **Working** (R19, R19a). The step being worked on is named, and the user can leave. Any entry
-   point opens this screen while the run is in flight, and a push brings the user back when it
-   ends (R20).
-4. **Review.** One list, grouped by component: the curated cards arrive first, and the AI cards
-   join them and replace the curated ones they improve. Source chips, *Already tracked* rows,
-   first-due lines and the disclosure (R31). The Accept button stays usable while cards load.
+   point opens this screen while the run is in flight, and a push brings the user back when it ends
+   (R20).
+4. **Review.** One list, grouped by component: the curated cards arrive first, and the AI cards join
+   them and replace the curated ones they improve. Source chips, *Already tracked* rows, first-due
+   lines and the disclosure (R31). The Accept button stays usable while cards load.
 5. **Add.** Tasks are written, and the user lands on the task list.
 
 The card reuses the starter-pack card. Colour and type follow `DESIGN.md`, and the source chip is
@@ -449,9 +449,9 @@ Whichever of #1181 and #1182 ships first builds it, and the other reuses it. It 
 - A **provider abstraction**, since the provider is chosen by §9 and #1181 may choose differently.
 - Caller → Thing → owner resolution through the sharing ACL, so R45 is enforced server-side.
 - Limits, ceilings, kill switch and cost logging (R49).
-- **No retention of inputs.** Documents and prompts pass through. The only stored copy of a
-  document is the user's attachment in their Thing's blob scope. The server keeps the derived cache
-  (R42–R44) and held results (R19, 24 h max) only.
+- **No retention of inputs.** Documents and prompts pass through. The only stored copy of a document
+  is the user's attachment in their Thing's blob scope. The server keeps the derived cache (R42–R44)
+  and held results (R19, 24 h max) only.
 
 ### 8.2 Local-first
 
@@ -469,9 +469,11 @@ Security rules deny client access.
 
 Suggestions get their own module, `feature/tasks/suggestions`. The starter-pack UI and ViewModel
 move there from `feature/tasks/update/.../starter/`. The pack's content moves out of the template
-`.textproto` files to the server's curated lists (R9a, decision 19). The callable client sits behind a manager interface in
+`.textproto` files to the server's curated lists (R9a, decision 19). The callable client sits behind
+a manager interface in
 `feature/tasks/suggestions/datamanager`, which calls a shared `feature/ai` module for common AI
-logic if #1181 has created one. The design doc decides the submodule split. Nothing lands in `feature/thing` or `feature/dashboard/host`.
+logic if #1181 has created one. The design doc decides the submodule split. Nothing lands in
+`feature/thing` or `feature/dashboard/host`.
 
 ## 9. Model and Provider Evaluation (design phase)
 
@@ -482,8 +484,8 @@ The design doc fills this in with measured results before phase B starts.
 - Provider and model: one model, or a cheap-plus-strong pair.
 - Document handling: sending text directly or pre-processing it (PDF text extraction, OCR for scans
   and photos).
-- Locating the maintenance section: PDF outline, printed TOC, page scoring, the whole document, or
-  a combination.
+- Locating the maintenance section: PDF outline, printed TOC, page scoring, the whole document, or a
+  combination.
 - Log-history summarization for large histories (R12).
 
 ### 9.2 Candidates
@@ -493,8 +495,8 @@ The bake-off chose Gemini 3.8 Flash for both tiers (decision 18):
 
 - Google Gemini (e.g. 3.5 Flash), on Vertex AI in the existing GCP project.
 - Anthropic Claude (e.g. Sonnet 5.5, Haiku 4.5), on Vertex AI in the same project.
-- For scans and photos: Google Document AI in front of a text model. Mistral OCR was dropped
-  from the bake-off (2026-09-28).
+- For scans and photos: Google Document AI in front of a text model. Mistral OCR was dropped from
+  the bake-off (2026-09-28).
 
 ### 9.3 Evaluation set
 
@@ -511,8 +513,8 @@ A fixed set with hand-written expected answers, kept out of the repo if licensin
 | A Thing with existing tasks          | Any of the above                             | De-duplication (R24)                      |
 | One case per remaining preset        | Bike, boat, custom                           | Lexicon, meters, R5                       |
 
-Aviation results are reviewed against real inspection programs by someone with A&P knowledge
-before the airplane preset is enabled.
+Aviation results are reviewed against real inspection programs by someone with A&P knowledge before
+the airplane preset is enabled.
 
 ### 9.4 Bar to ship
 
@@ -527,13 +529,13 @@ before the airplane preset is enabled.
 **Document-sourced cases:**
 
 - Recall of ≥ 90% of the manual's scheduled items.
-- ≥ 95% of the items present have the correct interval(s) and units. Phase 0 closed at 92%
+- ≥ 95% of the items present have the correct interval (s) and units. Phase 0 closed at 92%
   (2026-10-01): the misses are almost all on the multi-manual airplane, and the A&P review (§9.3)
   checks aviation intervals before the airplane preset ships.
 - ≥ 95% of citations point to the page containing the item.
 - An uncached three-document run finishes in under 10 minutes at p90. This was two minutes, then
-  three (2026-09-30), and became 10 on 2026-10-01: past a minute the user leaves the screen
-  anyway, so a cheaper, slower model costs them nothing.
+  three (2026-09-30), and became 10 on 2026-10-01: past a minute the user leaves the screen anyway,
+  so a cheaper, slower model costs them nothing.
 
 **Cost:** reported per document and per run, with a guide of under about $1 for an uncached
 three-document airplane. This is a guide, not a gate, and quality wins a tie.
@@ -543,15 +545,15 @@ non-document source kind, and none is phrased as a requirement.
 
 ## 10. Rollout
 
-| Phase                          | Scope                                                                                   | Exit                                                              |
-|--------------------------------|-----------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| **0 — Evaluate**               | §9 run, provider chosen, design doc written                                             | §9.4 bar met on the evaluation set                                |
-| **A — Backend**                | Shared backend (§8.1) if #1181 has not shipped it; provider abstraction, cache, limits  | Valid suggestions for every evaluation case from a test harness   |
-| **B — Reference-aware delete** | R37–R40, across client and server, independent of AI                                    | Shared-blob tests green; in production before D                   |
+| Phase                          | Scope                                                                                                            | Exit                                                              |
+|--------------------------------|------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| **0 — Evaluate**               | §9 run, provider chosen, design doc written                                                                      | §9.4 bar met on the evaluation set                                |
+| **A — Backend**                | Shared backend (§8.1) if #1181 has not shipped it; provider abstraction, cache, limits                           | Valid suggestions for every evaluation case from a test harness   |
+| **B — Reference-aware delete** | R37–R40, across client and server, independent of AI                                                             | Shared-blob tests green; in production before D                   |
 | **C — Suggestions**            | R1, R2, R5, R9, R9a, R10–R13, R15–R19a, R20, R21–R29, R31, R33–R36, R45–R52, `AppCapability` on developer builds | No-document flow end to end on all hosts, all seven presets       |
-| **D — Documents**              | R3, R4, R6–R8b, R14, R30, R37 wiring, R41, Pro paywall                                   | T100, Sling TSi and C172N + AD flows end to end; flag deleted; v1 |
-| **E — Follow-ups**             | R32, anything P1 that slipped                                                           | —                                                                 |
-| **F — Backfill intake**        | §10.1 once #1181's backfill exists                                                      | #1181 recurring items open this picker                            |
+| **D — Documents**              | R3, R4, R6–R8b, R14, R30, R37 wiring, R41, Pro paywall                                                           | T100, Sling TSi and C172N + AD flows end to end; flag deleted; v1 |
+| **E — Follow-ups**             | R32, anything P1 that slipped                                                                                    | —                                                                 |
+| **F — Backfill intake**        | §10.1 once #1181's backfill exists                                                                               | #1181 recurring items open this picker                            |
 
 Phase B comes before any document code. It fixes a latent risk for every shared blob, and the
 document flow depends on it.
@@ -564,9 +566,9 @@ picker. No second picker is built.
 
 ## 11. Success Criteria
 
-- Of Things created after launch, the share that accepts at least one starter task (multi-domain
-  PRD §13, target ≥ 60%) rises by at least 10 points where suggestions ran, and the share starting
-  with at least five tasks doubles.
+- Of Things created after launch, the share that accepts at least one starter task (multi-domain PRD
+  §13, target ≥ 60%) rises by at least 10 points where suggestions ran, and the share starting with
+  at least five tasks doubles.
 - ≥ 70% of document-sourced and ≥ 50% of other suggestions shown are accepted. Fewer than 10% of
   accepted suggestions are edited or deleted within 30 days.
 - Wrong-suggestion reports on fewer than 1% of accepted suggestions.
@@ -579,11 +581,11 @@ picker. No second picker is built.
 Settled 2026-09-27.
 
 1. **Both inputs in v1.** Thing-based suggestions and documents ship together (phases C and D).
-2. **Regulatory items are user-supplied only.** The model never proposes an AD or SB on its own,
-   and R18 enforces this server-side.
-3. **One task per inspection event.** "100 h / annual check" is one task whose description holds
-   the checklist and page references. An item with its own interval or life limit (spark plugs,
-   coolant, hoses, TBO) is its own task.
+2. **Regulatory items are user-supplied only.** The model never proposes an AD or SB on its own, and
+   R18 enforces this server-side.
+3. **One task per inspection event.** "100 h / annual check" is one task whose description holds the
+   checklist and page references. An item with its own interval or life limit (spark plugs, coolant,
+   hoses, TBO) is its own task.
 4. **The user always confirms** (G6).
 5. **All seven presets in v1**, with an A&P review for aviation.
 6. **Refresh is manual.** Spec changes trigger nothing.
@@ -600,8 +602,8 @@ Settled 2026-09-27.
 14. **Web-located documents and #1181 intake are later phases.**
 15. **Signed-in users only.** Guests see a sign-in prompt and no suggestions, and the backend
     rejects anonymous callers (R47). (Guests used to see the static pack; decision 19.)
-16. **One successful run per Thing per day** (R49). Failed runs, empty low-confidence runs and
-    cache hits do not count.
+16. **One successful run per Thing per day** (R49). Failed runs, empty low-confidence runs and cache
+    hits do not count.
 17. **Low confidence returns nothing** on any preset, with a fallback that asks for details or a
     document (R21a).
 18. **Gemini 3.8 Flash for both tiers, on Vertex AI** (2026-10-01). Flash + Sonnet 5.5 scored a
@@ -610,8 +612,9 @@ Settled 2026-09-27.
 19. **The suggestion RPC is the only source of suggestions** (2026-10-02). The template's built-in
     starter pack leaves the app and becomes the server's curated lists (R9a), returned by every run
     ahead of the AI's and merged with them on the server (R25). Guests and offline devices get none
-    (R47, R51). AI never runs on its own: the empty task tab shows the curated list, and AI runs only
-    when the user taps *Suggest tasks* (R1). Creating a Thing opens no suggestions (2026-10-03). Curated suggestions carry the `PRE_CURATED` origin, which replaces
+    (R47, R51). AI never runs on its own: the empty task tab shows the curated list, and AI runs
+    only when the user taps *Suggest tasks* (R1). Creating a Thing opens no suggestions
+    (2026-10-03). Curated suggestions carry the `PRE_CURATED` origin, which replaces
     `TEMPLATE_STARTER` under the same number.
 
 ### Still open

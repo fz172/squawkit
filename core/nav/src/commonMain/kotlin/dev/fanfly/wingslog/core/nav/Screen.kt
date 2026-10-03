@@ -1,8 +1,6 @@
 package dev.fanfly.wingslog.core.nav
 
 import dev.fanfly.wingslog.core.model.id.value
-import dev.fanfly.wingslog.core.nav.Screen.Companion.SUGGESTIONS_MODE
-import dev.fanfly.wingslog.core.nav.Screen.Companion.TEMPLATE_ID
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 
@@ -49,7 +47,8 @@ sealed class Screen(val route: String) {
    * default) and from the task list's *Suggest tasks* action (`suggest`); not after creating a
    * Thing (2026-10-03). The id and the mode are all the route carries.
    */
-  data object StarterPack : Screen("starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}") {
+  data object StarterPack :
+    Screen("starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}") {
     const val MODE_STARTER = "starter"
     const val MODE_SUGGEST = "suggest"
 
