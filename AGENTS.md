@@ -590,6 +590,31 @@ anonymous login) and `isAdsSupported`.
 
 ## Engineering Best Practices
 
+### Pull requests are small, atomic and stacked (required)
+
+Every PR does one thing a reviewer can hold in their head at once: a capability flag, a new
+module, a route, a data-layer class, one UI piece. Each comes with its own tests or checks.
+The model is the T16 series, #1258 → #1260 → #1261 → #1262: four PRs of a few files each for one
+board item.
+
+**How to apply:**
+
+1. **Plan the split before writing code.** For anything with more than one part, list the PRs first,
+   what each contains and what each depends on, and agree on it.
+2. **Either break the board item into items of that size, or open several PRs against one item.**
+   Each PR says "Part of #N"; the last one says `Closes #N`.
+3. **Stack dependent PRs.** Each PR targets the branch of the one below
+   (`gh pr create --base <previous branch>`). It is titled "n/N" and says "Stack n of N" in its
+   description, so it shows only its own diff.
+4. **Push each PR as soon as it is built and checked.** Don't hold the stack until the end; the
+   bottom can be reviewed while the top is still being written.
+5. **Merge bottom-up, and keep the next diff clean.** After a PR is squash-merged, rebase the next
+   one onto `main` (`git rebase --onto origin/main <old base> <branch>`, then force-push it) and
+   retarget it to `main`. **Retarget a PR before deleting its base branch:** deleting a base branch
+   closes every PR on it.
+6. **A dropped middle PR** (one that turns out not to be wanted): retarget the PR above it, rebase
+   that branch to skip the dropped commit, then close the dropped PR and delete its branch.
+
 ### Post-task cleanup pass (required)
 
 After finishing a large job — a sizable feature implementation, a big refactor, or any multi-file

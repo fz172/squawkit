@@ -59,6 +59,8 @@ so run `lint`, `testDebugUnitTest`, and `testAndroidHostTest` locally before pus
   five-step checklist (submodules → `settings.gradle.kts` → `core/di/CommonAppModules.kt` →
   `core/nav` + `feature/shell` routes → strings).
   [§ Canonical Feature Module Pattern](AGENTS.md#canonical-feature-module-pattern).
+- **Anything with more than one part** — plan it as small, atomic, stacked PRs first and push each
+  as it is built. [§ Pull requests are small, atomic and stacked](AGENTS.md#pull-requests-are-small-atomic-and-stacked-required).
 
 ## Conventions that are easy to get wrong
 
