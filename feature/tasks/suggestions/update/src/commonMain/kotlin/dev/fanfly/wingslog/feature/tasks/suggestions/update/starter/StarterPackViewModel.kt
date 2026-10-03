@@ -252,7 +252,8 @@ class StarterPackViewModel(
     _uiState.update { state ->
       state.copy(
         items = state.items.mapIndexed { i, item ->
-          if (i == index) item.copy(selected = !item.selected) else item
+          // An already-tracked card cannot be added again (PRD R24).
+          if (i == index && !item.isAlreadyTracked) item.copy(selected = !item.selected) else item
         }
       )
     }

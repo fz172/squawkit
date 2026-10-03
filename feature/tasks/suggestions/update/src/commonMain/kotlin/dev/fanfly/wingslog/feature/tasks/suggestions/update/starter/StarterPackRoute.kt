@@ -56,6 +56,7 @@ import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -68,6 +69,7 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pac
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_none
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_already_tracked
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
@@ -282,9 +284,13 @@ fun StarterPackRoute(
               {
                 GroupedCheckboxRow(
                   title = item.suggestion.title,
-                  subtitle = item.suggestion.summary(uiState.template),
+                  subtitle = if (item.isAlreadyTracked) {
+                    item.trackedSummary(uiState.template)
+                  } else {
+                    item.suggestion.summary(uiState.template)
+                  },
                   checked = item.selected,
-                  enabled = !uiState.isSaving,
+                  enabled = !uiState.isSaving && !item.isAlreadyTracked,
                   onCheckedChange = { viewModel.onToggle(index) },
                 )
               }
@@ -323,6 +329,18 @@ fun StarterPackRoute(
       }
     }
   }
+}
+
+/**
+ * "Already tracked · You track this every 12 months; the manual says 6" (PRD R24): the server's
+ * note when the intervals differ, else the suggestion's own schedule.
+ */
+@Composable
+private fun StarterPackItem.trackedSummary(template: ThingTemplate?): String {
+  val detail = suggestion.interval_difference_note.ifBlank { suggestion.summary(template) }
+  return listOf(stringResource(Res.string.starter_pack_already_tracked), detail)
+    .filter { it.isNotBlank() }
+    .joinToString(" · ")
 }
 
 /**
