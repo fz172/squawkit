@@ -998,6 +998,10 @@ citation and rationale, and opens the document at the page for a document source
   deleted (PRD R48). All entry points check it.
 - Guest: the signed-in Firebase user's `isAnonymous` (as `AuthManagerImpl` already reads it); the
   server check (§5.3 step 2) is authoritative.
+- Offline: not checked up front (R51, revised 2026-10-02). A call that fails as `UNAVAILABLE` shows
+  a "No internet connection" snackbar in the workflow (T17).
+- All of this, with the template's required specs (R5), is `TaskSuggestionEntry` (T16): Hidden,
+  SignInRequired, MissingIdentity or Available.
 - Documents: own Thing → `SubscriptionManager.canUploadAttachments()`; shared Thing →
   `eligibility().documentsAllowed` (the client cannot see the owner's tier otherwise).
 - No `DeveloperFlags` entry.

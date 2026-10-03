@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
 import dev.fanfly.wingslog.core.ai.AiJobClient
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -9,6 +10,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.impl.TaskSuggestionManagerImpl
+import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -24,6 +26,14 @@ val tasksSuggestionsDataManagerModule: Module = module {
     )
   }
   single<SuggestionMapper> { SuggestionMapper() }
+  single<TaskSuggestionEntry> {
+    TaskSuggestionEntry(
+      capability = get<AppCapability>(),
+      auth = get<FirebaseAuth>(),
+      fleetManager = get<FleetManager>(),
+      templateRegistry = get<TemplateRegistry>(),
+    )
+  }
   single<TaskSuggestionManager> {
     TaskSuggestionManagerImpl(
       client = get<AiJobClient>(),
