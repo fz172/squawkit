@@ -19,7 +19,9 @@ import {
   handleStartAiJob,
 } from "../../src/ai/jobs.js";
 import { AiJobKind, AiJobStatus } from "../../src/generated/proto/rpc/ai_job/ai_job.js";
-import { SuggestTasksRequest } from "../../src/generated/proto/rpc/suggest_tasks/suggest_tasks.js";
+import { SuggestTasksRequest, SuggestTasksResult } from "../../src/generated/proto/rpc/suggest_tasks/suggest_tasks.js";
+import { TaskOriginKind } from "../../src/generated/proto/task/task_origin.js";
+import { curatedListFor } from "../../src/ai/tasks/curated.js";
 import { thingShareDocPath } from "../../src/sharing/sharingModels.js";
 import {
   SUBSCRIPTION_LIFECYCLE,
@@ -44,11 +46,12 @@ async function seedSharedThing({ host, member, thing }: Ids): Promise<void> {
   await adminDb.doc(thingShareDocPath(host, thing)).set({ memberRoles: { [host]: "owner", [member]: "technician" } });
 }
 
-function encoded({ host, thing }: Ids, documents = 0): string {
+function encoded({ host, thing }: Ids, documents = 0, templateId = ""): string {
   const request = SuggestTasksRequest.fromPartial({
     thingId: { value: thing },
     hostUid: { value: host },
     documents: Array.from({ length: documents }, (_, i) => ({ name: `doc-${i}.pdf` })),
+    context: { templateId: { value: templateId } },
   });
   return Buffer.from(SuggestTasksRequest.encode(request).finish()).toString("base64");
 }
@@ -103,6 +106,28 @@ describe("startAiJob", () => {
       lastSuccessAt: null,
       inFlightJob: { callerUid: t.host, jobId },
     });
+  });
+
+  it("writes the curated suggestions into the new job, before any worker runs (design §6.8)", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+
+    const { jobId } = await handleStartAiJob(req(t.host, { kind: KIND, request: encoded(t, 0, "airplane") }), recorder().dispatch, NOW);
+
+    const job = (await adminDb.doc(aiJobDocPath(t.host, jobId)).get()).data();
+    expect(job?.status).toBe(AiJobStatus.AI_JOB_STATUS_QUEUED);
+    const result = SuggestTasksResult.decode(Buffer.from(job?.result, "base64"));
+    expect(result.suggestions.map((s) => s.title)).toEqual(curatedListFor("airplane").map((c) => c.title));
+    expect(result.suggestions.every((s) => s.originKind === TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)).toBe(true);
+  });
+
+  it("writes no result for a template with no curated list", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+
+    const { jobId } = await handleStartAiJob(req(t.host, { kind: KIND, request: encoded(t, 0, "custom") }), recorder().dispatch, NOW);
+
+    expect((await adminDb.doc(aiJobDocPath(t.host, jobId)).get()).get("result")).toBeNull();
   });
 
   it("joins the caller's own run in flight instead of starting a second", async () => {

@@ -143,14 +143,15 @@ export type StartAiJobResponse = {
  * Starts a run, or joins the caller's own run in flight (§5.1). In one transaction on the Thing's
  * usage document: an active run by the caller is returned, one by anyone else is
  * `run_in_progress` (R19a), a stale one is marked FAILED and replaced. A new run writes the job,
- * its input and `inFlightJob`, and only then is handed to the worker.
+ * carrying the kind's initial result (a task run's curated suggestions), its input and
+ * `inFlightJob`, and only then is handed to the worker.
  */
 export async function handleStartAiJob(
   request: CallableRequest<unknown>,
   dispatch: AiJobDispatcher,
   now: Date = new Date(),
 ): Promise<StartAiJobResponse> {
-  const { spec, encoded, target } = parseStartRequest(request.data);
+  const { spec, encoded, bytes, target } = parseStartRequest(request.data);
   const { hostUid, thingId } = target;
   const kind = spec.kind;
   if (!hostUid || !thingId) throw new HttpsError("invalid-argument", "The request names no Thing.");
@@ -163,6 +164,7 @@ export async function handleStartAiJob(
     throw new HttpsError("invalid-argument", `At most ${access.config.maxDocumentsPerRun} documents.`);
   }
   const uid = access.callerUid;
+  const initial = spec.initialResult(bytes);
 
   const usageRef = adminDb.doc(aiUsageDocPath(hostUid, thingId));
   const outcome = await adminDb.runTransaction(async (tx) => {
@@ -186,7 +188,8 @@ export async function handleStartAiJob(
       createdAt: created,
       updatedAt: created,
       expiresAt: Timestamp.fromMillis(now.getTime() + AI_JOB_TTL_MS),
-      result: null,
+      // The curated suggestions, before the worker starts (design §6.8).
+      result: initial == null ? null : Buffer.from(initial).toString("base64"),
       error: null,
     };
     const input: AiJobInputDoc = {
@@ -217,7 +220,12 @@ export async function handleStartAiJob(
   return outcome;
 }
 
-function parseStartRequest(data: unknown): { spec: AiJobKindSpec; encoded: string; target: AiJobTarget } {
+function parseStartRequest(data: unknown): {
+  spec: AiJobKindSpec;
+  encoded: string;
+  bytes: Uint8Array;
+  target: AiJobTarget;
+} {
   const d = (data ?? {}) as Record<string, unknown>;
   const spec = requireKind(d.kind);
   if (typeof d.request !== "string" || d.request.length === 0) {
@@ -228,7 +236,7 @@ function parseStartRequest(data: unknown): { spec: AiJobKindSpec; encoded: strin
     throw new HttpsError("invalid-argument", `The request is over ${AI_REQUEST_MAX_BYTES} bytes.`);
   }
   try {
-    return { spec, encoded: d.request, target: spec.decodeTarget(bytes) };
+    return { spec, encoded: d.request, bytes, target: spec.decodeTarget(bytes) };
   } catch {
     throw new HttpsError("invalid-argument", "The request does not decode.");
   }
