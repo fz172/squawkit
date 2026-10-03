@@ -68,6 +68,9 @@ internal fun rememberSectionActionHandler(
       is ThingOverviewAction.AddStarterPackClick ->
         navController.navigate(Screen.StarterPack.createRoute(thingId))
 
+      is ThingOverviewAction.SuggestTasksClick ->
+        navController.navigate(Screen.StarterPack.createRoute(thingId, Screen.StarterPack.MODE_SUGGEST))
+
       is ThingOverviewAction.EditTaskClick -> {
         viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
         navController.navigate(

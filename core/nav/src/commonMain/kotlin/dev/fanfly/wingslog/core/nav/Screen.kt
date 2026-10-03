@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.nav
 
 import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.core.nav.Screen.Companion.SUGGESTIONS_MODE
 import dev.fanfly.wingslog.core.nav.Screen.Companion.TEMPLATE_ID
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
@@ -15,6 +16,7 @@ sealed class Screen(val route: String) {
     const val TECHNICIAN_ID = "technicianId"
     const val SQUAWK_ID = "squawkId"
     const val TEMPLATE_ID = "templateId"
+    const val SUGGESTIONS_MODE = "mode"
     const val DATA_LOG_ID = "dataLogId"
 
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
@@ -42,12 +44,18 @@ sealed class Screen(val route: String) {
   }
 
   /**
-   * The template's recommended schedule, offered once the Thing exists (PRD §4.9). Reached from
-   * the create form's hand-off and from an empty Tasks tab; both read the pack off the Thing's own
-   * DNA, so the id is all the route carries.
+   * The template's recommended schedule, offered once the Thing exists (PRD §4.9), and the AI
+   * suggestions that join it (docs/ai/task_population_design.md §9.1). Reached from the create
+   * form's hand-off and an empty Tasks tab (`starter`, the default, so both existing routes are
+   * unchanged) and from the task list's *Suggest tasks* action (`suggest`). The pack is read off the
+   * Thing's own DNA, so the id and the mode are all the route carries.
    */
-  data object StarterPack : Screen("starter_pack/{$THING_ID}") {
-    fun createRoute(thingId: String) = "starter_pack/$thingId"
+  data object StarterPack : Screen("starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}") {
+    const val MODE_STARTER = "starter"
+    const val MODE_SUGGEST = "suggest"
+
+    fun createRoute(thingId: String, mode: String = MODE_STARTER) =
+      if (mode == MODE_STARTER) "starter_pack/$thingId" else "starter_pack/$thingId?$SUGGESTIONS_MODE=$mode"
   }
 
   data object EnterInviteCode : Screen("enter_invite_code")
