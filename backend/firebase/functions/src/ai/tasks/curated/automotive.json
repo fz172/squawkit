@@ -110,21 +110,6 @@
       "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
-    },
-    {
-      "title": "Chain lube & adjustment",
-      "description": "Motorcycles with a chain final drive. Sooner after rain.",
-      "componentSlotKey": "",
-      "rules": [
-        {
-          "kind": "meter",
-          "meterKey": "odometer",
-          "interval": 500
-        }
-      ],
-      "preselect": false,
-      "sourceKind": "common_practice",
-      "citation": ""
     }
   ]
 }
