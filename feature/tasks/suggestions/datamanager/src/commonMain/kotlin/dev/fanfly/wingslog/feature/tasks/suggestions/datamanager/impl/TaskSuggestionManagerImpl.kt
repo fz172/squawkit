@@ -49,14 +49,20 @@ class TaskSuggestionManagerImpl(
   override suspend fun eligibility(thingId: String): AiEligibility =
     client.eligibility(KIND, ThingId(value_ = thingId), UserId(value_ = hostUidOf(thingId)), withDocuments = false)
 
-  override suspend fun start(thingId: String, entryPoint: String): AiStartResult {
+  override suspend fun start(thingId: String, entryPoint: String, curatedOnly: Boolean): AiStartResult {
     val hostUid = hostUidOf(thingId)
     // A Thing made seconds ago on this device may not be on the server yet, and the server refuses
     // one it cannot find as not_member (§5.3). After the wait the server decides either way.
     if (!syncObserver.awaitSynced(CollectionKind.Thing, EntityScope.userRoot(hostUid), thingId, SYNC_WAIT)) {
       logger.w { "Starting suggestions before the Thing is confirmed on the server" }
     }
-    val request = contextBuilder.build(thingId, entryPoint)
+    val built = contextBuilder.build(thingId, entryPoint)
+    // The curated list is fitted to the Thing's slots, meters and tasks (§6.8), never its logs.
+    val request = if (curatedOnly) {
+      built.copy(curated_only = true, context = built.context?.copy(logs = emptyList(), logs_truncated = false))
+    } else {
+      built
+    }
     return client.start(KIND, request.encodeByteString())
   }
 

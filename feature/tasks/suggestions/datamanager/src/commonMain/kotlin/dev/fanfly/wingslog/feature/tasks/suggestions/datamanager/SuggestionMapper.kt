@@ -68,10 +68,12 @@ class SuggestionMapper(
       force_due_meter = suggestion.first_due?.takeIf { suggestion.is_one_time }?.meter,
       attachments = documents.filter { sourceDocument.isNotEmpty() && it.id == sourceDocument },
       origin = TaskOrigin(
-        kind = if (sourceDocument.isNotEmpty()) {
-          TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT
-        } else {
-          TaskOriginKind.TASK_ORIGIN_KIND_AI_THING
+        // The server says where each suggestion came from (design §6.8): PRE_CURATED for a curated
+        // one. A server from before origin_kind sent only the model's.
+        kind = when {
+          suggestion.origin_kind != TaskOriginKind.TASK_ORIGIN_KIND_UNSPECIFIED -> suggestion.origin_kind
+          sourceDocument.isNotEmpty() -> TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT
+          else -> TaskOriginKind.TASK_ORIGIN_KIND_AI_THING
         },
         source_kind = suggestion.source_kind,
         citation = suggestion.citation,
