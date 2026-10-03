@@ -176,7 +176,11 @@ export async function handleAiJob(ref: AiJobRef, deps: AiWorkerDeps = defaultDep
     if (jobSnap.exists) {
       tx.update(jobRef, {
         status: finish.status,
-        result: finish.result == null ? null : Buffer.from(finish.result).toString("base64"),
+        // A failed run keeps the result it was written with: a task job's curated suggestions
+        // (design §6.8), which the app still shows under the failure.
+        ...(finish.status === AiJobStatus.AI_JOB_STATUS_FAILED
+          ? {}
+          : { result: finish.result == null ? null : Buffer.from(finish.result).toString("base64") }),
         error: finish.error,
         stage: null,
         stageArg: null,
