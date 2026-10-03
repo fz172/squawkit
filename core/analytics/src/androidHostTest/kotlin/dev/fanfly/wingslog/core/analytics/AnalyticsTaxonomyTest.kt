@@ -230,6 +230,7 @@ class AnalyticsTaxonomyTest {
       TaskSuggestionsShown(templateId = "airplane", curatedCount = 6, aiCount = 4, latencySeconds = 95),
       TaskSuggestionsAccepted(templateId = "airplane", curatedCount = 2, aiCount = 3),
       TaskSuggestionsFailed(templateId = "airplane", reason = "unavailable"),
+      TaskOriginEdited(templateId = "airplane", originKind = "ai_thing", fieldGroup = "schedule"),
       TaskCompleted(templateId = "airplane"),
       DefectCreated(templateId = "airplane"),
       LogCreated(templateId = "airplane"),

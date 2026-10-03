@@ -450,11 +450,16 @@ class TaskViewModel(
           // task's origin.
           origin = storedTask(cardId)?.origin,
         )
+        val before = storedTask(cardId)
         inspectionDataManager.updateTask(
           thingId,
           updatedCard
         )
-          .onSuccess { onSuccess() }
+          .onSuccess {
+            before?.let { originEditOf(currentThingTemplate.templateId, it, updatedCard) }
+              ?.let { analytics.log(it) }
+            onSuccess()
+          }
       } finally {
         _isSaving.value = false
       }
