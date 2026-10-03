@@ -10,6 +10,15 @@
   <string name="starter_pack_added"><xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g> added</string>
   <string name="starter_pack_suggest">Suggest more <xliff:g example="inspections">%1$s</xliff:g></string>
   <string name="starter_pack_suggesting">Tailoring these to your <xliff:g example="plane">%1$s</xliff:g>…</string>
+  <!-- The model run’s progress (PRD R19), one per pipeline stage key. -->
+  <string name="starter_pack_stage_waiting">Getting ready…</string>
+  <string name="starter_pack_stage_recalling">Looking up the schedule for this <xliff:g example="plane">%1$s</xliff:g>…</string>
+  <string name="starter_pack_stage_reading">Reading <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
+  <string name="starter_pack_stage_finding">Finding the schedule in <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
+  <string name="starter_pack_stage_extracting">Reading the schedule in <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
+  <string name="starter_pack_stage_validating">Checking the suggestions…</string>
+  <string name="starter_pack_stage_other">Preparing suggestions…</string>
+  <string name="starter_pack_stage_hint">This can take a few minutes. You can leave and come back.</string>
   <string name="starter_rule_every_days">Every <xliff:g example="30">%1$d</xliff:g> days</string>
   <string name="starter_rule_every_month">Every month</string>
   <string name="starter_rule_every_months">Every <xliff:g example="6">%1$d</xliff:g> months</string>
