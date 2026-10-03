@@ -152,8 +152,10 @@
     </header>
 
     <p class="lede">
-        SquawkIt is an aircraft maintenance logbook and fleet-management app for pilots,
-        owners, and mechanics. This page has two parts. The <strong>Terms of Use</strong>
+        SquawkIt is a maintenance logbook for anything worth maintaining: an aircraft, car,
+        motorcycle, bike, boat, home, or something of your own. We call each of these a
+        <em>thing</em> below. It is for owners, pilots, mechanics, and the people they share
+        a thing with. This page has two parts. The <strong>Terms of Use</strong>
         (sections 1–8) set out the agreement between you and SquawkIt, including how the
         SquawkIt Pro subscription works. The <strong>Privacy Policy</strong> (sections 9–20)
         explains what data we hold, how it is stored and synced, what happens when you export
@@ -179,7 +181,7 @@
     <h2>2. Using SquawkIt</h2>
     <p>
         We grant you a personal, non-exclusive, non-transferable, revocable licence to use the
-        app and the service for keeping and managing aircraft maintenance records. You must be
+        app and the service for keeping and managing maintenance records. You must be
         at least 13 years old (or the age of digital consent where you live). You are
         responsible for keeping your sign-in method secure and for all activity under your
         account.
@@ -191,7 +193,7 @@
         us only the permission needed to store, sync, back up, export, and deliver that content
         to you and to the people you choose to share it with, as described in the Privacy
         Policy. You are responsible for having the right to upload and share what you add,
-        including anything you share with other members of a shared aircraft.
+        including anything you share with other members of a shared thing.
     </p>
 
     <h2>4. Acceptable use</h2>
@@ -232,11 +234,12 @@
 
     <h2>6. Certified records and disclaimers</h2>
     <p>
-        SquawkIt is a personal convenience tool. It does not replace the official aircraft
-        logbooks required by your aviation authority — keep your certified records as you
-        always have. Treat your exports as backups and snapshots, not as the legal source of
-        truth. You remain responsible for every airworthiness and maintenance decision and for
-        complying with the regulations that apply to your aircraft.
+        SquawkIt is a personal convenience tool. It does not replace any official records you
+        are required to keep, such as the aircraft logbooks your aviation authority requires.
+        Keep those records as you always have. Treat your exports as backups and snapshots, not
+        as the legal source of truth. You remain responsible for every maintenance decision
+        (for an aircraft, every airworthiness decision) and for complying with the regulations
+        that apply to what you maintain.
     </p>
     <p>
         SquawkIt is provided “as is” and “as available”. To the fullest extent permitted by
@@ -248,7 +251,8 @@
     <h2>7. Limitation of liability</h2>
     <p>
         To the fullest extent permitted by law, we are not liable for any indirect, incidental,
-        consequential, or special damages, or for any loss of data, aircraft downtime, or
+        consequential, or special damages, or for any loss of data, downtime of anything you
+        maintain, or
         regulatory penalty arising from your use of SquawkIt. Our total liability for any claim
         is limited to the amount you paid us for SquawkIt Pro in the twelve months before the
         claim. Nothing in these terms limits rights you have under consumer law that cannot be
@@ -272,10 +276,10 @@
             identifier — from whichever sign-in method you choose (section 10). We do not
             receive or store your Google/Apple password.
         </li>
-        <li><strong>Your content.</strong> The records you create in the app: aircraft and
-            fleet details, maintenance logs, inspections, service bulletins, airworthiness
-            directives, squawks, tasks, technician sign-offs, and any files, photos, or links
-            you attach to them.
+        <li><strong>Your content.</strong> The records you create in the app: the details of
+            each thing you keep in SquawkIt, maintenance logs, inspections, tasks, squawks
+            (reported issues), service bulletins and airworthiness directives, technician
+            sign-offs, and any files, photos, or links you attach to them.
         </li>
         <li><strong>Billing data.</strong> If you subscribe to SquawkIt Pro, subscription and
             purchase status from the app store and our subscription-management provider —
@@ -348,7 +352,7 @@
     <p>
         SquawkIt is <strong>local-first</strong>. Your records are written to a database on
         your own device first, so the app works fully offline and your data is always
-        available — even with no signal in the hangar.
+        available — even with no signal in the hangar, the garage, or the boatyard.
     </p>
     <p>
         When you are signed in and connected, a background sync process copies your records to
@@ -373,15 +377,15 @@
     <p>
         <strong>Urgency alerts stay on your device.</strong> When SquawkIt notifies you that an
         inspection has gone overdue, that a task is due soon, or that a squawk has been raised to
-        AOG, that decision is made on your device from the records already stored there, and the
-        notification is posted by your device. No server watches your records to produce these
-        alerts, and nothing about the aircraft, task, or squawk is sent anywhere in order to show
+        its top priority (AOG, for an aircraft), that decision is made on your device from the
+        records already stored there, and the notification is posted by your device. No server watches your records to produce these
+        alerts, and nothing about the thing, task, or squawk is sent anywhere in order to show
         one. They work with no account, no cloud sync, and no network connection. The one exception
-        is described next, and it applies only to aircraft you share with someone else.
+        is described next, and it applies only to things you share with someone else.
     </p>
 
     <p>
-        <strong>Shared-aircraft notifications use push services.</strong> If you share an aircraft,
+        <strong>Shared-thing notifications use push services.</strong> If you share a thing,
         SquawkIt can tell you when another member changes something on it. Your device may be asleep
         when that happens, so unlike the alerts above these are produced by our backend and delivered
         through Apple Push Notification service and Firebase Cloud Messaging. Two consequences worth
@@ -394,20 +398,21 @@
             delete your account.
         </li>
         <li>
-            The message we hand to the push service carries the aircraft tail number, the other
-            member's display name, how many changes they made, and — when a squawk is raised to high
-            priority or AOG — that squawk's title. Apart from AI task suggestions, which you ask for
-            (section 15), this is the only place SquawkIt passes your content to a service outside
-            Firebase, which is why these messages are kept short and
-            deliberately carry no attachments, certificate details, maintenance log contents, or
-            record descriptions.
+            The message we hand to the push service carries the thing's name (its tail number,
+            for an aircraft), the other member's display name, what kind of record changed and
+            how (created, updated or deleted), and that record's own title: a squawk's or task's
+            title, or a maintenance log's work description. When a squawk's priority is raised,
+            it carries the old and new priority too. Apart from AI task suggestions, which you
+            ask for (section 15), this is the only place SquawkIt passes your content to a
+            service outside Firebase, which is why these messages are kept short and
+            deliberately carry no attachments, certificate details, costs, or comments.
         </li>
     </ul>
     <p>
-        You control this in <em>Settings &rarr; Notifications</em>, by class (aircraft, squawks,
-        tasks, logbook, and the urgency classes) or with the master switch, and separately per
-        device. Switching a class off stops the message being sent at all, not merely hidden on
-        arrival. Aircraft you have not shared with anyone generate no push notifications of this kind;
+        You control this in <em>Settings &rarr; Notifications</em>, by type (<em>Priority &amp;
+        due updates</em> and <em>Collaboration</em>) or with <em>All notifications</em>.
+        Switching a type off stops the message being sent at all, not merely hidden on
+        arrival. Things you have not shared with anyone generate no push notifications of this kind;
         the only push it can get is the one telling you that suggestions you asked for are ready
         (section 15).
     </p>
@@ -415,7 +420,7 @@
     <h2>12. Data exports</h2>
     <p>
         You can export your records on demand from <em>Settings → Export logs</em>, for a
-        single aircraft or your whole fleet, optionally filtered by date range. An export is a
+        single thing or all of them, optionally filtered by date range. An export is a
         point-in-time snapshot bundled as an archive containing spreadsheet files (CSV / XLSX),
         a PDF report, and any attachment files referenced by the exported records.
     </p>
@@ -433,9 +438,9 @@
         you no longer need from your export history.
     </div>
     <p>
-        Exports exist so you keep ownership of your records — for a pre-buy, an annual, a
-        handoff to an A&amp;P/IA, or simply a personal backup that survives any future
-        migration.
+        Exports exist so you keep ownership of your records — for a sale or a pre-buy, an
+        annual or a service visit, a handoff to a mechanic (an A&amp;P or IA, for an
+        aircraft), or simply a personal backup that survives any future migration.
     </p>
 
     <h2>13. Subscription data (SquawkIt Pro)</h2>
@@ -471,16 +476,15 @@
     <p>
         Diagnostics about urgency alerts (section 11) are counted only for signed-in accounts with
         cloud sync switched on, and record only which mechanism delivered the alert and whether the
-        fleet includes a shared aircraft — never the aircraft, the record, or the alert text. If you
+        things you keep include a shared one — never the thing, the record, or the alert text. If you
         use SquawkIt without an account, or with cloud sync off, these alerts are not reported at
         all, so nothing about them leaves your device.
     </p>
 
     <h2 id="ai-suggestions">15. AI task suggestions</h2>
     <p>
-        SquawkIt can suggest maintenance tasks for anything you track in it: an aircraft, car,
-        motorcycle, bike, boat, home, or a thing of your own kind (a “thing” below). Some
-        suggestions come from a list we write and keep for each kind of thing. Others are drafted
+        SquawkIt can suggest maintenance tasks for any thing you keep in it. Some suggestions
+        come from a list we write and keep for each kind of thing. Others are drafted
         by an AI model, and
         <strong>only when you ask</strong>, by tapping <em>Suggest tasks</em> or <em>Suggest
         more</em>. Suggestions need a signed-in account and a connection; nothing is sent for a
