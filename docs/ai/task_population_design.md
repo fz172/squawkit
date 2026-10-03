@@ -563,9 +563,10 @@ verbatim check and the citation check need text regardless of whether the provid
 natively: the PDF text layer via `pdfjs-dist`; for image-only pages and photos, Document AI's
 Enterprise OCR (Mistral OCR was dropped from the bake-off on 2026-09-28; the bake-off measures
 Document AI's quality and time on the scanned case, §12). Limits: 3 documents per run (decided
-2026-10-01; `maxDocumentsPerRun` in `ai_config`), each within the attachment pipeline's existing
-file-size cap, checked at pick time; over-limit fails with
-`document_too_large` before any model spend. There is **no page limit** (decided 2026-09-28): the
+2026-10-01; `maxDocumentsPerRun` in `ai_config`), each at most `maxDocumentBytes` (`ai_config`,
+default 25 MB; decided 2026-10-03, since the attachment pipeline's 5 MB cap would refuse the Sling
+TSi manual at 13.7 MB). Regular attachments keep their 5 MB. Checked at pick time; over-limit
+fails with `document_too_large` before any model spend. There is **no page limit** (decided 2026-09-28): the
 locate stage (§6.2) sends only the schedule pages onward, so a long manual costs more to read, not
 more to extract from.
 
