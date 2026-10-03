@@ -108,15 +108,21 @@ class TaskSuggestionManagerImpl(
 
     val logger = Logger.withTag("TaskSuggestionManager")
 
-    fun AiJob.toRun(): SuggestionRun = when (status) {
-      AiJobStatus.AI_JOB_STATUS_SUCCEEDED -> {
-        val result = result?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
-        if (result != null) SuggestionRun.Ready(id, result) else SuggestionRun.Failed(id, AiErrorCode.UNKNOWN)
+    fun AiJob.toRun(): SuggestionRun {
+      val decoded = result?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
+      return when (status) {
+        AiJobStatus.AI_JOB_STATUS_SUCCEEDED ->
+          if (decoded != null) {
+            SuggestionRun.Ready(id, decoded, aiSkipped)
+          } else {
+            SuggestionRun.Failed(id, AiErrorCode.UNKNOWN)
+          }
+        AiJobStatus.AI_JOB_STATUS_EMPTY -> SuggestionRun.Empty(id, decoded)
+        AiJobStatus.AI_JOB_STATUS_FAILED -> SuggestionRun.Failed(id, error ?: AiErrorCode.UNKNOWN, decoded)
+        // QUEUED, RUNNING, and a status this build does not know: still working, as far as it can
+        // tell, with the curated suggestions it started with.
+        else -> SuggestionRun.Working(id, stage, stageArg, decoded)
       }
-      AiJobStatus.AI_JOB_STATUS_EMPTY -> SuggestionRun.Empty(id)
-      AiJobStatus.AI_JOB_STATUS_FAILED -> SuggestionRun.Failed(id, error ?: AiErrorCode.UNKNOWN)
-      // QUEUED, RUNNING, and a status this build does not know: still working, as far as it can tell.
-      else -> SuggestionRun.Working(id, stage, stageArg)
     }
   }
 }
