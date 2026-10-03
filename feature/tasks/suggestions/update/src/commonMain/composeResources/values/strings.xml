@@ -7,6 +7,7 @@
   <string name="starter_pack_add">Add <xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g></string>
   <string name="starter_pack_skip">Skip</string>
   <string name="starter_pack_added"><xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g> added</string>
+  <string name="starter_rule_every_days">Every <xliff:g example="30">%1$d</xliff:g> days</string>
   <string name="starter_rule_every_month">Every month</string>
   <string name="starter_rule_every_months">Every <xliff:g example="6">%1$d</xliff:g> months</string>
   <string name="starter_rule_every_year">Every year</string>

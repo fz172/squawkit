@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.toSuggestion
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,7 +56,9 @@ class StarterPackViewModel(
         .first()
       val template = thing.template
       val items = template?.starter_tasks.orEmpty()
-        .map { StarterPackItem(task = it, selected = it.default_selected) }
+        .mapIndexed { index, task ->
+          StarterPackItem(suggestion = task.toSuggestion(index), selected = task.default_selected, starterTask = task)
+        }
       _uiState.update {
         it.copy(
           isLoading = false,
@@ -98,15 +101,15 @@ class StarterPackViewModel(
       val createdAt = toWireInstant(now.epochSeconds, now.nanosecondsOfSecond)
       // One write per card, and a failure drops only its own card: the pack is a convenience, not
       // a transaction, and a half-written pack is still a better Tasks tab than an empty one.
-      val written = chosen.count { item ->
+      val written = chosen.mapNotNull { it.starterTask }.count { task ->
         taskDataManager.addTask(
           thingId,
-          item.task.toMaintenanceTask(
+          task.toMaintenanceTask(
             state.template,
             createdAt
           )
         )
-          .onFailure { logger.w(it) { "Starter task '${item.task.title}' was not written" } }
+          .onFailure { logger.w(it) { "Starter task '${task.title}' was not written" } }
           .isSuccess
       }
       if (written > 0) {
