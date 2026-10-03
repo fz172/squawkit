@@ -624,8 +624,9 @@ Settled 2026-09-27.
 
 - **Limit values** (R49): the cost ceilings, set from phase 0's cost data. The daily run limit is
   settled (decision 16), and so is the per-run document cap: 3 (2026-10-01).
-- **Provider data terms.** Confirm Vertex AI's retention and training terms for Gemini in this use,
-  and state them in the privacy policy before phase C ships.
+- ~~**Provider data terms.**~~ Settled 2026-10-03 (T19): stated in the privacy policy, section
+  15. Vertex AI does not train on the data; Gemini may keep requests in memory for up to 24 hours,
+  and Google may log a request its safety systems flag as abuse for up to 90 days.
 - **Log history cap** (R12): the size and recency cut.
 
 ## 13. Later
