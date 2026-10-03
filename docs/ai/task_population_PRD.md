@@ -364,8 +364,10 @@ Three mechanisms, kept separate, per
   - `task_origin_edited`: an AI-origin task was edited later.
 
   `StarterTasksOffered` / `StarterTasksAccepted` keep firing for the static items.
-- **R51 (P0). Offline.** The action is visible, disabled, and labelled as needing a connection.
-  Nothing about the feature blocks Thing creation, the static pack or adding a task by hand.
+- **R51 (P0). Offline.** The action stays visible and enabled offline (revised 2026-10-02: no
+  connectivity check up front). When a suggestion call fails for want of a connection, the workflow
+  shows a "No internet connection" snackbar. Nothing about the feature blocks Thing creation, the
+  static pack or adding a task by hand.
 - **R52 (P0). Lexicon.** Every string naming a task, inspection or component resolves from the
   lexicon. The source labels are new `strings.xml` entries shared by all templates.
 

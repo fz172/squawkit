@@ -32,6 +32,7 @@ kotlin {
       api(project(":feature:tasks:model"))
       implementation(project(":core:model"))
       implementation(project(":core:storage"))
+      implementation(project(":core:appinfo"))
       implementation(project(":core:template"))
       implementation(project(":core:datetime"))
       implementation(project(":feature:tasks:datamanager"))
@@ -39,6 +40,7 @@ kotlin {
       implementation(project(":feature:fleet:datamanager"))
       implementation(libs.koin.core)
       implementation(libs.kermit)
+      implementation(libs.gitlive.firebase.auth)
       implementation(libs.kotlinx.datetime)
       implementation(libs.kotlinx.coroutines.core)
     }
