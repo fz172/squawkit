@@ -1155,3 +1155,6 @@ feature/tasks/suggestions/update	starter_pack_skipped_until	AI suggestions for t
 feature/tasks/suggestions/update	starter_pack_not_enough	Not enough to go on for this %1$s. Add details, such as its make and model, for better suggestions.
 feature/tasks/suggestions/update	starter_pack_add_details	Add details
 feature/tasks/suggestions/update	starter_pack_already_tracked	Already tracked
+feature/tasks/suggestions/update	starter_pack_first_due_date	First due %1$s
+feature/tasks/suggestions/update	starter_pack_first_due_meter	First due at %1$s %2$s
+feature/tasks/suggestions/update	starter_pack_first_due_either	First due %1$s or at %2$s %3$s, whichever comes first

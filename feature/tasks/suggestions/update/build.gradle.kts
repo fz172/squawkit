@@ -35,6 +35,7 @@ kotlin {
       implementation(project(":feature:tasks:suggestions:model"))
       implementation(project(":feature:tasks:suggestions:datamanager"))
       implementation(project(":feature:tasks:datamanager"))
+      implementation(project(":feature:tasks:model"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":core:template"))
       implementation(project(":core:nav"))
