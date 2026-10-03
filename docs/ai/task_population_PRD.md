@@ -258,7 +258,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
   owner's own regulation keeps its interval (design §6.4). The app merges nothing itself. (Revised
   2026-10-02: the app used to send its starter pack for the server to merge against.)
 - **R26 (P0). Each card shows** the title, the schedule in plain words and lexicon terms ("Every 100
-  h or 12 months"), first-due (R29), and a source chip. Tapping the chip shows the full citation and
+  h or 12 months"), and a source chip. (No first-due line, revised 2026-10-03: the task list shows
+  it once the task is added.) Tapping the chip shows the full citation and
   the one-line rationale.
 - **R27 (P0). Nothing is pre-selected** (revised 2026-10-03). Every card, curated or AI, starts
   unchecked, and the user checks what they need. The button just reads "Add", disabled until
@@ -268,7 +269,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
   changed before it is accepted, using the normal task form pre-filled. Saving there counts as
   accepted-with-edits.
 - **R29 (P0). First due.** Computed on the **client** by the existing due engine, not by the model,
-  from when the task is accepted, as for any new task. **No suggestion is tied to a log** (decided
+  from when the task is accepted, as for any new task. It is not previewed on the suggestion card
+  (2026-10-03). **No suggestion is tied to a log** (decided
   2026-10-02). The log summaries go to the model as context and may shape what it suggests, but a
   suggestion never names a log as when it was last done, and no new task is seeded with a
   `ForceCompliedStatus` from one. The server strips any last-done evidence from the result before it

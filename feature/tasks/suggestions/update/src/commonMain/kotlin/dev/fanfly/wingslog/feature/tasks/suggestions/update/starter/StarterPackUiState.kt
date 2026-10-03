@@ -3,14 +3,10 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
-
-/** A card's first due, by its suggestion id. */
-data class CardFirstDue(val suggestionId: String, val due: DueMetadata)
 
 data class StarterPackUiState(
   /**
@@ -44,8 +40,6 @@ data class StarterPackUiState(
   /** Set once the step is over, either way; how many were written says which way. */
   val isDone: Boolean = false,
   val acceptedCount: Int = 0,
-  /** When each server card would first fall due if added now, from the due engine (PRD R29). */
-  val firstDues: List<CardFirstDue> = emptyList(),
   /** Why the screen closed with nothing to show, for the task tab to say (PRD R21, R51). */
   val closingError: AiErrorCode? = null,
 ) {

@@ -232,7 +232,6 @@ class StarterPackViewModel(
           counted = true
           offered(template, result.suggestions.size)
         }
-        _uiState.update { it.copy(firstDues = firstDuesOf(result)) }
       }
   }
 
@@ -256,22 +255,6 @@ class StarterPackViewModel(
   fun onNoticeShown() {
     _uiState.update { it.copy(notice = null) }
   }
-
-  /**
-   * The due engine's answer for each card the user could add (R29): mapped exactly as accepting
-   * maps it, dated from now, so the line cannot disagree with the task it becomes. Already-tracked
-   * cards are not added, so they get none.
-   */
-  private suspend fun firstDuesOf(result: SuggestTasksResult): List<CardFirstDue> =
-    result.suggestions
-      .filter { it.matches_existing_task_id?.value_.isNullOrEmpty() }
-      .mapNotNull { suggestion ->
-        val id = suggestion.suggestion_id?.value_ ?: return@mapNotNull null
-        runCatching { suggestionManager.firstDue(thingId, suggestion) }
-          .onFailure { logger.w(it) { "No first due for '${suggestion.title}'" } }
-          .getOrNull()
-          ?.let { CardFirstDue(id, it) }
-      }
 
   /** *Add details* after an empty run: the run is done with; the screen gives way to the Thing's edit form. */
   fun onAddDetails() {

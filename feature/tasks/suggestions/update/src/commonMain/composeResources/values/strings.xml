@@ -21,9 +21,6 @@
   <string name="starter_pack_not_enough">Not enough to go on for this <xliff:g example="plane">%1$s</xliff:g>. Add details, such as its make and model, for better suggestions.</string>
   <string name="starter_pack_add_details">Add details</string>
   <string name="starter_pack_already_tracked">Already tracked</string>
-  <string name="starter_pack_first_due_date">First due <xliff:g example="10/03/2027">%1$s</xliff:g></string>
-  <string name="starter_pack_first_due_meter">First due at <xliff:g example="512">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
-  <string name="starter_pack_first_due_either">First due <xliff:g example="10/03/2027">%1$s</xliff:g> or at <xliff:g example="512">%2$s</xliff:g> <xliff:g example="hrs">%3$s</xliff:g>, whichever comes first</string>
   <!-- Where a suggestion comes from (PRD R17, R26) and the AI disclosure (R31). -->
   <string name="suggestion_source_document">From your document</string>
   <string name="suggestion_source_manufacturer">Manufacturer schedule</string>

@@ -12,7 +12,6 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
@@ -49,7 +48,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -591,22 +589,6 @@ class StarterPackViewModelTest {
 
     assertThat(vm.uiState.value.items.map { it.isAlreadyTracked }).containsExactly(true, false).inOrder()
     assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(false, true).inOrder()
-  }
-
-  @Test
-  fun eachAddableCardGetsItsFirstDueFromTheDueEngine() = runTest(dispatcher) {
-    val tracked = curated("c0", "Annual").copy(matches_existing_task_id = MaintenanceTaskId(value_ = "task-annual"))
-    val oil = curated("c1", "Oil change")
-    serving(SuggestionRun.Ready(JOB, SuggestTasksResult(suggestions = listOf(tracked, oil))))
-    val due = DueMetadata(nextDueDate = LocalDate(2027, 4, 3))
-    coEvery { suggestions.firstDue(THING_ID, oil) } returns due
-
-    val vm = viewModel(pack, serverSource = true)
-    advanceUntilIdle()
-
-    // The tracked card is never added, so the engine is not asked about it.
-    assertThat(vm.uiState.value.firstDues).containsExactly(CardFirstDue("c1", due))
-    coVerify(exactly = 0) { suggestions.firstDue(THING_ID, tracked) }
   }
 
   private fun ai(id: String, title: String) = TaskSuggestion(

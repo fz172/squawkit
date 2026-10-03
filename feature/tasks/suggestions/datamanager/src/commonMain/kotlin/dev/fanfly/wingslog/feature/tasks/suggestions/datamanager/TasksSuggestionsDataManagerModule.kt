@@ -8,7 +8,6 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.impl.TaskSuggestionManagerImpl
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.Module
@@ -41,7 +40,6 @@ val tasksSuggestionsDataManagerModule: Module = module {
       mapper = get<SuggestionMapper>(),
       fleetManager = get<FleetManager>(),
       taskDataManager = get<TaskDataManager>(),
-      taskDueManager = get<TaskDueManager>(),
       templateRegistry = get<TemplateRegistry>(),
       scopeResolver = get<ThingScopeResolver>(),
       syncObserver = get<EntitySyncObserver>(),
