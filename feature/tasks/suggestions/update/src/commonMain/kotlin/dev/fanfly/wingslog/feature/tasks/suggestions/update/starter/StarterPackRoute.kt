@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
@@ -60,6 +61,8 @@ import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
@@ -67,6 +70,7 @@ import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
@@ -92,7 +96,6 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rul
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_year
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_years
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_ai_disclosure
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The recommended tasks (PRD §4.9): per-item checkboxes, and Skip as a real button.
@@ -108,6 +111,12 @@ fun StarterPackRoute(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+  // While this screen is in front, its own run's "ready" push stays quiet (PRD R20).
+  LifecycleResumeEffect(viewModel.thingId) {
+    val hide = OnScreenTapTargets.show(NotificationTapTarget.Suggestions(viewModel.thingId))
+    onPauseOrDispose { hide() }
+  }
 
   // Back is Skip: leaving without answering is declining, and the Thing already exists.
   BackHandler(enabled = !uiState.isDone) { viewModel.onSkip() }
