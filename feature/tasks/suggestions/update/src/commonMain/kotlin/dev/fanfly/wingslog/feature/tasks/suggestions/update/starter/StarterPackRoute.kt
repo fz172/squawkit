@@ -63,7 +63,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
-import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
@@ -331,7 +330,7 @@ fun StarterPackRoute(
             )
           }
           // R31: said once, and only when the model drafted some of what is on screen.
-          if (uiState.items.any { it.suggestion.isFromAi() }) {
+          if (uiState.items.any { it.suggestion.isFromModel() }) {
             Text(
               text = stringResource(Res.string.suggestion_ai_disclosure),
               style = MaterialTheme.typography.bodySmall,
@@ -388,11 +387,6 @@ private fun DueMetadata.firstDueText(template: ThingTemplate?): String? {
     else -> null
   }
 }
-
-/** Drafted by the model, from a document or the Thing (R31), rather than from the curated list. */
-private fun TaskSuggestion.isFromAi(): Boolean =
-  origin_kind == TaskOriginKind.TASK_ORIGIN_KIND_AI_THING ||
-    origin_kind == TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT
 
 /**
  * "Already tracked · You track this every 12 months; the manual says 6" (PRD R24): the server's
