@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.model
 
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.StarterTask
 
 /** One card on the suggestions screen. */
@@ -14,6 +15,11 @@ data class StarterPackItem(
    * suggestion from the server.
    */
   val starterTask: StarterTask? = null,
+  /**
+   * The task as the user changed it before adding it (PRD R28), from the task form's draft mode;
+   * null when it is to be written as suggested.
+   */
+  val edited: MaintenanceTask? = null,
 ) {
   /** The Thing already has this task (PRD R24): shown, never checkable. */
   val isAlreadyTracked: Boolean get() = !suggestion.matches_existing_task_id?.value_.isNullOrEmpty()

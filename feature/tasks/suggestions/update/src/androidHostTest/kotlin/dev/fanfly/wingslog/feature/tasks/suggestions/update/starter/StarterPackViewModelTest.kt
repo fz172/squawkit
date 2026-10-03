@@ -13,6 +13,8 @@ import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
+import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
@@ -27,6 +29,7 @@ import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.task.SeasonalRule
 import dev.fanfly.wingslog.task.StarterTask
+import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.Thing
@@ -741,6 +744,82 @@ class StarterPackViewModelTest {
     advanceUntilIdle()
 
     coVerify { suggestions.start(THING_ID, Screen.StarterPack.MODE_STARTER, curatedOnly = true) }
+  }
+
+  // Changing a suggestion before adding it (PRD R28, T18).
+
+  @Test
+  fun aCardOpensInTheFormAsAcceptingWouldWriteItAndComesBackEditedAndChecked() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    val mapped = MaintenanceTask(title = "Annual", origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED))
+    coEvery { suggestions.draftOf(THING_ID, curatedList.suggestions[0], any()) } returns mapped
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    val arg = vm.draftFor(0)!!
+    assertThat(taskFromDraftArg(arg)).isEqualTo(mapped)
+
+    val edited = mapped.copy(title = "Annual inspection (owner-assisted)")
+    vm.onEdited(edited.toDraftArg())
+
+    val card = vm.uiState.value.items[0]
+    assertThat(card.edited).isEqualTo(edited)
+    assertThat(card.selected).isTrue()
+    // Editing again starts from the edit, not from the suggestion.
+    assertThat(taskFromDraftArg(vm.draftFor(0)!!)).isEqualTo(edited)
+  }
+
+  @Test
+  fun anAppPackCardAndAnAlreadyTrackedOneCannotBeEdited() = runTest(dispatcher) {
+    val packVm = viewModel(pack)
+    advanceUntilIdle()
+    assertThat(packVm.draftFor(0)).isNull()
+
+    val tracked = curated("c0", "Annual").copy(matches_existing_task_id = MaintenanceTaskId(value_ = "t"))
+    serving(SuggestionRun.Ready(JOB, SuggestTasksResult(suggestions = listOf(tracked))))
+    val serverVm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    assertThat(serverVm.draftFor(0)).isNull()
+  }
+
+  @Test
+  fun acceptingWritesTheEditAndCountsIt() = runTest(dispatcher) {
+    val ready = SuggestionRun.Ready(JOB, curatedList)
+    serving(ready)
+    val mapped = MaintenanceTask(title = "Annual")
+    coEvery { suggestions.draftOf(THING_ID, any(), any()) } returns mapped
+    val chosen = slot<List<AcceptedSuggestion>>()
+    coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns 1
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    vm.draftFor(0)
+    vm.onEdited(mapped.copy(title = "Annual, owner-assisted").toDraftArg())
+
+    vm.onAccept()
+    advanceUntilIdle()
+
+    assertThat(chosen.captured.single().edited?.title).isEqualTo("Annual, owner-assisted")
+    assertThat(analytics.paramsFor("task_suggestions_accepted").single()).containsEntry("edited_count", "1")
+  }
+
+  @Test
+  fun anEditSurvivesTheModelsAnswerReplacingTheCuratedList() = runTest(dispatcher) {
+    val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+    coEvery { suggestions.start(THING_ID, any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    coEvery { suggestions.draftOf(THING_ID, any(), any()) } returns MaintenanceTask(title = "Annual")
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+    advanceUntilIdle()
+    vm.draftFor(0)
+    vm.onEdited(MaintenanceTask(title = "Annual, edited").toDraftArg())
+
+    runs.emit(SuggestionRun.Ready(JOB, SuggestTasksResult(suggestions = listOf(ai("s1", "Tire rotation")) + curatedList.suggestions)))
+    advanceUntilIdle()
+
+    val annual = vm.uiState.value.items.single { it.suggestion.title == "Annual" }
+    assertThat(annual.edited?.title).isEqualTo("Annual, edited")
+    assertThat(annual.selected).isTrue()
   }
 
   private companion object {
