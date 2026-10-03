@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.MaintenanceTask
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -40,6 +41,13 @@ interface TaskSuggestionManager {
    * No log counts as its last compliance, so the schedule runs from now.
    */
   suspend fun firstDue(thingId: String, suggestion: TaskSuggestion): DueMetadata
+
+  /**
+   * [suggestion] as the task [accept] would write, for the task form to start from when the user
+   * changes it first (PRD R28). The form hands back the edited task, which [accept] then writes as
+   * it is.
+   */
+  suspend fun draftOf(thingId: String, suggestion: TaskSuggestion, generationVersion: String): MaintenanceTask
 
   /**
    * Writes [chosen] as tasks, one write each like the starter pack (a failure drops only its own

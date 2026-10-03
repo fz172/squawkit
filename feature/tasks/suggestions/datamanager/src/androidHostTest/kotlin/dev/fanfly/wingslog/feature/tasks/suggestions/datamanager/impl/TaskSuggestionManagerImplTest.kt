@@ -249,6 +249,15 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
+  fun `a draft is the suggestion as accepting would write it`() = runTest {
+    val draft = manager.draftOf(THING, suggestion, generationVersion = "tasks-5")
+
+    assertThat(draft.title).isEqualTo("Replace spark plugs")
+    assertThat(draft.origin?.generation_version).isEqualTo("tasks-5")
+    assertThat(draft.id).isEmpty() // addTask assigns it
+  }
+
+  @Test
   fun `dismissing closes the run`() = runTest {
     manager.dismiss(JOB)
     coVerify(exactly = 1) { client.close(JOB) }

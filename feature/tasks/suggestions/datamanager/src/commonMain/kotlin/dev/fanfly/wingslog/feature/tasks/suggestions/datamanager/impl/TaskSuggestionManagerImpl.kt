@@ -15,8 +15,8 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMapper
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
@@ -27,6 +27,7 @@ import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
@@ -76,6 +77,12 @@ class TaskSuggestionManagerImpl(
     val tasks = taskDataManager.observeTasks(thingId).first()
     return taskDueManager.computeNextDue(task, logs = emptyList(), allCards = tasks)
   }
+
+  override suspend fun draftOf(
+    thingId: String,
+    suggestion: TaskSuggestion,
+    generationVersion: String,
+  ): MaintenanceTask = mapper.toTask(suggestion, templateOf(thingId), generationVersion)
 
   override suspend fun accept(
     thingId: String,
