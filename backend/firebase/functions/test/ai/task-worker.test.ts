@@ -24,7 +24,8 @@ import {
   SuggestTasksResult,
 } from "../../src/generated/proto/rpc/suggest_tasks/suggest_tasks.js";
 import { thingShareDocPath } from "../../src/sharing/sharingModels.js";
-import { TaskSourceKind } from "../../src/generated/proto/task/task_origin.js";
+import { TaskOriginKind, TaskSourceKind } from "../../src/generated/proto/task/task_origin.js";
+import { curatedListFor } from "../../src/ai/tasks/curated.js";
 import { adminDb, req } from "../helpers.js";
 
 // T14: a task-suggestion job without documents, from startAiJob through the worker and the real
@@ -75,7 +76,7 @@ const TAILORED: TailorOutput = {
 };
 
 /** Answers recall and tailor by schema, records which model it was asked as, and what it cost. */
-function scriptedProviders() {
+function scriptedProviders(recalled: RecallOutput = RECALLED, tailored: TailorOutput = TAILORED) {
   const asked: Array<{ id: string; stage: "recall" | "tailor" }> = [];
   const providerFor = (id: string): AiProvider => ({
     id,
@@ -83,7 +84,7 @@ function scriptedProviders() {
       const stage = request.schema === RECALL_SCHEMA ? "recall" : request.schema === TAILOR_SCHEMA ? "tailor" : null;
       if (stage == null) throw new Error("unexpected stage");
       asked.push({ id, stage });
-      return { json: stage === "recall" ? RECALLED : TAILORED, usage: { inputTokens: 1_000, outputTokens: 100, costMicros: 700 } };
+      return { json: stage === "recall" ? recalled : tailored, usage: { inputTokens: 1_000, outputTokens: 100, costMicros: 700 } };
     },
   });
   return { asked, providerFor };
@@ -139,6 +140,10 @@ async function runJob(ids: Ids, providerFor: (id: string) => AiProvider, make?: 
   return { callerUid: ids.host, jobId };
 }
 
+function titlesOf(result: string): string[] {
+  return SuggestTasksResult.decode(Buffer.from(result, "base64")).suggestions.map((s) => s.title);
+}
+
 beforeEach(async () => {
   await adminDb.doc(AI_CONFIG_DOC_PATH).set({ ...DEFAULT_AI_CONFIG, enabled: true });
 });
@@ -154,7 +159,14 @@ describe("the task-suggestion pipeline in the worker", () => {
     expect(job).toMatchObject({ kind: KIND, status: AiJobStatus.AI_JOB_STATUS_SUCCEEDED, error: null, stage: null });
     const result = SuggestTasksResult.decode(Buffer.from(job!.result, "base64"));
     expect(result.generationVersion).toBe(GENERATION_VERSION);
-    expect(result.suggestions).toEqual([
+    // The AI's suggestion first, then the curated list it did not cover (design §6.8).
+    const curatedTitles = curatedListFor("airplane").map((c) => c.title);
+    expect(result.suggestions.map((s) => s.title)).toEqual(["Replace spark plugs", ...curatedTitles]);
+    expect(result.suggestions.map((s) => s.originKind)).toEqual([
+      TaskOriginKind.TASK_ORIGIN_KIND_AI_THING,
+      ...curatedTitles.map(() => TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED),
+    ]);
+    expect(result.suggestions.slice(0, 1)).toEqual([
       expect.objectContaining({
         suggestionId: { value: "s1" },
         title: "Replace spark plugs",
@@ -206,5 +218,33 @@ describe("the task-suggestion pipeline in the worker", () => {
     const job = (await adminDb.doc(aiJobDocPath(ref.callerUid, ref.jobId)).get()).data();
     expect(job).toMatchObject({ status: AiJobStatus.AI_JOB_STATUS_FAILED, error: { code: "provider_error" } });
     expect((await adminDb.doc(aiUsageDocPath(ids.host, ids.thing)).get()).get("lastSuccessAt")).toBeNull();
+    // The curated suggestions the job was written with stay, for the app to show under the failure.
+    expect(titlesOf(job!.result)).toEqual(curatedListFor("airplane").map((c) => c.title));
+  });
+
+  it("replaces the curated card an AI suggestion covers, and keeps the rest", async () => {
+    const oilIndex = curatedListFor("airplane").findIndex((c) => c.title === "Oil change");
+    const covering: TailorOutput = {
+      ...TAILORED,
+      suggestions: [{ ...TAILORED.suggestions[0], title: "Oil and filter change", mergesStaticIndex: oilIndex }],
+    };
+    const { providerFor } = scriptedProviders(RECALLED, covering);
+
+    const ref = await runJob(await seedThing(), providerFor, `Sling-${randomUUID()}`);
+
+    const titles = titlesOf((await adminDb.doc(aiJobDocPath(ref.callerUid, ref.jobId)).get()).get("result"));
+    expect(titles[0]).toBe("Oil and filter change");
+    expect(titles).not.toContain("Oil change");
+    expect(titles).toHaveLength(curatedListFor("airplane").length);
+  });
+
+  it("ends EMPTY with the whole curated list when the model has nothing confident", async () => {
+    const { providerFor } = scriptedProviders({ ...RECALLED, identityConfidence: "low" });
+
+    const ref = await runJob(await seedThing(), providerFor, `Sling-${randomUUID()}`);
+
+    const job = (await adminDb.doc(aiJobDocPath(ref.callerUid, ref.jobId)).get()).data();
+    expect(job?.status).toBe(AiJobStatus.AI_JOB_STATUS_EMPTY);
+    expect(titlesOf(job!.result)).toEqual(curatedListFor("airplane").map((c) => c.title));
   });
 });

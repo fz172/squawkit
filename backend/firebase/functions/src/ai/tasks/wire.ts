@@ -60,8 +60,8 @@ export function requestFromProto(proto: SuggestTasksRequestProto): SuggestTasksR
         componentSlotKey: l.componentSlotKey,
       })),
       logsTruncated: c?.logsTruncated ?? false,
-      // The app no longer sends its starter pack; the curated list fills this from the server's
-      // own files (#1265, design §6.8).
+      // The app no longer sends its starter pack; taskSuggestionPipeline fills this from the
+      // curated list (design §6.8).
       staticPack: [],
       lexiconTaskNoun: c?.lexiconTaskNoun ?? "",
     },
