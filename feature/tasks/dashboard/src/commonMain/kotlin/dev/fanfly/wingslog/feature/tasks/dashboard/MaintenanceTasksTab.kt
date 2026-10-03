@@ -151,7 +151,11 @@ fun MaintenanceTasksTab(
           .isNotEmpty() &&
         state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
       ) {
-        { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) }
+        browseSuggestedAction(
+          entry = suggestEntry,
+          browse = { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) },
+          signIn = onLinkAccount,
+        )
       } else null,
       scrollTargetId = scrollToTaskId,
       highlightedId = landedTaskId,
