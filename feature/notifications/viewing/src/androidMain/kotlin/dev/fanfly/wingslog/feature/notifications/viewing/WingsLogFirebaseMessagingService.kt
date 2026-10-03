@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
 import dev.fanfly.wingslog.feature.notifications.model.SignedInUid
 import kotlinx.coroutines.runBlocking
@@ -68,6 +69,12 @@ class WingsLogFirebaseMessagingService : FirebaseMessagingService(),
       // landing keeps a live token, so its notifications keep arriving (issue P4.13). Showing one
       // would put another account's tail number and squawk title in this pilot's tray.
       log.d { "Dropping a push addressed to another account (id=${parsed.notificationId})" }
+      return
+    }
+    if (parsed.tapTarget?.let(OnScreenTapTargets::isOnScreen) == true) {
+      // The user is already looking at what it is about: a suggestion run's push while its screen
+      // is open (task population PRD R20).
+      log.d { "Dropping a push about what is on screen (id=${parsed.notificationId})" }
       return
     }
     runBlocking {

@@ -76,6 +76,9 @@ object NotificationTapRouter {
     is NotificationTapTarget.Suggestions -> "$SCHEME://$HOST/suggestions/${target.thingId}"
   }
 
+  /** The target an encoded tap URI names, or null; for a platform deciding whether to present it. */
+  internal fun targetOf(uri: String): NotificationTapTarget? = decode(uri)
+
   private fun decode(uri: String): NotificationTapTarget? {
     val prefix = "$SCHEME://$HOST/"
     if (!uri.startsWith(prefix)) return null

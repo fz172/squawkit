@@ -27,6 +27,7 @@ kotlin {
       implementation(project(":core:model"))
       implementation(project(":feature:tasks:model"))
       implementation(project(":feature:squawk:model"))
+      implementation(libs.kotlinx.coroutines.core)
     }
   }
 }
