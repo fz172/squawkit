@@ -41,7 +41,11 @@ class StarterPackViewModel(
 
   private val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
 
-  private val _uiState = MutableStateFlow(StarterPackUiState())
+  private val _uiState = MutableStateFlow(
+    StarterPackUiState(
+      mode = savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE) ?: Screen.StarterPack.MODE_STARTER,
+    ),
+  )
   val uiState = _uiState.asStateFlow()
 
   init {

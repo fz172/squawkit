@@ -76,7 +76,7 @@ class StarterPackViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun viewModel(starterTasks: List<StarterTask>): StarterPackViewModel {
+  private fun viewModel(starterTasks: List<StarterTask>, mode: String? = null): StarterPackViewModel {
     val thing = Thing(
       id = THING_ID,
       template = ThingTemplate(
@@ -91,7 +91,12 @@ class StarterPackViewModelTest {
       taskDataManager = taskDataManager,
       templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
       analytics = analytics,
-      savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to THING_ID)),
+      savedStateHandle = SavedStateHandle(
+        buildMap {
+          put(Screen.THING_ID, THING_ID)
+          if (mode != null) put(Screen.SUGGESTIONS_MODE, mode)
+        },
+      ),
     )
   }
 
@@ -201,5 +206,20 @@ class StarterPackViewModelTest {
 
   private companion object {
     const val THING_ID = "thing-1"
+  }
+
+  @Test
+  fun theStarterRoutesAreUnchangedAndDefaultToStarterMode() {
+    // Creation and the empty list build the same URL as before the mode existed.
+    assertThat(Screen.StarterPack.createRoute(THING_ID)).isEqualTo("starter_pack/$THING_ID")
+    assertThat(Screen.StarterPack.createRoute(THING_ID, Screen.StarterPack.MODE_SUGGEST))
+      .isEqualTo("starter_pack/$THING_ID?mode=suggest")
+    assertThat(viewModel(pack).uiState.value.mode).isEqualTo(Screen.StarterPack.MODE_STARTER)
+  }
+
+  @Test
+  fun theTaskListsSuggestOpensInSuggestMode() {
+    assertThat(viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST).uiState.value.mode)
+      .isEqualTo(Screen.StarterPack.MODE_SUGGEST)
   }
 }
