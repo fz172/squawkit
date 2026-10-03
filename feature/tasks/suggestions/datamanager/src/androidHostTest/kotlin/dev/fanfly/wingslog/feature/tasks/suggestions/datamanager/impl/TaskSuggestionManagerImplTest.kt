@@ -13,7 +13,6 @@ import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
@@ -32,6 +31,7 @@ import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TaskOriginKind
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -57,7 +57,6 @@ class TaskSuggestionManagerImplTest {
     every { loadThing(THING) } returns flowOf(Thing(id = THING, template = template))
   }
   private val taskData = mockk<TaskDataManager> { every { observeTasks(THING) } returns flowOf(emptyList()) }
-  private val logs = mockk<MaintenanceLogManager> { every { observeLogs(THING) } returns flowOf(emptyList()) }
   private val dueManager = mockk<TaskDueManager>()
   private val registry = mockk<TemplateRegistry>()
   private val scopes = mockk<ThingScopeResolver> {
@@ -66,7 +65,7 @@ class TaskSuggestionManagerImplTest {
   private val sync = mockk<EntitySyncObserver> { coEvery { awaitSynced(any(), any(), any(), any()) } returns true }
 
   private val manager = TaskSuggestionManagerImpl(
-    client, builder, SuggestionMapper(), fleet, taskData, logs, dueManager, registry, scopes, sync,
+    client, builder, SuggestionMapper(), fleet, taskData, dueManager, registry, scopes, sync,
   )
 
   private val suggestion = TaskSuggestion(title = "Replace spark plugs", component_slot_key = "engine")
@@ -189,20 +188,18 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
-  fun `previews the first due from the due engine on the task as accept would write it`() = runTest {
-    val due = DueMetadata(nextDueEngine = 580f, nextDueMeterKey = "engine_hours")
+  fun `previews the first due from the due engine, from now, with no log tied to it`() = runTest {
+    val due = DueMetadata(nextDueEngine = 610f, nextDueMeterKey = "engine_hours")
     val mapped = slot<MaintenanceTask>()
-    every { dueManager.computeNextDue(capture(mapped), any(), any()) } returns due
+    val logsSeen = slot<List<MaintenanceLog>>()
+    every { dueManager.computeNextDue(capture(mapped), capture(logsSeen), any()) } returns due
     val done = suggestion.copy(
       last_done = LastDoneEvidence(log_id = MaintenanceLogId(value_ = "log-1"), date = "2026-05-02"),
     )
 
-    val preview = manager.firstDue(THING, done)
-
-    assertThat(preview.due).isEqualTo(due)
-    assertThat(preview.hasLastDone).isTrue()
-    assertThat(mapped.captured.force_complied_status).isNotNull()
-    assertThat(manager.firstDue(THING, suggestion).hasLastDone).isFalse()
+    assertThat(manager.firstDue(THING, done)).isEqualTo(due)
+    assertThat(mapped.captured.force_complied_status).isNull()
+    assertThat(logsSeen.captured).isEmpty()
   }
 
   @Test

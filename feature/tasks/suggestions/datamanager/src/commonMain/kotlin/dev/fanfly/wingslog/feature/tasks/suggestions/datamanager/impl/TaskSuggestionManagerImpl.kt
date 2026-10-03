@@ -13,11 +13,10 @@ import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionDue
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMapper
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
@@ -41,7 +40,6 @@ class TaskSuggestionManagerImpl(
   private val mapper: SuggestionMapper,
   private val fleetManager: FleetManager,
   private val taskDataManager: TaskDataManager,
-  private val logManager: MaintenanceLogManager,
   private val taskDueManager: TaskDueManager,
   private val templateRegistry: TemplateRegistry,
   private val scopeResolver: ThingScopeResolver,
@@ -65,14 +63,12 @@ class TaskSuggestionManagerImpl(
   override fun observeRun(thingId: String): Flow<SuggestionRun> =
     client.observeLatest(KIND, ThingId(value_ = thingId)).map { job -> job?.toRun() ?: SuggestionRun.Idle }
 
-  override suspend fun firstDue(thingId: String, suggestion: TaskSuggestion): SuggestionDue {
+  override suspend fun firstDue(thingId: String, suggestion: TaskSuggestion): DueMetadata {
     val task = mapper.toTask(suggestion, templateOf(thingId), generationVersion = "")
-    val logs = logManager.observeLogs(thingId).first()
+    // No log names a task that does not exist yet, and none is tied to it on accept: the due engine
+    // dates it from now. The other tasks are passed for linked rules.
     val tasks = taskDataManager.observeTasks(thingId).first()
-    return SuggestionDue(
-      due = taskDueManager.computeNextDue(task, logs, tasks),
-      hasLastDone = suggestion.last_done != null,
-    )
+    return taskDueManager.computeNextDue(task, logs = emptyList(), allCards = tasks)
   }
 
   override suspend fun accept(

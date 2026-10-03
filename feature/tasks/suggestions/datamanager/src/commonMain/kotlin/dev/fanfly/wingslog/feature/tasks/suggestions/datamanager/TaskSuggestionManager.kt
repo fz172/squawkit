@@ -32,8 +32,9 @@ interface TaskSuggestionManager {
   /**
    * When [suggestion] would first fall due if accepted now, from the due engine itself (R29): the
    * suggestion is mapped exactly as [accept] maps it, so the preview cannot disagree with the task.
+   * No log counts as its last compliance, so the schedule runs from now.
    */
-  suspend fun firstDue(thingId: String, suggestion: TaskSuggestion): SuggestionDue
+  suspend fun firstDue(thingId: String, suggestion: TaskSuggestion): DueMetadata
 
   /**
    * Writes [chosen] as tasks, one write each like the starter pack (a failure drops only its own
@@ -58,13 +59,3 @@ sealed interface SuggestionRun {
 
   data class Failed(val jobId: AiJobId, val reason: AiErrorCode) : SuggestionRun
 }
-
-/**
- * When a suggestion would first fall due, as the due engine computes it for the mapped task: the
- * same [DueMetadata] a task card renders.
- */
-data class SuggestionDue(
-  val due: DueMetadata,
-  /** False when no log shows it was done: the card says so and the due date runs from today (R29). */
-  val hasLastDone: Boolean,
-)

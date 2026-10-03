@@ -133,7 +133,7 @@ class SuggestionMapperTest {
   }
 
   @Test
-  fun `last-done evidence becomes the recorded compliance (R29)`() {
+  fun `never ties the task to a log, even if a result carried last-done evidence`() {
     val done = suggestion.copy(
       last_done = LastDoneEvidence(
         log_id = MaintenanceLogId(value_ = "log-1"),
@@ -142,10 +142,10 @@ class SuggestionMapperTest {
       ),
     )
 
-    val status = mapper.toTask(done, airplane, "tasks-4").force_complied_status!!
+    val task = mapper.toTask(done, airplane, "tasks-4")
 
-    assertThat(status.complied_date).isEqualTo(Instant.parse("2026-05-02T00:00:00Z").toWireInstant())
-    assertThat(status.complied_meter?.value_).isEqualTo(380.0)
+    assertThat(task.force_complied_status).isNull()
+    assertThat(task).isEqualTo(mapper.toTask(suggestion, airplane, "tasks-4"))
   }
 
   @Test

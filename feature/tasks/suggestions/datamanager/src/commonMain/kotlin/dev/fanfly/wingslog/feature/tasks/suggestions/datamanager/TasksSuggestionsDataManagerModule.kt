@@ -31,7 +31,6 @@ val tasksSuggestionsDataManagerModule: Module = module {
       mapper = get<SuggestionMapper>(),
       fleetManager = get<FleetManager>(),
       taskDataManager = get<TaskDataManager>(),
-      logManager = get<MaintenanceLogManager>(),
       taskDueManager = get<TaskDueManager>(),
       templateRegistry = get<TemplateRegistry>(),
       scopeResolver = get<ThingScopeResolver>(),

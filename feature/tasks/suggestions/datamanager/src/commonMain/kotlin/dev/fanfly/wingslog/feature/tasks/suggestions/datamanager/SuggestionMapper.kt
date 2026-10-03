@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.tasks.datamanager.componentTypeForSlot
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
-import dev.fanfly.wingslog.task.ForceCompliedStatus
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
@@ -21,6 +20,10 @@ import com.squareup.wire.Instant as WireInstant
  *
  * The first-due preview maps a suggestion the same way and asks the due engine (R29), so what the
  * review shows and what is saved cannot disagree.
+ *
+ * **No suggestion is tied to a log** (owner's decision, 2026-10-02). Logs may shape what is
+ * suggested, but a new task never inherits a log as its last compliance; its first due runs from
+ * when it is accepted. `TaskSuggestion.last_done` is never read here, and the server never sets it.
  */
 class SuggestionMapper(
   private val clock: Clock = Clock.System,
@@ -63,10 +66,6 @@ class SuggestionMapper(
       is_one_time = suggestion.is_one_time,
       force_due_date = suggestion.first_due?.takeIf { suggestion.is_one_time }?.date?.let(::startOfDay),
       force_due_meter = suggestion.first_due?.takeIf { suggestion.is_one_time }?.meter,
-      // No log is linked to a new task, so the due engine reads "last done" from here (R29).
-      force_complied_status = suggestion.last_done?.let { done ->
-        ForceCompliedStatus(complied_date = startOfDay(done.date), complied_meter = done.reading)
-      },
       attachments = documents.filter { sourceDocument.isNotEmpty() && it.id == sourceDocument },
       origin = TaskOrigin(
         kind = if (sourceDocument.isNotEmpty()) {
