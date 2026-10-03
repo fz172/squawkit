@@ -71,7 +71,7 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pac
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggesting
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_stage_hint
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_either
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_days
@@ -231,14 +231,17 @@ fun StarterPackRoute(
                 modifier = Modifier.size(Spacing.large),
                 strokeWidth = 2.dp
               )
-              Text(
-                text = stringResource(
-                  Res.string.starter_pack_suggesting,
-                  LocalThingLexicon.current.thingNoun.singular,
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
+              Column {
+                Text(
+                  text = stageText(uiState.stage, uiState.stageArg),
+                  style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                  text = stringResource(Res.string.starter_pack_stage_hint),
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
             }
           }
           GroupedRowGroup(

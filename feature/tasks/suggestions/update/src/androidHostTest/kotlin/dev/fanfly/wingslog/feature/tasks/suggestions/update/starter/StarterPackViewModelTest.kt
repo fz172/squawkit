@@ -513,6 +513,24 @@ class StarterPackViewModelTest {
     assertThat(vm.uiState.value.closingError).isEqualTo(AiErrorCode.STALE)
   }
 
+  @Test
+  fun theProgressLineFollowsTheRunsStage() = runTest(dispatcher) {
+    val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+    coEvery { suggestions.start(THING_ID, any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+
+    runs.emit(SuggestionRun.Working(JOB, "reading_document", "Rotax MM.pdf", curatedList))
+    advanceUntilIdle()
+    assertThat(vm.uiState.value.stage).isEqualTo("reading_document")
+    assertThat(vm.uiState.value.stageArg).isEqualTo("Rotax MM.pdf")
+
+    runs.emit(SuggestionRun.Ready(JOB, curatedList))
+    advanceUntilIdle()
+    assertThat(vm.uiState.value.isSuggesting).isFalse()
+    assertThat(vm.uiState.value.stage).isNull()
+  }
+
   private companion object {
     const val THING_ID = "thing-1"
     val JOB = AiJobId("job-1")

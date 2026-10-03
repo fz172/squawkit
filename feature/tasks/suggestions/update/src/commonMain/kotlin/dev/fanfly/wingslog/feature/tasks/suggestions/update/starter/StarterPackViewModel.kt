@@ -149,7 +149,15 @@ class StarterPackViewModel(
         val finished = latest !is SuggestionRun.Working
         val failure = (latest as? SuggestionRun.Failed)?.reason
         // A curated-only run is finished from the start, so only a model run reads as working.
-        _uiState.update { it.copy(isSuggesting = !finished, failure = failure) }
+        val working = latest as? SuggestionRun.Working
+        _uiState.update {
+          it.copy(
+            isSuggesting = !finished,
+            failure = failure,
+            stage = working?.stage,
+            stageArg = working?.stageArg,
+          )
+        }
         if (result == null) {
           // A template with no curated list, and no model answer (yet). A failure with no cards
           // to fall back on closes the screen, and the task tab says why.

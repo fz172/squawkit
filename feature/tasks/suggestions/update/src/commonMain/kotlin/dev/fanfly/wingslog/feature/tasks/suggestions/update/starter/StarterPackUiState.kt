@@ -21,6 +21,9 @@ data class StarterPackUiState(
   val canSuggest: Boolean = false,
   /** A model run is working; its answer will replace the cards. */
   val isSuggesting: Boolean = false,
+  /** The working run's stage key and its argument (a document's name), for the progress line. */
+  val stage: String? = null,
+  val stageArg: String? = null,
   /** The model run failed; the cards stay, with this and *Try again* above them (PRD R21). */
   val failure: AiErrorCode? = null,
   /** Why *Suggest more* or *Try again* did not start; shown once, as a snackbar. */
