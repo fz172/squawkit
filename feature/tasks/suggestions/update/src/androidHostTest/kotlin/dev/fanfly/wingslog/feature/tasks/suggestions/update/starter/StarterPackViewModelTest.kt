@@ -2,11 +2,21 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.ai.AiErrorCode
+import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
+import dev.fanfly.wingslog.id.SuggestionId
+import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
+import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.MeterRule
@@ -23,6 +33,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -80,7 +91,13 @@ class StarterPackViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun viewModel(starterTasks: List<StarterTask>, mode: String? = null): StarterPackViewModel {
+  private val suggestions = mockk<TaskSuggestionManager>(relaxUnitFun = true)
+
+  private fun viewModel(
+    starterTasks: List<StarterTask>,
+    mode: String? = null,
+    serverSource: Boolean = false,
+  ): StarterPackViewModel {
     val thing = Thing(
       id = THING_ID,
       template = ThingTemplate(
@@ -95,6 +112,14 @@ class StarterPackViewModelTest {
       taskDataManager = taskDataManager,
       templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
       analytics = analytics,
+      capability = AppCapability(
+        isDeveloperOptionsSupported = serverSource,
+        isCameraCaptureSupported = true,
+        isAnonymousLoginSupported = true,
+        isAdsSupported = false,
+        isTaskSuggestionsSupported = serverSource,
+      ),
+      suggestionManager = suggestions,
       savedStateHandle = SavedStateHandle(
         buildMap {
           put(Screen.THING_ID, THING_ID)
@@ -238,8 +263,145 @@ class StarterPackViewModelTest {
     assertThat(analytics.countOf("starter_tasks_offered")).isEqualTo(0)
   }
 
+  // The server source (developer builds until T25): cards come from a suggestion run.
+
+  private fun curated(id: String, title: String, preselect: Boolean = true) = TaskSuggestion(
+    suggestion_id = SuggestionId(value_ = id),
+    title = title,
+    preselect = preselect,
+    origin_kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED,
+  )
+
+  private val curatedList = SuggestTasksResult(
+    suggestions = listOf(curated("c0", "Annual"), curated("c1", "Oil change"), curated("c2", "ELT", preselect = false)),
+  )
+
+  private fun serving(vararg runs: SuggestionRun, started: AiStartResult = AiStartResult.Started(JOB, joined = false)) {
+    coEvery { suggestions.start(THING_ID, any(), any()) } returns started
+    every { suggestions.observeRun(THING_ID) } returns flowOf(*runs)
+  }
+
+  @Test
+  fun theStarterModeAsksForTheCuratedListAndShowsItTickedAsTheServerSays() = runTest(dispatcher) {
+    serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, curatedList))
+
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    coVerify { suggestions.start(THING_ID, Screen.StarterPack.MODE_STARTER, curatedOnly = true) }
+    assertThat(vm.uiState.value.isLoading).isFalse()
+    assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly("Annual", "Oil change", "ELT").inOrder()
+    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(true, true, false).inOrder()
+    assertThat(analytics.paramsFor("starter_tasks_offered").single()).containsEntry("task_count", "3")
+  }
+
+  @Test
+  fun theSuggestModeStartsTheModelRun() = runTest(dispatcher) {
+    serving(SuggestionRun.Working(JOB, null, null, curatedList))
+
+    viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+
+    coVerify { suggestions.start(THING_ID, Screen.StarterPack.MODE_SUGGEST, curatedOnly = false) }
+  }
+
+  @Test
+  fun theModelsAnswerReplacesTheCuratedCardsAndKeepsTheUsersChoices() = runTest(dispatcher) {
+    val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+    coEvery { suggestions.start(THING_ID, any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+    advanceUntilIdle()
+    vm.onToggle(0) // untick the annual
+
+    val merged = SuggestTasksResult(
+      suggestions = listOf(
+        TaskSuggestion(suggestion_id = SuggestionId(value_ = "s1"), title = "Oil and filter", preselect = true),
+        curated("c0", "Annual"),
+        curated("c2", "ELT", preselect = false),
+      ),
+    )
+    runs.emit(SuggestionRun.Ready(JOB, merged))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly("Oil and filter", "Annual", "ELT").inOrder()
+    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(true, false, false).inOrder()
+    // Offered once, when cards first showed.
+    assertThat(analytics.countOf("starter_tasks_offered")).isEqualTo(1)
+  }
+
+  @Test
+  fun ignoresAnOlderJobUntilTheListenerCatchesUp() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(AiJobId("older"), curatedList))
+
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.items).isEmpty()
+    assertThat(vm.uiState.value.isLoading).isTrue()
+  }
+
+  @Test
+  fun acceptingWritesTheTickedSuggestionsThroughTheManager() = runTest(dispatcher) {
+    val ready = SuggestionRun.Ready(JOB, curatedList)
+    serving(ready)
+    val chosen = slot<List<AcceptedSuggestion>>()
+    coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns 2
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    vm.onAccept()
+    advanceUntilIdle()
+
+    assertThat(chosen.captured.map { it.suggestion.title }).containsExactly("Annual", "Oil change").inOrder()
+    coVerify(exactly = 0) { taskDataManager.addTask(any(), any()) }
+    assertThat(vm.uiState.value.acceptedCount).isEqualTo(2)
+    assertThat(analytics.paramsFor("starter_tasks_accepted").single()).containsEntry("task_count", "2")
+  }
+
+  @Test
+  fun aRefusedStartClosesTheScreenWithNothingOffered() = runTest(dispatcher) {
+    serving(started = AiStartResult.Refused(AiErrorCode.SIGN_IN_REQUIRED, null))
+
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isDone).isTrue()
+    assertThat(analytics.countOf("starter_tasks_offered")).isEqualTo(0)
+  }
+
+  @Test
+  fun aTemplateWithNoCuratedListIsNotAnOffer() = runTest(dispatcher) {
+    serving(SuggestionRun.Empty(JOB, result = null))
+
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isDone).isTrue()
+    assertThat(analytics.countOf("starter_tasks_offered")).isEqualTo(0)
+  }
+
+  @Test
+  fun skippingClosesAFinishedRunButLeavesAWorkingOneRunning() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    val finished = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    finished.onSkip()
+    advanceUntilIdle()
+    coVerify(exactly = 1) { suggestions.dismiss(JOB) }
+
+    serving(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+    val working = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    advanceUntilIdle()
+    working.onSkip()
+    advanceUntilIdle()
+    coVerify(exactly = 1) { suggestions.dismiss(JOB) }
+  }
+
   private companion object {
     const val THING_ID = "thing-1"
+    val JOB = AiJobId("job-1")
   }
 
   @Test
