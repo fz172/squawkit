@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SuggestionId
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
@@ -571,6 +572,20 @@ class StarterPackViewModelTest {
     assertThat(vm.uiState.value.isDone).isFalse()
     assertThat(vm.uiState.value.isLoading).isFalse()
     assertThat(vm.uiState.value.notEnough).isTrue()
+  }
+
+  @Test
+  fun anAlreadyTrackedCardCannotBeChecked() = runTest(dispatcher) {
+    val tracked = curated("c0", "Annual").copy(matches_existing_task_id = MaintenanceTaskId(value_ = "task-annual"))
+    serving(SuggestionRun.Ready(JOB, SuggestTasksResult(suggestions = listOf(tracked, curated("c1", "Oil change")))))
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    vm.onToggle(0)
+    vm.onToggle(1)
+
+    assertThat(vm.uiState.value.items.map { it.isAlreadyTracked }).containsExactly(true, false).inOrder()
+    assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(false, true).inOrder()
   }
 
   private companion object {

@@ -14,4 +14,7 @@ data class StarterPackItem(
    * suggestion from the server.
    */
   val starterTask: StarterTask? = null,
-)
+) {
+  /** The Thing already has this task (PRD R24): shown, never checkable. */
+  val isAlreadyTracked: Boolean get() = !suggestion.matches_existing_task_id?.value_.isNullOrEmpty()
+}
