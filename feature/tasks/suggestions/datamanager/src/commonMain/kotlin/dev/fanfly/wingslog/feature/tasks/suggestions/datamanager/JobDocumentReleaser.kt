@@ -69,6 +69,12 @@ class JobDocumentReleaser(
     store.record(uid, jobId.value, thingId, documents)
   }
 
+  /** The documents the signed-in user's run [jobId] was started with. */
+  suspend fun documentsOf(jobId: AiJobId): List<Attachment> {
+    val uid = currentUid() ?: return emptyList()
+    return store.forJob(uid, jobId.value).map { it.attachment }
+  }
+
   /** Releases the signed-in user's run [jobId]'s documents and forgets them. */
   suspend fun release(jobId: AiJobId) {
     val uid = currentUid() ?: return

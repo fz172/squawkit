@@ -511,6 +511,40 @@ class TaskSuggestionManagerImplTest {
     }
 
   @Test
+  fun `a suggestion citing a document is written holding that same document`() = runTest {
+    val written = mutableListOf<MaintenanceTask>()
+    coEvery { taskData.addTask(THING, capture(written)) } returns Result.success(true)
+    coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
+    val cites = TaskSuggestion(
+      title = "Gearbox oil",
+      source_document = AttachmentId(value_ = "blob-1"),
+    )
+    val run = SuggestionRun.Ready(JOB, SuggestTasksResult(generation_version = "tasks-5"))
+
+    manager.accept(
+      THING,
+      run,
+      listOf(
+        AcceptedSuggestion(cites),
+        // An edit keeps its citation, and already holding the document does not add it twice.
+        AcceptedSuggestion(cites, edited = MaintenanceTask(title = "Mine", attachments = listOf(manual))),
+        AcceptedSuggestion(TaskSuggestion(title = "Annual")),
+        AcceptedSuggestion(
+          TaskSuggestion(title = "Elsewhere", source_document = AttachmentId(value_ = "blob-9")),
+        ),
+      ),
+    )
+
+    assertThat(written.map { it.attachments }).containsExactly(
+      listOf(manual),
+      listOf(manual),
+      emptyList<Attachment>(),
+      emptyList<Attachment>(),
+    ).inOrder()
+    assertThat(written[0].origin?.source_attachment_id?.value_).isEqualTo("blob-1")
+  }
+
+  @Test
   fun `a failed write drops only its own card`() = runTest {
     coEvery { taskData.addTask(THING, any()) } returnsMany
       listOf(Result.failure(RuntimeException("disk")), Result.success(true))
