@@ -34,6 +34,8 @@ fun AttachmentSection(
   openError: String? = null,
   /** The records DATA_LOG references point at, keyed by data log id; null while not loaded. */
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
+  /** *Find tasks in this document* on PDF and image rows; null where suggestions cannot run. */
+  onFindTasks: ((Attachment) -> Unit)? = null,
 ) {
   if (attachments.isEmpty()) return
 
@@ -47,6 +49,7 @@ fun AttachmentSection(
         syncState = if (attachment.type.isFile) syncStates[attachment.id] else null,
         onTap = onAttachmentTap,
         dataLogs = dataLogs,
+        onFindTasks = onFindTasks,
       )
       HorizontalDivider()
     }

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.dashboard.api
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 
 sealed interface ThingOverviewAction {
@@ -21,6 +22,17 @@ sealed interface ThingOverviewAction {
 
   /** The task list's *Suggest tasks* (PRD R2): the suggestions route in `suggest` mode. */
   data class SuggestTasksClick(val thingId: String) : ThingOverviewAction
+
+  /**
+   * *Find tasks in this document* on a record's attachment (PRD R4): the suggestions route in
+   * `document` mode, starting from that file.
+   */
+  data class FindTasksInDocument(
+    val thingId: String,
+    val document: Attachment
+  ) :
+    ThingOverviewAction
+
   data class TaskCardClick(val card: MaintenanceTaskWithStatus) :
     ThingOverviewAction
 

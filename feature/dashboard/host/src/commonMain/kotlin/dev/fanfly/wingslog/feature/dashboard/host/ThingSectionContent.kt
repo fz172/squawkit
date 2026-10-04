@@ -230,6 +230,18 @@ fun ThingSectionContent(
           thingId = thingId,
           syncStates = state.syncStates,
           dataLogs = state.dataLogs,
+          onFindTasks = if (state.canFindTasksInDocuments) {
+            { attachment ->
+              onAction(
+                ThingOverviewAction.FindTasksInDocument(
+                  thingId,
+                  attachment
+                )
+              )
+            }
+          } else {
+            null
+          },
           // Route through the same onAction wrapper as every other section, which navigates directly.
           onNavigateToAddLog = {
             onAction(

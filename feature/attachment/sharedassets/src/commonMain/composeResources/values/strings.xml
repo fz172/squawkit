@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="attachments">Attachments</string>
   <string name="choose_file">Choose file</string>
   <string name="take_photo">Take photo</string>
@@ -41,4 +41,6 @@
   <string name="attachment_data_log_removed">Removed</string>
   <!-- Design §9: v1 shares record data only, not blobs. A member sees the attachment exists but
        cannot fetch it — say so plainly instead of offering a tap that does nothing. -->
+  <!-- An attachment row's way into AI task suggestions from that file (task population PRD R4). -->
+  <string name="find_tasks_in_document">Find <xliff:g example="tasks">%1$s</xliff:g> in this document</string>
 </resources>

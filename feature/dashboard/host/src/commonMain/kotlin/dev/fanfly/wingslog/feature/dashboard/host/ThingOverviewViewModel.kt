@@ -46,6 +46,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
@@ -93,6 +95,7 @@ class ThingOverviewViewModel(
   private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
   private val auth: FirebaseAuth,
+  private val suggestEntry: TaskSuggestionEntry,
   private val thingId: String,
 ) : ViewModel() {
 
@@ -141,6 +144,24 @@ class ThingOverviewViewModel(
 
   init {
     loadThingAndStats()
+  }
+
+  /** Whether attachment rows offer *Find tasks in this document*; kept up to date below. */
+  private var findTasksAvailable = false
+
+  init {
+    viewModelScope.launch {
+      suggestEntry.observe(thingId)
+        .map { it == SuggestEntry.Available }
+        .distinctUntilChanged()
+        .collect { available ->
+          findTasksAvailable = available
+          _uiState.update {
+            (it as? ThingOverviewUiState.Success)?.copy(canFindTasksInDocuments = available)
+              ?: it
+          }
+        }
+    }
   }
 
   // Blob sync state must be observed at the scope that actually holds this thing's data: the
@@ -318,6 +339,7 @@ class ThingOverviewViewModel(
             myRole = myRole,
             shared = isShared,
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
+            canFindTasksInDocuments = findTasksAvailable,
           )
         } else {
           ThingOverviewUiState.Error
@@ -392,6 +414,7 @@ class ThingOverviewViewModel(
       // Navigation only — ThingSectionContent drives the navController and never forwards it.
       is ThingOverviewAction.AddStarterPackClick -> Unit
       is ThingOverviewAction.SuggestTasksClick -> Unit
+      is ThingOverviewAction.FindTasksInDocument -> Unit
 
       is ThingOverviewAction.TaskCardClick -> {
         showTaskDetails(action.card)
