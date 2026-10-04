@@ -154,7 +154,15 @@ export interface TaskOrigin {
   pageRef: string;
   /** The pipeline version that produced it (design §6.6), so a bad prompt's tasks can be found. */
   generationVersion: string;
-  suggestedAt: Date | undefined;
+  suggestedAt:
+    | Date
+    | undefined;
+  /**
+   * The 1-based PDF page `page_ref` names, where the run read one (the suggestion's first
+   * `source_pages`), for opening the document there (PRD R30). 0 when unknown: a task from before
+   * this field, or a citation with no page.
+   */
+  sourcePage: number;
 }
 
 function createBaseTaskOrigin(): TaskOrigin {
@@ -166,6 +174,7 @@ function createBaseTaskOrigin(): TaskOrigin {
     pageRef: "",
     generationVersion: "",
     suggestedAt: undefined,
+    sourcePage: 0,
   };
 }
 
@@ -191,6 +200,9 @@ export const TaskOrigin: MessageFns<TaskOrigin> = {
     }
     if (message.suggestedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.suggestedAt), writer.uint32(58).fork()).join();
+    }
+    if (message.sourcePage !== 0) {
+      writer.uint32(64).int32(message.sourcePage);
     }
     return writer;
   },
@@ -258,6 +270,14 @@ export const TaskOrigin: MessageFns<TaskOrigin> = {
           message.suggestedAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.sourcePage = reader.int32();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -296,6 +316,11 @@ export const TaskOrigin: MessageFns<TaskOrigin> = {
         : isSet(object.suggested_at)
         ? fromJsonTimestamp(object.suggested_at)
         : undefined,
+      sourcePage: isSet(object.sourcePage)
+        ? globalThis.Number(object.sourcePage)
+        : isSet(object.source_page)
+        ? globalThis.Number(object.source_page)
+        : 0,
     };
   },
 
@@ -322,6 +347,9 @@ export const TaskOrigin: MessageFns<TaskOrigin> = {
     if (message.suggestedAt !== undefined) {
       obj.suggestedAt = message.suggestedAt.toISOString();
     }
+    if (message.sourcePage !== 0) {
+      obj.sourcePage = Math.round(message.sourcePage);
+    }
     return obj;
   },
 
@@ -339,6 +367,7 @@ export const TaskOrigin: MessageFns<TaskOrigin> = {
     message.pageRef = object.pageRef ?? "";
     message.generationVersion = object.generationVersion ?? "";
     message.suggestedAt = object.suggestedAt ?? undefined;
+    message.sourcePage = object.sourcePage ?? 0;
     return message;
   },
 };

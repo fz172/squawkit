@@ -92,6 +92,17 @@ class SuggestionMapperTest {
   }
 
   @Test
+  fun `keeps the PDF page the citation names, for opening the document there`() {
+    val cited = suggestion.copy(
+      source_document = AttachmentId(value_ = "blob-mm"),
+      source_pages = listOf(212, 213),
+    )
+
+    assertThat(mapper.toTask(cited, airplane, "tasks-5").origin!!.source_page).isEqualTo(212)
+    assertThat(mapper.toTask(suggestion, airplane, "tasks-5").origin!!.source_page).isEqualTo(0)
+  }
+
+  @Test
   fun `says it came from a run without documents`() {
     val origin = mapper.toTask(suggestion, airplane, "tasks-4").origin!!
 

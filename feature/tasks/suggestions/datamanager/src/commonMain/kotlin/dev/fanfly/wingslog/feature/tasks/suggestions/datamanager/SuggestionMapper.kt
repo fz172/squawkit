@@ -83,6 +83,7 @@ class SuggestionMapper(
         citation = suggestion.citation,
         source_attachment_id = suggestion.source_document?.takeIf { sourceDocument.isNotEmpty() },
         page_ref = suggestion.page_ref,
+        source_page = suggestion.source_pages.firstOrNull()?.takeIf { it > 0 } ?: 0,
         generation_version = generationVersion,
         suggested_at = now,
       ),

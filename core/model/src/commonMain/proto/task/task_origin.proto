@@ -49,4 +49,8 @@ message TaskOrigin {
     // The pipeline version that produced it (design §6.6), so a bad prompt's tasks can be found.
     string generation_version = 6;
     google.protobuf.Timestamp suggested_at = 7;
+    // The 1-based PDF page `page_ref` names, where the run read one (the suggestion's first
+    // `source_pages`), for opening the document there (PRD R30). 0 when unknown: a task from before
+    // this field, or a citation with no page.
+    int32 source_page = 8;
 }
