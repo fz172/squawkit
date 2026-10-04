@@ -42,7 +42,7 @@ internal class AttachmentOpenerWeb(
     })
   }
 
-  override fun open(attachment: Attachment): Flow<OpenState> {
+  override fun open(attachment: Attachment, page: Int?): Flow<OpenState> {
     // Browsers only honour window.open() during a user-gesture stack. Both paths below must run
     // synchronously inside the click callback.
     //
@@ -100,13 +100,13 @@ internal class AttachmentOpenerWeb(
               closePopup(popup)
               emit(OpenState.Failed(downloadError))
             } else {
-              navigatePopupToLocalBytes(popup, attachment)
+              navigatePopupToLocalBytes(popup, attachment, page)
               emit(OpenState.Done)
             }
           }
 
           else -> {
-            navigatePopupToLocalBytes(popup, attachment)
+            navigatePopupToLocalBytes(popup, attachment, page)
             emit(OpenState.Done)
           }
         }
@@ -124,13 +124,14 @@ internal class AttachmentOpenerWeb(
 
   private suspend fun navigatePopupToLocalBytes(
     popup: dynamic,
-    attachment: Attachment
+    attachment: Attachment,
+    page: Int?,
   ) {
     val bytes = fs.read(blobRelativePath(attachment.id))
     val mimeType = attachment.mime_type.ifBlank { "application/octet-stream" }
     val objectUrl = createObjectUrl(bytes, mimeType)
     try {
-      popup.location.href = objectUrl
+      popup.location.href = objectUrl + pageFragment(attachment, page)
       // Give the new tab time to load the bytes before revoking the URL.
       window.setTimeout(
         handler = { revokeObjectUrl(objectUrl) },
@@ -190,3 +191,10 @@ internal class AttachmentOpenerWeb(
     private const val BLANK_URL = "about:blank"
   }
 }
+
+/**
+ * `#page=N` for a PDF opened at a page: the open-parameters fragment every major browser's PDF
+ * viewer reads. Nothing for any other file, or with no page.
+ */
+internal fun pageFragment(attachment: Attachment, page: Int?): String =
+  if (page != null && page > 0 && attachment.mime_type == "application/pdf") "#page=$page" else ""
