@@ -45,6 +45,7 @@ kotlin {
 
 dependencies {
   "androidMainImplementation"(libs.androidx.documentfile)
+  "androidMainImplementation"(libs.androidx.pdf.viewer.fragment)
   "androidRuntimeClasspath"(libs.androidx.compose.ui.tooling)
 }
 
