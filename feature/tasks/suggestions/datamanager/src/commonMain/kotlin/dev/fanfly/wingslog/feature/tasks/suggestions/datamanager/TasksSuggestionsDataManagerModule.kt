@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
 import dev.fanfly.wingslog.core.ai.AiJobClient
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
 import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.core.storage.CurrentUidProvider
@@ -31,7 +30,6 @@ val tasksSuggestionsDataManagerModule: Module = module {
   single<SuggestionMapper> { SuggestionMapper() }
   single<TaskSuggestionEntry> {
     TaskSuggestionEntry(
-      capability = get<AppCapability>(),
       auth = get<FirebaseAuth>(),
       fleetManager = get<FleetManager>(),
       templateRegistry = get<TemplateRegistry>(),

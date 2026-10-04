@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.thing.Spec
@@ -38,7 +37,6 @@ class TaskSuggestionEntryTest {
   )
 
   private fun entry(
-    developerBuild: Boolean = true,
     guest: Boolean = false,
     thing: Thing = complete,
   ): TaskSuggestionEntry {
@@ -48,26 +46,10 @@ class TaskSuggestionEntryTest {
     val fleet =
       mockk<FleetManager> { every { loadThing(THING) } returns flowOf(thing) }
     return TaskSuggestionEntry(
-      capability = AppCapability(
-        isDeveloperOptionsSupported = developerBuild,
-        isCameraCaptureSupported = true,
-        isAnonymousLoginSupported = true,
-        isAdsSupported = false,
-        isTaskSuggestionsSupported = developerBuild,
-      ),
       auth = auth,
       fleetManager = fleet,
       templateRegistry = mockk<TemplateRegistry>(),
     )
-  }
-
-  @Test
-  fun `is hidden off developer builds, whatever else is true`() = runTest {
-    assertThat(
-      entry(developerBuild = false, guest = true).observe(THING)
-        .first()
-    )
-      .isEqualTo(SuggestEntry.Hidden)
   }
 
   @Test

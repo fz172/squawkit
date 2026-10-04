@@ -1114,8 +1114,8 @@ citation and rationale, and opens the document at the page for a document source
 
 ## 10. Gating and capability
 
-- `AppCapability.isTaskSuggestionsSupported` (new): `isDeveloperBuild` until v1, then the field is
-  deleted (PRD R48). All entry points check it.
+- `AppCapability.isTaskSuggestionsSupported`: `isDeveloperBuild` until v1, when T25 deleted it
+  (PRD R48). Suggestions are on in every build; the entry points check only the rest below.
 - Guest: the signed-in Firebase user's `isAnonymous` (as `AuthManagerImpl` already reads it); the
   server check (§5.3 step 2) is authoritative.
 - Offline: not checked up front (R51, revised 2026-10-02). A call that fails as `UNAVAILABLE` shows

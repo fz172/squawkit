@@ -12,6 +12,4 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   termsUrl = "/privacy.html",
   // No store on web, so nothing to rate.
   storeListingUrl = null,
-  // Developer builds only until v1 (PRD R48), then the field goes.
-  isTaskSuggestionsSupported = isDeveloperBuild,
 )

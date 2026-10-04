@@ -421,23 +421,21 @@ fun StarterPackRoute(
                           sourceShown = item.suggestion
                         }
                         // R28: change it before adding it, in the task form.
-                        if (item.starterTask == null) {
-                          TextButton(
-                            enabled = !uiState.isSaving,
-                            onClick = {
-                              scope.launch {
-                                val draft =
-                                  viewModel.draftFor(index) ?: return@launch
-                                navController.navigate(
-                                  Screen.AddMaintenanceTask.createRoute(
-                                    viewModel.thingId,
-                                    draft
-                                  ),
-                                )
-                              }
-                            },
-                          ) { Text(stringResource(CoreRes.string.edit)) }
-                        }
+                        TextButton(
+                          enabled = !uiState.isSaving,
+                          onClick = {
+                            scope.launch {
+                              val draft =
+                                viewModel.draftFor(index) ?: return@launch
+                              navController.navigate(
+                                Screen.AddMaintenanceTask.createRoute(
+                                  viewModel.thingId,
+                                  draft
+                                ),
+                              )
+                            }
+                          },
+                        ) { Text(stringResource(CoreRes.string.edit)) }
                       }
                     },
                     onCheckedChange = { viewModel.onToggle(index) },
