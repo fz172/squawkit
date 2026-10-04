@@ -32,4 +32,13 @@ class BrowseSuggestedActionTest {
       )
     }
   }
+
+  @Test
+  fun `every template has a curated list to browse but the custom one`() {
+    assertThat(hasCuratedList("airplane")).isTrue()
+    assertThat(hasCuratedList("home")).isTrue()
+    assertThat(hasCuratedList("custom")).isFalse()
+    // Not known yet: nothing to offer until the template is.
+    assertThat(hasCuratedList(null)).isFalse()
+  }
 }

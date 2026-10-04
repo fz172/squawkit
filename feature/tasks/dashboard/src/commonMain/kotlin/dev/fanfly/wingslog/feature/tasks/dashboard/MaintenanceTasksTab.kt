@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
@@ -126,9 +127,12 @@ fun MaintenanceTasksTab(
       .padding(bottom = navPillAndFabClearance),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
-    // Any time on a list that has tasks (PRD R2). An empty list offers the starter pack instead,
-    // which carries its own Suggest tasks (R1).
-    if (state.activeTasks.isNotEmpty() || state.completedTasks.isNotEmpty()) {
+    // An empty list offers the template's curated list instead (below), which carries its own AI
+    // button (R1). Every template has one on the server but the custom one, whose empty list asks
+    // the AI here from the start.
+    val isEmpty = state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
+    val hasCuratedList = hasCuratedList(LocalThingTemplate.current?.id)
+    if (!isEmpty || !hasCuratedList) {
       SuggestTasksAction(
         entry = suggestEntry,
         onSuggest = { onAction(ThingOverviewAction.SuggestTasksClick(state.thing.id)) },
@@ -146,12 +150,8 @@ fun MaintenanceTasksTab(
       },
       onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
       // "Can add it later from an empty Tasks tab" (PRD §4.9): only while the tab is empty in
-      // both sub-views, and only when this Thing's own DNA still carries a pack.
-      onAddStarterPack = if (
-        state.thing.template?.starter_tasks.orEmpty()
-          .isNotEmpty() &&
-        state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
-      ) {
+      // both sub-views, and only for a template the server keeps a curated list for.
+      onAddStarterPack = if (isEmpty && hasCuratedList) {
         browseSuggestedAction(
           entry = suggestEntry,
           browse = { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) },
