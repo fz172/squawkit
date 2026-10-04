@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import android.net.Uri
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import dev.fanfly.wingslog.core.storage.blob.BlobId
@@ -36,57 +36,58 @@ class AttachmentOpenerAndroid(
   override val downloadingIds: StateFlow<Set<String>> =
     _downloadingIds.asStateFlow()
 
-  override fun open(attachment: Attachment, page: Int?): Flow<OpenState> = flow {
-    emit(OpenState.Downloading)
+  override fun open(attachment: Attachment, page: Int?): Flow<OpenState> =
+    flow {
+      emit(OpenState.Downloading)
 
-    if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
-      val url = attachment.url.let {
-        if (!it.startsWith("http://") && !it.startsWith("https://")) "https://$it" else it
-      }
-      context.startActivity(
-        Intent(
-          Intent.ACTION_VIEW,
-          url.toUri()
-        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      )
-      emit(OpenState.Done)
-      return@flow
-    }
-
-    if (_downloadingIds.value.contains(attachment.id)) return@flow
-    _downloadingIds.update { it + attachment.id }
-
-    try {
-      val ref = blobs.get(BlobId(attachment.id))
-      when {
-        ref == null && attachment.sha256.isBlank() -> emit(
-          OpenState.Failed(
-            LegacyAttachment()
-          )
-        )
-
-        ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
-          // Row missing (reconciler not yet run) or row present but not downloaded yet — same path.
-          var downloadError: Throwable? = null
-          attachmentManager.ensureLocal(attachment)
-            .collect { state ->
-              if (state is DownloadState.Failed) downloadError = state.error
-            }
-          if (downloadError != null) {
-            emit(OpenState.Failed(downloadError))
-          } else {
-            emitOpenLocalFile(attachment, page)
-          }
+      if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
+        val url = attachment.url.let {
+          if (!it.startsWith("http://") && !it.startsWith("https://")) "https://$it" else it
         }
-
-        else -> emitOpenLocalFile(attachment, page)
+        context.startActivity(
+          Intent(
+            Intent.ACTION_VIEW,
+            url.toUri()
+          ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+        emit(OpenState.Done)
+        return@flow
       }
-    } catch (e: Exception) {
-      emit(OpenState.Failed(e))
-    } finally {
-      _downloadingIds.update { it - attachment.id }
+
+      if (_downloadingIds.value.contains(attachment.id)) return@flow
+      _downloadingIds.update { it + attachment.id }
+
+      try {
+        val ref = blobs.get(BlobId(attachment.id))
+        when {
+          ref == null && attachment.sha256.isBlank() -> emit(
+            OpenState.Failed(
+              LegacyAttachment()
+            )
+          )
+
+          ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
+            // Row missing (reconciler not yet run) or row present but not downloaded yet — same path.
+            var downloadError: Throwable? = null
+            attachmentManager.ensureLocal(attachment)
+              .collect { state ->
+                if (state is DownloadState.Failed) downloadError = state.error
+              }
+            if (downloadError != null) {
+              emit(OpenState.Failed(downloadError))
+            } else {
+              emitOpenLocalFile(attachment, page)
+            }
+          }
+
+          else -> emitOpenLocalFile(attachment, page)
+        }
+      } catch (e: Exception) {
+        emit(OpenState.Failed(e))
+      } finally {
+        _downloadingIds.update { it - attachment.id }
+      }
     }
-  }
 
   private suspend fun FlowCollector<OpenState>.emitOpenLocalFile(
     attachment: Attachment,
@@ -119,7 +120,11 @@ class AttachmentOpenerAndroid(
       )
       // A PDF opens in the app's own viewer, which can open at a page (PRD R30); anything else, or
       // a PDF that viewer cannot take, goes to the device's viewers as before.
-      if (attachment.mime_type == PDF_MIME && context.openInApp(contentUri, page ?: attachment.open_page)) {
+      if (attachment.mime_type == PDF_MIME && context.openInApp(
+          contentUri,
+          page ?: attachment.open_page
+        )
+      ) {
         emit(OpenState.Done)
         return
       }

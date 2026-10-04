@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.attachment.viewing.pdf
 
+import androidx.core.os.BundleCompat
+import android.view.View
+import android.net.Uri
 import android.content.Intent
 import android.content.ActivityNotFoundException
 import android.os.Bundle
@@ -40,11 +43,14 @@ class PdfViewerActivity : FragmentActivity() {
     }
     setContentView(container)
     if (savedInstanceState != null) return
+    // The fragment sets the document itself once its view exists, as the library's samples load one.
     val viewer = CitedPagePdfViewerFragment().apply {
-      arguments = bundleOf(CitedPagePdfViewerFragment.ARG_PAGE to intent.getIntExtra(EXTRA_PAGE, 0))
+      arguments = bundleOf(
+        CitedPagePdfViewerFragment.ARG_DOCUMENT to document,
+        CitedPagePdfViewerFragment.ARG_PAGE to intent.getIntExtra(EXTRA_PAGE, 0),
+      )
     }
     supportFragmentManager.commitNow { replace(CONTAINER_ID, viewer) }
-    viewer.documentUri = document
   }
 
   companion object {
@@ -74,6 +80,14 @@ class CitedPagePdfViewerFragment : PdfViewerFragment() {
     jumped = savedInstanceState?.getBoolean(STATE_JUMPED) ?: false
   }
 
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+    // Once: after a rotation the library restores its own document and place.
+    if (documentUri == null) {
+      documentUri = BundleCompat.getParcelable(requireArguments(), ARG_DOCUMENT, Uri::class.java)
+    }
+  }
+
   override fun onSaveInstanceState(outState: Bundle) {
     super.onSaveInstanceState(outState)
     outState.putBoolean(STATE_JUMPED, jumped)
@@ -85,7 +99,28 @@ class CitedPagePdfViewerFragment : PdfViewerFragment() {
     if (jumped || page <= 0) return
     jumped = true
     // The view counts from 0; a citation from 1. A page past the end goes to the last.
-    pdfView.scrollToPage((page - 1).coerceAtMost(document.pageCount - 1))
+    scrollWhenReady((page - 1).coerceAtMost(document.pageCount - 1), attemptsLeft = SCROLL_ATTEMPTS)
+  }
+
+  /**
+   * The library reports the document loaded before its view has it, and the view throws when asked
+   * to scroll without one; so this waits a frame at a time until it does. Never crashes the viewer:
+   * if the view never takes the document, it stays at the first page.
+   */
+  private fun scrollWhenReady(pageIndex: Int, attemptsLeft: Int) {
+    val view = view ?: return
+    view.post {
+      if (!isAdded) return@post
+      if (pdfView.pdfDocument == null) {
+        if (attemptsLeft > 0) scrollWhenReady(pageIndex, attemptsLeft - 1)
+        return@post
+      }
+      try {
+        pdfView.scrollToPage(pageIndex)
+      } catch (_: IllegalStateException) {
+        // Not ready after all: the first page is a fine place to be.
+      }
+    }
   }
 
   /**
@@ -109,6 +144,10 @@ class CitedPagePdfViewerFragment : PdfViewerFragment() {
 
   internal companion object {
     const val ARG_PAGE = "page"
+    const val ARG_DOCUMENT = "document"
+
+    /** About a second of frames: the view takes the document within one or two. */
+    private const val SCROLL_ATTEMPTS = 60
     private const val STATE_JUMPED = "jumped"
   }
 }
