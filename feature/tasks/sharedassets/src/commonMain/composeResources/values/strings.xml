@@ -30,4 +30,6 @@
   <string name="skip_this_cycle_option_subtitle">Marks complete without logging</string>
   <string name="task_deleted"><xliff:g example="Task">%1$s</xliff:g> deleted</string>
   <string name="task_skipped">Cycle skipped — next due rescheduled</string>
+  <!-- Marks a task the AI drafted (task population PRD R34), on its card and in its detail. -->
+  <string name="suggested_by_ai">Suggested by AI</string>
 </resources>
