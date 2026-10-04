@@ -49,6 +49,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -108,6 +109,9 @@ class StarterPackViewModelTest {
     }
     // The Thing has no tasks unless a test says so.
     every { taskDataManager.observeTasks(THING_ID) } returns flowOf(emptyList())
+    // A model run can start, without documents, unless a test says otherwise.
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, false, null)
+    coEvery { suggestions.isOwner(THING_ID) } returns true
   }
 
   @After
@@ -711,15 +715,69 @@ class StarterPackViewModelTest {
   }
 
   @Test
-  fun theDailyLimitHoldsSuggestAndSaysWhen() = runTest(dispatcher) {
+  fun theDailyLimitShowsWhenAiIsBackAndOpensNoSheet() = runTest(dispatcher) {
     val back = Instant.fromEpochMilliseconds(9_000)
     val vm = openSheet(eligibility = AiEligibility(false, AiErrorCode.DAILY_LIMIT, true, back))
 
-    assertThat(vm.uiState.value.sources?.blocked).isEqualTo(AiErrorCode.DAILY_LIMIT)
-    assertThat(vm.uiState.value.sources?.availableAt).isEqualTo(back)
+    assertThat(vm.uiState.value.sources).isNull()
+    assertThat(vm.uiState.value.canSuggest).isFalse()
+    assertThat(vm.uiState.value.aiUnavailable).isEqualTo(AiSkipped(AiErrorCode.DAILY_LIMIT, back))
+    assertThat(vm.uiState.value.isCheckingAi).isFalse()
+    // Nothing on screen starts a run.
+    vm.onOpenSources()
     vm.onSuggest()
     advanceUntilIdle()
+    assertThat(vm.uiState.value.sources).isNull()
     coVerify(exactly = 0) { suggestions.start(THING_ID, any(), curatedOnly = false, any()) }
+  }
+
+  @Test
+  fun theSheetWaitsForTheAnswerAndSaysItIsChecking() = runTest(dispatcher) {
+    val answer = CompletableDeferred<AiEligibility>()
+    coEvery { suggestions.eligibility(THING_ID, any()) } coAnswers { answer.await() }
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      AiStartResult.Started(CURATED_JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
+    advanceUntilIdle()
+
+    // The cards are up; the sheet is not, and the screen says why it is waiting.
+    assertThat(vm.uiState.value.items).hasSize(3)
+    assertThat(vm.uiState.value.isCheckingAi).isTrue()
+    assertThat(vm.uiState.value.sources).isNull()
+
+    answer.complete(AiEligibility(true, null, true, null))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isCheckingAi).isFalse()
+    assertThat(vm.uiState.value.sources?.isChecking).isFalse()
+    assertThat(vm.uiState.value.sources?.documentsAllowed).isTrue()
+  }
+
+  @Test
+  fun theSheetOpensFromTheAnswerAlreadyIn() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    vm.onOpenSources()
+
+    assertThat(vm.uiState.value.sources?.isChecking).isFalse()
+    coVerify(exactly = 1) { suggestions.eligibility(THING_ID, any()) }
+  }
+
+  @Test
+  fun theStarterModeAlsoSaysWhenAiIsBack() = runTest(dispatcher) {
+    val back = Instant.fromEpochMilliseconds(9_000)
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns
+      AiEligibility(false, AiErrorCode.DAILY_LIMIT, false, back)
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.canSuggest).isFalse()
+    assertThat(vm.uiState.value.aiUnavailable?.reason).isEqualTo(AiErrorCode.DAILY_LIMIT)
   }
 
   @Test
