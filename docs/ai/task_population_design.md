@@ -983,7 +983,8 @@ design. `BlobIndexReconciler` marks such a blob remote-missing rather than loopi
 ## 9. UX
 
 All states are one route: `Screen.StarterPack` gains an optional `mode` query arg (`starter`
-default, `suggest`, `document`) and an optional `attachmentId` (R4).
+default, `suggest`, `document`) and an optional `document` (R4): the attachment itself, encoded
+like a task draft (built in T23), so the screen needs no search of the Thing's records for it.
 
 ### 9.1 Entry points
 
@@ -1000,7 +1001,9 @@ default, `suggest`, `document`) and an optional `attachmentId` (R4).
   suggestions start from its task tab.
 - **Task list action** (R2): new `ThingOverviewAction.SuggestTasksClick` → `mode=suggest`.
 - **Add task → Tasks from a document** (R3): `mode=document` (sources sheet opens with the picker).
-- **Attachment row → Find tasks in this document** (R4, P1): `mode=document&attachmentId=`.
+- **Attachment row → Find tasks in this document** (R4, P1): `mode=document&document=`. The sheet
+  starts with that file instead of the picker, and the run reads the stored blob (nothing uploads);
+  its record keeps holding it, so ending the run never lets it go.
 
 While a run is in flight for the Thing, no entry point opens the sources sheet (PRD R19a):
 

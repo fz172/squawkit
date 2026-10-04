@@ -84,6 +84,11 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
         type = NavType.StringType
         defaultValue = Screen.StarterPack.MODE_STARTER
       },
+      navArgument(Screen.SUGGESTIONS_DOCUMENT) {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+      },
     ),
     dialogProperties = formDialogProperties(),
   ) {

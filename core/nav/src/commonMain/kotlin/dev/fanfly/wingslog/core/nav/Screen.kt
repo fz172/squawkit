@@ -15,6 +15,9 @@ sealed class Screen(val route: String) {
     const val SQUAWK_ID = "squawkId"
     const val TEMPLATE_ID = "templateId"
     const val SUGGESTIONS_MODE = "mode"
+
+    /** A file already on a record for the suggestions screen to read (task population R4). */
+    const val SUGGESTIONS_DOCUMENT = "document"
     const val DATA_LOG_ID = "dataLogId"
 
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
@@ -54,16 +57,28 @@ sealed class Screen(val route: String) {
    * (docs/ai/task_population_design.md §9.1). Reached from an empty Tasks tab (`starter`, the
    * default), from the task list's *Suggest tasks* action (`suggest`), and from the add-task form's
    * *Tasks from a document* (`document`, which opens the file picker at once); not after creating a
-   * Thing (2026-10-03). The id and the mode are all the route carries.
+   * Thing (2026-10-03). In `document` mode it may also carry [SUGGESTIONS_DOCUMENT], an attachment
+   * already on a record (*Find tasks in this document*, R4), which the sheet starts with instead of
+   * the picker.
    */
   data object StarterPack :
-    Screen("starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}") {
+    Screen(
+      "starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}" +
+        "&$SUGGESTIONS_DOCUMENT={$SUGGESTIONS_DOCUMENT}"
+    ) {
     const val MODE_STARTER = "starter"
     const val MODE_SUGGEST = "suggest"
     const val MODE_DOCUMENT = "document"
 
-    fun createRoute(thingId: String, mode: String = MODE_STARTER) =
-      if (mode == MODE_STARTER) "starter_pack/$thingId" else "starter_pack/$thingId?$SUGGESTIONS_MODE=$mode"
+    /** [document]: an encoded attachment (`toDocumentArg`), for [MODE_DOCUMENT] only. */
+    fun createRoute(thingId: String, mode: String = MODE_STARTER, document: String? = null) =
+      when {
+        document != null ->
+          "starter_pack/$thingId?$SUGGESTIONS_MODE=$MODE_DOCUMENT&$SUGGESTIONS_DOCUMENT=$document"
+
+        mode == MODE_STARTER -> "starter_pack/$thingId"
+        else -> "starter_pack/$thingId?$SUGGESTIONS_MODE=$mode"
+      }
   }
 
   data object EnterInviteCode : Screen("enter_invite_code")
