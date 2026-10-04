@@ -258,6 +258,7 @@ fun StarterPackRoute(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
+          DocumentsHeader(uiState.documents)
           uiState.aiSkipped?.let { skipped ->
             // The curated cards came alone; say why, and when the model is back (PRD R9a).
             Text(

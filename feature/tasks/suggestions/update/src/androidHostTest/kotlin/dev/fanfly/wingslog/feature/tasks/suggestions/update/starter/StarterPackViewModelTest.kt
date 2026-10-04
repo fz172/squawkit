@@ -25,6 +25,8 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionE
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.AttachmentId
+import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
 import dev.fanfly.wingslog.id.SuggestionId
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
@@ -447,6 +449,29 @@ class StarterPackViewModelTest {
     assertThat(vm.uiState.value.sources).isEqualTo(
       SourcesState(isChecking = false, documentsAllowed = false, isOwner = false),
     )
+  }
+
+  @Test
+  fun theReviewCarriesWhatTheRunMadeOfEachDocument() = runTest(dispatcher) {
+    val vm = suggestModeModelRun()
+    val manual = IdentifiedDocument(
+      blob_id = AttachmentId(value_ = "blob-1"),
+      name = "915iS_MM.pdf",
+      title = "Rotax 915 iS MM",
+      matches_thing = true,
+    )
+    val stray = IdentifiedDocument(name = "Airmaster_manual.pdf", matches_thing = false)
+
+    runs.emit(SuggestionRun.Ready(JOB, curatedList.copy(documents = listOf(manual, stray))))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.documents).containsExactly(manual, stray).inOrder()
+  }
+
+  @Test
+  fun aDocumentIsNamedByTheTitleItCarriesElseItsFileName() {
+    assertThat(IdentifiedDocument(name = "a.pdf", title = "Rotax MM").displayTitle()).isEqualTo("Rotax MM")
+    assertThat(IdentifiedDocument(name = "a.pdf").displayTitle()).isEqualTo("a.pdf")
   }
 
   @Test
