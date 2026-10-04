@@ -21,6 +21,10 @@ class WingsLogApplication : Application() {
 
   override fun onCreate() {
     super.onCreate()
+    // The app's own process only. Jetpack PDF renders in an isolated service process, which runs
+    // this class too; there Firebase, Koin and sync have nothing to do, and Firebase's start crashes
+    // (an isolated process has no UserManager), killing the service and leaving the viewer spinning.
+    if (getProcessName() != packageName) return
     initializeFirebaseAppCheck()
     logger.d { "WingsLogApplication started" }
     SwitchTrace.enabled = BuildConfig.BUILD_TYPE != "release"
