@@ -226,7 +226,15 @@ export type AiConfig = {
   monthlyCeilingMicros: { free: number; pro: number; total: number };
   /** Documents per run (design §5.5). */
   maxDocumentsPerRun: number;
+  /**
+   * Bytes per document (design §5.5). Its own cap, above the attachment pipeline's 5 MB, because a
+   * maintenance manual is often bigger (the Sling TSi manual is 13.7 MB; decided 2026-10-03).
+   */
+  maxDocumentBytes: number;
 };
+
+/** 25 MiB: every manual in the eval set, with room. */
+export const DEFAULT_MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 
 /**
  * What the seed script writes. Disabled until phase C ships: the switch is turned on by hand.
@@ -240,6 +248,7 @@ export const DEFAULT_AI_CONFIG: AiConfig = {
   strongProvider: "gemini-3.8-flash",
   monthlyCeilingMicros: { free: 50_000_000, pro: 150_000_000, total: 200_000_000 },
   maxDocumentsPerRun: 3,
+  maxDocumentBytes: DEFAULT_MAX_DOCUMENT_BYTES,
 };
 
 /**
@@ -260,7 +269,9 @@ export function parseAiConfig(data: unknown): AiConfig {
     isNonNegative(ceilings.free) &&
     isNonNegative(ceilings.pro) &&
     isNonNegative(ceilings.total) &&
-    isNonNegative(d.maxDocumentsPerRun);
+    isNonNegative(d.maxDocumentsPerRun) &&
+    // Optional, so a config seeded before it existed still reads as live; a bad value does not.
+    (d.maxDocumentBytes === undefined || isNonNegative(d.maxDocumentBytes));
   if (!valid) return disabled;
   return {
     enabled: d.enabled as boolean,
@@ -272,6 +283,7 @@ export function parseAiConfig(data: unknown): AiConfig {
       total: ceilings.total as number,
     },
     maxDocumentsPerRun: d.maxDocumentsPerRun as number,
+    maxDocumentBytes: (d.maxDocumentBytes as number | undefined) ?? DEFAULT_MAX_DOCUMENT_BYTES,
   };
 }
 

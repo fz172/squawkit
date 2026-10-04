@@ -31,6 +31,19 @@ describe("parseAiConfig", () => {
     expect(parseAiConfig(live)).toEqual(live);
   });
 
+  it("reads a config seeded before maxDocumentBytes existed as live, at 25 MB", () => {
+    const { maxDocumentBytes: _absent, ...older } = { ...DEFAULT_AI_CONFIG, enabled: true };
+
+    const parsed = parseAiConfig(older);
+
+    expect(parsed.enabled).toBe(true);
+    expect(parsed.maxDocumentBytes).toBe(25 * 1024 * 1024);
+  });
+
+  it("reads a document cap it is given", () => {
+    expect(parseAiConfig({ ...DEFAULT_AI_CONFIG, enabled: true, maxDocumentBytes: 10_000_000 }).maxDocumentBytes).toBe(10_000_000);
+  });
+
   it("seeds disabled", () => {
     expect(DEFAULT_AI_CONFIG.enabled).toBe(false);
   });
@@ -46,6 +59,7 @@ describe("parseAiConfig", () => {
       { ...DEFAULT_AI_CONFIG, enabled: true, monthlyCeilingMicros: { free: -1, pro: 1, total: 1 } },
     ],
     ["no document cap", { ...DEFAULT_AI_CONFIG, enabled: true, maxDocumentsPerRun: undefined }],
+    ["a negative document size cap", { ...DEFAULT_AI_CONFIG, enabled: true, maxDocumentBytes: -1 }],
   ])("fails closed on %s", (_name, data) => {
     expect(parseAiConfig(data).enabled).toBe(false);
   });
