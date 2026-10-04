@@ -21,11 +21,32 @@ fun StarterTask.toSuggestion(index: Int): TaskSuggestion = TaskSuggestion(
   description = description,
   component_slot_key = component_slot_key,
   rules = buildList {
-    val calendarMonths = months.filter { it in 1..12 }.distinct().sorted()
-    if (calendarMonths.isNotEmpty()) add(InspectionRule(seasonal_rule = SeasonalRule(months = calendarMonths)))
-    if (interval_months > 0) add(InspectionRule(time_rule = TimeRule(interval_months = interval_months)))
+    val calendarMonths = months.filter { it in 1..12 }
+      .distinct()
+      .sorted()
+    if (calendarMonths.isNotEmpty()) add(
+      InspectionRule(
+        seasonal_rule = SeasonalRule(
+          months = calendarMonths
+        )
+      )
+    )
+    if (interval_months > 0) add(
+      InspectionRule(
+        time_rule = TimeRule(
+          interval_months = interval_months
+        )
+      )
+    )
     if (meter_key.isNotEmpty() && interval > 0f) {
-      add(InspectionRule(meter_rule = MeterRule(meter_key = meter_key, interval = interval)))
+      add(
+        InspectionRule(
+          meter_rule = MeterRule(
+            meter_key = meter_key,
+            interval = interval
+          )
+        )
+      )
     }
   },
   type = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,

@@ -54,11 +54,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 class TaskViewModel(
   private val inspectionDataManager: TaskDataManager,
@@ -81,7 +81,8 @@ class TaskViewModel(
    * The task the form was opened with in draft mode (task population T18), or null. The form
    * starts from it and hands the edited task back rather than saving anything.
    */
-  val draft: MaintenanceTask? = savedStateHandle.get<String>(Screen.TASK_DRAFT)?.let(::taskFromDraftArg)
+  val draft: MaintenanceTask? = savedStateHandle.get<String>(Screen.TASK_DRAFT)
+    ?.let(::taskFromDraftArg)
 
   private val _uiState = MutableStateFlow<TaskUiState>(TaskUiState.Loading)
   val uiState: StateFlow<TaskUiState> = _uiState.asStateFlow()
@@ -467,7 +468,13 @@ class TaskViewModel(
           updatedCard
         )
           .onSuccess {
-            before?.let { originEditOf(currentThingTemplate.templateId, it, updatedCard) }
+            before?.let {
+              originEditOf(
+                currentThingTemplate.templateId,
+                it,
+                updatedCard
+              )
+            }
               ?.let { analytics.log(it) }
             onSuccess()
           }

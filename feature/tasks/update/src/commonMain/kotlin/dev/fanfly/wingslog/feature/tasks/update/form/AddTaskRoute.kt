@@ -19,10 +19,10 @@ import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.task_added
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 @Composable
 fun AddTaskRoute(
@@ -89,7 +89,8 @@ fun AddTaskRoute(
           // the form, which writes it. The suggestion's origin and documents stay with it.
           navController.previousBackStackEntry?.savedStateHandle?.set(
             CROSS_SCREEN_TASK_DRAFT,
-            card.copy(origin = draft.origin, attachments = draft.attachments).toDraftArg(),
+            card.copy(origin = draft.origin, attachments = draft.attachments)
+              .toDraftArg(),
           )
           navController.popBackStack()
           return@AddTaskScreen

@@ -23,6 +23,9 @@ val tasksDashboardModule = module {
     )
   }
   viewModel { params ->
-    SuggestTasksEntryViewModel(get<TaskSuggestionEntry>(), params.get<String>(0))
+    SuggestTasksEntryViewModel(
+      get<TaskSuggestionEntry>(),
+      params.get<String>(0)
+    )
   }
 }

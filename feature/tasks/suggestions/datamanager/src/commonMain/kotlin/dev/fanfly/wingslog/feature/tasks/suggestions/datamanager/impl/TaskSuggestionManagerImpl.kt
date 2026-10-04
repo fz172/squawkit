@@ -27,11 +27,11 @@ import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlin.time.Duration.Companion.seconds
 
 class TaskSuggestionManagerImpl(
   private val client: AiJobClient,
@@ -45,19 +45,40 @@ class TaskSuggestionManagerImpl(
 ) : TaskSuggestionManager {
 
   override suspend fun eligibility(thingId: String): AiEligibility =
-    client.eligibility(KIND, ThingId(value_ = thingId), UserId(value_ = hostUidOf(thingId)), withDocuments = false)
+    client.eligibility(
+      KIND,
+      ThingId(value_ = thingId),
+      UserId(value_ = hostUidOf(thingId)),
+      withDocuments = false
+    )
 
-  override suspend fun start(thingId: String, entryPoint: String, curatedOnly: Boolean): AiStartResult {
+  override suspend fun start(
+    thingId: String,
+    entryPoint: String,
+    curatedOnly: Boolean
+  ): AiStartResult {
     val hostUid = hostUidOf(thingId)
     // A Thing made seconds ago on this device may not be on the server yet, and the server refuses
     // one it cannot find as not_member (§5.3). After the wait the server decides either way.
-    if (!syncObserver.awaitSynced(CollectionKind.Thing, EntityScope.userRoot(hostUid), thingId, SYNC_WAIT)) {
+    if (!syncObserver.awaitSynced(
+        CollectionKind.Thing,
+        EntityScope.userRoot(hostUid),
+        thingId,
+        SYNC_WAIT
+      )
+    ) {
       logger.w { "Starting suggestions before the Thing is confirmed on the server" }
     }
     val built = contextBuilder.build(thingId, entryPoint)
     // The curated list is fitted to the Thing's slots, meters and tasks (§6.8), never its logs.
     val request = if (curatedOnly) {
-      built.copy(curated_only = true, context = built.context?.copy(logs = emptyList(), logs_truncated = false))
+      built.copy(
+        curated_only = true,
+        context = built.context?.copy(
+          logs = emptyList(),
+          logs_truncated = false
+        )
+      )
     } else {
       built
     }
@@ -65,13 +86,15 @@ class TaskSuggestionManagerImpl(
   }
 
   override fun observeRun(thingId: String): Flow<SuggestionRun> =
-    client.observeLatest(KIND, ThingId(value_ = thingId)).map { job -> job?.toRun() ?: SuggestionRun.Idle }
+    client.observeLatest(KIND, ThingId(value_ = thingId))
+      .map { job -> job?.toRun() ?: SuggestionRun.Idle }
 
   override suspend fun draftOf(
     thingId: String,
     suggestion: TaskSuggestion,
     generationVersion: String,
-  ): MaintenanceTask = mapper.toTask(suggestion, templateOf(thingId), generationVersion)
+  ): MaintenanceTask =
+    mapper.toTask(suggestion, templateOf(thingId), generationVersion)
 
   override suspend fun accept(
     thingId: String,
@@ -81,7 +104,11 @@ class TaskSuggestionManagerImpl(
     val template = templateOf(thingId)
     val written = chosen.count { accepted ->
       val task = accepted.edited
-        ?: mapper.toTask(accepted.suggestion, template, run.result.generation_version)
+        ?: mapper.toTask(
+          accepted.suggestion,
+          template,
+          run.result.generation_version
+        )
       taskDataManager.addTask(thingId, task)
         .onFailure { logger.w(it) { "A suggested task was not written" } }
         .isSuccess
@@ -95,10 +122,13 @@ class TaskSuggestionManagerImpl(
   }
 
   private suspend fun hostUidOf(thingId: String): String =
-    scopeResolver.resolveNow(thingId).segments.getOrNull(1).orEmpty()
+    scopeResolver.resolveNow(thingId).segments.getOrNull(1)
+      .orEmpty()
 
   private suspend fun templateOf(thingId: String): ThingTemplate? {
-    val thing = fleetManager.loadThing(thingId).filterNotNull().first()
+    val thing = fleetManager.loadThing(thingId)
+      .filterNotNull()
+      .first()
     return thing.template ?: templateRegistry.forThingWithFallback(thing)
   }
 
@@ -111,7 +141,8 @@ class TaskSuggestionManagerImpl(
     val logger = Logger.withTag("TaskSuggestionManager")
 
     fun AiJob.toRun(): SuggestionRun {
-      val decoded = result?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
+      val decoded =
+        result?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
       return when (status) {
         AiJobStatus.AI_JOB_STATUS_SUCCEEDED ->
           if (decoded != null) {
@@ -119,8 +150,13 @@ class TaskSuggestionManagerImpl(
           } else {
             SuggestionRun.Failed(id, AiErrorCode.UNKNOWN)
           }
+
         AiJobStatus.AI_JOB_STATUS_EMPTY -> SuggestionRun.Empty(id, decoded)
-        AiJobStatus.AI_JOB_STATUS_FAILED -> SuggestionRun.Failed(id, error ?: AiErrorCode.UNKNOWN, decoded)
+        AiJobStatus.AI_JOB_STATUS_FAILED -> SuggestionRun.Failed(
+          id,
+          error ?: AiErrorCode.UNKNOWN,
+          decoded
+        )
         // QUEUED, RUNNING, and a status this build does not know: still working, as far as it can
         // tell, with the curated suggestions it started with.
         else -> SuggestionRun.Working(id, stage, stageArg, decoded)

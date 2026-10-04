@@ -31,12 +31,11 @@ import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
-import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkTab
-import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.roundToInt
 
 @Composable
 fun MaintenanceTasksTab(
@@ -68,7 +67,9 @@ fun MaintenanceTasksTab(
     )
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
   val suggestViewModel: SuggestTasksEntryViewModel =
-    koinViewModel(key = "suggest:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
+    koinViewModel(
+      key = "suggest:${state.thing.id}",
+      parameters = { parametersOf(state.thing.id) })
   val suggestEntry by suggestViewModel.entry.collectAsStateWithLifecycle()
   val taskFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange
@@ -190,7 +191,14 @@ fun MaintenanceTasksTab(
         }
       } else null,
       revealController = revealController,
-      quickActionsFor = { item -> taskQuickActionsFor(item, state, revealController, onAction) },
+      quickActionsFor = { item ->
+        taskQuickActionsFor(
+          item,
+          state,
+          revealController,
+          onAction
+        )
+      },
     )
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))

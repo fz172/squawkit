@@ -29,7 +29,11 @@ interface TaskSuggestionManager {
    * and the empty task list show before the user asks for AI (design §9.1). Such a run ends at once
    * and never uses up the day.
    */
-  suspend fun start(thingId: String, entryPoint: String, curatedOnly: Boolean = false): AiStartResult
+  suspend fun start(
+    thingId: String,
+    entryPoint: String,
+    curatedOnly: Boolean = false
+  ): AiStartResult
 
   /** The caller's latest run on [thingId]; [SuggestionRun.Idle] when there is none. */
   fun observeRun(thingId: String): Flow<SuggestionRun>
@@ -39,13 +43,21 @@ interface TaskSuggestionManager {
    * changes it first (PRD R28). The form hands back the edited task, which [accept] then writes as
    * it is.
    */
-  suspend fun draftOf(thingId: String, suggestion: TaskSuggestion, generationVersion: String): MaintenanceTask
+  suspend fun draftOf(
+    thingId: String,
+    suggestion: TaskSuggestion,
+    generationVersion: String
+  ): MaintenanceTask
 
   /**
    * Writes [chosen] as tasks, one write each like the starter pack (a failure drops only its own
    * card), then closes the run. Returns how many were written.
    */
-  suspend fun accept(thingId: String, run: SuggestionRun.Ready, chosen: List<AcceptedSuggestion>): Int
+  suspend fun accept(
+    thingId: String,
+    run: SuggestionRun.Ready,
+    chosen: List<AcceptedSuggestion>
+  ): Int
 
   /** Closes the run without writing anything. */
   suspend fun dismiss(jobId: AiJobId)
@@ -85,7 +97,8 @@ sealed interface SuggestionRun {
    * The model had nothing confident to say (PRD R21a). It does not use up the day. [result] holds
    * the curated suggestions, if the template has any.
    */
-  data class Empty(val jobId: AiJobId, val result: SuggestTasksResult? = null) : SuggestionRun
+  data class Empty(val jobId: AiJobId, val result: SuggestTasksResult? = null) :
+    SuggestionRun
 
   /** [result] holds the curated suggestions the run started with, if any. */
   data class Failed(

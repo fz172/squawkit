@@ -34,10 +34,22 @@ fun AiErrorCode.message(thing: String = LocalThingLexicon.current.thingNoun.sing
   when (this) {
     AiErrorCode.SIGN_IN_REQUIRED -> stringResource(Res.string.ai_error_sign_in_required)
     AiErrorCode.DISABLED -> stringResource(Res.string.ai_error_disabled)
-    AiErrorCode.NOT_MEMBER -> stringResource(Res.string.ai_error_not_member, thing)
+    AiErrorCode.NOT_MEMBER -> stringResource(
+      Res.string.ai_error_not_member,
+      thing
+    )
+
     AiErrorCode.OWNER_NOT_PRO -> stringResource(Res.string.ai_error_owner_not_pro)
-    AiErrorCode.DAILY_LIMIT -> stringResource(Res.string.ai_error_daily_limit, thing)
-    AiErrorCode.RUN_IN_PROGRESS -> stringResource(Res.string.ai_error_run_in_progress, thing)
+    AiErrorCode.DAILY_LIMIT -> stringResource(
+      Res.string.ai_error_daily_limit,
+      thing
+    )
+
+    AiErrorCode.RUN_IN_PROGRESS -> stringResource(
+      Res.string.ai_error_run_in_progress,
+      thing
+    )
+
     AiErrorCode.SPEND_CEILING -> stringResource(Res.string.ai_error_spend_ceiling)
     AiErrorCode.DOCUMENT_MISSING -> stringResource(Res.string.ai_error_document_missing)
     AiErrorCode.DOCUMENT_TOO_LARGE -> stringResource(Res.string.ai_error_document_too_large)

@@ -6,8 +6,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
@@ -43,6 +41,8 @@ import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_se
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_days
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_months
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_years
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /** The schedule in one sentence, a hint for the second line, and whether there is one at all. */
 @Composable

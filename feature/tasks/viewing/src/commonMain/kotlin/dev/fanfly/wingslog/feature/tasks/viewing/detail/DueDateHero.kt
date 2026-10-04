@@ -18,7 +18,6 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
@@ -31,6 +30,7 @@ import wingslog.feature.tasks.viewing.generated.resources.engine_hours_label
 import wingslog.feature.tasks.viewing.generated.resources.next_due_date
 import wingslog.feature.tasks.viewing.generated.resources.next_due_meter
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
+import kotlin.time.Clock
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
 @Composable

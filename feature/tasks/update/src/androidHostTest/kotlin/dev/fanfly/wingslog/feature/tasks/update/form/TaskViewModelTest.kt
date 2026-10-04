@@ -384,7 +384,12 @@ class TaskViewModelTest {
 
   @Test
   fun saveNewTask_marksTheTaskAsMadeByHand() = runTest(testDispatcher) {
-    coEvery { inspectionDataManager.addTask(TEST_THING_ID, any()) } returns Result.success(true)
+    coEvery {
+      inspectionDataManager.addTask(
+        TEST_THING_ID,
+        any()
+      )
+    } returns Result.success(true)
     val viewModel = buildViewModelForNew()
     advanceUntilIdle()
 
@@ -404,7 +409,12 @@ class TaskViewModelTest {
     advanceUntilIdle()
 
     val persisted = slot<MaintenanceTask>()
-    coVerify { inspectionDataManager.addTask(TEST_THING_ID, capture(persisted)) }
+    coVerify {
+      inspectionDataManager.addTask(
+        TEST_THING_ID,
+        capture(persisted)
+      )
+    }
     assertThat(persisted.captured.origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_USER)
   }
 
@@ -413,8 +423,15 @@ class TaskViewModelTest {
     // The form never shows the origin, so the rebuilt card must carry it over (PRD R35).
     val origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
     val stored = skippedCard(forceDueEngine = 0f).copy(origin = origin)
-    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(listOf(stored))
-    coEvery { inspectionDataManager.updateTask(TEST_THING_ID, any()) } returns Result.success(true)
+    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      listOf(stored)
+    )
+    coEvery {
+      inspectionDataManager.updateTask(
+        TEST_THING_ID,
+        any()
+      )
+    } returns Result.success(true)
     val viewModel = buildViewModelForEdit()
     advanceUntilIdle()
 
@@ -422,7 +439,12 @@ class TaskViewModelTest {
     advanceUntilIdle()
 
     val persisted = slot<MaintenanceTask>()
-    coVerify { inspectionDataManager.updateTask(TEST_THING_ID, capture(persisted)) }
+    coVerify {
+      inspectionDataManager.updateTask(
+        TEST_THING_ID,
+        capture(persisted)
+      )
+    }
     assertThat(persisted.captured.origin).isEqualTo(origin)
   }
 
@@ -432,16 +454,31 @@ class TaskViewModelTest {
     val analytics = RecordingAnalyticsManager()
     val stored = skippedCard(forceDueEngine = 0f)
       .copy(origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_AI_THING))
-    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(listOf(stored))
-    coEvery { inspectionDataManager.updateTask(TEST_THING_ID, any()) } returns Result.success(true)
+    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      listOf(stored)
+    )
+    coEvery {
+      inspectionDataManager.updateTask(
+        TEST_THING_ID,
+        any()
+      )
+    } returns Result.success(true)
     val viewModel = buildViewModelForEdit(analytics)
     advanceUntilIdle()
 
     viewModel.saveEditedTaskFrom(stored.copy(title = "Renamed"))
     advanceUntilIdle()
 
-    assertThat(analytics.paramsFor("task_origin_edited").single())
-      .containsAtLeastEntriesIn(mapOf("kind" to "ai_thing", "field_group" to "details"))
+    assertThat(
+      analytics.paramsFor("task_origin_edited")
+        .single()
+    )
+      .containsAtLeastEntriesIn(
+        mapOf(
+          "kind" to "ai_thing",
+          "field_group" to "details"
+        )
+      )
   }
 
   @Test

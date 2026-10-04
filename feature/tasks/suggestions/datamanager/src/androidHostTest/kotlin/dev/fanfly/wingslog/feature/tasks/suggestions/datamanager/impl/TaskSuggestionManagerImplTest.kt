@@ -38,13 +38,12 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlin.time.Instant
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import okio.ByteString
 import org.junit.Test
+import kotlin.time.Instant
 
 class TaskSuggestionManagerImplTest {
 
@@ -52,20 +51,47 @@ class TaskSuggestionManagerImplTest {
   private val client = mockk<AiJobClient>(relaxed = true)
   private val builder = mockk<SuggestionContextBuilder>()
   private val fleet = mockk<FleetManager> {
-    every { loadThing(THING) } returns flowOf(Thing(id = THING, template = template))
+    every { loadThing(THING) } returns flowOf(
+      Thing(
+        id = THING,
+        template = template
+      )
+    )
   }
-  private val taskData = mockk<TaskDataManager> { every { observeTasks(THING) } returns flowOf(emptyList()) }
+  private val taskData = mockk<TaskDataManager> {
+    every { observeTasks(THING) } returns flowOf(emptyList())
+  }
   private val registry = mockk<TemplateRegistry>()
   private val scopes = mockk<ThingScopeResolver> {
-    coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe("host", THING)
+    coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe(
+      "host",
+      THING
+    )
   }
-  private val sync = mockk<EntitySyncObserver> { coEvery { awaitSynced(any(), any(), any(), any()) } returns true }
+  private val sync = mockk<EntitySyncObserver> {
+    coEvery {
+      awaitSynced(
+        any(),
+        any(),
+        any(),
+        any()
+      )
+    } returns true
+  }
 
   private val manager = TaskSuggestionManagerImpl(
-    client, builder, SuggestionMapper(), fleet, taskData, registry, scopes, sync,
+    client,
+    builder,
+    SuggestionMapper(),
+    fleet,
+    taskData,
+    registry,
+    scopes,
+    sync,
   )
 
-  private val suggestion = TaskSuggestion(title = "Replace spark plugs", component_slot_key = "engine")
+  private val suggestion =
+    TaskSuggestion(title = "Replace spark plugs", component_slot_key = "engine")
 
   private fun job(
     status: AiJobStatus?,
@@ -89,7 +115,14 @@ class TaskSuggestionManagerImplTest {
 
   @Test
   fun `asks about the Thing in its host's tree, without documents`() = runTest {
-    coEvery { client.eligibility(any(), any(), any(), any()) } returns AiEligibility(true, null, false, null)
+    coEvery {
+      client.eligibility(
+        any(),
+        any(),
+        any(),
+        any()
+      )
+    } returns AiEligibility(true, null, false, null)
 
     manager.eligibility(THING)
 
@@ -104,32 +137,56 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
-  fun `waits for the Thing to reach the server, then starts with the built request`() = runTest {
-    val request = SuggestTasksRequest(thing_id = ThingId(value_ = THING), entry_point = "overview")
-    coEvery { builder.build(THING, "overview") } returns request
-    val sent = slot<ByteString>()
-    coEvery { client.start(any(), capture(sent)) } returns AiStartResult.Started(JOB, joined = false)
+  fun `waits for the Thing to reach the server, then starts with the built request`() =
+    runTest {
+      val request = SuggestTasksRequest(
+        thing_id = ThingId(value_ = THING),
+        entry_point = "overview"
+      )
+      coEvery { builder.build(THING, "overview") } returns request
+      val sent = slot<ByteString>()
+      coEvery {
+        client.start(
+          any(),
+          capture(sent)
+        )
+      } returns AiStartResult.Started(JOB, joined = false)
 
-    val result = manager.start(THING, "overview")
+      val result = manager.start(THING, "overview")
 
-    assertThat(result).isEqualTo(AiStartResult.Started(JOB, joined = false))
-    assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured)).isEqualTo(request)
-    coVerifyOrder {
-      sync.awaitSynced(CollectionKind.Thing, EntityScope.userRoot("host"), THING, any())
-      builder.build(THING, "overview")
-      client.start(AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, any())
+      assertThat(result).isEqualTo(AiStartResult.Started(JOB, joined = false))
+      assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured)).isEqualTo(
+        request
+      )
+      coVerifyOrder {
+        sync.awaitSynced(
+          CollectionKind.Thing,
+          EntityScope.userRoot("host"),
+          THING,
+          any()
+        )
+        builder.build(THING, "overview")
+        client.start(AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, any())
+      }
     }
-  }
 
   @Test
   fun `asks for the curated suggestions alone, without the logs`() = runTest {
     val request = SuggestTasksRequest(
       thing_id = ThingId(value_ = THING),
-      context = SuggestionContext(logs = listOf(LogSummary(work_description = "Oil change")), logs_truncated = true),
+      context = SuggestionContext(
+        logs = listOf(LogSummary(work_description = "Oil change")),
+        logs_truncated = true
+      ),
     )
     coEvery { builder.build(THING, "created") } returns request
     val sent = slot<ByteString>()
-    coEvery { client.start(any(), capture(sent)) } returns AiStartResult.Started(JOB, joined = false)
+    coEvery {
+      client.start(
+        any(),
+        capture(sent)
+      )
+    } returns AiStartResult.Started(JOB, joined = false)
 
     manager.start(THING, "created", curatedOnly = true)
 
@@ -140,18 +197,35 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
-  fun `still starts when the Thing is not confirmed synced, and lets the server decide`() = runTest {
-    coEvery { sync.awaitSynced(any(), any(), any(), any()) } returns false
-    coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
-    coEvery { client.start(any(), any()) } returns AiStartResult.Refused(AiErrorCode.NOT_MEMBER, null)
+  fun `still starts when the Thing is not confirmed synced, and lets the server decide`() =
+    runTest {
+      coEvery { sync.awaitSynced(any(), any(), any(), any()) } returns false
+      coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
+      coEvery { client.start(any(), any()) } returns AiStartResult.Refused(
+        AiErrorCode.NOT_MEMBER,
+        null
+      )
 
-    assertThat(manager.start(THING, "overview")).isEqualTo(AiStartResult.Refused(AiErrorCode.NOT_MEMBER, null))
-  }
+      assertThat(
+        manager.start(
+          THING,
+          "overview"
+        )
+      ).isEqualTo(AiStartResult.Refused(AiErrorCode.NOT_MEMBER, null))
+    }
 
   @Test
   fun `turns the latest job into a run state`() = runTest {
-    val result = SuggestTasksResult(suggestions = listOf(suggestion), generation_version = "tasks-4")
-    every { client.observeLatest(AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, ThingId(value_ = THING)) } returns flowOf(
+    val result = SuggestTasksResult(
+      suggestions = listOf(suggestion),
+      generation_version = "tasks-4"
+    )
+    every {
+      client.observeLatest(
+        AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
+        ThingId(value_ = THING)
+      )
+    } returns flowOf(
       null,
       job(AiJobStatus.AI_JOB_STATUS_QUEUED),
       job(AiJobStatus.AI_JOB_STATUS_RUNNING),
@@ -162,7 +236,10 @@ class TaskSuggestionManagerImplTest {
       job(AiJobStatus.AI_JOB_STATUS_FAILED),
     )
 
-    assertThat(manager.observeRun(THING).toList()).containsExactly(
+    assertThat(
+      manager.observeRun(THING)
+        .toList()
+    ).containsExactly(
       SuggestionRun.Idle,
       SuggestionRun.Working(JOB, "tailoring", null),
       SuggestionRun.Working(JOB, "tailoring", null),
@@ -172,48 +249,86 @@ class TaskSuggestionManagerImplTest {
       SuggestionRun.Empty(JOB),
       SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR),
       SuggestionRun.Failed(JOB, AiErrorCode.UNKNOWN),
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
-  fun `carries the curated suggestions in every state, and why the model was skipped`() = runTest {
-    val curated = SuggestTasksResult(suggestions = listOf(TaskSuggestion(title = "Annual")), generation_version = "tasks-4")
-    val skipped = AiSkipped(AiErrorCode.DAILY_LIMIT, Instant.fromEpochMilliseconds(5_000))
-    every { client.observeLatest(AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, ThingId(value_ = THING)) } returns flowOf(
-      job(AiJobStatus.AI_JOB_STATUS_QUEUED, result = curated),
-      job(AiJobStatus.AI_JOB_STATUS_EMPTY, result = curated),
-      job(AiJobStatus.AI_JOB_STATUS_FAILED, result = curated, error = AiErrorCode.PROVIDER_ERROR),
-      job(AiJobStatus.AI_JOB_STATUS_SUCCEEDED, result = curated, aiSkipped = skipped),
-    )
+  fun `carries the curated suggestions in every state, and why the model was skipped`() =
+    runTest {
+      val curated = SuggestTasksResult(
+        suggestions = listOf(TaskSuggestion(title = "Annual")),
+        generation_version = "tasks-4"
+      )
+      val skipped =
+        AiSkipped(AiErrorCode.DAILY_LIMIT, Instant.fromEpochMilliseconds(5_000))
+      every {
+        client.observeLatest(
+          AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
+          ThingId(value_ = THING)
+        )
+      } returns flowOf(
+        job(AiJobStatus.AI_JOB_STATUS_QUEUED, result = curated),
+        job(AiJobStatus.AI_JOB_STATUS_EMPTY, result = curated),
+        job(
+          AiJobStatus.AI_JOB_STATUS_FAILED,
+          result = curated,
+          error = AiErrorCode.PROVIDER_ERROR
+        ),
+        job(
+          AiJobStatus.AI_JOB_STATUS_SUCCEEDED,
+          result = curated,
+          aiSkipped = skipped
+        ),
+      )
 
-    assertThat(manager.observeRun(THING).toList()).containsExactly(
-      SuggestionRun.Working(JOB, "tailoring", null, curated),
-      SuggestionRun.Empty(JOB, curated),
-      SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR, curated),
-      SuggestionRun.Ready(JOB, curated, skipped),
-    ).inOrder()
-  }
+      assertThat(
+        manager.observeRun(THING)
+          .toList()
+      ).containsExactly(
+        SuggestionRun.Working(JOB, "tailoring", null, curated),
+        SuggestionRun.Empty(JOB, curated),
+        SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR, curated),
+        SuggestionRun.Ready(JOB, curated, skipped),
+      )
+        .inOrder()
+    }
 
   @Test
-  fun `accepting writes each chosen task, keeps an edit as edited, and closes the run`() = runTest {
-    val written = mutableListOf<MaintenanceTask>()
-    coEvery { taskData.addTask(THING, capture(written)) } returns Result.success(true)
-    val edited = MaintenanceTask(title = "My own wording")
-    val run = SuggestionRun.Ready(JOB, SuggestTasksResult(generation_version = "tasks-4"))
+  fun `accepting writes each chosen task, keeps an edit as edited, and closes the run`() =
+    runTest {
+      val written = mutableListOf<MaintenanceTask>()
+      coEvery {
+        taskData.addTask(
+          THING,
+          capture(written)
+        )
+      } returns Result.success(true)
+      val edited = MaintenanceTask(title = "My own wording")
+      val run = SuggestionRun.Ready(
+        JOB,
+        SuggestTasksResult(generation_version = "tasks-4")
+      )
 
-    val count = manager.accept(
-      THING,
-      run,
-      listOf(AcceptedSuggestion(suggestion), AcceptedSuggestion(suggestion.copy(title = "Second"), edited = edited)),
-    )
+      val count = manager.accept(
+        THING,
+        run,
+        listOf(
+          AcceptedSuggestion(suggestion),
+          AcceptedSuggestion(
+            suggestion.copy(title = "Second"),
+            edited = edited
+          )
+        ),
+      )
 
-    assertThat(count).isEqualTo(2)
-    assertThat(written[0].title).isEqualTo("Replace spark plugs")
-    assertThat(written[0].origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_AI_THING)
-    assertThat(written[0].origin?.generation_version).isEqualTo("tasks-4")
-    assertThat(written[1]).isEqualTo(edited)
-    coVerify(exactly = 1) { client.close(JOB) }
-  }
+      assertThat(count).isEqualTo(2)
+      assertThat(written[0].title).isEqualTo("Replace spark plugs")
+      assertThat(written[0].origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_AI_THING)
+      assertThat(written[0].origin?.generation_version).isEqualTo("tasks-4")
+      assertThat(written[1]).isEqualTo(edited)
+      coVerify(exactly = 1) { client.close(JOB) }
+    }
 
   @Test
   fun `a failed write drops only its own card`() = runTest {
@@ -221,7 +336,11 @@ class TaskSuggestionManagerImplTest {
       listOf(Result.failure(RuntimeException("disk")), Result.success(true))
     val run = SuggestionRun.Ready(JOB, SuggestTasksResult())
 
-    val count = manager.accept(THING, run, listOf(AcceptedSuggestion(suggestion), AcceptedSuggestion(suggestion)))
+    val count = manager.accept(
+      THING,
+      run,
+      listOf(AcceptedSuggestion(suggestion), AcceptedSuggestion(suggestion))
+    )
 
     assertThat(count).isEqualTo(1)
     coVerify(exactly = 1) { client.close(JOB) }
@@ -229,7 +348,8 @@ class TaskSuggestionManagerImplTest {
 
   @Test
   fun `a draft is the suggestion as accepting would write it`() = runTest {
-    val draft = manager.draftOf(THING, suggestion, generationVersion = "tasks-5")
+    val draft =
+      manager.draftOf(THING, suggestion, generationVersion = "tasks-5")
 
     assertThat(draft.title).isEqualTo("Replace spark plugs")
     assertThat(draft.origin?.generation_version).isEqualTo("tasks-5")

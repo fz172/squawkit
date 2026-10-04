@@ -8,10 +8,10 @@ import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlin.time.Clock
 import com.squareup.wire.Instant as WireInstant
 
 /**
@@ -41,7 +41,8 @@ class SuggestionMapper(
     generationVersion: String,
     documents: List<Attachment> = emptyList(),
   ): MaintenanceTask {
-    val now = clock.now().toWireInstant()
+    val now = clock.now()
+      .toWireInstant()
     val sourceDocument = suggestion.source_document?.value_.orEmpty()
     return MaintenanceTask(
       title = suggestion.title,
@@ -56,7 +57,8 @@ class SuggestionMapper(
         rule.copy(
           time_rule = time.copy(
             creation_date = now,
-            due_on_anniversary = template?.capabilities?.month_intervals_due_on_anniversary ?: false,
+            due_on_anniversary = template?.capabilities?.month_intervals_due_on_anniversary
+              ?: false,
           ),
         )
       },
@@ -64,7 +66,9 @@ class SuggestionMapper(
       reference_number = suggestion.reference_number,
       compliance_authority = suggestion.compliance_authority,
       is_one_time = suggestion.is_one_time,
-      force_due_date = suggestion.first_due?.takeIf { suggestion.is_one_time }?.date?.let(::startOfDay),
+      force_due_date = suggestion.first_due?.takeIf { suggestion.is_one_time }?.date?.let(
+        ::startOfDay
+      ),
       force_due_meter = suggestion.first_due?.takeIf { suggestion.is_one_time }?.meter,
       attachments = documents.filter { sourceDocument.isNotEmpty() && it.id == sourceDocument },
       origin = TaskOrigin(
@@ -87,5 +91,7 @@ class SuggestionMapper(
 
   /** A wire `yyyy-mm-dd` as the start of that day here, or null when it is not a date. */
   private fun startOfDay(date: String): WireInstant? =
-    runCatching { LocalDate.parse(date) }.getOrNull()?.atStartOfDayIn(timeZone)?.toWireInstant()
+    runCatching { LocalDate.parse(date) }.getOrNull()
+      ?.atStartOfDayIn(timeZone)
+      ?.toWireInstant()
 }

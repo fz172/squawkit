@@ -8,16 +8,32 @@ import org.junit.Test
 class CardGroupsTest {
 
   private fun card(title: String, slot: String) =
-    StarterPackItem(suggestion = TaskSuggestion(title = title, component_slot_key = slot), selected = false)
+    StarterPackItem(
+      suggestion = TaskSuggestion(
+        title = title,
+        component_slot_key = slot
+      ), selected = false
+    )
 
   @Test
   fun `groups by component in the order each first appears, keeping each card's index`() {
-    val items = listOf(card("Spark plugs", "engine"), card("Annual", ""), card("Oil", "engine"), card("Prop", "propeller"))
+    val items = listOf(
+      card("Spark plugs", "engine"),
+      card("Annual", ""),
+      card("Oil", "engine"),
+      card("Prop", "propeller")
+    )
 
     val groups = groupsOf(items)
 
-    assertThat(groups.map { it.slotKey }).containsExactly("engine", "", "propeller").inOrder()
-    assertThat(groups[0].cards.map { it.index }).containsExactly(0, 2).inOrder()
+    assertThat(groups.map { it.slotKey }).containsExactly(
+      "engine",
+      "",
+      "propeller"
+    )
+      .inOrder()
+    assertThat(groups[0].cards.map { it.index }).containsExactly(0, 2)
+      .inOrder()
     assertThat(groups[1].cards.single().value.suggestion.title).isEqualTo("Annual")
   }
 

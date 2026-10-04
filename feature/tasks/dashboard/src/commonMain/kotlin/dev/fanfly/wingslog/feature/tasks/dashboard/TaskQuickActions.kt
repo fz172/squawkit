@@ -9,7 +9,6 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskQuickActionCallbacks
 import dev.fanfly.wingslog.feature.tasks.viewing.quickActions
-import kotlinx.coroutines.flow.first
 
 /** A task card's swipe actions: resolve (with its options menu) and delete, closing the card first. */
 @Composable

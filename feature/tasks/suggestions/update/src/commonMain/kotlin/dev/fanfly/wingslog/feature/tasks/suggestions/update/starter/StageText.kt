@@ -25,12 +25,28 @@ fun stageText(stage: String?, stageArg: String?): String {
   val document = stageArg.orEmpty()
   return when (stage) {
     null -> stringResource(Res.string.starter_pack_stage_waiting)
-    "recalling_schedule" -> stringResource(Res.string.starter_pack_stage_recalling, thing)
+    "recalling_schedule" -> stringResource(
+      Res.string.starter_pack_stage_recalling,
+      thing
+    )
+
     "tailoring" -> stringResource(Res.string.starter_pack_suggesting, thing)
     "validating" -> stringResource(Res.string.starter_pack_stage_validating)
-    "reading_document" -> stringResource(Res.string.starter_pack_stage_reading, document)
-    "finding_schedule" -> stringResource(Res.string.starter_pack_stage_finding, document)
-    "extracting_schedule" -> stringResource(Res.string.starter_pack_stage_extracting, document)
+    "reading_document" -> stringResource(
+      Res.string.starter_pack_stage_reading,
+      document
+    )
+
+    "finding_schedule" -> stringResource(
+      Res.string.starter_pack_stage_finding,
+      document
+    )
+
+    "extracting_schedule" -> stringResource(
+      Res.string.starter_pack_stage_extracting,
+      document
+    )
+
     else -> stringResource(Res.string.starter_pack_stage_other)
   }
 }
