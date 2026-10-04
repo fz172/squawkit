@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
+import dev.fanfly.wingslog.feature.tasks.model.citedPageOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +64,9 @@ fun taskDetailFor(
               )
               return@TaskDetailSheet
             }
-          val openFlow = attachmentOpener.open(attachment)
+          // The document an AI suggestion cited opens at the cited page, where the platform can.
+          val openFlow =
+            attachmentOpener.open(attachment, selectedTask.card.citedPageOf(attachment))
           coroutineScope.launch {
             openFlow.collect { openState ->
               if (openState is OpenState.Failed) taskSheetOpenError =
