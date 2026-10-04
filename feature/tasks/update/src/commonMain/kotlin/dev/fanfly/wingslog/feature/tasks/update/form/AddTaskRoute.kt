@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.update.form
 
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -146,7 +147,7 @@ fun AddTaskRoute(
       onTasksFromDocument = if (offersTasksFromDocument) {
         {
           navController.navigate(
-            Screen.StarterPack.createRoute(viewModel.thingId, Screen.StarterPack.MODE_DOCUMENT),
+            Screen.StarterPack.createRoute(viewModel.thingId, SuggestionsMode.DOCUMENT),
           ) {
             popUpTo(Screen.AddMaintenanceTask.route) { inclusive = true }
           }

@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiEligibility
@@ -125,7 +126,7 @@ class StarterPackViewModelTest {
 
   private fun viewModel(
     starterTasks: List<StarterTask>,
-    mode: String? = null,
+    mode: SuggestionsMode? = null,
     serverSource: Boolean = false,
     document: Attachment? = null,
   ): StarterPackViewModel {
@@ -156,7 +157,7 @@ class StarterPackViewModelTest {
       savedStateHandle = SavedStateHandle(
         buildMap {
           put(Screen.THING_ID, THING_ID)
-          if (mode != null) put(Screen.SUGGESTIONS_MODE, mode)
+          if (mode != null) put(Screen.SUGGESTIONS_MODE, mode.wire)
           if (document != null) put(Screen.SUGGESTIONS_DOCUMENT, document.toDocumentArg())
         },
       ),
@@ -353,7 +354,7 @@ class StarterPackViewModelTest {
     coEvery { suggestions.eligibility(THING_ID, any()) } returns
       AiEligibility(true, null, documentsAllowed, null)
     coEvery { suggestions.isOwner(THING_ID) } returns true
-    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    val vm = viewModel(pack, mode = SuggestionsMode.SUGGEST, serverSource = true)
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curated))
     advanceUntilIdle()
     vm.onSuggest()
@@ -372,7 +373,7 @@ class StarterPackViewModelTest {
       coVerify {
         suggestions.start(
           THING_ID,
-          Screen.StarterPack.MODE_STARTER,
+          SuggestionsMode.STARTER.wire,
           curatedOnly = true
         )
       }
@@ -401,10 +402,10 @@ class StarterPackViewModelTest {
     coEvery { suggestions.eligibility(THING_ID, any()) } returns
       AiEligibility(true, null, true, null)
 
-    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    val vm = viewModel(pack, mode = SuggestionsMode.SUGGEST, serverSource = true)
     advanceUntilIdle()
 
-    coVerify { suggestions.start(THING_ID, Screen.StarterPack.MODE_SUGGEST, curatedOnly = true) }
+    coVerify { suggestions.start(THING_ID, SuggestionsMode.SUGGEST.wire, curatedOnly = true) }
     coVerify(exactly = 0) { suggestions.start(THING_ID, any(), curatedOnly = false, any()) }
     assertThat(vm.uiState.value.items).hasSize(3)
     assertThat(vm.uiState.value.canSuggest).isTrue()
@@ -435,7 +436,7 @@ class StarterPackViewModelTest {
     coEvery { suggestions.isOwner(THING_ID) } returns owner
     coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
       AiStartResult.Started(JOB, joined = false)
-    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    val vm = viewModel(pack, mode = SuggestionsMode.SUGGEST, serverSource = true)
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
     advanceUntilIdle()
     // The AI button.
@@ -494,7 +495,7 @@ class StarterPackViewModelTest {
     every { suggestions.observeRun(THING_ID) } returns runs
     coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, true, null)
     coEvery { suggestions.isOwner(THING_ID) } returns true
-    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_DOCUMENT, serverSource = true)
+    val vm = viewModel(pack, mode = SuggestionsMode.DOCUMENT, serverSource = true)
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
     advanceUntilIdle()
 
@@ -526,7 +527,7 @@ class StarterPackViewModelTest {
     coEvery { suggestions.isOwner(THING_ID) } returns true
     val vm = viewModel(
       pack,
-      mode = Screen.StarterPack.MODE_DOCUMENT,
+      mode = SuggestionsMode.DOCUMENT,
       serverSource = true,
       document = document,
     )
@@ -743,7 +744,7 @@ class StarterPackViewModelTest {
     coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
       AiStartResult.Started(CURATED_JOB, joined = false)
     every { suggestions.observeRun(THING_ID) } returns runs
-    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_DOCUMENT, serverSource = true)
+    val vm = viewModel(pack, mode = SuggestionsMode.DOCUMENT, serverSource = true)
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
     advanceUntilIdle()
 
@@ -793,7 +794,7 @@ class StarterPackViewModelTest {
     every { suggestions.observeRun(THING_ID) } returns runs
     coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, true, null)
     coEvery { suggestions.isOwner(THING_ID) } returns true
-    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    val vm = viewModel(pack, mode = SuggestionsMode.SUGGEST, serverSource = true)
     // The custom template: no curated list, and the sheet stays open over nothing.
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, SuggestTasksResult()))
     advanceUntilIdle()
@@ -820,7 +821,7 @@ class StarterPackViewModelTest {
       every { suggestions.observeRun(THING_ID) } returns runs
       val vm = viewModel(
         pack,
-        mode = Screen.StarterPack.MODE_SUGGEST,
+        mode = SuggestionsMode.SUGGEST,
         serverSource = true
       )
       runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
@@ -934,7 +935,7 @@ class StarterPackViewModelTest {
       serving(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
       val working = viewModel(
         pack,
-        mode = Screen.StarterPack.MODE_SUGGEST,
+        mode = SuggestionsMode.SUGGEST,
         serverSource = true
       )
       advanceUntilIdle()
@@ -967,7 +968,7 @@ class StarterPackViewModelTest {
       serving(SuggestionRun.Working(JOB, null, null, curatedList))
       val suggesting = viewModel(
         pack,
-        mode = Screen.StarterPack.MODE_SUGGEST,
+        mode = SuggestionsMode.SUGGEST,
         serverSource = true
       )
       advanceUntilIdle()
@@ -1110,7 +1111,7 @@ class StarterPackViewModelTest {
     every { suggestions.observeRun(THING_ID) } returns runs
     val vm = viewModel(
       pack,
-      mode = Screen.StarterPack.MODE_SUGGEST,
+      mode = SuggestionsMode.SUGGEST,
       serverSource = true
     )
 
@@ -1376,7 +1377,7 @@ class StarterPackViewModelTest {
     coEvery { suggestions.accept(THING_ID, ready, any()) } returns 2
     val vm = viewModel(
       pack,
-      mode = Screen.StarterPack.MODE_SUGGEST,
+      mode = SuggestionsMode.SUGGEST,
       serverSource = true
     )
     advanceUntilIdle()
@@ -1462,7 +1463,7 @@ class StarterPackViewModelTest {
       coVerify {
         suggestions.start(
           THING_ID,
-          Screen.StarterPack.MODE_STARTER,
+          SuggestionsMode.STARTER.wire,
           curatedOnly = true
         )
       }
@@ -1556,7 +1557,7 @@ class StarterPackViewModelTest {
       } returns MaintenanceTask(title = "Annual")
       val vm = viewModel(
         pack,
-        mode = Screen.StarterPack.MODE_SUGGEST,
+        mode = SuggestionsMode.SUGGEST,
         serverSource = true
       )
       runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
@@ -1599,11 +1600,24 @@ class StarterPackViewModelTest {
     assertThat(
       Screen.StarterPack.createRoute(
         THING_ID,
-        Screen.StarterPack.MODE_SUGGEST
+        SuggestionsMode.SUGGEST
       )
     )
       .isEqualTo("starter_pack/$THING_ID?mode=suggest")
-    assertThat(viewModel(pack).uiState.value.mode).isEqualTo(Screen.StarterPack.MODE_STARTER)
+    assertThat(viewModel(pack).uiState.value.mode).isEqualTo(SuggestionsMode.STARTER)
+  }
+
+  @Test
+  fun theModeReadsTheRoutesWordAndAnythingElseIsTheStarterMode() {
+    assertThat(SuggestionsMode.fromWire("suggest")).isEqualTo(SuggestionsMode.SUGGEST)
+    assertThat(SuggestionsMode.fromWire("document")).isEqualTo(SuggestionsMode.DOCUMENT)
+    // An old or mistyped link still opens the list.
+    assertThat(SuggestionsMode.fromWire(null)).isEqualTo(SuggestionsMode.STARTER)
+    assertThat(SuggestionsMode.fromWire("Suggest")).isEqualTo(SuggestionsMode.STARTER)
+    assertThat(SuggestionsMode.fromWire("from_pdf")).isEqualTo(SuggestionsMode.STARTER)
+    assertThat(
+      Screen.StarterPack.createRoute(THING_ID, SuggestionsMode.DOCUMENT),
+    ).isEqualTo("starter_pack/$THING_ID?mode=document")
   }
 
   @Test
@@ -1611,9 +1625,9 @@ class StarterPackViewModelTest {
     assertThat(
       viewModel(
         pack,
-        mode = Screen.StarterPack.MODE_SUGGEST
+        mode = SuggestionsMode.SUGGEST
       ).uiState.value.mode
     )
-      .isEqualTo(Screen.StarterPack.MODE_SUGGEST)
+      .isEqualTo(SuggestionsMode.SUGGEST)
   }
 }

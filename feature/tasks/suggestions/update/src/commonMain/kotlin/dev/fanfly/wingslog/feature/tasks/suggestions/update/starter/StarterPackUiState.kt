@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiSkipped
-import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
@@ -11,11 +11,11 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 
 data class StarterPackUiState(
   /**
-   * How the screen was opened (`Screen.StarterPack.MODE_*`): `starter` from the empty list,
+   * How the screen was opened ([SuggestionsMode]): `starter` from the empty list,
    * `suggest` from the task list's *Suggest tasks*, `document` from the add form's *From a
    * document* (design §9.1). The last two open the sources sheet at once; `document` also picks.
    */
-  val mode: String = Screen.StarterPack.MODE_STARTER,
+  val mode: SuggestionsMode = SuggestionsMode.STARTER,
   val isLoading: Boolean = true,
   val template: ThingTemplate? = null,
   val lexicon: Lexicon = GenericLexicon.LEXICON,
