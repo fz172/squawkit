@@ -72,7 +72,6 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.core.sharedassets.generated.resources.retry
@@ -96,6 +95,7 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rul
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_year
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_years
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_ai_disclosure
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The recommended tasks (PRD §4.9): per-item checkboxes, and Skip as a real button.
@@ -114,7 +114,8 @@ fun StarterPackRoute(
 
   // While this screen is in front, its own run's "ready" push stays quiet (PRD R20).
   LifecycleResumeEffect(viewModel.thingId) {
-    val hide = OnScreenTapTargets.show(NotificationTapTarget.Suggestions(viewModel.thingId))
+    val hide =
+      OnScreenTapTargets.show(NotificationTapTarget.Suggestions(viewModel.thingId))
     onPauseOrDispose { hide() }
   }
 
@@ -126,7 +127,9 @@ fun StarterPackRoute(
   LaunchedEffect(editedDraft?.value) {
     val draft = editedDraft?.value ?: return@LaunchedEffect
     viewModel.onEdited(draft)
-    navController.currentBackStackEntry?.savedStateHandle?.remove<String>(CROSS_SCREEN_TASK_DRAFT)
+    navController.currentBackStackEntry?.savedStateHandle?.remove<String>(
+      CROSS_SCREEN_TASK_DRAFT
+    )
   }
 
   // Back is Skip: leaving without answering is declining, and the Thing already exists.
@@ -358,9 +361,13 @@ fun StarterPackRoute(
                             enabled = !uiState.isSaving,
                             onClick = {
                               scope.launch {
-                                val draft = viewModel.draftFor(index) ?: return@launch
+                                val draft =
+                                  viewModel.draftFor(index) ?: return@launch
                                 navController.navigate(
-                                  Screen.AddMaintenanceTask.createRoute(viewModel.thingId, draft),
+                                  Screen.AddMaintenanceTask.createRoute(
+                                    viewModel.thingId,
+                                    draft
+                                  ),
                                 )
                               }
                             },
@@ -420,12 +427,19 @@ private fun TaskSuggestion.summary(template: ThingTemplate?): String =
 /** An edited card's line: "Edited · Every 6 months · its notes" (PRD R28). */
 @Composable
 private fun MaintenanceTask.editedSummary(template: ThingTemplate?): String =
-  listOf(stringResource(Res.string.starter_pack_edited), rulesSummary(rules, notes, template))
+  listOf(
+    stringResource(Res.string.starter_pack_edited),
+    rulesSummary(rules, notes, template)
+  )
     .filter { it.isNotEmpty() }
     .joinToString(" · ")
 
 @Composable
-private fun rulesSummary(rules: List<InspectionRule>, description: String, template: ThingTemplate?): String {
+private fun rulesSummary(
+  rules: List<InspectionRule>,
+  description: String,
+  template: ThingTemplate?
+): String {
   val calendar = rules.firstNotNullOfOrNull { it.time_rule }
     ?.let { calendarText(it) }
   val meter = rules.firstNotNullOfOrNull { it.meter_rule }

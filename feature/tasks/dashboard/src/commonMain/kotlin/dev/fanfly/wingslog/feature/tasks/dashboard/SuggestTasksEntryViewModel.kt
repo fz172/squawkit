@@ -15,5 +15,9 @@ class SuggestTasksEntryViewModel(
 ) : ViewModel() {
 
   val entry: StateFlow<SuggestEntry> = entry.observe(thingId)
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SuggestEntry.Hidden)
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(5_000),
+      SuggestEntry.Hidden
+    )
 }

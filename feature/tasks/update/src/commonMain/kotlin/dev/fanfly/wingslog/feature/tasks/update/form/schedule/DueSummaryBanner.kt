@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.badge.PreviewBanner
 import dev.fanfly.wingslog.core.ui.badge.PreviewBannerTone
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
@@ -19,6 +18,7 @@ import wingslog.feature.tasks.update.generated.resources.due_summary_schedule_al
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_asap_primary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_hint
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
+import kotlin.time.Clock
 
 /**
  * The one banner the schedule and adjustments tabs both show, so the same task reads the same way

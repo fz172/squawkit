@@ -33,9 +33,6 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.toSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -44,6 +41,9 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /**
  * The empty task list's recommended tasks, and the task list's *Suggest tasks* (PRD R1, R2). Not a
@@ -114,7 +114,8 @@ class StarterPackViewModel(
           lexicon = templateRegistry.lexiconFor(template)
         )
       }
-      trackedTitles = taskDataManager.observeTasks(thingId).first()
+      trackedTitles = taskDataManager.observeTasks(thingId)
+        .first()
         .mapTo(mutableSetOf()) { normalizeTitle(it.title) }
       if (capability.isTaskSuggestionsSupported) showRun(template) else showPack(
         template
@@ -150,7 +151,10 @@ class StarterPackViewModel(
     // shows it rather than starting over: a new run would hide it behind a newer job, and a second
     // model run the same day is refused anyway (R49).
     // The listener answers at once, from cache if need be; a slow one is not worth waiting on.
-    val earlier = withTimeoutOrNull(RESUME_WAIT) { suggestionManager.observeRun(thingId).firstOrNull() }
+    val earlier = withTimeoutOrNull(RESUME_WAIT) {
+      suggestionManager.observeRun(thingId)
+        .firstOrNull()
+    }
     if (earlier != null && earlier.holdsModelAnswer()) {
       modelRequested = true
       followedJob = earlier.jobIdOrNull
@@ -171,7 +175,13 @@ class StarterPackViewModel(
       logger.i { "No suggestions to show: $started" }
       val reason = (started as AiStartResult.Refused).reason
       if (modelRequested) failed(reason)
-      _uiState.update { it.copy(isLoading = false, isDone = true, closingError = reason) }
+      _uiState.update {
+        it.copy(
+          isLoading = false,
+          isDone = true,
+          closingError = reason
+        )
+      }
       return
     }
     followedJob = started.jobId
@@ -280,7 +290,14 @@ class StarterPackViewModel(
 
   private fun startModelRun(onRefused: (StarterPackUiState) -> StarterPackUiState) {
     modelRequested = true
-    _uiState.update { it.copy(canSuggest = false, isSuggesting = true, failure = null, notEnough = false) }
+    _uiState.update {
+      it.copy(
+        canSuggest = false,
+        isSuggesting = true,
+        failure = null,
+        notEnough = false
+      )
+    }
     viewModelScope.launch {
       val curatedRun = run
       val started = suggestionManager.start(
@@ -292,7 +309,14 @@ class StarterPackViewModel(
         logger.i { "The model run did not start: $started" }
         val reason = (started as AiStartResult.Refused).reason
         failed(reason)
-        _uiState.update { onRefused(it.copy(isSuggesting = false, notice = reason)) }
+        _uiState.update {
+          onRefused(
+            it.copy(
+              isSuggesting = false,
+              notice = reason
+            )
+          )
+        }
         return@launch
       }
       followedJob = started.jobId
@@ -332,7 +356,10 @@ class StarterPackViewModel(
     _uiState.update { state ->
       state.copy(
         items = state.items.map { item ->
-          if (item.suggestion.suggestion_id?.value_ == id) item.copy(edited = edited, selected = true) else item
+          if (item.suggestion.suggestion_id?.value_ == id) item.copy(
+            edited = edited,
+            selected = true
+          ) else item
         },
       )
     }
@@ -466,7 +493,8 @@ class StarterPackViewModel(
       is SuggestionRun.Failed -> failed(finished.reason)
       else -> {
         val cards = finished.resultOrNull?.suggestions.orEmpty()
-        val latency = requestedAt?.let { (clock.now() - it).inWholeSeconds } ?: 0L
+        val latency =
+          requestedAt?.let { (clock.now() - it).inWholeSeconds } ?: 0L
         analytics.log(
           TaskSuggestionsShown(
             templateId = uiState.value.template?.id.orEmpty(),
@@ -481,7 +509,10 @@ class StarterPackViewModel(
 
   private fun failed(reason: AiErrorCode) {
     analytics.log(
-      TaskSuggestionsFailed(templateId = uiState.value.template?.id.orEmpty(), reason = reason.name.lowercase()),
+      TaskSuggestionsFailed(
+        templateId = uiState.value.template?.id.orEmpty(),
+        reason = reason.name.lowercase()
+      ),
     )
   }
 
@@ -532,10 +563,13 @@ class StarterPackViewModel(
      */
     fun SuggestionRun.holdsModelAnswer(): Boolean =
       this is SuggestionRun.Working ||
-        resultOrNull?.suggestions.orEmpty().any { it.isFromModel() }
+        resultOrNull?.suggestions.orEmpty()
+          .any { it.isFromModel() }
 
     /** A title as the tracked check compares it: trimmed, single-spaced, lower case. */
-    fun normalizeTitle(title: String): String = title.trim().replace(Regex("\\s+"), " ").lowercase()
+    fun normalizeTitle(title: String): String = title.trim()
+      .replace(Regex("\\s+"), " ")
+      .lowercase()
 
     /** The run's job, whatever its state; null when there is no run. */
     val SuggestionRun.jobIdOrNull: AiJobId?

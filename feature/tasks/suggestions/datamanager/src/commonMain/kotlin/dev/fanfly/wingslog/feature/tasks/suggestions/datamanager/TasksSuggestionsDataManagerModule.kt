@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -43,6 +44,7 @@ val tasksSuggestionsDataManagerModule: Module = module {
       templateRegistry = get<TemplateRegistry>(),
       scopeResolver = get<ThingScopeResolver>(),
       syncObserver = get<EntitySyncObserver>(),
+      attachmentManager = get<AttachmentManager>(),
     )
   }
 }

@@ -25,7 +25,6 @@ import dev.fanfly.wingslog.feature.search.viewing.filter.FilterSection
 import dev.fanfly.wingslog.feature.search.viewing.filter.RecordFilterControls
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.TaskAdapter
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -37,6 +36,7 @@ import wingslog.feature.search.sharedassets.generated.resources.filter_scope_com
 import wingslog.feature.search.sharedassets.generated.resources.filter_scope_due
 import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
+import kotlin.time.Clock
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 /** The search bar and filter sheet over the task list, counting against the unfiltered sub-view. */

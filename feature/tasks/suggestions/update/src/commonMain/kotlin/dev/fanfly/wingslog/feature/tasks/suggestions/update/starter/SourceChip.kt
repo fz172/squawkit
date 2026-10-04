@@ -42,25 +42,30 @@ fun SourceChip(suggestion: TaskSuggestion, onClick: () -> Unit) {
 fun SourceSheet(suggestion: TaskSuggestion, onDismiss: () -> Unit) {
   ModalBottomSheet(onDismissRequest = onDismiss) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.xLarge, vertical = Spacing.large),
+      modifier = Modifier.fillMaxWidth()
+        .padding(horizontal = Spacing.xLarge, vertical = Spacing.large),
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      suggestion.source_kind.label()?.let {
-        Text(text = it, style = MaterialTheme.typography.titleMedium)
-      }
-      suggestion.citation.takeIf { it.isNotBlank() }?.let {
-        Text(text = it, style = MaterialTheme.typography.bodyLarge)
-      }
-      suggestion.page_ref.takeIf { it.isNotBlank() }?.let {
-        Text(
-          text = stringResource(Res.string.suggestion_source_page, it),
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-      suggestion.rationale.takeIf { it.isNotBlank() }?.let {
-        Text(text = it, style = MaterialTheme.typography.bodyMedium)
-      }
+      suggestion.source_kind.label()
+        ?.let {
+          Text(text = it, style = MaterialTheme.typography.titleMedium)
+        }
+      suggestion.citation.takeIf { it.isNotBlank() }
+        ?.let {
+          Text(text = it, style = MaterialTheme.typography.bodyLarge)
+        }
+      suggestion.page_ref.takeIf { it.isNotBlank() }
+        ?.let {
+          Text(
+            text = stringResource(Res.string.suggestion_source_page, it),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      suggestion.rationale.takeIf { it.isNotBlank() }
+        ?.let {
+          Text(text = it, style = MaterialTheme.typography.bodyMedium)
+        }
       if (suggestion.source_kind == TaskSourceKind.TASK_SOURCE_KIND_MANUFACTURER_SCHEDULE) {
         Text(
           text = stringResource(Res.string.suggestion_source_verify),

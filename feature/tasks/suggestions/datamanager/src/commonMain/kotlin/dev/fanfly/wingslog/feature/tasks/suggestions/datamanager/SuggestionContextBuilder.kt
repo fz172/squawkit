@@ -52,21 +52,38 @@ class SuggestionContextBuilder(
 
   /** The request for [thingId], and the uid of the tree it lives in. */
   suspend fun build(thingId: String, entryPoint: String): SuggestTasksRequest {
-    val thing = fleetManager.loadThing(thingId).filterNotNull().first()
-    val template = thing.template ?: templateRegistry.forThingWithFallback(thing)
+    val thing = fleetManager.loadThing(thingId)
+      .filterNotNull()
+      .first()
+    val template =
+      thing.template ?: templateRegistry.forThingWithFallback(thing)
     // A shared Thing lives in its host's tree: users/{hostUid}/thing/{thingId}.
-    val hostUid = scopeResolver.resolveNow(thingId).segments.getOrNull(1).orEmpty()
-    val tasks = taskDataManager.observeTasks(thingId).first()
-    val logs = logManager.observeLogs(thingId).first()
-    val current = logManager.observeMaintenanceOverview(thingId).first()?.current.orEmpty()
+    val hostUid = scopeResolver.resolveNow(thingId).segments.getOrNull(1)
+      .orEmpty()
+    val tasks = taskDataManager.observeTasks(thingId)
+      .first()
+    val logs = logManager.observeLogs(thingId)
+      .first()
+    val current = logManager.observeMaintenanceOverview(thingId)
+      .first()?.current.orEmpty()
 
     val context = SuggestionContext(
       template_id = TemplateId(value_ = template.id),
       template_version = template.version,
       specs = sendable(thing.spec, template.spec_fields),
-      components = thing.components.flatMap { componentSummaries(it, template) },
+      components = thing.components.flatMap {
+        componentSummaries(
+          it,
+          template
+        )
+      },
       meters = template.meters.map { meter ->
-        meterSummary(meter.key, meter.unit_label, meter.component_slot_key, current)
+        meterSummary(
+          meter.key,
+          meter.unit_label,
+          meter.component_slot_key,
+          current
+        )
       },
       existing_tasks = tasks.map { task ->
         ExistingTask(
@@ -86,18 +103,30 @@ class SuggestionContextBuilder(
       context = context,
       entry_point = entryPoint,
     )
-    return withLogs(base, logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }.map(::logSummary))
+    return withLogs(
+      base,
+      logs.sortedByDescending {
+        it.timestamp?.getEpochSecond() ?: 0L
+      }
+        .map(::logSummary)
+    )
   }
 
   /**
    * Adds [newestFirst] logs to [base], dropping the oldest until the request is under
    * [MAX_REQUEST_BYTES] and at most [MAX_LOGS] (design §7.2; the server's cap is 512 KiB).
    */
-  internal fun withLogs(base: SuggestTasksRequest, newestFirst: List<LogSummary>): SuggestTasksRequest {
+  internal fun withLogs(
+    base: SuggestTasksRequest,
+    newestFirst: List<LogSummary>
+  ): SuggestTasksRequest {
     var kept = newestFirst.take(MAX_LOGS)
     while (true) {
       val request = base.copy(
-        context = base.context!!.copy(logs = kept, logs_truncated = kept.size < newestFirst.size),
+        context = base.context!!.copy(
+          logs = kept,
+          logs_truncated = kept.size < newestFirst.size
+        ),
       )
       if (kept.isEmpty() || request.encode().size <= MAX_REQUEST_BYTES) return request
       // Drop the oldest tenth at a time: one at a time is quadratic on a long history.
@@ -107,7 +136,9 @@ class SuggestionContextBuilder(
 
   private fun logSummary(log: MaintenanceLog) = LogSummary(
     id = MaintenanceLogId(value_ = log.id),
-    date = log.timestamp?.toLocalDate(timeZone)?.toString().orEmpty(),
+    date = log.timestamp?.toLocalDate(timeZone)
+      ?.toString()
+      .orEmpty(),
     readings = log.readings,
     // A log has no title of its own; its work description says what was done.
     title = "",
@@ -115,7 +146,10 @@ class SuggestionContextBuilder(
     component_slot_key = slotKeyFor(log.component_type),
   )
 
-  private fun componentSummaries(component: Component, template: ThingTemplate): List<ComponentSummary> {
+  private fun componentSummaries(
+    component: Component,
+    template: ThingTemplate
+  ): List<ComponentSummary> {
     val slot = template.component_slots.findSlot(component.slot_key)
     return listOf(
       ComponentSummary(
@@ -133,13 +167,21 @@ class SuggestionContextBuilder(
 
     /** The specs the template declares and does not mark as identifying (R12). */
     fun sendable(specs: List<Spec>, declared: List<SpecField>): List<Spec> {
-      val allowed = declared.filterNot { it.is_identifier }.map { it.key }.toSet()
+      val allowed = declared.filterNot { it.is_identifier }
+        .map { it.key }
+        .toSet()
       return specs.filter { it.key in allowed && it.value_.isNotBlank() }
     }
 
-    fun meterSummary(key: String, unit: String, slotKey: String, current: List<MeterReading>): MeterSummary {
+    fun meterSummary(
+      key: String,
+      unit: String,
+      slotKey: String,
+      current: List<MeterReading>
+    ): MeterSummary {
       // A twin has one reading per engine; the highest is the meter's current state.
-      val reading = current.filter { it.meter_key == key }.maxOfOrNull { it.value_ }
+      val reading = current.filter { it.meter_key == key }
+        .maxOfOrNull { it.value_ }
       return MeterSummary(
         key = key,
         unit_label = unit,
@@ -150,6 +192,10 @@ class SuggestionContextBuilder(
     }
 
     fun List<ComponentSlot>.findSlot(key: String): ComponentSlot? =
-      firstNotNullOfOrNull { slot -> if (slot.slot_key == key) slot else slot.children.findSlot(key) }
+      firstNotNullOfOrNull { slot ->
+        if (slot.slot_key == key) slot else slot.children.findSlot(
+          key
+        )
+      }
   }
 }

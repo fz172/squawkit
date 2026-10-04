@@ -9,17 +9,22 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.flow.Flow
 
 /**
  * AI task suggestions for one Thing (docs/ai/task_population_design.md §7.3): ask whether a run is
  * open, start one, follow it, preview a suggestion's first due date, and accept or dismiss the
- * result. Documents arrive with T22; a run here describes the Thing alone (PRD R9).
+ * result. A run describes the Thing, and reads the documents the user picked when there are any
+ * (PRD R6, R9).
  */
 interface TaskSuggestionManager {
 
-  /** Whether an entry point can offer a run right now, and why not. Never throws. */
-  suspend fun eligibility(thingId: String): AiEligibility
+  /**
+   * Whether an entry point can offer a run right now, and why not. Never throws. [withDocuments]
+   * also asks whether the owner can add documents (Pro, PRD R14).
+   */
+  suspend fun eligibility(thingId: String, withDocuments: Boolean = false): AiEligibility
 
   /**
    * Starts a run, or joins the caller's own run in flight. Waits for the Thing to reach the server
@@ -28,8 +33,18 @@ interface TaskSuggestionManager {
    * [curatedOnly] asks for the Thing's curated suggestions alone, with no model call: what creation
    * and the empty task list show before the user asks for AI (design §9.1). Such a run ends at once
    * and never uses up the day.
+   *
+   * [documents] are files the user picked for the model to read, already added through the
+   * attachment manager. Waits for each to finish uploading, because the server reads it from
+   * Storage, and refuses with [AiErrorCode.DOCUMENT_MISSING] when one fails or takes too long. A
+   * [curatedOnly] run reads none, so it neither waits for nor sends them.
    */
-  suspend fun start(thingId: String, entryPoint: String, curatedOnly: Boolean = false): AiStartResult
+  suspend fun start(
+    thingId: String,
+    entryPoint: String,
+    curatedOnly: Boolean = false,
+    documents: List<Attachment> = emptyList(),
+  ): AiStartResult
 
   /** The caller's latest run on [thingId]; [SuggestionRun.Idle] when there is none. */
   fun observeRun(thingId: String): Flow<SuggestionRun>
@@ -39,13 +54,21 @@ interface TaskSuggestionManager {
    * changes it first (PRD R28). The form hands back the edited task, which [accept] then writes as
    * it is.
    */
-  suspend fun draftOf(thingId: String, suggestion: TaskSuggestion, generationVersion: String): MaintenanceTask
+  suspend fun draftOf(
+    thingId: String,
+    suggestion: TaskSuggestion,
+    generationVersion: String
+  ): MaintenanceTask
 
   /**
    * Writes [chosen] as tasks, one write each like the starter pack (a failure drops only its own
    * card), then closes the run. Returns how many were written.
    */
-  suspend fun accept(thingId: String, run: SuggestionRun.Ready, chosen: List<AcceptedSuggestion>): Int
+  suspend fun accept(
+    thingId: String,
+    run: SuggestionRun.Ready,
+    chosen: List<AcceptedSuggestion>
+  ): Int
 
   /** Closes the run without writing anything. */
   suspend fun dismiss(jobId: AiJobId)
@@ -85,7 +108,8 @@ sealed interface SuggestionRun {
    * The model had nothing confident to say (PRD R21a). It does not use up the day. [result] holds
    * the curated suggestions, if the template has any.
    */
-  data class Empty(val jobId: AiJobId, val result: SuggestTasksResult? = null) : SuggestionRun
+  data class Empty(val jobId: AiJobId, val result: SuggestTasksResult? = null) :
+    SuggestionRun
 
   /** [result] holds the curated suggestions the run started with, if any. */
   data class Failed(

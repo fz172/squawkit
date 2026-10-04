@@ -16,7 +16,10 @@ class TaskDraftTest {
       title = "Tire rotation & balance — every 6,250 mi",
       notes = "Rotate front/rear; check pressure?",
       rules = listOf(InspectionRule(time_rule = TimeRule(interval_months = 6))),
-      origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_AI_THING, citation = "Tesla service"),
+      origin = TaskOrigin(
+        kind = TaskOriginKind.TASK_ORIGIN_KIND_AI_THING,
+        citation = "Tesla service"
+      ),
     )
 
     val arg = task.toDraftArg()

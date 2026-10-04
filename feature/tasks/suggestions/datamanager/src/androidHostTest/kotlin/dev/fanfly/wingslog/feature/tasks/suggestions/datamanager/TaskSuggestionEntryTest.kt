@@ -31,7 +31,10 @@ class TaskSuggestionEntryTest {
   private val complete = Thing(
     id = THING,
     template = template,
-    spec = listOf(Spec(key = "make", value_ = "Toyota"), Spec(key = "model", value_ = "Tacoma")),
+    spec = listOf(
+      Spec(key = "make", value_ = "Toyota"),
+      Spec(key = "model", value_ = "Tacoma")
+    ),
   )
 
   private fun entry(
@@ -40,8 +43,10 @@ class TaskSuggestionEntryTest {
     thing: Thing = complete,
   ): TaskSuggestionEntry {
     val user = mockk<FirebaseUser> { every { isAnonymous } returns guest }
-    val auth = mockk<FirebaseAuth> { every { authStateChanged } returns flowOf(user) }
-    val fleet = mockk<FleetManager> { every { loadThing(THING) } returns flowOf(thing) }
+    val auth =
+      mockk<FirebaseAuth> { every { authStateChanged } returns flowOf(user) }
+    val fleet =
+      mockk<FleetManager> { every { loadThing(THING) } returns flowOf(thing) }
     return TaskSuggestionEntry(
       capability = AppCapability(
         isDeveloperOptionsSupported = developerBuild,
@@ -58,40 +63,65 @@ class TaskSuggestionEntryTest {
 
   @Test
   fun `is hidden off developer builds, whatever else is true`() = runTest {
-    assertThat(entry(developerBuild = false, guest = true).observe(THING).first())
+    assertThat(
+      entry(developerBuild = false, guest = true).observe(THING)
+        .first()
+    )
       .isEqualTo(SuggestEntry.Hidden)
   }
 
   @Test
   fun `is available to a signed-in user on a described Thing`() = runTest {
-    assertThat(entry().observe(THING).first()).isEqualTo(SuggestEntry.Available)
+    assertThat(
+      entry().observe(THING)
+        .first()
+    ).isEqualTo(SuggestEntry.Available)
   }
 
   @Test
   fun `asks a guest to sign in before anything else`() = runTest {
-    assertThat(entry(guest = true, thing = complete.copy(spec = emptyList())).observe(THING).first())
+    assertThat(
+      entry(
+        guest = true,
+        thing = complete.copy(spec = emptyList())
+      ).observe(THING)
+        .first()
+    )
       .isEqualTo(SuggestEntry.SignInRequired)
   }
 
   @Test
   fun `names the required fields left empty, and only those`() = runTest {
     val noModel = complete.copy(
-      spec = listOf(Spec(key = "make", value_ = "Toyota"), Spec(key = "model", value_ = " ")),
+      spec = listOf(
+        Spec(key = "make", value_ = "Toyota"),
+        Spec(key = "model", value_ = " ")
+      ),
     )
 
-    assertThat(entry(thing = noModel).observe(THING).first())
+    assertThat(
+      entry(thing = noModel).observe(THING)
+        .first()
+    )
       .isEqualTo(SuggestEntry.MissingIdentity(listOf("Model")))
   }
 
   @Test
-  fun `a template that requires nothing is always described enough`() = runTest {
-    val custom = Thing(
-      id = THING,
-      template = ThingTemplate(id = "custom", spec_fields = listOf(SpecField(key = "notes"))),
-    )
+  fun `a template that requires nothing is always described enough`() =
+    runTest {
+      val custom = Thing(
+        id = THING,
+        template = ThingTemplate(
+          id = "custom",
+          spec_fields = listOf(SpecField(key = "notes"))
+        ),
+      )
 
-    assertThat(entry(thing = custom).observe(THING).first()).isEqualTo(SuggestEntry.Available)
-  }
+      assertThat(
+        entry(thing = custom).observe(THING)
+          .first()
+      ).isEqualTo(SuggestEntry.Available)
+    }
 
   private companion object {
     const val THING = "thing-1"

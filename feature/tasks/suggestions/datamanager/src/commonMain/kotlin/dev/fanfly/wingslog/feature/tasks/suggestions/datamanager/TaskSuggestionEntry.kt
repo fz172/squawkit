@@ -42,7 +42,8 @@ class TaskSuggestionEntry(
         template.spec_fields
           .filter { it.required && values[it.key].isNullOrBlank() }
           .map { it.label.ifBlank { it.key } }
-      }.orEmpty()
+      }
+        .orEmpty()
       when {
         isGuest -> SuggestEntry.SignInRequired
         missing.isNotEmpty() -> SuggestEntry.MissingIdentity(missing)

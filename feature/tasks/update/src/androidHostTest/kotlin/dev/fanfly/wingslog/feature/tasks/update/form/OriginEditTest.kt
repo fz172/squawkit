@@ -22,7 +22,13 @@ class OriginEditTest {
   @Test
   fun `an edited AI task reports its origin and what changed`() {
     val before = task(TaskOriginKind.TASK_ORIGIN_KIND_AI_THING)
-    val after = before.copy(rules = listOf(InspectionRule(time_rule = TimeRule(interval_months = 12))))
+    val after = before.copy(
+      rules = listOf(
+        InspectionRule(
+          time_rule = TimeRule(interval_months = 12)
+        )
+      )
+    )
 
     val event = originEditOf("car", before, after)!!
 

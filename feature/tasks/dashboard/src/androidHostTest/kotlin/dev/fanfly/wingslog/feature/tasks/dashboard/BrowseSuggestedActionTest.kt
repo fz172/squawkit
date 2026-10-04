@@ -11,13 +11,25 @@ class BrowseSuggestedActionTest {
 
   @Test
   fun `a guest is asked to sign in rather than shown suggestions`() {
-    assertThat(browseSuggestedAction(SuggestEntry.SignInRequired, browse, signIn)).isSameInstanceAs(signIn)
+    assertThat(
+      browseSuggestedAction(
+        SuggestEntry.SignInRequired,
+        browse,
+        signIn
+      )
+    ).isSameInstanceAs(signIn)
   }
 
   @Test
   fun `everyone else opens the list, a Thing missing its make and model included`() {
-    listOf(SuggestEntry.Hidden, SuggestEntry.Available, SuggestEntry.MissingIdentity(listOf("Model"))).forEach {
-      assertThat(browseSuggestedAction(it, browse, signIn)).isSameInstanceAs(browse)
+    listOf(
+      SuggestEntry.Hidden,
+      SuggestEntry.Available,
+      SuggestEntry.MissingIdentity(listOf("Model"))
+    ).forEach {
+      assertThat(browseSuggestedAction(it, browse, signIn)).isSameInstanceAs(
+        browse
+      )
     }
   }
 }

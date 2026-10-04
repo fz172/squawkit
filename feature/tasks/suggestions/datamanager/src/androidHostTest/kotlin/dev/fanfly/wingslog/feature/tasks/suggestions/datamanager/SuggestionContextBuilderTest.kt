@@ -30,11 +30,11 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import org.junit.Test
+import kotlin.time.Instant
 
 class SuggestionContextBuilderTest {
 
@@ -49,13 +49,23 @@ class SuggestionContextBuilderTest {
     component_slots = listOf(
       ComponentSlot(
         slot_key = "engine",
-        spec_fields = listOf(SpecField(key = "displacement"), SpecField(key = "engine_serial", is_identifier = true)),
+        spec_fields = listOf(
+          SpecField(key = "displacement"),
+          SpecField(
+            key = "engine_serial",
+            is_identifier = true
+          )
+        ),
         children = listOf(ComponentSlot(slot_key = "propeller")),
       ),
     ),
     meters = listOf(
       MeterDef(key = "airframe_hours", unit_label = "hrs"),
-      MeterDef(key = "engine_hours", unit_label = "hrs", component_slot_key = "engine"),
+      MeterDef(
+        key = "engine_hours",
+        unit_label = "hrs",
+        component_slot_key = "engine"
+      ),
       MeterDef(key = "hobbs", unit_label = "hrs"),
     ),
   )
@@ -76,13 +86,27 @@ class SuggestionContextBuilderTest {
         make = "Rotax",
         model = "915 iS",
         serial = "SN-123456",
-        spec = listOf(Spec(key = "displacement", value_ = "1352"), Spec(key = "engine_serial", value_ = "X")),
-        children = listOf(Component(id = "c-prop", slot_key = "propeller", make = "Airmaster", serial = "P-9")),
+        spec = listOf(
+          Spec(key = "displacement", value_ = "1352"),
+          Spec(key = "engine_serial", value_ = "X")
+        ),
+        children = listOf(
+          Component(
+            id = "c-prop",
+            slot_key = "propeller",
+            make = "Airmaster",
+            serial = "P-9"
+          )
+        ),
       ),
     ),
   )
 
-  private fun log(id: String, epochSeconds: Long, description: String = "Oil change") = MaintenanceLog(
+  private fun log(
+    id: String,
+    epochSeconds: Long,
+    description: String = "Oil change"
+  ) = MaintenanceLog(
     id = id,
     timestamp = toWireInstant(epochSeconds),
     work_description = description,
@@ -100,38 +124,61 @@ class SuggestionContextBuilderTest {
     tasks: List<MaintenanceTask> = emptyList(),
     hostUid: String = "host-uid",
   ): SuggestionContextBuilder {
-    val fleet = mockk<FleetManager> { every { loadThing(THING) } returns flowOf(thing) }
-    val taskData = mockk<TaskDataManager> { every { observeTasks(THING) } returns flowOf(tasks) }
+    val fleet =
+      mockk<FleetManager> { every { loadThing(THING) } returns flowOf(thing) }
+    val taskData = mockk<TaskDataManager> {
+      every { observeTasks(THING) } returns flowOf(tasks)
+    }
     val logManager = mockk<MaintenanceLogManager> {
       every { observeLogs(THING) } returns flowOf(logs)
       every { observeMaintenanceOverview(THING) } returns flowOf(
         MaintenanceOverview(
           current = listOf(
-            MeterReading(meter_key = "engine_hours", component_id = "c-engine", value_ = 410.0),
-            MeterReading(meter_key = "engine_hours", component_id = "c-engine-2", value_ = 395.0),
+            MeterReading(
+              meter_key = "engine_hours",
+              component_id = "c-engine",
+              value_ = 410.0
+            ),
+            MeterReading(
+              meter_key = "engine_hours",
+              component_id = "c-engine-2",
+              value_ = 395.0
+            ),
             MeterReading(meter_key = "airframe_hours", value_ = 412.0),
           ),
         ),
       )
     }
-    val registry = mockk<TemplateRegistry> { every { lexiconFor(any()) } returns GenericLexicon.LEXICON }
+    val registry =
+      mockk<TemplateRegistry> { every { lexiconFor(any()) } returns GenericLexicon.LEXICON }
     val scopes = mockk<ThingScopeResolver> {
-      coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe(hostUid, THING)
+      coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe(
+        hostUid,
+        THING
+      )
     }
-    return SuggestionContextBuilder(fleet, taskData, logManager, registry, scopes, TimeZone.UTC)
+    return SuggestionContextBuilder(
+      fleet,
+      taskData,
+      logManager,
+      registry,
+      scopes,
+      TimeZone.UTC
+    )
   }
 
   @Test
-  fun `names the Thing and its host tree, and carries the template`() = runTest {
-    val request = builder(hostUid = "the-host").build(THING, "overview")
+  fun `names the Thing and its host tree, and carries the template`() =
+    runTest {
+      val request = builder(hostUid = "the-host").build(THING, "overview")
 
-    assertThat(request.thing_id?.value_).isEqualTo(THING)
-    assertThat(request.host_uid?.value_).isEqualTo("the-host")
-    assertThat(request.entry_point).isEqualTo("overview")
-    assertThat(request.context?.template_id?.value_).isEqualTo("airplane")
-    assertThat(request.context?.template_version).isEqualTo(13)
-    assertThat(request.context?.lexicon_task_noun).isNotEmpty()
-  }
+      assertThat(request.thing_id?.value_).isEqualTo(THING)
+      assertThat(request.host_uid?.value_).isEqualTo("the-host")
+      assertThat(request.entry_point).isEqualTo("overview")
+      assertThat(request.context?.template_id?.value_).isEqualTo("airplane")
+      assertThat(request.context?.template_version).isEqualTo(13)
+      assertThat(request.context?.lexicon_task_noun).isNotEmpty()
+    }
 
   @Test
   fun `sends no identifier, no invented field and no serial`() = runTest {
@@ -141,20 +188,33 @@ class SuggestionContextBuilderTest {
     val engine = context.components.first { it.slot_key == "engine" }
     assertThat(engine.spec.map { it.key }).containsExactly("displacement")
     // Child components are listed too; ComponentSummary has no serial field at all.
-    assertThat(context.components.map { it.slot_key }).containsExactly("engine", "propeller")
-    assertThat(context.encode().decodeToString()).doesNotContain("SN-123456")
-    assertThat(context.encode().decodeToString()).doesNotContain("N123AB")
+    assertThat(context.components.map { it.slot_key }).containsExactly(
+      "engine",
+      "propeller"
+    )
+    assertThat(
+      context.encode()
+        .decodeToString()
+    ).doesNotContain("SN-123456")
+    assertThat(
+      context.encode()
+        .decodeToString()
+    ).doesNotContain("N123AB")
   }
 
   @Test
-  fun `takes each meter's highest current reading, and says when there is none`() = runTest {
-    val meters = builder().build(THING, "overview").context!!.meters.associateBy { it.key }
+  fun `takes each meter's highest current reading, and says when there is none`() =
+    runTest {
+      val meters = builder().build(
+        THING,
+        "overview"
+      ).context!!.meters.associateBy { it.key }
 
-    assertThat(meters.getValue("engine_hours").current).isEqualTo(410.0)
-    assertThat(meters.getValue("engine_hours").component_slot_key).isEqualTo("engine")
-    assertThat(meters.getValue("airframe_hours").has_current).isTrue()
-    assertThat(meters.getValue("hobbs").has_current).isFalse()
-  }
+      assertThat(meters.getValue("engine_hours").current).isEqualTo(410.0)
+      assertThat(meters.getValue("engine_hours").component_slot_key).isEqualTo("engine")
+      assertThat(meters.getValue("airframe_hours").has_current).isTrue()
+      assertThat(meters.getValue("hobbs").has_current).isFalse()
+    }
 
   @Test
   fun `describes existing tasks by slot`() = runTest {
@@ -167,7 +227,10 @@ class SuggestionContextBuilderTest {
       reference_number = "SB-1",
     )
 
-    val existing = builder(tasks = listOf(task)).build(THING, "overview").context!!.existing_tasks.single()
+    val existing = builder(tasks = listOf(task)).build(
+      THING,
+      "overview"
+    ).context!!.existing_tasks.single()
 
     assertThat(existing.id?.value_).isEqualTo("t1")
     assertThat(existing.component_slot_key).isEqualTo("engine")
@@ -181,13 +244,20 @@ class SuggestionContextBuilderTest {
 
     val summaries = builder(logs = logs).build(THING, "overview").context!!.logs
 
-    assertThat(summaries.map { it.id?.value_ }).containsExactly("newer", "older").inOrder()
+    assertThat(summaries.map { it.id?.value_ }).containsExactly(
+      "newer",
+      "older"
+    )
+      .inOrder()
     val newest = summaries.first()
     assertThat(newest.date).isEqualTo("2026-06-02")
     assertThat(newest.work_description).isEqualTo("Oil change")
     assertThat(newest.component_slot_key).isEqualTo("engine")
     assertThat(newest.readings.single().value_).isEqualTo(380.0)
-    assertThat(newest.encode().decodeToString()).doesNotContain("Jane Mechanic")
+    assertThat(
+      newest.encode()
+        .decodeToString()
+    ).doesNotContain("Jane Mechanic")
   }
 
   @Test
@@ -207,7 +277,14 @@ class SuggestionContextBuilderTest {
     val base = builder.build(THING, "overview")
     val big = "x".repeat(4_000)
 
-    val request = builder.withLogs(base, (0 until 200).map { LogSummary(work_description = big, date = "2026-06-01") })
+    val request = builder.withLogs(
+      base,
+      (0 until 200).map {
+        LogSummary(
+          work_description = big,
+          date = "2026-06-01"
+        )
+      })
 
     assertThat(request.encode().size).isAtMost(400 * 1024)
     assertThat(request.context!!.logs.size).isLessThan(200)
@@ -216,7 +293,12 @@ class SuggestionContextBuilderTest {
 
   @Test
   fun `a short history is sent whole`() = runTest {
-    assertThat(builder().build(THING, "overview").context!!.logs_truncated).isFalse()
+    assertThat(
+      builder().build(
+        THING,
+        "overview"
+      ).context!!.logs_truncated
+    ).isFalse()
   }
 
   private companion object {

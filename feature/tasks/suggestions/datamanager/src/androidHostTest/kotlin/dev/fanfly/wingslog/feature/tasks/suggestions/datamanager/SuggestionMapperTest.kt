@@ -18,10 +18,10 @@ import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 class SuggestionMapperTest {
 
@@ -46,7 +46,12 @@ class SuggestionMapperTest {
     component_slot_key = "engine",
     component_hint = "Engine #2",
     rules = listOf(
-      InspectionRule(meter_rule = MeterRule(meter_key = "engine_hours", interval = 200f)),
+      InspectionRule(
+        meter_rule = MeterRule(
+          meter_key = "engine_hours",
+          interval = 200f
+        )
+      ),
       InspectionRule(time_rule = TimeRule(interval_months = 24)),
     ),
     type = ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN,
@@ -74,7 +79,9 @@ class SuggestionMapperTest {
   @Test
   fun `dates a time rule from now with the template's convention, and leaves meter rules alone`() {
     val anniversary = airplane.copy(
-      capabilities = airplane.capabilities!!.copy(month_intervals_due_on_anniversary = true),
+      capabilities = airplane.capabilities!!.copy(
+        month_intervals_due_on_anniversary = true
+      ),
     )
 
     val rules = mapper.toTask(suggestion, anniversary, "tasks-4").rules
@@ -99,7 +106,8 @@ class SuggestionMapperTest {
 
   @Test
   fun `takes the origin the server gives, curated included`() {
-    val curated = suggestion.copy(origin_kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
+    val curated =
+      suggestion.copy(origin_kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
 
     assertThat(mapper.toTask(curated, airplane, "tasks-4").origin?.kind)
       .isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
@@ -107,10 +115,17 @@ class SuggestionMapperTest {
 
   @Test
   fun `a document suggestion carries its document, the same blob`() {
-    val manual = Attachment(id = "blob-mm", name = "Rotax MM.pdf", sha256 = "abc")
-    val cited = suggestion.copy(source_document = AttachmentId(value_ = "blob-mm"))
+    val manual =
+      Attachment(id = "blob-mm", name = "Rotax MM.pdf", sha256 = "abc")
+    val cited =
+      suggestion.copy(source_document = AttachmentId(value_ = "blob-mm"))
 
-    val task = mapper.toTask(cited, airplane, "tasks-4", documents = listOf(manual, Attachment(id = "other")))
+    val task = mapper.toTask(
+      cited,
+      airplane,
+      "tasks-4",
+      documents = listOf(manual, Attachment(id = "other"))
+    )
 
     assertThat(task.origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT)
     assertThat(task.origin?.source_attachment_id?.value_).isEqualTo("blob-mm")
@@ -121,23 +136,45 @@ class SuggestionMapperTest {
   fun `a one-time item is forced due at its first due date and reading`() {
     val once = suggestion.copy(
       is_one_time = true,
-      first_due = FirstDue(date = "2026-12-01", meter = MeterReading(meter_key = "engine_hours", value_ = 500.0)),
+      first_due = FirstDue(
+        date = "2026-12-01",
+        meter = MeterReading(
+          meter_key = "engine_hours",
+          value_ = 500.0
+        )
+      ),
     )
 
     val task = mapper.toTask(once, airplane, "tasks-4")
 
     assertThat(task.is_one_time).isTrue()
-    assertThat(task.force_due_date).isEqualTo(Instant.parse("2026-12-01T00:00:00Z").toWireInstant())
+    assertThat(task.force_due_date).isEqualTo(
+      Instant.parse("2026-12-01T00:00:00Z")
+        .toWireInstant()
+    )
     assertThat(task.force_due_meter?.value_).isEqualTo(500.0)
   }
 
   @Test
   fun `a recurring item ignores a first due, and a bad date is dropped`() {
     val recurring = suggestion.copy(first_due = FirstDue(date = "2026-12-01"))
-    assertThat(mapper.toTask(recurring, airplane, "tasks-4").force_due_date).isNull()
+    assertThat(
+      mapper.toTask(
+        recurring,
+        airplane,
+        "tasks-4"
+      ).force_due_date
+    ).isNull()
 
-    val badDate = suggestion.copy(is_one_time = true, first_due = FirstDue(date = "soon"))
-    assertThat(mapper.toTask(badDate, airplane, "tasks-4").force_due_date).isNull()
+    val badDate =
+      suggestion.copy(is_one_time = true, first_due = FirstDue(date = "soon"))
+    assertThat(
+      mapper.toTask(
+        badDate,
+        airplane,
+        "tasks-4"
+      ).force_due_date
+    ).isNull()
   }
 
   @Test
@@ -160,6 +197,8 @@ class SuggestionMapperTest {
   fun `a Thing-level suggestion off the airplane preset has no component`() {
     val home = ThingTemplate(id = "home")
 
-    assertThat(mapper.toTask(suggestion, home, "tasks-4").component).isEqualTo(ComponentType.COMPONENT_UNKNOWN)
+    assertThat(mapper.toTask(suggestion, home, "tasks-4").component).isEqualTo(
+      ComponentType.COMPONENT_UNKNOWN
+    )
   }
 }

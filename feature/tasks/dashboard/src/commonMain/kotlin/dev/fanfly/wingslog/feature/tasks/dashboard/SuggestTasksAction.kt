@@ -44,10 +44,17 @@ fun SuggestTasksAction(
   val note: String? = when (entry) {
     SuggestEntry.SignInRequired -> stringResource(Res.string.suggest_tasks_sign_in)
     is SuggestEntry.MissingIdentity ->
-      stringResource(Res.string.suggest_tasks_missing_identity, entry.fieldLabels.joinToString(", "))
+      stringResource(
+        Res.string.suggest_tasks_missing_identity,
+        entry.fieldLabels.joinToString(", ")
+      )
+
     else -> null
   }
-  Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+  Column(
+    modifier = modifier.fillMaxWidth(),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)
+  ) {
     OutlinedButton(
       onClick = when (entry) {
         SuggestEntry.SignInRequired -> onSignIn
@@ -56,8 +63,17 @@ fun SuggestTasksAction(
       },
     ) {
       Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.padding(end = Spacing.small))
-        Text(stringResource(Res.string.suggest_tasks_action, LexiconFormatter.plural(taskNoun)))
+        Icon(
+          Icons.Default.AutoAwesome,
+          contentDescription = null,
+          modifier = Modifier.padding(end = Spacing.small)
+        )
+        Text(
+          stringResource(
+            Res.string.suggest_tasks_action,
+            LexiconFormatter.plural(taskNoun)
+          )
+        )
       }
     }
     if (note != null) {
