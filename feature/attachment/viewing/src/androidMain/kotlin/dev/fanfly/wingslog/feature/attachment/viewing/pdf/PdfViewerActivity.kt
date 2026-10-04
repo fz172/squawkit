@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.viewing.pdf
 
+import android.content.Intent
+import android.content.ActivityNotFoundException
 import android.os.Bundle
 import android.widget.FrameLayout
 import androidx.core.os.bundleOf
@@ -84,6 +86,25 @@ class CitedPagePdfViewerFragment : PdfViewerFragment() {
     jumped = true
     // The view counts from 0; a citation from 1. A page past the end goes to the last.
     pdfView.scrollToPage((page - 1).coerceAtMost(document.pageCount - 1))
+  }
+
+  /**
+   * The library could not open it (a device it cannot run on, a damaged file): the device's own
+   * viewers get the file instead, as before this screen existed.
+   */
+  override fun onLoadDocumentError(error: Throwable) {
+    super.onLoadDocumentError(error)
+    val activity = activity ?: return
+    val document = documentUri ?: return
+    val outside = Intent(Intent.ACTION_VIEW)
+      .setDataAndType(document, "application/pdf")
+      .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    try {
+      activity.startActivity(Intent.createChooser(outside, null))
+    } catch (_: ActivityNotFoundException) {
+      return
+    }
+    activity.finish()
   }
 
   internal companion object {

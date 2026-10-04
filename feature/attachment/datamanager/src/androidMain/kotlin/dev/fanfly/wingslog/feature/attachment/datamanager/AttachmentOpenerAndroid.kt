@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import android.net.Uri
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
@@ -34,7 +36,6 @@ class AttachmentOpenerAndroid(
   override val downloadingIds: StateFlow<Set<String>> =
     _downloadingIds.asStateFlow()
 
-  // [page] is not passed on: an external viewer takes none (see the interface).
   override fun open(attachment: Attachment, page: Int?): Flow<OpenState> = flow {
     emit(OpenState.Downloading)
 
@@ -74,11 +75,11 @@ class AttachmentOpenerAndroid(
           if (downloadError != null) {
             emit(OpenState.Failed(downloadError))
           } else {
-            emitOpenLocalFile(attachment)
+            emitOpenLocalFile(attachment, page)
           }
         }
 
-        else -> emitOpenLocalFile(attachment)
+        else -> emitOpenLocalFile(attachment, page)
       }
     } catch (e: Exception) {
       emit(OpenState.Failed(e))
@@ -89,6 +90,7 @@ class AttachmentOpenerAndroid(
 
   private suspend fun FlowCollector<OpenState>.emitOpenLocalFile(
     attachment: Attachment,
+    page: Int?,
   ) {
     val blobFile = File(context.filesDir, blobRelativePath(attachment.id))
     if (!blobFile.exists()) {
@@ -115,6 +117,12 @@ class AttachmentOpenerAndroid(
         "${context.packageName}.fileprovider",
         namedFile,
       )
+      // A PDF opens in the app's own viewer, which can open at a page (PRD R30); anything else, or
+      // a PDF that viewer cannot take, goes to the device's viewers as before.
+      if (attachment.mime_type == PDF_MIME && context.openInApp(contentUri, page ?: attachment.open_page)) {
+        emit(OpenState.Done)
+        return
+      }
       val intent = Intent(Intent.ACTION_VIEW).apply {
         setDataAndType(contentUri, attachment.mime_type.ifEmpty { "*/*" })
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -130,6 +138,32 @@ class AttachmentOpenerAndroid(
     }
   }
 }
+
+/**
+ * Starts the in-app PDF viewer (`feature/attachment/viewing`'s `PdfViewerActivity`) at [page],
+ * 1-based, 0 for the start. By class name: that module is not this one's to depend on. False when it
+ * cannot be started, for the caller to fall back to the device's viewers.
+ */
+private fun Context.openInApp(document: Uri, page: Int): Boolean {
+  val intent = Intent(Intent.ACTION_VIEW)
+    .setClassName(packageName, PDF_VIEWER_ACTIVITY)
+    .setDataAndType(document, PDF_MIME)
+    .putExtra(PDF_VIEWER_EXTRA_PAGE, page)
+    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+  return try {
+    startActivity(intent)
+    true
+  } catch (e: ActivityNotFoundException) {
+    false
+  }
+}
+
+private const val PDF_MIME = "application/pdf"
+
+/** `PdfViewerActivity.CLASS_NAME` and `EXTRA_PAGE`, which this module cannot see; keep in step. */
+private const val PDF_VIEWER_ACTIVITY =
+  "dev.fanfly.wingslog.feature.attachment.viewing.pdf.PdfViewerActivity"
+private const val PDF_VIEWER_EXTRA_PAGE = "dev.fanfly.wingslog.extra.PDF_PAGE"
 
 /**
  * The attachment's user-facing file name, sanitized for use as an actual filename: path separators
