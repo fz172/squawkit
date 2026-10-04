@@ -286,8 +286,9 @@ class StarterPackViewModel(
   /**
    * Asks, once the curated list is up, whether a model run can start and whether documents are
    * allowed, before offering either. When it cannot (the daily limit, another member's run, …)
-   * the screen says why and when, and offers neither the button nor the sheet; when it can, the
-   * suggest and document modes open the sheet already knowing what it may offer.
+   * the screen says why and when, and offers neither the button nor the sheet. When it can, the
+   * button is offered; only the document mode, which the user opened to read a document, opens
+   * the sheet by itself (owner's decision, 2026-10-04: nothing pops up unasked).
    */
   private suspend fun checkAi() {
     _uiState.update { it.copy(isCheckingAi = true) }
@@ -305,10 +306,8 @@ class StarterPackViewModel(
       return
     }
     _uiState.update { it.copy(isCheckingAi = false, canSuggest = true) }
-    if (uiState.value.mode != Screen.StarterPack.MODE_STARTER) {
-      entryPoint = uiState.value.mode
-      onOpenSources()
-    }
+    if (uiState.value.mode != Screen.StarterPack.MODE_STARTER) entryPoint = uiState.value.mode
+    if (uiState.value.mode == Screen.StarterPack.MODE_DOCUMENT) openSheet()
   }
 
   /** What the server said when the screen opened; the sheet opens from it with no wait. */
@@ -322,8 +321,24 @@ class StarterPackViewModel(
     return SourceAccess(eligibility, owner).also { access = it }
   }
 
-  /** *Suggest tasks* on the curated list: opens the sources sheet (design §9.3). */
+  /**
+   * The AI button on the curated list. Where documents are allowed (the owner's Pro), the sheet
+   * asks for them first, with *Skip* and *Add documents*; otherwise there is nothing to ask, and
+   * the run starts at once (owner's decision, 2026-10-04).
+   */
   fun onOpenSources() {
+    val state = uiState.value
+    if (!state.canSuggest || state.sources != null) return
+    val known = access
+    if (known != null && !known.eligibility.documentsAllowed) {
+      onSuggest()
+      return
+    }
+    openSheet()
+  }
+
+  /** Opens the sources sheet (design §9.3), from what the server said if that is in. */
+  private fun openSheet() {
     val state = uiState.value
     if (!state.canSuggest || state.sources != null) return
     val firstOpening = !sheetOpened

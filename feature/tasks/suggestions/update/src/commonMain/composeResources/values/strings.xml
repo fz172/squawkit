@@ -23,9 +23,10 @@
   <string name="starter_pack_add_details">Add details</string>
   <!-- The sources sheet (design §9.3, PRD R6). -->
   <string name="sources_title">Suggest <xliff:g example="tasks">%1$s</xliff:g></string>
-  <string name="sources_documents">Add manuals or service documents for a closer match (optional)</string>
+  <string name="sources_documents">Add your manuals or service documents and the suggestions will follow them. Or skip, and they come from the details of this <xliff:g example="plane">%1$s</xliff:g> and common practice.</string>
+  <string name="sources_add_documents">Add documents</string>
+  <string name="sources_add_more">Add more</string>
   <string name="sources_limits">PDFs or photos of the pages, up to <xliff:g example="3">%1$d</xliff:g>, <xliff:g example="25">%2$d</xliff:g> MB each</string>
-  <string name="sources_without_documents">Without documents, suggestions come from the details of this <xliff:g example="plane">%1$s</xliff:g> and common practice.</string>
   <string name="sources_pro">PRO</string>
   <string name="sources_suggest">Suggest</string>
   <string name="sources_problem_too_large">That file is over <xliff:g example="25">%1$d</xliff:g> MB</string>

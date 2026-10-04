@@ -1144,7 +1144,9 @@ feature/tasks/suggestions/update	ai_error_stale	That run stopped before it finis
 feature/tasks/suggestions/update	ai_error_unavailable	No internet connection
 feature/tasks/suggestions/update	ai_error_app_unverified	This copy of the app couldn’t be verified
 feature/tasks/suggestions/update	ai_error_unknown	Something went wrong. Try again.
-feature/tasks/suggestions/update	sources_documents	Add manuals or service documents for a closer match (optional)
+feature/tasks/suggestions/update	sources_documents	Add your manuals or service documents and the suggestions will follow them. Or skip, and they come from the details of this %1$s and common practice.
+feature/tasks/suggestions/update	sources_add_documents	Add documents
+feature/tasks/suggestions/update	sources_add_more	Add more
 feature/tasks/suggestions/update	sources_limits	PDFs or photos of the pages, up to %1$d, %2$d MB each
 feature/tasks/suggestions/update	sources_pro	PRO
 feature/tasks/suggestions/update	sources_problem_not_added	That file couldn’t be added
@@ -1153,7 +1155,6 @@ feature/tasks/suggestions/update	sources_problem_too_many	Up to %1$d documents a
 feature/tasks/suggestions/update	sources_problem_unsupported	Add a PDF or a photo of the pages
 feature/tasks/suggestions/update	sources_suggest	Suggest
 feature/tasks/suggestions/update	sources_title	Suggest %1$s
-feature/tasks/suggestions/update	sources_without_documents	Without documents, suggestions come from the details of this %1$s and common practice.
 feature/tasks/suggestions/update	starter_pack_stage_waiting	Getting ready…
 feature/tasks/suggestions/update	starter_pack_stage_recalling	Looking up the schedule for this %1$s…
 feature/tasks/suggestions/update	starter_pack_stage_reading	Reading %1$s…

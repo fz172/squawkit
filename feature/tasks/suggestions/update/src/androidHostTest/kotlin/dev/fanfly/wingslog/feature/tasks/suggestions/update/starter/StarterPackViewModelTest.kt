@@ -396,11 +396,10 @@ class StarterPackViewModelTest {
     }
 
   @Test
-  fun theSuggestModeOpensTheSourcesSheetOverTheCuratedList() = runTest(dispatcher) {
+  fun theSuggestModeOffersTheAiButtonAndOpensNothingByItself() = runTest(dispatcher) {
     serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, curatedList))
     coEvery { suggestions.eligibility(THING_ID, any()) } returns
       AiEligibility(true, null, true, null)
-    coEvery { suggestions.isOwner(THING_ID) } returns true
 
     val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
     advanceUntilIdle()
@@ -408,9 +407,9 @@ class StarterPackViewModelTest {
     coVerify { suggestions.start(THING_ID, Screen.StarterPack.MODE_SUGGEST, curatedOnly = true) }
     coVerify(exactly = 0) { suggestions.start(THING_ID, any(), curatedOnly = false, any()) }
     assertThat(vm.uiState.value.items).hasSize(3)
-    assertThat(vm.uiState.value.sources).isEqualTo(
-      SourcesState(isChecking = false, documentsAllowed = true, isOwner = true),
-    )
+    assertThat(vm.uiState.value.canSuggest).isTrue()
+    // Owner's decision, 2026-10-04: nothing pops up unasked.
+    assertThat(vm.uiState.value.sources).isNull()
   }
 
   private fun picked(name: String, mime: String = "application/pdf") =
@@ -424,7 +423,7 @@ class StarterPackViewModelTest {
     }
   }
 
-  /** The suggest mode, with its sheet open on [eligibility] and nothing started yet. */
+  /** The suggest mode on [eligibility], and the AI button tapped: the sheet, where docs are allowed. */
   private fun TestScope.openSheet(
     eligibility: AiEligibility = AiEligibility(true, null, true, null),
     owner: Boolean = true,
@@ -434,30 +433,35 @@ class StarterPackViewModelTest {
     every { suggestions.observeRun(THING_ID) } returns runs
     coEvery { suggestions.eligibility(THING_ID, any()) } returns eligibility
     coEvery { suggestions.isOwner(THING_ID) } returns owner
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+      AiStartResult.Started(JOB, joined = false)
     val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
+    advanceUntilIdle()
+    // The AI button.
+    vm.onOpenSources()
     advanceUntilIdle()
     return vm
   }
 
   @Test
-  fun suggestTasksOpensTheSheetFromTheCuratedList() = runTest(dispatcher) {
-    serving(SuggestionRun.Ready(JOB, curatedList))
-    coEvery { suggestions.eligibility(THING_ID, any()) } returns
-      AiEligibility(true, null, false, null)
-    coEvery { suggestions.isOwner(THING_ID) } returns false
-    val vm = viewModel(pack, serverSource = true)
-    advanceUntilIdle()
-    assertThat(vm.uiState.value.sources).isNull()
+  fun theAiButtonAsksForDocumentsWhereTheOwnerHasPro() = runTest(dispatcher) {
+    val vm = openSheet()
 
-    vm.onOpenSources()
-    advanceUntilIdle()
-
-    // Asked without documents, which still says whether they are allowed.
     coVerify { suggestions.eligibility(THING_ID, false) }
     assertThat(vm.uiState.value.sources).isEqualTo(
-      SourcesState(isChecking = false, documentsAllowed = false, isOwner = false),
+      SourcesState(isChecking = false, documentsAllowed = true, isOwner = true),
     )
+    coVerify(exactly = 0) { suggestions.start(THING_ID, any(), curatedOnly = false, any()) }
+  }
+
+  @Test
+  fun withoutProTheAiButtonStartsTheRunWithNoSheet() = runTest(dispatcher) {
+    val vm = openSheet(eligibility = AiEligibility(true, null, false, null), owner = false)
+
+    assertThat(vm.uiState.value.sources).isNull()
+    assertThat(vm.uiState.value.isSuggesting).isTrue()
+    coVerify { suggestions.start(THING_ID, any(), curatedOnly = false, documents = emptyList()) }
   }
 
   @Test
@@ -637,8 +641,9 @@ class StarterPackViewModelTest {
   }
 
   @Test
-  fun aFreeOwnersSheetAddsNothing() = runTest(dispatcher) {
-    val vm = openSheet(eligibility = AiEligibility(true, null, false, null))
+  fun aFreeOwnersPickAddsNothing() = runTest(dispatcher) {
+    // Only a document entry point opens the sheet for a free owner.
+    val vm = findTasksIn(onRecord, eligibility = AiEligibility(true, null, false, null))
 
     vm.onAddDocuments(listOf(picked("POH.pdf")))
     advanceUntilIdle()
@@ -738,7 +743,7 @@ class StarterPackViewModelTest {
     coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
       AiStartResult.Started(CURATED_JOB, joined = false)
     every { suggestions.observeRun(THING_ID) } returns runs
-    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_DOCUMENT, serverSource = true)
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
     advanceUntilIdle()
 
@@ -758,6 +763,7 @@ class StarterPackViewModelTest {
   @Test
   fun theSheetOpensFromTheAnswerAlreadyIn() = runTest(dispatcher) {
     serving(SuggestionRun.Ready(JOB, curatedList))
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, true, null)
     val vm = viewModel(pack, serverSource = true)
     advanceUntilIdle()
 
@@ -785,12 +791,13 @@ class StarterPackViewModelTest {
     coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
       AiStartResult.Started(CURATED_JOB, joined = false)
     every { suggestions.observeRun(THING_ID) } returns runs
-    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, false, null)
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, true, null)
     coEvery { suggestions.isOwner(THING_ID) } returns true
     val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
     // The custom template: no curated list, and the sheet stays open over nothing.
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, SuggestTasksResult()))
     advanceUntilIdle()
+    vm.onOpenSources()
     assertThat(vm.uiState.value.isDone).isFalse()
     assertThat(vm.uiState.value.sources).isNotNull()
 
