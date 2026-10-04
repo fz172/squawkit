@@ -60,6 +60,7 @@ val tasksSuggestionsDataManagerModule: Module = module {
       syncObserver = get<EntitySyncObserver>(),
       attachmentManager = get<AttachmentManager>(),
       jobDocuments = get<JobDocumentReleaser>(),
+      currentUid = get<CurrentUidProvider>(),
     )
   }
 }

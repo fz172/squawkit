@@ -27,6 +27,12 @@ interface TaskSuggestionManager {
   suspend fun eligibility(thingId: String, withDocuments: Boolean = false): AiEligibility
 
   /**
+   * Whether the signed-in user owns [thingId], rather than being a member of it: documents need the
+   * owner's Pro, so a member's paywall names the owner's plan instead of offering one (PRD R45).
+   */
+  suspend fun isOwner(thingId: String): Boolean
+
+  /**
    * Starts a run, or joins the caller's own run in flight. Waits for the Thing to reach the server
    * first, because the server refuses one it cannot find (§5.3). [entryPoint] is for analytics.
    *

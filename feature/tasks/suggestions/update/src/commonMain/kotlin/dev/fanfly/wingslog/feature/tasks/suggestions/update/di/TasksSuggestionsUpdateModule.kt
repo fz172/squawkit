@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.StarterPackViewModel
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -22,6 +23,7 @@ val tasksSuggestionsUpdateModule = module {
       capability = get<AppCapability>(),
       suggestionManager = get<TaskSuggestionManager>(),
       suggestEntry = get<TaskSuggestionEntry>(),
+      attachmentManager = get<AttachmentManager>(),
       savedStateHandle = get<SavedStateHandle>(),
     )
   }

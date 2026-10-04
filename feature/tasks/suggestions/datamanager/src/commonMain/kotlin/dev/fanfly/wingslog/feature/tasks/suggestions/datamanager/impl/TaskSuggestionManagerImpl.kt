@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
@@ -53,6 +54,7 @@ class TaskSuggestionManagerImpl(
   private val syncObserver: EntitySyncObserver,
   private val attachmentManager: AttachmentManager,
   private val jobDocuments: JobDocumentReleaser,
+  private val currentUid: CurrentUidProvider,
 ) : TaskSuggestionManager {
 
   override suspend fun eligibility(thingId: String, withDocuments: Boolean): AiEligibility =
@@ -62,6 +64,9 @@ class TaskSuggestionManagerImpl(
       UserId(value_ = hostUidOf(thingId)),
       withDocuments = withDocuments
     )
+
+  override suspend fun isOwner(thingId: String): Boolean =
+    currentUid.currentUid()?.let { it == hostUidOf(thingId) } ?: false
 
   override suspend fun start(
     thingId: String,

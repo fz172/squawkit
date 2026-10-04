@@ -102,7 +102,10 @@ class TaskSuggestionManagerImplTest {
     sync,
     attachments,
     jobDocuments,
+    { uid },
   )
+
+  private var uid: String? = "host"
 
   private val manual = Attachment(
     id = "blob-1",
@@ -156,6 +159,15 @@ class TaskSuggestionManagerImplTest {
         false,
       )
     }
+  }
+
+  @Test
+  fun `owns the Thing when it is in the caller's own tree`() = runTest {
+    assertThat(manager.isOwner(THING)).isTrue()
+    uid = "member"
+    assertThat(manager.isOwner(THING)).isFalse()
+    uid = null
+    assertThat(manager.isOwner(THING)).isFalse()
   }
 
   @Test

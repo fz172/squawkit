@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiSkipped
@@ -10,6 +11,10 @@ import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
@@ -31,6 +36,7 @@ import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TimeRule
+import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -43,6 +49,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -102,6 +109,7 @@ class StarterPackViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   private val suggestions = mockk<TaskSuggestionManager>(relaxUnitFun = true)
+  private val attachments = mockk<AttachmentManager>(relaxUnitFun = true)
   private val entry = mockk<TaskSuggestionEntry> {
     every { observe(THING_ID) } returns flowOf(SuggestEntry.Available)
   }
@@ -134,6 +142,7 @@ class StarterPackViewModelTest {
       ),
       suggestionManager = suggestions,
       suggestEntry = entry,
+      attachmentManager = attachments,
       savedStateHandle = SavedStateHandle(
         buildMap {
           put(Screen.THING_ID, THING_ID)
@@ -315,6 +324,32 @@ class StarterPackViewModelTest {
     every { suggestions.observeRun(THING_ID) } returns flowOf(*runs)
   }
 
+  private val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+
+  /**
+   * The suggest mode on [curated], whose sources sheet opens at once, and *Suggest* on it: the
+   * model run is [JOB], and [runs] carries what the test emits next.
+   */
+  private fun TestScope.suggestModeModelRun(
+    curated: SuggestTasksResult = curatedList,
+    documentsAllowed: Boolean = false,
+  ): StarterPackViewModel {
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      AiStartResult.Started(CURATED_JOB, joined = false)
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+      AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns
+      AiEligibility(true, null, documentsAllowed, null)
+    coEvery { suggestions.isOwner(THING_ID) } returns true
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curated))
+    advanceUntilIdle()
+    vm.onSuggest()
+    advanceUntilIdle()
+    return vm
+  }
+
   @Test
   fun theStarterModeAsksForTheCuratedListAndShowsItWithNothingChecked() =
     runTest(dispatcher) {
@@ -350,22 +385,229 @@ class StarterPackViewModelTest {
     }
 
   @Test
-  fun theSuggestModeStartsTheModelRun() = runTest(dispatcher) {
-    serving(
-      SuggestionRun.Idle,
-      SuggestionRun.Working(JOB, null, null, curatedList)
-    )
+  fun theSuggestModeOpensTheSourcesSheetOverTheCuratedList() = runTest(dispatcher) {
+    serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, curatedList))
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns
+      AiEligibility(true, null, true, null)
+    coEvery { suggestions.isOwner(THING_ID) } returns true
 
-    viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
     advanceUntilIdle()
 
-    coVerify {
-      suggestions.start(
-        THING_ID,
-        Screen.StarterPack.MODE_SUGGEST,
-        curatedOnly = false
-      )
+    coVerify { suggestions.start(THING_ID, Screen.StarterPack.MODE_SUGGEST, curatedOnly = true) }
+    coVerify(exactly = 0) { suggestions.start(THING_ID, any(), curatedOnly = false, any()) }
+    assertThat(vm.uiState.value.items).hasSize(3)
+    assertThat(vm.uiState.value.sources).isEqualTo(
+      SourcesState(isChecking = false, documentsAllowed = true, isOwner = true),
+    )
+  }
+
+  private fun picked(name: String, mime: String = "application/pdf") =
+    PickedFile(uri = "file://$name", name = name, mimeType = mime, sizeBytes = 1_000)
+
+  private fun storing(vararg names: String) {
+    names.forEach { name ->
+      coEvery {
+        attachments.addPickedFile(THING_ID, match { it.name == name }, name, QuotaChecker.MAX_AI_DOCUMENT_BYTES)
+      } returns Attachment(id = "blob-$name", name = name)
     }
+  }
+
+  /** The suggest mode, with its sheet open on [eligibility] and nothing started yet. */
+  private fun TestScope.openSheet(
+    eligibility: AiEligibility = AiEligibility(true, null, true, null),
+    owner: Boolean = true,
+  ): StarterPackViewModel {
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      AiStartResult.Started(CURATED_JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns eligibility
+    coEvery { suggestions.isOwner(THING_ID) } returns owner
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
+    advanceUntilIdle()
+    return vm
+  }
+
+  @Test
+  fun suggestTasksOpensTheSheetFromTheCuratedList() = runTest(dispatcher) {
+    serving(SuggestionRun.Ready(JOB, curatedList))
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns
+      AiEligibility(true, null, false, null)
+    coEvery { suggestions.isOwner(THING_ID) } returns false
+    val vm = viewModel(pack, serverSource = true)
+    advanceUntilIdle()
+    assertThat(vm.uiState.value.sources).isNull()
+
+    vm.onOpenSources()
+    advanceUntilIdle()
+
+    // Asked without documents, which still says whether they are allowed.
+    coVerify { suggestions.eligibility(THING_ID, false) }
+    assertThat(vm.uiState.value.sources).isEqualTo(
+      SourcesState(isChecking = false, documentsAllowed = false, isOwner = false),
+    )
+  }
+
+  @Test
+  fun aPickedPdfOrPhotoIsStoredAtTheAiDocumentCap() = runTest(dispatcher) {
+    val vm = openSheet()
+    storing("POH.pdf", "page.jpg")
+
+    vm.onAddDocuments(listOf(picked("POH.pdf"), picked("page.jpg", "image/jpeg")))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.sources?.documents?.map { it.name })
+      .containsExactly("POH.pdf", "page.jpg").inOrder()
+    assertThat(vm.uiState.value.sources?.isAdding).isFalse()
+    assertThat(vm.uiState.value.sources?.problem).isNull()
+  }
+
+  @Test
+  fun anythingButAPdfOrAnImageIsNotAdded() = runTest(dispatcher) {
+    val vm = openSheet()
+
+    vm.onAddDocuments(listOf(picked("notes.txt", "text/plain")))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.sources?.documents).isEmpty()
+    assertThat(vm.uiState.value.sources?.problem).isEqualTo(DocumentProblem.UNSUPPORTED)
+    coVerify(exactly = 0) { attachments.addPickedFile(any(), any(), any(), any()) }
+    vm.onDocumentProblemShown()
+    assertThat(vm.uiState.value.sources?.problem).isNull()
+  }
+
+  @Test
+  fun aFileOverTheCapSaysSo() = runTest(dispatcher) {
+    val vm = openSheet()
+    coEvery { attachments.addPickedFile(THING_ID, any(), any(), any()) } throws
+      FileTooLargeException(30_000_000)
+
+    vm.onAddDocuments(listOf(picked("AMM.pdf")))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.sources?.problem).isEqualTo(DocumentProblem.TOO_LARGE)
+  }
+
+  @Test
+  fun aFourthDocumentIsNotAdded() = runTest(dispatcher) {
+    val vm = openSheet()
+    storing("a.pdf", "b.pdf", "c.pdf", "d.pdf")
+
+    vm.onAddDocuments(listOf(picked("a.pdf"), picked("b.pdf"), picked("c.pdf"), picked("d.pdf")))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.sources?.documents).hasSize(3)
+    assertThat(vm.uiState.value.sources?.problem).isEqualTo(DocumentProblem.TOO_MANY)
+  }
+
+  @Test
+  fun aFreeOwnersSheetAddsNothing() = runTest(dispatcher) {
+    val vm = openSheet(eligibility = AiEligibility(true, null, false, null))
+
+    vm.onAddDocuments(listOf(picked("POH.pdf")))
+    advanceUntilIdle()
+
+    coVerify(exactly = 0) { attachments.addPickedFile(any(), any(), any(), any()) }
+  }
+
+  @Test
+  fun removingADocumentLetsGoOfIt() = runTest(dispatcher) {
+    val vm = openSheet()
+    storing("POH.pdf")
+    vm.onAddDocuments(listOf(picked("POH.pdf")))
+    advanceUntilIdle()
+
+    vm.onRemoveDocument("blob-POH.pdf")
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.sources?.documents).isEmpty()
+    coVerify { attachments.release(Attachment(id = "blob-POH.pdf", name = "POH.pdf"), null) }
+  }
+
+  @Test
+  fun closingTheSheetLetsGoOfItsDocumentsAndKeepsTheList() = runTest(dispatcher) {
+    val vm = openSheet()
+    storing("POH.pdf")
+    vm.onAddDocuments(listOf(picked("POH.pdf")))
+    advanceUntilIdle()
+
+    vm.onSourcesDismissed()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.sources).isNull()
+    assertThat(vm.uiState.value.isDone).isFalse()
+    assertThat(vm.uiState.value.canSuggest).isTrue()
+    coVerify { attachments.release(Attachment(id = "blob-POH.pdf", name = "POH.pdf"), null) }
+  }
+
+  @Test
+  fun suggestStartsTheModelRunWithTheDocumentsAndCountsThem() = runTest(dispatcher) {
+    val vm = openSheet()
+    storing("POH.pdf")
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+      AiStartResult.Started(JOB, joined = false)
+    vm.onAddDocuments(listOf(picked("POH.pdf")))
+    advanceUntilIdle()
+
+    vm.onSuggest()
+    advanceUntilIdle()
+
+    val manual = Attachment(id = "blob-POH.pdf", name = "POH.pdf")
+    coVerify { suggestions.start(THING_ID, any(), curatedOnly = false, documents = listOf(manual)) }
+    assertThat(vm.uiState.value.sources).isNull()
+    assertThat(vm.uiState.value.isSuggesting).isTrue()
+    // The run owns them now; the manager lets them go when it ends.
+    coVerify(exactly = 0) { attachments.release(any(), any()) }
+    assertThat(analytics.paramsFor("task_suggestions_requested").single())
+      .containsAtLeastEntriesIn(mapOf("source" to "suggest", "document_count" to "1"))
+  }
+
+  @Test
+  fun aRefusedStartLetsGoOfTheDocuments() = runTest(dispatcher) {
+    val vm = openSheet()
+    storing("POH.pdf")
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+      AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
+    vm.onAddDocuments(listOf(picked("POH.pdf")))
+    advanceUntilIdle()
+
+    vm.onSuggest()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.notice).isEqualTo(AiErrorCode.DOCUMENT_MISSING)
+    coVerify { attachments.release(Attachment(id = "blob-POH.pdf", name = "POH.pdf"), null) }
+  }
+
+  @Test
+  fun theDailyLimitHoldsSuggestAndSaysWhen() = runTest(dispatcher) {
+    val back = Instant.fromEpochMilliseconds(9_000)
+    val vm = openSheet(eligibility = AiEligibility(false, AiErrorCode.DAILY_LIMIT, true, back))
+
+    assertThat(vm.uiState.value.sources?.blocked).isEqualTo(AiErrorCode.DAILY_LIMIT)
+    assertThat(vm.uiState.value.sources?.availableAt).isEqualTo(back)
+    vm.onSuggest()
+    advanceUntilIdle()
+    coVerify(exactly = 0) { suggestions.start(THING_ID, any(), curatedOnly = false, any()) }
+  }
+
+  @Test
+  fun closingTheSheetOverNoCardsClosesTheScreen() = runTest(dispatcher) {
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      AiStartResult.Started(CURATED_JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, false, null)
+    coEvery { suggestions.isOwner(THING_ID) } returns true
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
+    // The custom template: no curated list, and the sheet stays open over nothing.
+    runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, SuggestTasksResult()))
+    advanceUntilIdle()
+    assertThat(vm.uiState.value.isDone).isFalse()
+    assertThat(vm.uiState.value.sources).isNotNull()
+
+    vm.onSourcesDismissed()
+
+    assertThat(vm.uiState.value.isDone).isTrue()
   }
 
   @Test
@@ -617,20 +859,7 @@ class StarterPackViewModelTest {
   @Test
   fun aFailedModelRunKeepsTheCuratedCardsAndOffersTryAgain() =
     runTest(dispatcher) {
-      val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
-      coEvery {
-        suggestions.start(
-          THING_ID,
-          any(),
-          curatedOnly = false
-        )
-      } returns AiStartResult.Started(JOB, joined = false)
-      every { suggestions.observeRun(THING_ID) } returns runs
-      val vm = viewModel(
-        pack,
-        mode = Screen.StarterPack.MODE_SUGGEST,
-        serverSource = true
-      )
+      val vm = suggestModeModelRun()
       runs.emit(
         SuggestionRun.Failed(
           JOB,
@@ -664,13 +893,8 @@ class StarterPackViewModelTest {
 
   @Test
   fun aFailedRunWithNothingToShowClosesAndSaysWhy() = runTest(dispatcher) {
-    serving(SuggestionRun.Failed(JOB, AiErrorCode.STALE, result = null))
-
-    val vm = viewModel(
-      pack,
-      mode = Screen.StarterPack.MODE_SUGGEST,
-      serverSource = true
-    )
+    val vm = suggestModeModelRun(curated = SuggestTasksResult())
+    runs.emit(SuggestionRun.Failed(JOB, AiErrorCode.STALE, result = null))
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.isDone).isTrue()
@@ -716,13 +940,8 @@ class StarterPackViewModelTest {
   fun aCuratedOnlyAnswerSaysWhyTheModelWasSkipped() = runTest(dispatcher) {
     val skipped =
       AiSkipped(AiErrorCode.DAILY_LIMIT, Instant.fromEpochMilliseconds(5_000))
-    serving(SuggestionRun.Ready(JOB, curatedList, skipped))
-
-    val vm = viewModel(
-      pack,
-      mode = Screen.StarterPack.MODE_SUGGEST,
-      serverSource = true
-    )
+    val vm = suggestModeModelRun()
+    runs.emit(SuggestionRun.Ready(JOB, curatedList, skipped))
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.aiSkipped).isEqualTo(skipped)
@@ -732,13 +951,8 @@ class StarterPackViewModelTest {
   @Test
   fun anEmptyModelRunKeepsTheCuratedCardsAndOffersAddDetails() =
     runTest(dispatcher) {
-      serving(SuggestionRun.Empty(JOB, curatedList))
-
-      val vm = viewModel(
-        pack,
-        mode = Screen.StarterPack.MODE_SUGGEST,
-        serverSource = true
-      )
+      val vm = suggestModeModelRun()
+      runs.emit(SuggestionRun.Empty(JOB, curatedList))
       advanceUntilIdle()
 
       assertThat(vm.uiState.value.notEnough).isTrue()
@@ -753,13 +967,8 @@ class StarterPackViewModelTest {
   fun anEmptyModelRunWithNoCuratedListStaysToSayNotEnough() =
     runTest(dispatcher) {
       // The custom template: the message is the whole screen (R21a).
-      serving(SuggestionRun.Empty(JOB, result = null))
-
-      val vm = viewModel(
-        pack,
-        mode = Screen.StarterPack.MODE_SUGGEST,
-        serverSource = true
-      )
+      val vm = suggestModeModelRun(curated = SuggestTasksResult())
+      runs.emit(SuggestionRun.Empty(JOB, result = null))
       advanceUntilIdle()
 
       assertThat(vm.uiState.value.isDone).isFalse()
@@ -843,21 +1052,7 @@ class StarterPackViewModelTest {
   @Test
   fun aModelRunReportsRequestedThenShownOnceWithTheSplit() =
     runTest(dispatcher) {
-      val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
-      coEvery {
-        suggestions.start(
-          THING_ID,
-          any(),
-          any()
-        )
-      } returns AiStartResult.Started(JOB, joined = false)
-      every { suggestions.observeRun(THING_ID) } returns runs
-      viewModel(
-        pack,
-        mode = Screen.StarterPack.MODE_SUGGEST,
-        serverSource = true
-      )
-      advanceUntilIdle()
+      suggestModeModelRun()
 
       val answer = SuggestTasksResult(
         suggestions = listOf(
@@ -945,17 +1140,7 @@ class StarterPackViewModelTest {
 
   @Test
   fun aFailedRunIsReportedOnce() = runTest(dispatcher) {
-    val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
-    coEvery {
-      suggestions.start(
-        THING_ID,
-        any(),
-        any()
-      )
-    } returns AiStartResult.Started(JOB, joined = false)
-    every { suggestions.observeRun(THING_ID) } returns runs
-    viewModel(pack, mode = Screen.StarterPack.MODE_SUGGEST, serverSource = true)
-    advanceUntilIdle()
+    suggestModeModelRun()
 
     runs.emit(
       SuggestionRun.Failed(
@@ -1208,6 +1393,7 @@ class StarterPackViewModelTest {
     const val THING_ID = "thing-1"
     val JOB = AiJobId("job-1")
     val AI_JOB = AiJobId("job-2")
+    val CURATED_JOB = AiJobId("job-0")
   }
 
   @Test
