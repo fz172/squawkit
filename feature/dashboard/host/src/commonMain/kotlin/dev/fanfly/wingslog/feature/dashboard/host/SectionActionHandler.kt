@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.feature.attachment.model.toDocumentArg
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.id.ThingId
 
@@ -20,111 +19,98 @@ internal fun rememberSectionActionHandler(
   thingId: String,
 ): (ThingOverviewAction) -> Unit =
   remember(viewModel, navController, thingId) {
-    { action ->
-      when (action) {
-        is ThingOverviewAction.AddLogClick ->
-          navController.navigate(
-            Screen.AddMaintenanceLog.createRoute(
-              thingId
-            )
+  { action ->
+    when (action) {
+      is ThingOverviewAction.AddLogClick ->
+        navController.navigate(
+          Screen.AddMaintenanceLog.createRoute(
+            thingId
           )
+        )
 
-        // Resolve → Fixed / Create work log: the ViewModel closes the bubble and logs the
-        // commit, then we open Create Log with the record pre-linked (design §5.1).
-        is ThingOverviewAction.SquawkFixedClick -> {
-          viewModel.onAction(action)
-          navController.navigate(
-            Screen.AddMaintenanceLog.createRoute(
-              thingId,
-              squawkId = action.squawkId,
-            )
+      // Resolve → Fixed / Create work log: the ViewModel closes the bubble and logs the
+      // commit, then we open Create Log with the record pre-linked (design §5.1).
+      is ThingOverviewAction.SquawkFixedClick -> {
+        viewModel.onAction(action)
+        navController.navigate(
+          Screen.AddMaintenanceLog.createRoute(
+            thingId,
+            squawkId = action.squawkId,
           )
-        }
-
-        is ThingOverviewAction.TaskCreateLogClick -> {
-          viewModel.onAction(action)
-          navController.navigate(
-            Screen.AddMaintenanceLog.createRoute(
-              thingId,
-              cardId = action.cardId,
-            )
-          )
-        }
-
-        is ThingOverviewAction.EditLogClick ->
-          navController.navigate(
-            Screen.EditMaintenanceLog.createRoute(
-              thingId,
-              action.logId
-            )
-          )
-
-        is ThingOverviewAction.AddTaskClick ->
-          navController.navigate(
-            Screen.AddMaintenanceTask.createRoute(
-              thingId
-            )
-          )
-
-        is ThingOverviewAction.AddStarterPackClick ->
-          navController.navigate(Screen.StarterPack.createRoute(thingId))
-
-        is ThingOverviewAction.SuggestTasksClick ->
-          navController.navigate(
-            Screen.StarterPack.createRoute(
-              thingId,
-              Screen.StarterPack.MODE_SUGGEST
-            )
-          )
-
-        is ThingOverviewAction.FindTasksInDocument ->
-          navController.navigate(
-            Screen.StarterPack.createRoute(
-              thingId,
-              document = action.document.toDocumentArg()
-            ),
-          )
-
-        is ThingOverviewAction.EditTaskClick -> {
-          viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
-          navController.navigate(
-            Screen.EditMaintenanceTask.createRoute(
-              thingId,
-              action.cardId
-            )
-          )
-        }
-
-        is ThingOverviewAction.AddSquawkClick ->
-          navController.navigate(Screen.AddSquawk.createRoute(thingId))
-
-        is ThingOverviewAction.EditSquawkClick -> {
-          viewModel.onAction(ThingOverviewAction.DismissSquawkDetail)
-          navController.navigate(
-            Screen.EditSquawk.createRoute(
-              thingId,
-              action.squawkId
-            )
-          )
-        }
-
-        is ThingOverviewAction.OpenDataLogClick ->
-          navController.navigate(
-            Screen.DataLogViewer.createRoute(
-              ThingId(action.thingId),
-              action.dataLogId
-            )
-          )
-
-        is ThingOverviewAction.EditClick ->
-          navController.navigate(Screen.EditThing.createRoute(thingId))
-
-        is ThingOverviewAction.ManageAccessClick ->
-          navController.navigate(Screen.ManageAccess.createRoute(thingId))
-
-        ThingOverviewAction.BackClick -> Unit
-
-        else -> viewModel.onAction(action)
+        )
       }
+
+      is ThingOverviewAction.TaskCreateLogClick -> {
+        viewModel.onAction(action)
+        navController.navigate(
+          Screen.AddMaintenanceLog.createRoute(
+            thingId,
+            cardId = action.cardId,
+          )
+        )
+      }
+
+      is ThingOverviewAction.EditLogClick ->
+        navController.navigate(
+          Screen.EditMaintenanceLog.createRoute(
+            thingId,
+            action.logId
+          )
+        )
+
+      is ThingOverviewAction.AddTaskClick ->
+        navController.navigate(
+          Screen.AddMaintenanceTask.createRoute(
+            thingId
+          )
+        )
+
+      is ThingOverviewAction.AddStarterPackClick ->
+        navController.navigate(Screen.StarterPack.createRoute(thingId))
+
+      is ThingOverviewAction.SuggestTasksClick ->
+        navController.navigate(Screen.StarterPack.createRoute(thingId, Screen.StarterPack.MODE_SUGGEST))
+
+      is ThingOverviewAction.EditTaskClick -> {
+        viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
+        navController.navigate(
+          Screen.EditMaintenanceTask.createRoute(
+            thingId,
+            action.cardId
+          )
+        )
+      }
+
+      is ThingOverviewAction.AddSquawkClick ->
+        navController.navigate(Screen.AddSquawk.createRoute(thingId))
+
+      is ThingOverviewAction.EditSquawkClick -> {
+        viewModel.onAction(ThingOverviewAction.DismissSquawkDetail)
+        navController.navigate(
+          Screen.EditSquawk.createRoute(
+            thingId,
+            action.squawkId
+          )
+        )
+      }
+
+      is ThingOverviewAction.OpenDataLogClick ->
+        navController.navigate(
+          Screen.DataLogViewer.createRoute(
+            ThingId(action.thingId),
+            action.dataLogId
+          )
+        )
+
+      is ThingOverviewAction.EditClick ->
+        navController.navigate(Screen.EditThing.createRoute(thingId))
+
+      is ThingOverviewAction.ManageAccessClick ->
+        navController.navigate(Screen.ManageAccess.createRoute(thingId))
+
+      ThingOverviewAction.BackClick -> Unit
+
+      else -> viewModel.onAction(action)
     }
+  }
   }

@@ -30,7 +30,6 @@ kotlin {
       implementation(project(":core:appinfo"))
       implementation(project(":core:datetime"))
       implementation(project(":core:ui"))
-      implementation(project(":core:template"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:subscription:viewing"))

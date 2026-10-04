@@ -16,7 +16,6 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -43,7 +42,6 @@ val dashboardHostModule = module {
       get<TemplateRegistry>(),
       get<AnalyticsManager>(),
       get<FirebaseAuth>(),
-      get<TaskSuggestionEntry>(),
       thingId,
     )
   }

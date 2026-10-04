@@ -74,19 +74,6 @@ fun taskDetailFor(
         syncStates = state.syncStates,
         dataLogs = state.dataLogs,
         openError = taskSheetOpenError,
-        onFindTasks = if (state.canFindTasksInDocuments) {
-          { attachment ->
-            onAction(ThingOverviewAction.DismissTaskDetail)
-            onAction(
-              ThingOverviewAction.FindTasksInDocument(
-                thingId,
-                attachment
-              )
-            )
-          }
-        } else {
-          null
-        },
         onLogWorkClick = {
           onAction(ThingOverviewAction.DismissTaskDetail)
           onAction(ThingOverviewAction.TaskCreateLogClick(selectedTask.card.id))

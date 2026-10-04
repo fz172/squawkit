@@ -61,19 +61,6 @@ internal fun squawkDetailFor(
         syncStates = state.syncStates,
         dataLogs = state.dataLogs,
         openError = openError,
-        onFindTasks = if (state.canFindTasksInDocuments) {
-          { attachment ->
-            onAction(ThingOverviewAction.DismissSquawkDetail)
-            onAction(
-              ThingOverviewAction.FindTasksInDocument(
-                state.thing.id,
-                attachment
-              )
-            )
-          }
-        } else {
-          null
-        },
         onFixedClick = onMutationAction?.let { mutate ->
           {
             onAction(ThingOverviewAction.DismissSquawkDetail)

@@ -53,8 +53,6 @@ fun TaskDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
-  /** *Find tasks in this document* on PDF and image attachments; null where suggestions cannot run. */
-  onFindTasks: ((Attachment) -> Unit)? = null,
   /**
    * Advancing the schedule. Not "Resolve": a task has no end state, only a next due date, so the
    * primary action is logging the work — with Skip beside it, or the cycle could not be advanced
@@ -197,7 +195,6 @@ fun TaskDetailSheet(
       syncStates = syncStates,
       dataLogs = dataLogs,
       openError = openError,
-      onFindTasks = onFindTasks,
     )
 
     if (card.attachments.isNotEmpty()) {

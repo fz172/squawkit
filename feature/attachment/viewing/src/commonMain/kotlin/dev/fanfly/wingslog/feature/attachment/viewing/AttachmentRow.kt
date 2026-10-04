@@ -10,17 +10,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
-import androidx.compose.material.icons.automirrored.outlined.ShowChart
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,16 +28,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.formatDuration
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.text.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
-import dev.fanfly.wingslog.feature.attachment.model.isReadableDocument
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
@@ -51,16 +45,12 @@ import wingslog.feature.attachment.sharedassets.generated.resources.attachment_d
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_image
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_pdf
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_text
-import wingslog.feature.attachment.sharedassets.generated.resources.find_tasks_in_document
 import wingslog.feature.attachment.sharedassets.generated.resources.subtitle_separator
 
 /**
  * [dataLogs] describes the records DATA_LOG references point at; null means the caller has not
  * loaded them, so a reference stays tappable without a subtitle. A loaded map with no entry for
  * the reference means the record is gone: the row reads *Removed* and does nothing on tap.
- *
- * [onFindTasks], where suggestions can run for the Thing, puts *Find tasks in this document* on a
- * PDF or image row (task population PRD R4).
  */
 @Composable
 fun AttachmentRow(
@@ -69,7 +59,6 @@ fun AttachmentRow(
   onTap: (Attachment) -> Unit,
   modifier: Modifier = Modifier,
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
-  onFindTasks: ((Attachment) -> Unit)? = null,
 ) {
   val isDataLog = attachment.type == AttachmentType.ATTACHMENT_TYPE_DATA_LOG
   val dataLog = attachment.data_log_id?.let { dataLogs?.get(it) }
@@ -120,18 +109,6 @@ fun AttachmentRow(
       )
     }
     if (removed) return@Row
-    if (onFindTasks != null && attachment.isReadableDocument()) {
-      IconButton(onClick = { onFindTasks(attachment) }) {
-        Icon(
-          imageVector = Icons.Default.AutoAwesome,
-          contentDescription = stringResource(
-            Res.string.find_tasks_in_document,
-            LexiconFormatter.plural(LocalThingLexicon.current.taskNoun),
-          ),
-          tint = MaterialTheme.colorScheme.primary,
-        )
-      }
-    }
     when (effectiveSync) {
       BlobSyncState.Uploading,
       BlobSyncState.Downloading,
@@ -180,7 +157,7 @@ private fun Attachment.typeIcon() = when (type) {
   AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
   AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
   AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
-  AttachmentType.ATTACHMENT_TYPE_DATA_LOG -> Icons.AutoMirrored.Outlined.ShowChart
+  AttachmentType.ATTACHMENT_TYPE_DATA_LOG -> Icons.Outlined.ShowChart
   else -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 
