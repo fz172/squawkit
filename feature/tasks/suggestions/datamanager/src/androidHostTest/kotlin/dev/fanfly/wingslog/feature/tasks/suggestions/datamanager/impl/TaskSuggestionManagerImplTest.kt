@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMapper
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
@@ -88,6 +89,7 @@ class TaskSuggestionManagerImplTest {
   }
 
   private val attachments = mockk<AttachmentManager>()
+  private val jobDocuments = mockk<JobDocumentReleaser>(relaxed = true)
 
   private val manager = TaskSuggestionManagerImpl(
     client,
@@ -99,6 +101,7 @@ class TaskSuggestionManagerImplTest {
     scopes,
     sync,
     attachments,
+    jobDocuments,
   )
 
   private val manual = Attachment(
@@ -197,6 +200,7 @@ class TaskSuggestionManagerImplTest {
         size_bytes = 2_000_000,
       ),
     )
+    coVerify { jobDocuments.record(JOB, THING, listOf(manual)) }
   }
 
   @Test
@@ -486,7 +490,12 @@ class TaskSuggestionManagerImplTest {
       assertThat(written[0].origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_AI_THING)
       assertThat(written[0].origin?.generation_version).isEqualTo("tasks-4")
       assertThat(written[1]).isEqualTo(edited)
-      coVerify(exactly = 1) { client.close(JOB) }
+      coVerifyOrder {
+        taskData.addTask(THING, any())
+        client.close(JOB)
+        // After the writes, so the reference check keeps a document a task now holds.
+        jobDocuments.release(JOB)
+      }
     }
 
   @Test
@@ -516,9 +525,10 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
-  fun `dismissing closes the run`() = runTest {
+  fun `dismissing closes the run and lets go of its documents`() = runTest {
     manager.dismiss(JOB)
     coVerify(exactly = 1) { client.close(JOB) }
+    coVerify(exactly = 1) { jobDocuments.release(JOB) }
   }
 
   private companion object {
