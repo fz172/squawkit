@@ -999,7 +999,8 @@ like a task draft (built in T23), so the screen needs no search of the Thing's r
   failed run is closed on leaving, and an empty or failed one is not resumed.
 - **Not after creating a Thing** (2026-10-03): the create form closes onto the new Thing, and
   suggestions start from its task tab.
-- **Task list action** (R2): new `ThingOverviewAction.SuggestTasksClick` → `mode=suggest`.
+- **Task list action** (R2): new `ThingOverviewAction.SuggestTasksClick` → `mode=suggest`. Since 2026-10-04 this mode
+  only shows the curated list and the AI button; it opens no sheet by itself (§9.3).
 - **Add task → Tasks from a document** (R3): `mode=document` (sources sheet opens with the picker).
 - **Attachment row → Find tasks in this document** (R4, P1): `mode=document&document=`. The sheet
   starts with that file instead of the picker, and the run reads the stored blob (nothing uploads);
@@ -1040,21 +1041,29 @@ line saying why: "AI suggestions are available again at 3:10 pm".
 
 ### 9.3 Sources sheet (PRD R6)
 
+Revised 2026-10-04 (owner's decision): the sheet never opens unasked. The screen asks the server
+whether a run can start when the curated list comes up ("Checking for AI suggestions…" meanwhile);
+when it cannot, the reason and the time it is back replace the AI button, and there is no sheet.
+
+- **The AI button, owner without Pro** (or a member of such an owner's Thing): there is nothing to
+  ask, so the run starts at once.
+- **The AI button, owner with Pro:** the sheet asks for documents, optionally.
+- **The document entry points** (*From a document*, *Find tasks in this document*): the sheet opens
+  by itself, since the user asked to read a document; the picker opens, or the file is already in
+  it, or for a free owner the Pro upsell.
+
 ```
 ┌ Suggest tasks ─────────────────────────────────┐
-│ Add manuals, bulletins or ADs (optional)       │
-│  📄 915iS_MM_rev3.pdf                       ✕  │
-│  📄 Sling_TSi_AMM.pdf                       ✕  │
-│  + Add documents                  PRO          │  ← paywall for a free owner
-│                                                │
-│ Without documents, suggestions come from       │
-│ common practice for this plane.                │
-│                               [ Suggest ]      │
+│ Add your manuals or service documents and the  │
+│ suggestions will follow them. Or skip, and     │
+│ they come from the details of this plane and   │
+│ common practice.                               │
+│  📄 915iS_MM_rev3.pdf                       ✕  │  ← once added
+│ PDFs or photos of the pages, up to 3, 25 MB    │
+│                     [ Skip ] [ Add documents ] │  ← none added yet
+│                     [ Add more ] [ Suggest ]   │  ← once added
 └────────────────────────────────────────────────┘
 ```
-
-Opening the sheet calls `eligibility`. `daily_limit` replaces *Suggest* with "Available again at 3:
-10 pm". A member whose owner is free sees "Documents need the owner’s Pro plan".
 
 ### 9.4 Working (R19)
 

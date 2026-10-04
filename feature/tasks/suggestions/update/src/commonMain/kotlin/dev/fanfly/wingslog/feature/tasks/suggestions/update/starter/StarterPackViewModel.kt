@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
-import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.StarterTasksAccepted
@@ -286,8 +286,9 @@ class StarterPackViewModel(
   /**
    * Asks, once the curated list is up, whether a model run can start and whether documents are
    * allowed, before offering either. When it cannot (the daily limit, another member's run, …)
-   * the screen says why and when, and offers neither the button nor the sheet; when it can, the
-   * suggest and document modes open the sheet already knowing what it may offer.
+   * the screen says why and when, and offers neither the button nor the sheet. When it can, the
+   * button is offered; only the document mode, which the user opened to read a document, opens
+   * the sheet by itself (owner's decision, 2026-10-04: nothing pops up unasked).
    */
   private suspend fun checkAi() {
     _uiState.update { it.copy(isCheckingAi = true) }
@@ -305,10 +306,9 @@ class StarterPackViewModel(
       return
     }
     _uiState.update { it.copy(isCheckingAi = false, canSuggest = true) }
-    if (uiState.value.mode != Screen.StarterPack.MODE_STARTER) {
-      entryPoint = uiState.value.mode
-      onOpenSources()
-    }
+    if (uiState.value.mode != Screen.StarterPack.MODE_STARTER) entryPoint =
+      uiState.value.mode
+    if (uiState.value.mode == Screen.StarterPack.MODE_DOCUMENT) openSheet()
   }
 
   /** What the server said when the screen opened; the sheet opens from it with no wait. */
@@ -322,17 +322,37 @@ class StarterPackViewModel(
     return SourceAccess(eligibility, owner).also { access = it }
   }
 
-  /** *Suggest tasks* on the curated list: opens the sources sheet (design §9.3). */
+  /**
+   * The AI button on the curated list. Where documents are allowed (the owner's Pro), the sheet
+   * asks for them first, with *Skip* and *Add documents*; otherwise there is nothing to ask, and
+   * the run starts at once (owner's decision, 2026-10-04).
+   */
   fun onOpenSources() {
     val state = uiState.value
     if (!state.canSuggest || state.sources != null) return
+    val known = access
+    if (known != null && !known.eligibility.documentsAllowed) {
+      onSuggest()
+      return
+    }
+    openSheet()
+  }
+
+  /** Opens the sources sheet (design §9.3), from what the server said if that is in. */
+  private fun openSheet() {
+    val state = uiState.value
+    if (!state.canSuggest || state.sources != null) return
     val firstOpening = !sheetOpened
-    val pickOnOpen = state.mode == Screen.StarterPack.MODE_DOCUMENT && firstOpening
+    val pickOnOpen =
+      state.mode == Screen.StarterPack.MODE_DOCUMENT && firstOpening
     sheetOpened = true
     val known = access
     if (known != null) {
       _uiState.update {
-        it.copy(sources = SourcesState(pickOnOpen = pickOnOpen).with(known).withPreset(firstOpening))
+        it.copy(
+          sources = SourcesState(pickOnOpen = pickOnOpen).with(known)
+            .withPreset(firstOpening)
+        )
       }
       return
     }
@@ -340,7 +360,10 @@ class StarterPackViewModel(
     _uiState.update { it.copy(sources = SourcesState(pickOnOpen = pickOnOpen)) }
     viewModelScope.launch {
       val asked = askAccess()
-      updateSources { it.with(asked).withPreset(firstOpening) }
+      updateSources {
+        it.with(asked)
+          .withPreset(firstOpening)
+      }
     }
   }
 
@@ -355,7 +378,10 @@ class StarterPackViewModel(
     )
   }
 
-  private data class SourceAccess(val eligibility: AiEligibility, val isOwner: Boolean)
+  private data class SourceAccess(
+    val eligibility: AiEligibility,
+    val isOwner: Boolean
+  )
 
   /**
    * The first opening's [presetDocument], where documents are allowed, in place of the picker. A
@@ -421,7 +447,9 @@ class StarterPackViewModel(
 
   /** ✕ on a document: out of the run, and its copy let go of (no record holds it). */
   fun onRemoveDocument(attachmentId: String) {
-    val removed = uiState.value.sources?.documents?.firstOrNull { it.id == attachmentId } ?: return
+    val removed =
+      uiState.value.sources?.documents?.firstOrNull { it.id == attachmentId }
+        ?: return
     updateSources { it.copy(documents = it.documents - removed) }
     viewModelScope.launch { attachmentManager.release(removed, owner = null) }
   }
@@ -434,7 +462,10 @@ class StarterPackViewModel(
     val documents = uiState.value.sources?.documents.orEmpty()
     // With no cards behind it (a template with no curated list) there is nothing left to show.
     _uiState.update {
-      it.copy(sources = null, isDone = closeIfEmpty && it.items.isEmpty() && !it.isSuggesting)
+      it.copy(
+        sources = null,
+        isDone = closeIfEmpty && it.items.isEmpty() && !it.isSuggesting
+      )
     }
     releaseAll(documents)
   }
@@ -673,12 +704,27 @@ class StarterPackViewModel(
   }
 
   private fun updateSources(change: (SourcesState) -> SourcesState) {
-    _uiState.update { state -> state.sources?.let { state.copy(sources = change(it)) } ?: state }
+    _uiState.update { state ->
+      state.sources?.let {
+        state.copy(
+          sources = change(
+            it
+          )
+        )
+      } ?: state
+    }
   }
 
   private fun releaseAll(documents: List<Attachment>) {
     if (documents.isEmpty()) return
-    viewModelScope.launch { documents.forEach { attachmentManager.release(it, owner = null) } }
+    viewModelScope.launch {
+      documents.forEach {
+        attachmentManager.release(
+          it,
+          owner = null
+        )
+      }
+    }
   }
 
   /** R50: the model was asked; its answer or failure is reported once per job by [report]. */
