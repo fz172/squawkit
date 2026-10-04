@@ -1176,3 +1176,6 @@ feature/notifications/sharedassets	notification_suggestions_body_ready	Your sugg
 feature/notifications/sharedassets	notification_suggestions_body_empty	Not enough to go on. Add details for better suggestions.
 feature/notifications/sharedassets	notification_suggestions_body_failed	Suggestions didn’t finish. Try again from the task list.
 feature/tasks/suggestions/update	starter_pack_edited	Edited
+feature/tasks/suggestions/update	review_documents_from	From: %1$s
+feature/tasks/suggestions/update	review_document_revision	%1$s rev %2$s
+feature/tasks/suggestions/update	review_document_mismatch	%1$s doesn’t look like it’s for this %2$s

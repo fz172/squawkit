@@ -258,6 +258,7 @@ class StarterPackViewModel(
         _uiState.update { state ->
           state.copy(
             isLoading = false,
+            documents = result.documents,
             items = itemsOf(
               result,
               state.items

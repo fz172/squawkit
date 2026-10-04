@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
+import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
 
@@ -19,6 +20,11 @@ data class StarterPackUiState(
   val template: ThingTemplate? = null,
   val lexicon: Lexicon = GenericLexicon.LEXICON,
   val items: List<StarterPackItem> = emptyList(),
+  /**
+   * What the run made of each document it read, for the review header: what it is, and whether it
+   * looks like it is for this Thing (design §9.5).
+   */
+  val documents: List<IdentifiedDocument> = emptyList(),
   /** The server's curated list is shown and the model can be asked to add to it (PRD R1). */
   val canSuggest: Boolean = false,
   /** A model run is working; its answer will replace the cards. */
