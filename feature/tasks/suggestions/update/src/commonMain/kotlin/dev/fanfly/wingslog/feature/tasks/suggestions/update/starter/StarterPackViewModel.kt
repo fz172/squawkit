@@ -230,6 +230,7 @@ class StarterPackViewModel(
         // Until the listener catches up with the job just started, the newest it knows is older.
         if (latest.jobIdOrNull != followedJob) return@collect
         run = latest
+        loadRunDocuments(followedJob)
         val result = latest.resultOrNull
         val finished = latest !is SuggestionRun.Working
         val failure = (latest as? SuggestionRun.Failed)?.reason
@@ -505,6 +506,17 @@ class StarterPackViewModel(
    */
   private fun StarterPackItem.isShown(): Boolean =
     !isAlreadyTracked && normalizeTitle(suggestion.title) !in trackedTitles
+
+  /** The job whose documents [StarterPackUiState.runDocuments] holds. */
+  private var documentsOfJob: AiJobId? = null
+
+  /** The documents [jobId] read, once per job, for its citations to open (PRD R30). */
+  private suspend fun loadRunDocuments(jobId: AiJobId?) {
+    if (jobId == null || jobId == documentsOfJob) return
+    documentsOfJob = jobId
+    val documents = suggestionManager.documentsOf(jobId)
+    _uiState.update { it.copy(runDocuments = documents) }
+  }
 
   /** *Add details* after an empty run: the run is done with; the screen gives way to the Thing's edit form. */
   fun onAddDetails() {

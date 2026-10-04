@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
+import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
 
@@ -32,6 +33,11 @@ data class StarterPackUiState(
    * of the button, with when it is back where the server says.
    */
   val aiUnavailable: AiSkipped? = null,
+  /**
+   * The files the run read, as attachments on this device, so a document suggestion's citation can
+   * open its document (PRD R30). Empty for a run started on another device.
+   */
+  val runDocuments: List<Attachment> = emptyList(),
   /** The server's curated list is shown and the model can be asked to add to it (PRD R1). */
   val canSuggest: Boolean = false,
   /** A model run is working; its answer will replace the cards. */

@@ -112,6 +112,7 @@ class StarterPackViewModelTest {
     // A model run can start, without documents, unless a test says otherwise.
     coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, false, null)
     coEvery { suggestions.isOwner(THING_ID) } returns true
+    coEvery { suggestions.documentsOf(any()) } returns emptyList()
   }
 
   @After
@@ -479,6 +480,19 @@ class StarterPackViewModelTest {
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.documents).containsExactly(manual, stray).inOrder()
+  }
+
+  @Test
+  fun theRunsDocumentsAreAtHandForItsCitations() = runTest(dispatcher) {
+    val manual = Attachment(id = "blob-1", name = "MM.pdf", mime_type = "application/pdf")
+    coEvery { suggestions.documentsOf(JOB) } returns listOf(manual)
+    val vm = suggestModeModelRun()
+
+    runs.emit(SuggestionRun.Working(JOB, "reading_document", "MM.pdf", curatedList))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.runDocuments).containsExactly(manual)
+    coVerify(exactly = 1) { suggestions.documentsOf(JOB) }
   }
 
   @Test

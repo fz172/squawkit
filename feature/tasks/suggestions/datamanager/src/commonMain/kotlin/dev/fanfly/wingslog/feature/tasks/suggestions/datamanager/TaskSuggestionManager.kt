@@ -78,6 +78,12 @@ interface TaskSuggestionManager {
     chosen: List<AcceptedSuggestion>
   ): Int
 
+  /**
+   * The documents the caller's run [jobId] was started with on this device, for its suggestions'
+   * citations to open (PRD R30). Empty for a run started elsewhere.
+   */
+  suspend fun documentsOf(jobId: AiJobId): List<Attachment>
+
   /** Closes the run without writing anything, and lets go of its documents. */
   suspend fun dismiss(jobId: AiJobId)
 }

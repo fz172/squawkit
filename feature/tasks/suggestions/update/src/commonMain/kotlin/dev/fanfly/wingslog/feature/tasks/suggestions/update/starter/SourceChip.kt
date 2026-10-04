@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_open_document
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,7 +41,12 @@ fun SourceChip(suggestion: TaskSuggestion, onClick: () -> Unit) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SourceSheet(suggestion: TaskSuggestion, onDismiss: () -> Unit) {
+fun SourceSheet(
+  suggestion: TaskSuggestion,
+  onDismiss: () -> Unit,
+  /** Opens the cited document, at the cited page where the platform can (PRD R30); null without one. */
+  onOpenDocument: (() -> Unit)? = null,
+) {
   ModalBottomSheet(onDismissRequest = onDismiss) {
     Column(
       modifier = Modifier.fillMaxWidth()
@@ -62,6 +69,11 @@ fun SourceSheet(suggestion: TaskSuggestion, onDismiss: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }
+      if (onOpenDocument != null) {
+        TextButton(onClick = onOpenDocument) {
+          Text(stringResource(Res.string.suggestion_open_document))
+        }
+      }
       suggestion.rationale.takeIf { it.isNotBlank() }
         ?.let {
           Text(text = it, style = MaterialTheme.typography.bodyMedium)

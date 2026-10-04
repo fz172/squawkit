@@ -151,6 +151,9 @@ class TaskSuggestionManagerImpl(
     return written
   }
 
+  override suspend fun documentsOf(jobId: AiJobId): List<Attachment> =
+    jobDocuments.documentsOf(jobId)
+
   override suspend fun dismiss(jobId: AiJobId) {
     client.close(jobId)
     jobDocuments.release(jobId)

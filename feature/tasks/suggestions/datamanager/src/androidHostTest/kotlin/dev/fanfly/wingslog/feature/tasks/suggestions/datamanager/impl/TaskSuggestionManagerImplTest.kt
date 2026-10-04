@@ -571,6 +571,13 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
+  fun `hands back the run's documents, for its citations`() = runTest {
+    coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
+
+    assertThat(manager.documentsOf(JOB)).containsExactly(manual)
+  }
+
+  @Test
   fun `dismissing closes the run and lets go of its documents`() = runTest {
     manager.dismiss(JOB)
     coVerify(exactly = 1) { client.close(JOB) }

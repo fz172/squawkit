@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import org.koin.compose.koinInject
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -171,7 +173,22 @@ fun StarterPackRoute(
     val taskNoun = LocalThingLexicon.current.taskNoun
     val noticeMessage = uiState.notice?.message()
     var sourceShown by remember { mutableStateOf<TaskSuggestion?>(null) }
-    sourceShown?.let { SourceSheet(it) { sourceShown = null } }
+    val attachmentOpener = koinInject<AttachmentOpener>()
+    sourceShown?.let { suggestion ->
+      val cited = suggestion.source_document?.value_
+      val document = uiState.runDocuments.firstOrNull { it.id == cited }
+      SourceSheet(
+        suggestion = suggestion,
+        onDismiss = { sourceShown = null },
+        onOpenDocument = document?.let {
+          {
+            // Called in the tap itself: the web may only open a tab during the user's gesture.
+            val opening = attachmentOpener.open(it, suggestion.source_pages.firstOrNull())
+            scope.launch { opening.collect {} }
+          }
+        },
+      )
+    }
     var upsell by remember { mutableStateOf(false) }
     uiState.sources?.let { sources ->
       SourcesSheet(
