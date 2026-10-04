@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
+import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
@@ -128,6 +129,10 @@ val storageModule: Module = module {
   single<BlobReferenceScanner> { BlobReferenceScanner(get<WingsLogDatabase>()) }
 
   single<EntitySyncObserver> { EntitySyncObserver(get<WingsLogDatabase>()) }
+
+  single<AiJobDocumentStore> {
+    AiJobDocumentStore(db = get<WingsLogDatabase>(), writeLock = get<DatabaseWriteLock>())
+  }
 
   single<TombstoneGc> {
     TombstoneGc(
