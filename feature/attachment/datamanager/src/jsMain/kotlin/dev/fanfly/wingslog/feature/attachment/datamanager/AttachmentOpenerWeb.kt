@@ -196,5 +196,8 @@ internal class AttachmentOpenerWeb(
  * `#page=N` for a PDF opened at a page: the open-parameters fragment every major browser's PDF
  * viewer reads. Nothing for any other file, or with no page.
  */
-internal fun pageFragment(attachment: Attachment, page: Int?): String =
-  if (page != null && page > 0 && attachment.mime_type == "application/pdf") "#page=$page" else ""
+internal fun pageFragment(attachment: Attachment, page: Int?): String {
+  // A page asked for wins; otherwise the page this record keeps for the file (Attachment.open_page).
+  val target = page?.takeIf { it > 0 } ?: attachment.open_page.takeIf { it > 0 }
+  return if (target != null && attachment.mime_type == "application/pdf") "#page=$target" else ""
+}

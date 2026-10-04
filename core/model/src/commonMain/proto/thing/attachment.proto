@@ -37,4 +37,8 @@ message Attachment {
   // Set only for DATA_LOG; null on every other type. A new field on an old message still uses the
   // boxed id (id/ids.proto).
   DataLogId data_log_id = 11;
+  // The 1-based PDF page to open this file at, on this record: the page an AI suggestion cited when
+  // the task was written from it (task population PRD R30). Per record, so one manual shared by
+  // several tasks opens at each one's own page. 0 opens at the start.
+  int32 open_page = 12;
 }
