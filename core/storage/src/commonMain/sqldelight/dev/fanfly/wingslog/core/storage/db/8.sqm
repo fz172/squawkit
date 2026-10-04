@@ -1,0 +1,13 @@
+-- Migration from schema version 8 to 9 (SQLDelight applies N.sqm when migrating FROM version N).
+--
+-- Adds ai_job_document: the documents an AI run was started with, which no record holds until the
+-- user accepts (docs/ai/task_population_design.md §8.2). See the table comment in Schema.sq.
+
+CREATE TABLE ai_job_document (
+  uid           TEXT NOT NULL,
+  job_id        TEXT NOT NULL,
+  thing_id      TEXT NOT NULL,
+  attachment_id TEXT NOT NULL,
+  attachment    BLOB NOT NULL,
+  PRIMARY KEY (uid, job_id, attachment_id)
+);
