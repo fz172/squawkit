@@ -50,10 +50,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
@@ -70,6 +74,7 @@ class TaskViewModel(
   private val taskDueManager: TaskDueManager,
   private val analytics: AnalyticsManager,
   private val currentThingTemplate: CurrentThingTemplate,
+  suggestEntry: TaskSuggestionEntry,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -112,6 +117,15 @@ class TaskViewModel(
   /** Attachments added or removed since load — part of the form’s unsaved-changes check. */
   val hasAttachmentChanges: StateFlow<Boolean> = attachmentForm.hasChanges
     .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+  /**
+   * The add form offers *Tasks from a document* (PRD R3) where suggestions can run for this Thing:
+   * adding a new task, not editing one or changing a suggestion before it is added.
+   */
+  val offersTasksFromDocument: StateFlow<Boolean> =
+    (if (cardId == null && draft == null) suggestEntry.observe(thingId) else flowOf(SuggestEntry.Hidden))
+      .map { it == SuggestEntry.Available }
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
   private val _isSaving = MutableStateFlow(false)
   val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()

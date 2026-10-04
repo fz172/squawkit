@@ -10,8 +10,9 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 
 data class StarterPackUiState(
   /**
-   * How the screen was opened (`Screen.StarterPack.MODE_*`): `starter` from the empty
-   * list, `suggest` from the task list's *Suggest tasks* (design §9.1). T17 renders the difference.
+   * How the screen was opened (`Screen.StarterPack.MODE_*`): `starter` from the empty list,
+   * `suggest` from the task list's *Suggest tasks*, `document` from the add form's *From a
+   * document* (design §9.1). The last two open the sources sheet at once; `document` also picks.
    */
   val mode: String = Screen.StarterPack.MODE_STARTER,
   val isLoading: Boolean = true,
