@@ -176,6 +176,10 @@ export async function handleStartAiJob(
   if (plan.run === "ai" && target.documentCount > plan.access.config.maxDocumentsPerRun) {
     throw new HttpsError("invalid-argument", `At most ${plan.access.config.maxDocumentsPerRun} documents.`);
   }
+  // Before any spend (design §5.5); the worker checks the stored bytes again.
+  if (plan.run === "ai" && target.largestDocumentBytes > plan.access.config.maxDocumentBytes) {
+    throw new HttpsError("invalid-argument", "document_too_large", { code: "document_too_large", nextAvailableAt: null });
+  }
   const uid = plan.callerUid;
   const initial = spec.initialResult(bytes);
 

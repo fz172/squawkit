@@ -14,6 +14,8 @@ export type AiJobTarget = {
   hostUid: string;
   thingId: string;
   documentCount: number;
+  /** The largest document the request names, as the app sized it; 0 with none. */
+  largestDocumentBytes: number;
   /** The request asks for the curated suggestions only, with no model call (design §9.1). */
   curatedOnly: boolean;
 };
@@ -25,8 +27,8 @@ export type AiJobKindSpec = {
   /** Whether a SUCCEEDED run sets `lastSuccessAt` (PRD R49). */
   countsTowardDailyLimit: boolean;
   /**
-   * Whether this deploy runs the kind with documents. False for task suggestions until T21 wires
-   * stages 1–2: start refuses a request with documents, and eligibility offers none.
+   * Whether this deploy runs the kind with documents. When false, start refuses a request with
+   * documents and eligibility offers none. Task suggestions take them since T21.
    */
   acceptsDocuments: boolean;
   /**
@@ -48,6 +50,7 @@ function suggestTasksTarget(request: Uint8Array): AiJobTarget {
     hostUid: decoded.hostUid?.value ?? "",
     thingId: decoded.thingId?.value ?? "",
     documentCount: decoded.documents.length,
+    largestDocumentBytes: Math.max(0, ...decoded.documents.map((d) => d.sizeBytes)),
     curatedOnly: decoded.curatedOnly,
   };
 }
@@ -63,7 +66,7 @@ const SPECS: AiJobKindSpec[] = [
     kind: AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
     decodeTarget: suggestTasksTarget,
     countsTowardDailyLimit: true,
-    acceptsDocuments: false,
+    acceptsDocuments: true,
     initialResult: curatedTaskResult,
     offersCuratedOnly: true,
   },
