@@ -23,7 +23,7 @@ data class SourcesState(
   val availableAt: Instant? = null,
   /** A picked file is being stored. */
   val isAdding: Boolean = false,
-  /** Why the last pick was not added, shown once. */
+  /** Why the last pick was not (all) added; cleared by the next. */
   val problem: DocumentProblem? = null,
 ) {
   val atLimit: Boolean get() = documents.size >= MAX_DOCUMENTS_PER_RUN

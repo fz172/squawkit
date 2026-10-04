@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_TASK_DRAFT
@@ -63,6 +64,8 @@ import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProUpsellSheet
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.UpsellTrigger
 import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.InspectionRule
@@ -71,6 +74,7 @@ import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.edit
@@ -169,6 +173,34 @@ fun StarterPackRoute(
     val noticeMessage = uiState.notice?.message()
     var sourceShown by remember { mutableStateOf<TaskSuggestion?>(null) }
     sourceShown?.let { SourceSheet(it) { sourceShown = null } }
+    var upsell by remember { mutableStateOf(false) }
+    val capability = koinInject<AppCapability>()
+    uiState.sources?.let { sources ->
+      SourcesSheet(
+        state = sources,
+        cameraSupported = capability.isCameraCaptureSupported,
+        onAddDocuments = viewModel::onAddDocuments,
+        onPickError = viewModel::onPickFailed,
+        onRemove = viewModel::onRemoveDocument,
+        // The promo replaces the sheet rather than stacking on it.
+        onUpsell = {
+          viewModel.onSourcesDismissed(closeIfEmpty = false)
+          upsell = true
+        },
+        onSuggest = viewModel::onSuggest,
+        onDismiss = { viewModel.onSourcesDismissed() },
+      )
+    }
+    if (upsell) {
+      ProUpsellSheet(
+        trigger = UpsellTrigger.AI_DOCUMENTS,
+        onSeePlans = {
+          upsell = false
+          navController.navigate(Screen.Subscription.route)
+        },
+        onDismiss = { upsell = false },
+      )
+    }
     LaunchedEffect(noticeMessage) {
       if (noticeMessage == null) return@LaunchedEffect
       snackbarHostState.showSnackbar(noticeMessage)
@@ -277,7 +309,7 @@ fun StarterPackRoute(
           }
           if (uiState.canSuggest) {
             OutlinedButton(
-              onClick = viewModel::onSuggest,
+              onClick = viewModel::onOpenSources,
               enabled = !uiState.isSaving
             ) {
               Row(verticalAlignment = Alignment.CenterVertically) {

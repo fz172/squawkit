@@ -21,6 +21,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_add_thing
+import wingslog.feature.subscription.viewing.generated.resources.upsell_body_ai_documents
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_attachment
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_email
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_share
@@ -32,6 +33,7 @@ import wingslog.feature.subscription.viewing.generated.resources.upsell_body_sha
  */
 enum class UpsellTrigger {
   ADD_THING,
+  AI_DOCUMENTS,
   ATTACHMENT_UPLOAD,
   EMAIL_EXPORT,
   SHARE_HOST,
@@ -51,6 +53,8 @@ enum class UpsellTrigger {
 @Composable
 private fun UpsellTrigger.body(): String = when (this) {
   UpsellTrigger.ADD_THING -> stringResource(Res.string.upsell_body_add_thing)
+
+  UpsellTrigger.AI_DOCUMENTS -> stringResource(Res.string.upsell_body_ai_documents)
 
   UpsellTrigger.SHARE_HOST -> stringResource(Res.string.upsell_body_share)
 
