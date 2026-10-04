@@ -98,6 +98,13 @@ class QuotaChecker(
   companion object {
     const val MAX_FILE_ATTACHMENTS = 3
     const val MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024 // 5 MB
+
+    /**
+     * A document picked for an AI suggestion run to read, such as an owner's manual: larger than
+     * an ordinary attachment. Matches the server's default `ai_config.maxDocumentBytes`, which
+     * decides; this only stops the app copying and uploading a file the server would refuse.
+     */
+    const val MAX_AI_DOCUMENT_BYTES = 25L * 1024 * 1024 // 25 MB
     const val PARENT_CAP_BYTES: Long =
       MAX_FILE_SIZE_BYTES * MAX_FILE_ATTACHMENTS
     const val USER_CAP_BYTES: Long = 1024L * 1024 * 1024  // 1 GB

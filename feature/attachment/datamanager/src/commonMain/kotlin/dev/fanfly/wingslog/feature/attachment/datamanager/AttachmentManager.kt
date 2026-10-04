@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
 import dev.fanfly.wingslog.core.storage.EntityRef
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -38,13 +39,17 @@ interface AttachmentManager {
    * Photos (see [isCompressiblePhotoMime]) are compressed to JPEG before they are stored; the
    * returned attachment's `mime_type`, `name`, and `size_bytes` reflect the compressed file.
    *
+   * [maxBytes] is the per-file cap: [MAX_FILE_SIZE_BYTES] for an attachment on a record, or
+   * [QuotaChecker.MAX_AI_DOCUMENT_BYTES] for a document an AI run reads.
+   *
    * @throws IllegalStateException if no Firebase user (anonymous or permanent) is signed in.
-   * @throws FileTooLargeException if the file (post-compression, for photos) exceeds the cap.
+   * @throws FileTooLargeException if the file (post-compression, for photos) exceeds [maxBytes].
    */
   suspend fun addPickedFile(
     thingId: String,
     picked: PickedFile,
-    displayName: String
+    displayName: String,
+    maxBytes: Long = MAX_FILE_SIZE_BYTES,
   ): Attachment
 
   /** Build a LINK [Attachment] with no blob. */

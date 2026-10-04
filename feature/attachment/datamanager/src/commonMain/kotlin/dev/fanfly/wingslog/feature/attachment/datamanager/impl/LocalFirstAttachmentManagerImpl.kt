@@ -15,7 +15,6 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.ImageCompressor
-import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.datamanager.isCompressiblePhotoMime
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -58,6 +57,7 @@ class LocalFirstAttachmentManagerImpl(
     thingId: String,
     picked: PickedFile,
     displayName: String,
+    maxBytes: Long,
   ): Attachment {
     checkNotNull(auth.getCurrentUser()) {
       "addPickedFile requires a signed-in user (anonymous or permanent)"
@@ -81,7 +81,7 @@ class LocalFirstAttachmentManagerImpl(
     // Enforce the per-file cap on the *stored* size. Non-photos were already gated on their
     // picked size before we read them; photos are gated here so compression gets to rescue a
     // large image before we reject it.
-    if (bytes.size > MAX_FILE_SIZE_BYTES) throw FileTooLargeException(bytes.size.toLong())
+    if (bytes.size > maxBytes) throw FileTooLargeException(bytes.size.toLong())
 
     val id = generateRandomId()
     // Resolve WHERE the bytes live: own thing → the caller's tree; shared thing → the host's
