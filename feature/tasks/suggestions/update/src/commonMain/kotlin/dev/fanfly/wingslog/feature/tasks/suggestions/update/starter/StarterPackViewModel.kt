@@ -302,7 +302,7 @@ class StarterPackViewModel(
     val sources = uiState.value.sources ?: return
     if (!sources.documentsAllowed || files.isEmpty()) return
     viewModelScope.launch {
-      updateSources { it.copy(isAdding = true) }
+      updateSources { it.copy(isAdding = true, problem = null) }
       var problem: DocumentProblem? = null
       for (file in files) {
         val current = uiState.value.sources ?: break
@@ -331,8 +331,13 @@ class StarterPackViewModel(
           problem = DocumentProblem.NOT_ADDED
         }
       }
-      updateSources { it.copy(isAdding = false, problem = problem ?: it.problem) }
+      updateSources { it.copy(isAdding = false, problem = problem) }
     }
+  }
+
+  /** The picker could not read what was picked. */
+  fun onPickFailed() {
+    updateSources { it.copy(problem = DocumentProblem.NOT_ADDED) }
   }
 
   /** ✕ on a document: out of the run, and its copy let go of (no record holds it). */
@@ -342,16 +347,16 @@ class StarterPackViewModel(
     viewModelScope.launch { attachmentManager.release(removed, owner = null) }
   }
 
-  /** The sheet's problem line, once shown. */
-  fun onDocumentProblemShown() {
-    updateSources { it.copy(problem = null) }
-  }
-
-  /** The sheet closed without *Suggest*: its documents are let go of, and the list stays if any. */
-  fun onSourcesDismissed() {
+  /**
+   * The sheet closed without *Suggest*: its documents are let go of, and the list stays if any.
+   * [closeIfEmpty] is false when the sheet gives way to the Pro upsell, which needs the screen.
+   */
+  fun onSourcesDismissed(closeIfEmpty: Boolean = true) {
     val documents = uiState.value.sources?.documents.orEmpty()
     // With no cards behind it (a template with no curated list) there is nothing left to show.
-    _uiState.update { it.copy(sources = null, isDone = it.items.isEmpty() && !it.isSuggesting) }
+    _uiState.update {
+      it.copy(sources = null, isDone = closeIfEmpty && it.items.isEmpty() && !it.isSuggesting)
+    }
     releaseAll(documents)
   }
 

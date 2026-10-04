@@ -20,6 +20,17 @@
   <string name="starter_pack_skipped_until">AI suggestions for this <xliff:g example="plane">%1$s</xliff:g> are available again at <xliff:g example="3:10 PM">%2$s</xliff:g></string>
   <string name="starter_pack_not_enough">Not enough to go on for this <xliff:g example="plane">%1$s</xliff:g>. Add details, such as its make and model, for better suggestions.</string>
   <string name="starter_pack_add_details">Add details</string>
+  <!-- The sources sheet (design §9.3, PRD R6). -->
+  <string name="sources_title">Suggest <xliff:g example="tasks">%1$s</xliff:g></string>
+  <string name="sources_documents">Add manuals or service documents for a closer match (optional)</string>
+  <string name="sources_limits">PDFs or photos of the pages, up to <xliff:g example="3">%1$d</xliff:g>, <xliff:g example="25">%2$d</xliff:g> MB each</string>
+  <string name="sources_without_documents">Without documents, suggestions come from the details of this <xliff:g example="plane">%1$s</xliff:g> and common practice.</string>
+  <string name="sources_pro">PRO</string>
+  <string name="sources_suggest">Suggest</string>
+  <string name="sources_problem_too_large">That file is over <xliff:g example="25">%1$d</xliff:g> MB</string>
+  <string name="sources_problem_unsupported">Add a PDF or a photo of the pages</string>
+  <string name="sources_problem_too_many">Up to <xliff:g example="3">%1$d</xliff:g> documents at a time</string>
+  <string name="sources_problem_not_added">That file couldn’t be added</string>
   <!-- Where a suggestion comes from (PRD R17, R26) and the AI disclosure (R31). -->
   <string name="suggestion_source_document">From your document</string>
   <string name="suggestion_source_manufacturer">Manufacturer schedule</string>

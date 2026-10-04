@@ -473,7 +473,9 @@ class StarterPackViewModelTest {
     assertThat(vm.uiState.value.sources?.documents).isEmpty()
     assertThat(vm.uiState.value.sources?.problem).isEqualTo(DocumentProblem.UNSUPPORTED)
     coVerify(exactly = 0) { attachments.addPickedFile(any(), any(), any(), any()) }
-    vm.onDocumentProblemShown()
+    storing("POH.pdf")
+    vm.onAddDocuments(listOf(picked("POH.pdf")))
+    advanceUntilIdle()
     assertThat(vm.uiState.value.sources?.problem).isNull()
   }
 
