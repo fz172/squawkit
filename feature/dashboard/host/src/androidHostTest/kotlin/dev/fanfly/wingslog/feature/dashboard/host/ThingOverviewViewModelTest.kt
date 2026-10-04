@@ -30,6 +30,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -142,8 +144,14 @@ class ThingOverviewViewModelTest {
     BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
     analytics,
     auth,
+    suggestEntry,
     THING_ID,
   )
+
+  private var entryState: SuggestEntry = SuggestEntry.Hidden
+  private val suggestEntry = mockk<TaskSuggestionEntry> {
+    every { observe(THING_ID) } answers { flowOf(entryState) }
+  }
 
   private val ThingOverviewViewModel.success: ThingOverviewUiState.Success
     get() = uiState.value as ThingOverviewUiState.Success
@@ -180,6 +188,17 @@ class ThingOverviewViewModelTest {
       DataLogId("dl-1"), DataLogRowInfo("GDU 460", 255, BlobSyncState.Synced),
       DataLogId("dl-2"), DataLogRowInfo("", 60, BlobSyncState.RemoteOnly),
     )
+  }
+
+  @Test
+  fun findTasksInDocuments_isOfferedOnlyWhereSuggestionsCanRun() = runTest {
+    assertThat(viewModel().success.canFindTasksInDocuments).isFalse()
+
+    entryState = SuggestEntry.Available
+    assertThat(viewModel().success.canFindTasksInDocuments).isTrue()
+
+    entryState = SuggestEntry.MissingIdentity(listOf("Model"))
+    assertThat(viewModel().success.canFindTasksInDocuments).isFalse()
   }
 
   @Test

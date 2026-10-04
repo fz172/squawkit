@@ -21,6 +21,7 @@ import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListContent
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -38,6 +39,8 @@ fun LogsTab(
   onSquawkClick: (squawkId: String) -> Unit,
   scrollToLogId: String? = null,
   modifier: Modifier = Modifier,
+  /** *Find tasks in this document* on a log's PDF and image attachments (task population R4). */
+  onFindTasks: ((Attachment) -> Unit)? = null,
 ) {
   // Key by thingId: in the adaptive shell the switcher swaps thing within the same
   // composition site, so an unkeyed ViewModel would be reused and keep the previous thing's logs.
@@ -120,6 +123,12 @@ fun LogsTab(
       }
     },
     openError = openError,
+    onFindTasks = onFindTasks?.let { find ->
+      { attachment ->
+        viewModel.onDismissDetail()
+        find(attachment)
+      }
+    },
     onTaskClick = onTaskClick,
     onSquawkClick = onSquawkClick,
     scrollToLogId = scrollToLogId,

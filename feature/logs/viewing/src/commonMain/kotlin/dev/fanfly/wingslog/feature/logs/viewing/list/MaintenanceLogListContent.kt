@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
@@ -53,7 +52,6 @@ import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -65,6 +63,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintena
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
 import wingslog.feature.logs.viewing.generated.resources.failed_to_load_logs
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
+import kotlin.time.Duration.Companion.milliseconds
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
@@ -94,6 +93,7 @@ fun MaintenanceLogListContent(
   onAddLog: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit,
   openError: String? = null,
+  onFindTasks: ((Attachment) -> Unit)? = null,
   onTaskClick: ((String) -> Unit)? = null,
   onSquawkClick: ((String) -> Unit)? = null,
   /**
@@ -227,6 +227,7 @@ fun MaintenanceLogListContent(
                   syncStates = syncStates,
                   dataLogs = dataLogs,
                   openError = openError,
+                  onFindTasks = onFindTasks,
                   onTaskClick = onTaskClick?.let { cb ->
                     { taskId ->
                       onDismissDetail()
