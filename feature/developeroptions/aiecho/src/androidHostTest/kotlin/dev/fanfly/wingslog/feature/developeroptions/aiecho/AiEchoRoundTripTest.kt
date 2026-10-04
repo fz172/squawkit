@@ -65,6 +65,8 @@ class AiEchoRoundTripTest {
 
     override fun observeLatest(kind: AiJobKind, thingId: ThingId): Flow<AiJob?> = job
 
+    override suspend fun isGone(jobId: AiJobId) = false
+
     override suspend fun close(jobId: AiJobId) {
       closed += jobId
     }
