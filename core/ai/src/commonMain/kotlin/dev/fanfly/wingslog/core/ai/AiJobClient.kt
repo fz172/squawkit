@@ -36,6 +36,13 @@ interface AiJobClient {
   /** The caller's newest job of [kind] on [thingId], so a returning user finds their run. */
   fun observeLatest(kind: AiJobKind, thingId: ThingId): Flow<AiJob?>
 
+  /**
+   * True only when the server says the caller's job [jobId] no longer exists: closed, or expired.
+   * False when it exists, when no one is signed in, and when the server cannot be asked (offline),
+   * because a caller acts on true by letting go of the job's documents.
+   */
+  suspend fun isGone(jobId: AiJobId): Boolean
+
   /** Deletes the job on accept or dismiss. Idempotent; a failure is logged, not thrown. */
   suspend fun close(jobId: AiJobId)
 }

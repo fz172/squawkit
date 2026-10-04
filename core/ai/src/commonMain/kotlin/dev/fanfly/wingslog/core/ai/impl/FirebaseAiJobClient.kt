@@ -16,6 +16,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.Source
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.toMilliseconds
 import dev.gitlive.firebase.functions.FirebaseFunctions
@@ -113,6 +114,19 @@ class FirebaseAiJobClient(
             ?.toAiJobOrNull()
         }
     }
+
+  override suspend fun isGone(jobId: AiJobId): Boolean {
+    val uid = auth.currentUser?.uid ?: return false
+    return try {
+      // From the server, never the cache: a job this device never cached reads as absent offline.
+      !jobs(uid).document(jobId.value).get(Source.SERVER).exists
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Exception) {
+      logger.i(e) { "Could not ask whether AI job ${jobId.value} is gone" }
+      false
+    }
+  }
 
   override suspend fun close(jobId: AiJobId) {
     try {
