@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.ImageCompressor
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
@@ -322,6 +323,46 @@ class LocalFirstAttachmentManagerImplTest {
       manager.addPickedFile(TEST_THING_ID, picked, displayName = "doc.pdf")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_PDF")
+  }
+
+  @Test
+  fun addPickedFile_aiDocumentCap_admitsAFileOverTheAttachmentCap() = runTest {
+    val picked = buildPickedFile(mimeType = "application/pdf")
+    every { fileByteReader.readBytes(any()) } returns
+      ByteArray((QuotaChecker.MAX_FILE_SIZE_BYTES + 1).toInt())
+    coEvery {
+      blobs.put(
+        any(),
+        any(),
+        contentType = any(),
+        scope = any()
+      )
+    } returns buildBlobRef()
+
+    val result = manager.addPickedFile(
+      TEST_THING_ID,
+      picked,
+      displayName = "manual.pdf",
+      maxBytes = QuotaChecker.MAX_AI_DOCUMENT_BYTES,
+    )
+
+    assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_PDF")
+  }
+
+  @Test
+  fun addPickedFile_overTheGivenCap_throwsFileTooLarge() = runTest {
+    val picked = buildPickedFile(mimeType = "application/pdf")
+    every { fileByteReader.readBytes(any()) } returns ByteArray(11)
+
+    var caught: FileTooLargeException? = null
+    try {
+      manager.addPickedFile(TEST_THING_ID, picked, displayName = "manual.pdf", maxBytes = 10)
+    } catch (e: FileTooLargeException) {
+      caught = e
+    }
+
+    assertThat(caught?.sizeBytes).isEqualTo(11)
+    coVerify(exactly = 0) { blobs.put(any(), any(), contentType = any(), scope = any()) }
   }
 
   @Test
