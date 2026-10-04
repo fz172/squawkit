@@ -207,7 +207,8 @@ class TaskSuggestionManagerImpl(
 
     /**
      * [task] holding the document [suggestion] cites, as the same blob the run read: one document
-     * is stored once however many tasks it yields (PRD R37). Unchanged when it cites none, or the
+     * is stored once however many tasks it yields (PRD R37). This task's copy carries the cited
+     * page, so it opens there (R30); each task keeps its own. Unchanged when it cites none, or the
      * document is not this device's to hand on (the run started elsewhere).
      */
     fun MaintenanceTask.withCitedDocument(
@@ -216,8 +217,16 @@ class TaskSuggestionManagerImpl(
     ): MaintenanceTask {
       val cited = suggestion.source_document?.value_?.takeIf { it.isNotEmpty() } ?: return this
       val document = documents.firstOrNull { it.id == cited } ?: return this
-      if (attachments.any { it.id == cited }) return this
-      return copy(attachments = attachments + document)
+      val page = suggestion.source_pages.firstOrNull()?.takeIf { it > 0 } ?: 0
+      if (attachments.none { it.id == cited }) {
+        return copy(attachments = attachments + document.copy(open_page = page))
+      }
+      // Already held (an edit kept it): it gains the page if it has none of its own.
+      return copy(
+        attachments = attachments.map {
+          if (it.id == cited && it.open_page == 0) it.copy(open_page = page) else it
+        },
+      )
     }
 
     fun AiJob.toRun(): SuggestionRun {

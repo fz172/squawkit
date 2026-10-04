@@ -511,13 +511,14 @@ class TaskSuggestionManagerImplTest {
     }
 
   @Test
-  fun `a suggestion citing a document is written holding that same document`() = runTest {
+  fun `a suggestion citing a document is written holding that same document, at its page`() = runTest {
     val written = mutableListOf<MaintenanceTask>()
     coEvery { taskData.addTask(THING, capture(written)) } returns Result.success(true)
     coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
     val cites = TaskSuggestion(
       title = "Gearbox oil",
       source_document = AttachmentId(value_ = "blob-1"),
+      source_pages = listOf(212),
     )
     val run = SuggestionRun.Ready(JOB, SuggestTasksResult(generation_version = "tasks-5"))
 
@@ -526,7 +527,7 @@ class TaskSuggestionManagerImplTest {
       run,
       listOf(
         AcceptedSuggestion(cites),
-        // An edit keeps its citation, and already holding the document does not add it twice.
+        // An edit already holding it: no second copy, and it gains the page it lacked.
         AcceptedSuggestion(cites, edited = MaintenanceTask(title = "Mine", attachments = listOf(manual))),
         AcceptedSuggestion(TaskSuggestion(title = "Annual")),
         AcceptedSuggestion(
@@ -536,12 +537,50 @@ class TaskSuggestionManagerImplTest {
     )
 
     assertThat(written.map { it.attachments }).containsExactly(
-      listOf(manual),
-      listOf(manual),
+      listOf(manual.copy(open_page = 212)),
+      listOf(manual.copy(open_page = 212)),
       emptyList<Attachment>(),
       emptyList<Attachment>(),
     ).inOrder()
-    assertThat(written[0].origin?.source_attachment_id?.value_).isEqualTo("blob-1")
+  }
+
+  @Test
+  fun `the page is kept per attachment, on each task`() = runTest {
+    val written = mutableListOf<MaintenanceTask>()
+    coEvery { taskData.addTask(THING, capture(written)) } returns Result.success(true)
+    coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
+    val bulletin = Attachment(id = "blob-sb", name = "SB 12.pdf", open_page = 5)
+    val cites = { page: Int ->
+      TaskSuggestion(
+        title = "Page $page",
+        source_document = AttachmentId(value_ = "blob-1"),
+        source_pages = listOf(page),
+      )
+    }
+    val run = SuggestionRun.Ready(JOB, SuggestTasksResult(generation_version = "tasks-5"))
+
+    manager.accept(
+      THING,
+      run,
+      listOf(
+        AcceptedSuggestion(cites(212)),
+        // A task with another document of its own: that one keeps its page.
+        AcceptedSuggestion(
+          cites(40),
+          edited = MaintenanceTask(title = "Mine", attachments = listOf(bulletin)),
+        ),
+        // Edited after the manual was on it at another page: that page stays.
+        AcceptedSuggestion(
+          cites(99),
+          edited = MaintenanceTask(title = "Kept", attachments = listOf(manual.copy(open_page = 7))),
+        ),
+      ),
+    )
+
+    assertThat(written[0].attachments).containsExactly(manual.copy(open_page = 212))
+    assertThat(written[1].attachments)
+      .containsExactly(bulletin, manual.copy(open_page = 40)).inOrder()
+    assertThat(written[2].attachments).containsExactly(manual.copy(open_page = 7))
   }
 
   @Test

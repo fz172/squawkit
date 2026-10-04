@@ -99,7 +99,15 @@ export interface Attachment {
    * Set only for DATA_LOG; null on every other type. A new field on an old message still uses the
    * boxed id (id/ids.proto).
    */
-  dataLogId: DataLogId | undefined;
+  dataLogId:
+    | DataLogId
+    | undefined;
+  /**
+   * The 1-based PDF page to open this file at, on this record: the page an AI suggestion cited when
+   * the task was written from it (task population PRD R30). Per record, so one manual shared by
+   * several tasks opens at each one's own page. 0 opens at the start.
+   */
+  openPage: number;
 }
 
 function createBaseAttachment(): Attachment {
@@ -115,6 +123,7 @@ function createBaseAttachment(): Attachment {
     createdAt: undefined,
     sha256: "",
     dataLogId: undefined,
+    openPage: 0,
   };
 }
 
@@ -152,6 +161,9 @@ export const Attachment: MessageFns<Attachment> = {
     }
     if (message.dataLogId !== undefined) {
       DataLogId.encode(message.dataLogId, writer.uint32(90).fork()).join();
+    }
+    if (message.openPage !== 0) {
+      writer.uint32(96).int32(message.openPage);
     }
     return writer;
   },
@@ -251,6 +263,14 @@ export const Attachment: MessageFns<Attachment> = {
           message.dataLogId = DataLogId.decode(reader, reader.uint32());
           continue;
         }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.openPage = reader.int32();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -297,6 +317,11 @@ export const Attachment: MessageFns<Attachment> = {
         : isSet(object.data_log_id)
         ? DataLogId.fromJSON(object.data_log_id)
         : undefined,
+      openPage: isSet(object.openPage)
+        ? globalThis.Number(object.openPage)
+        : isSet(object.open_page)
+        ? globalThis.Number(object.open_page)
+        : 0,
     };
   },
 
@@ -335,6 +360,9 @@ export const Attachment: MessageFns<Attachment> = {
     if (message.dataLogId !== undefined) {
       obj.dataLogId = DataLogId.toJSON(message.dataLogId);
     }
+    if (message.openPage !== 0) {
+      obj.openPage = Math.round(message.openPage);
+    }
     return obj;
   },
 
@@ -356,6 +384,7 @@ export const Attachment: MessageFns<Attachment> = {
     message.dataLogId = (object.dataLogId !== undefined && object.dataLogId !== null)
       ? DataLogId.fromPartial(object.dataLogId)
       : undefined;
+    message.openPage = object.openPage ?? 0;
     return message;
   },
 };

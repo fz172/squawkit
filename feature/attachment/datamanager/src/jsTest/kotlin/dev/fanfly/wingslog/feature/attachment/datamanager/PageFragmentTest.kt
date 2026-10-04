@@ -13,6 +13,12 @@ class PageFragmentTest {
   }
 
   @Test
+  fun withoutAPageAskedForTheRecordsOwnPageIsUsed() {
+    assertEquals("#page=40", pageFragment(pdf.copy(open_page = 40), null))
+    assertEquals("#page=12", pageFragment(pdf.copy(open_page = 40), 12))
+  }
+
+  @Test
   fun noPageAPageBeforeTheFirstOrAnotherFileOpensAtTheStart() {
     assertEquals("", pageFragment(pdf, null))
     assertEquals("", pageFragment(pdf, 0))
