@@ -23,6 +23,8 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.attachmentFromDocumentArg
+import dev.fanfly.wingslog.feature.attachment.model.isReadableDocument
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
@@ -81,6 +83,16 @@ class StarterPackViewModel(
 ) : ViewModel() {
 
   val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
+
+  /**
+   * A file already on one of the Thing's records, from *Find tasks in this document* (PRD R4): the
+   * sheet starts with it rather than the picker, and the run reads the stored blob, uploading
+   * nothing. Its record keeps holding it, so ending the run never lets it go (design §8.3).
+   */
+  private val presetDocument: Attachment? =
+    savedStateHandle.get<String>(Screen.SUGGESTIONS_DOCUMENT)
+      ?.let(::attachmentFromDocumentArg)
+      ?.takeIf { it.isReadableDocument() }
 
   private val _uiState = MutableStateFlow(
     StarterPackUiState(
@@ -279,7 +291,8 @@ class StarterPackViewModel(
   fun onOpenSources() {
     val state = uiState.value
     if (!state.canSuggest || state.sources != null) return
-    val pickOnOpen = state.mode == Screen.StarterPack.MODE_DOCUMENT && !sheetOpened
+    val firstOpening = !sheetOpened
+    val pickOnOpen = state.mode == Screen.StarterPack.MODE_DOCUMENT && firstOpening
     sheetOpened = true
     _uiState.update { it.copy(sources = SourcesState(pickOnOpen = pickOnOpen)) }
     viewModelScope.launch {
@@ -294,9 +307,19 @@ class StarterPackViewModel(
           isOwner = owner,
           blocked = eligibility.reason.takeIf { !eligibility.allowed },
           availableAt = eligibility.nextAvailableAt.takeIf { !eligibility.allowed },
-        )
+        ).withPreset(firstOpening)
       }
     }
+  }
+
+  /**
+   * The first opening's [presetDocument], where documents are allowed, in place of the picker. A
+   * free owner still gets the upsell from [SourcesState.pickOnOpen].
+   */
+  private fun SourcesState.withPreset(firstOpening: Boolean): SourcesState {
+    val preset = presetDocument ?: return this
+    if (!firstOpening || !documentsAllowed) return this
+    return copy(documents = listOf(preset), pickOnOpen = false)
   }
 
   /**

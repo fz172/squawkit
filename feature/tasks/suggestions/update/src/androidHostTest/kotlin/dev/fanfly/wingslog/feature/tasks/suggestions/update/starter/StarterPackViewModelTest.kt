@@ -39,6 +39,9 @@ import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.feature.attachment.model.attachmentFromDocumentArg
+import dev.fanfly.wingslog.feature.attachment.model.toDocumentArg
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -120,6 +123,7 @@ class StarterPackViewModelTest {
     starterTasks: List<StarterTask>,
     mode: String? = null,
     serverSource: Boolean = false,
+    document: Attachment? = null,
   ): StarterPackViewModel {
     val thing = Thing(
       id = THING_ID,
@@ -149,6 +153,7 @@ class StarterPackViewModelTest {
         buildMap {
           put(Screen.THING_ID, THING_ID)
           if (mode != null) put(Screen.SUGGESTIONS_MODE, mode)
+          if (document != null) put(Screen.SUGGESTIONS_DOCUMENT, document.toDocumentArg())
         },
       ),
     )
@@ -493,6 +498,78 @@ class StarterPackViewModelTest {
     vm.onSourcesDismissed()
     vm.onOpenSources()
     assertThat(vm.uiState.value.sources?.pickOnOpen).isFalse()
+  }
+
+  private val onRecord = Attachment(
+    id = "blob-poh",
+    name = "POH.pdf",
+    type = AttachmentType.ATTACHMENT_TYPE_PDF,
+    mime_type = "application/pdf",
+  )
+
+  private fun TestScope.findTasksIn(
+    document: Attachment,
+    eligibility: AiEligibility = AiEligibility(true, null, true, null),
+  ): StarterPackViewModel {
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      AiStartResult.Started(CURATED_JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns eligibility
+    coEvery { suggestions.isOwner(THING_ID) } returns true
+    val vm = viewModel(
+      pack,
+      mode = Screen.StarterPack.MODE_DOCUMENT,
+      serverSource = true,
+      document = document,
+    )
+    runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
+    advanceUntilIdle()
+    return vm
+  }
+
+  @Test
+  fun findTasksInADocumentStartsTheSheetWithItAndNoPicker() = runTest(dispatcher) {
+    val vm = findTasksIn(onRecord)
+
+    assertThat(vm.uiState.value.sources?.documents).containsExactly(onRecord)
+    assertThat(vm.uiState.value.sources?.pickOnOpen).isFalse()
+    coVerify(exactly = 0) { attachments.addPickedFile(any(), any(), any(), any()) }
+  }
+
+  @Test
+  fun suggestReadsTheStoredFile() = runTest(dispatcher) {
+    val vm = findTasksIn(onRecord)
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+      AiStartResult.Started(JOB, joined = false)
+
+    vm.onSuggest()
+    advanceUntilIdle()
+
+    coVerify { suggestions.start(THING_ID, any(), curatedOnly = false, documents = listOf(onRecord)) }
+  }
+
+  @Test
+  fun aFreeOwnerGetsTheUpsellInsteadOfTheDocument() = runTest(dispatcher) {
+    val vm = findTasksIn(onRecord, eligibility = AiEligibility(true, null, false, null))
+
+    assertThat(vm.uiState.value.sources?.documents).isEmpty()
+    // The sheet acts on it with the upsell, as for *Tasks from a document*.
+    assertThat(vm.uiState.value.sources?.pickOnOpen).isTrue()
+  }
+
+  @Test
+  fun aFileTheReaderCannotTakeIsNotPreset() = runTest(dispatcher) {
+    val vm = findTasksIn(onRecord.copy(mime_type = "text/plain", type = AttachmentType.ATTACHMENT_TYPE_FILE))
+
+    assertThat(vm.uiState.value.sources?.documents).isEmpty()
+    assertThat(vm.uiState.value.sources?.pickOnOpen).isTrue()
+  }
+
+  @Test
+  fun theDocumentRouteCarriesTheFile() {
+    val route = Screen.StarterPack.createRoute(THING_ID, document = onRecord.toDocumentArg())
+    assertThat(route).startsWith("starter_pack/$THING_ID?mode=document&document=")
+    assertThat(attachmentFromDocumentArg(route.substringAfter("document="))).isEqualTo(onRecord)
   }
 
   @Test
