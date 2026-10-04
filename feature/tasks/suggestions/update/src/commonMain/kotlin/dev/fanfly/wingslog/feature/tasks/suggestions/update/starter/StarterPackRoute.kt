@@ -82,6 +82,7 @@ import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_edited
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
@@ -307,6 +308,40 @@ fun StarterPackRoute(
               ) {
                 Text(stringResource(CoreRes.string.retry))
               }
+            }
+          }
+          if (uiState.isCheckingAi) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+              CircularProgressIndicator(
+                modifier = Modifier.size(Spacing.large),
+                strokeWidth = 2.dp
+              )
+              Text(
+                text = stringResource(Res.string.starter_pack_checking),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
+          uiState.aiUnavailable?.let { unavailable ->
+            // In place of the button: AI cannot run now, so nothing here would start it.
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+              Icon(
+                Icons.Default.AutoAwesome,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+              Text(
+                text = unavailable.text(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
             }
           }
           if (uiState.canSuggest) {

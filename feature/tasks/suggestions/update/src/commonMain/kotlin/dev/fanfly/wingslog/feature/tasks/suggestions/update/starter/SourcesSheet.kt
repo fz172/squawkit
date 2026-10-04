@@ -44,6 +44,7 @@ import wingslog.feature.attachment.sharedassets.generated.resources.take_photo
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.ai_error_owner_not_pro
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_documents
+import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_limits
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_pro
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_problem_not_added
@@ -135,7 +136,17 @@ internal fun SourcesSheet(
       }
 
       when {
-        state.isChecking -> Unit
+        state.isChecking -> Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        ) {
+          CircularProgressIndicator(modifier = Modifier.size(Spacing.large), strokeWidth = 2.dp)
+          Text(
+            text = stringResource(Res.string.starter_pack_checking),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
 
         // A member cannot buy the owner's plan: say whose it is, and offer nothing (R45).
         !state.documentsAllowed && !state.isOwner -> Text(

@@ -25,6 +25,13 @@ data class StarterPackUiState(
    * looks like it is for this Thing (design §9.5).
    */
   val documents: List<IdentifiedDocument> = emptyList(),
+  /** Asking whether a model run can start, before the button or the sheet is offered. */
+  val isCheckingAi: Boolean = false,
+  /**
+   * No model run can start now, and why (the daily limit, another member's run, …): said in place
+   * of the button, with when it is back where the server says.
+   */
+  val aiUnavailable: AiSkipped? = null,
   /** The server's curated list is shown and the model can be asked to add to it (PRD R1). */
   val canSuggest: Boolean = false,
   /** A model run is working; its answer will replace the cards. */

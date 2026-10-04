@@ -4,7 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
+import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
@@ -214,11 +216,8 @@ class StarterPackViewModel(
     if (suggestEntry.observe(thingId)
         .first() == SuggestEntry.Available
     ) {
-      _uiState.update { it.copy(canSuggest = true) }
-      if (uiState.value.mode != Screen.StarterPack.MODE_STARTER) {
-        entryPoint = uiState.value.mode
-        onOpenSources()
-      }
+      // Beside the cards, which arrive meanwhile: the sheet must not open before this is known.
+      viewModelScope.launch { checkAi() }
     }
     follow(template)
   }
@@ -285,32 +284,78 @@ class StarterPackViewModel(
   }
 
   /**
-   * *Suggest tasks* on the curated list: opens the sources sheet (design §9.3), and asks what the
-   * owner's plan and the day allow.
+   * Asks, once the curated list is up, whether a model run can start and whether documents are
+   * allowed, before offering either. When it cannot (the daily limit, another member's run, …)
+   * the screen says why and when, and offers neither the button nor the sheet; when it can, the
+   * suggest and document modes open the sheet already knowing what it may offer.
    */
+  private suspend fun checkAi() {
+    _uiState.update { it.copy(isCheckingAi = true) }
+    val access = askAccess()
+    if (!access.eligibility.allowed) {
+      _uiState.update {
+        it.copy(
+          isCheckingAi = false,
+          aiUnavailable = AiSkipped(
+            access.eligibility.reason ?: AiErrorCode.UNKNOWN,
+            access.eligibility.nextAvailableAt,
+          ),
+        )
+      }
+      return
+    }
+    _uiState.update { it.copy(isCheckingAi = false, canSuggest = true) }
+    if (uiState.value.mode != Screen.StarterPack.MODE_STARTER) {
+      entryPoint = uiState.value.mode
+      onOpenSources()
+    }
+  }
+
+  /** What the server said when the screen opened; the sheet opens from it with no wait. */
+  private var access: SourceAccess? = null
+
+  private suspend fun askAccess(): SourceAccess {
+    // Without documents: that call still says whether they are allowed, where asking with them
+    // refuses a free owner's run outright.
+    val eligibility = suggestionManager.eligibility(thingId)
+    val owner = suggestionManager.isOwner(thingId)
+    return SourceAccess(eligibility, owner).also { access = it }
+  }
+
+  /** *Suggest tasks* on the curated list: opens the sources sheet (design §9.3). */
   fun onOpenSources() {
     val state = uiState.value
     if (!state.canSuggest || state.sources != null) return
     val firstOpening = !sheetOpened
     val pickOnOpen = state.mode == Screen.StarterPack.MODE_DOCUMENT && firstOpening
     sheetOpened = true
+    val known = access
+    if (known != null) {
+      _uiState.update {
+        it.copy(sources = SourcesState(pickOnOpen = pickOnOpen).with(known).withPreset(firstOpening))
+      }
+      return
+    }
+    // Not asked yet: the sheet shows that it is checking until the answer is in.
     _uiState.update { it.copy(sources = SourcesState(pickOnOpen = pickOnOpen)) }
     viewModelScope.launch {
-      // Without documents: that call still says whether they are allowed, where asking with them
-      // refuses a free owner's run outright.
-      val eligibility = suggestionManager.eligibility(thingId)
-      val owner = suggestionManager.isOwner(thingId)
-      updateSources {
-        it.copy(
-          isChecking = false,
-          documentsAllowed = eligibility.documentsAllowed,
-          isOwner = owner,
-          blocked = eligibility.reason.takeIf { !eligibility.allowed },
-          availableAt = eligibility.nextAvailableAt.takeIf { !eligibility.allowed },
-        ).withPreset(firstOpening)
-      }
+      val asked = askAccess()
+      updateSources { it.with(asked).withPreset(firstOpening) }
     }
   }
+
+  private fun SourcesState.with(access: SourceAccess): SourcesState {
+    val eligibility = access.eligibility
+    return copy(
+      isChecking = false,
+      documentsAllowed = eligibility.documentsAllowed,
+      isOwner = access.isOwner,
+      blocked = eligibility.reason.takeIf { !eligibility.allowed },
+      availableAt = eligibility.nextAvailableAt.takeIf { !eligibility.allowed },
+    )
+  }
+
+  private data class SourceAccess(val eligibility: AiEligibility, val isOwner: Boolean)
 
   /**
    * The first opening's [presetDocument], where documents are allowed, in place of the picker. A
