@@ -34,6 +34,8 @@ data class StarterPackUiState(
   val aiSkipped: AiSkipped? = null,
   /** The model had nothing confident to say (PRD R21a); the screen offers *Add details*. */
   val notEnough: Boolean = false,
+  /** The sources sheet, open while non-null (design §9.3). */
+  val sources: SourcesState? = null,
   /** Why *Suggest more* or *Try again* did not start; shown once, as a snackbar. */
   val notice: AiErrorCode? = null,
   val isSaving: Boolean = false,

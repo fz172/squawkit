@@ -19,6 +19,10 @@ import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
@@ -32,7 +36,9 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.toSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
+import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -53,9 +59,9 @@ import kotlin.time.Instant
  * - **The app's starter pack**, off the Thing's own DNA, where suggestions are not supported yet
  *   (production). The DNA is what the Thing was created from, and what an empty Tasks tab
  *   re-offers later.
- * - **The suggestion RPC**, where they are (developer builds; design §6.8, PRD R1). The starter
- *   mode asks for the curated suggestions alone; the suggest mode starts the model run, whose
- *   first result is the same curated list.
+ * - **The suggestion RPC**, where they are (developer builds; design §6.8, PRD R1). Every mode
+ *   asks for the curated suggestions alone first; the model run starts from the sources sheet
+ *   (design §9.3), which the suggest mode opens at once, and its first result is the same list.
  *
  * Both §13 events are emitted from here either way: `starter_tasks_offered` when cards are first
  * shown, the denominator that tells "declined" apart from "never offered", and
@@ -69,6 +75,7 @@ class StarterPackViewModel(
   private val capability: AppCapability,
   private val suggestionManager: TaskSuggestionManager,
   private val suggestEntry: TaskSuggestionEntry,
+  private val attachmentManager: AttachmentManager,
   savedStateHandle: SavedStateHandle,
   private val clock: Clock = Clock.System,
 ) : ViewModel() {
@@ -97,6 +104,9 @@ class StarterPackViewModel(
    * of them is not shown (owner's decision, 2026-10-03; PRD R24).
    */
   private var trackedTitles: Set<String> = emptySet()
+
+  /** What the next model run reports as its entry point (R50): the mode that opened the sheet, then *Suggest more*. */
+  private var entryPoint: String = SUGGEST_MORE
 
   /** When the model was last asked, for the shown event's latency; and which job it was. */
   private var requestedAt: Instant? = null
@@ -163,18 +173,17 @@ class StarterPackViewModel(
       follow(template)
       return
     }
-    val curatedOnly = uiState.value.mode == Screen.StarterPack.MODE_STARTER
-    modelRequested = !curatedOnly
+    // Every mode opens on the curated list; the model is asked from the sources sheet, which the
+    // suggest mode opens at once (design §9.1, §9.3).
     val started = suggestionManager.start(
       thingId,
       entryPoint = uiState.value.mode,
-      curatedOnly = curatedOnly
+      curatedOnly = true
     )
     if (started !is AiStartResult.Started) {
       // Nothing to show: the screen closes, and the task tab says why (PRD R21, R51).
       logger.i { "No suggestions to show: $started" }
       val reason = (started as AiStartResult.Refused).reason
-      if (modelRequested) failed(reason)
       _uiState.update {
         it.copy(
           isLoading = false,
@@ -185,13 +194,16 @@ class StarterPackViewModel(
       return
     }
     followedJob = started.jobId
-    if (modelRequested) requested(uiState.value.mode)
     // The curated list came without the model; the user can ask for it here (PRD R1), where the
     // Thing is described well enough (R5).
-    if (curatedOnly && suggestEntry.observe(thingId)
+    if (suggestEntry.observe(thingId)
         .first() == SuggestEntry.Available
     ) {
       _uiState.update { it.copy(canSuggest = true) }
+      if (uiState.value.mode != Screen.StarterPack.MODE_STARTER) {
+        entryPoint = uiState.value.mode
+        onOpenSources()
+      }
     }
     follow(template)
   }
@@ -227,9 +239,11 @@ class StarterPackViewModel(
           // A template with no curated list, and no model answer (yet). A failure with no cards
           // to fall back on closes the screen, and the task tab says why.
           // An empty model run stays, to offer *Add details* (R21a; for the custom template that
-          // message is the whole screen).
+          // message is the whole screen). So does an empty curated list in the suggest mode, under
+          // the sources sheet it opened.
           if (finished) _uiState.update {
-            val close = it.items.isEmpty() && !notEnough
+            val close = it.items.isEmpty() && !notEnough &&
+              (modelRequested || it.mode == Screen.StarterPack.MODE_STARTER)
             it.copy(
               isLoading = false,
               isDone = close,
@@ -255,19 +269,113 @@ class StarterPackViewModel(
   }
 
   /**
-   * *Suggest tasks* on the curated list: starts the model run, whose first result is the same
-   * curated list, so the cards stay while it works and its answer replaces them (design §9.2).
-   * Documents join with the sources sheet (T22).
+   * *Suggest tasks* on the curated list: opens the sources sheet (design §9.3), and asks what the
+   * owner's plan and the day allow.
+   */
+  fun onOpenSources() {
+    val state = uiState.value
+    if (!state.canSuggest || state.sources != null) return
+    _uiState.update { it.copy(sources = SourcesState()) }
+    viewModelScope.launch {
+      // Without documents: that call still says whether they are allowed, where asking with them
+      // refuses a free owner's run outright.
+      val eligibility = suggestionManager.eligibility(thingId)
+      val owner = suggestionManager.isOwner(thingId)
+      updateSources {
+        it.copy(
+          isChecking = false,
+          documentsAllowed = eligibility.documentsAllowed,
+          isOwner = owner,
+          blocked = eligibility.reason.takeIf { !eligibility.allowed },
+          availableAt = eligibility.nextAvailableAt.takeIf { !eligibility.allowed },
+        )
+      }
+    }
+  }
+
+  /**
+   * Files picked in the sheet: each stored on this device and queued to upload at once, so it is
+   * likely in Storage by the time the user taps *Suggest* (design §8.1). PDFs and images only
+   * (PRD R7), up to the per-run count and the AI document size.
+   */
+  fun onAddDocuments(files: List<PickedFile>) {
+    val sources = uiState.value.sources ?: return
+    if (!sources.documentsAllowed || files.isEmpty()) return
+    viewModelScope.launch {
+      updateSources { it.copy(isAdding = true) }
+      var problem: DocumentProblem? = null
+      for (file in files) {
+        val current = uiState.value.sources ?: break
+        if (current.atLimit) {
+          problem = DocumentProblem.TOO_MANY
+          break
+        }
+        if (!file.isReadableDocument()) {
+          problem = DocumentProblem.UNSUPPORTED
+          continue
+        }
+        try {
+          val added = attachmentManager.addPickedFile(
+            thingId,
+            file,
+            displayName = file.name,
+            maxBytes = QuotaChecker.MAX_AI_DOCUMENT_BYTES,
+          )
+          updateSources { it.copy(documents = it.documents + added) }
+        } catch (e: CancellationException) {
+          throw e
+        } catch (e: FileTooLargeException) {
+          problem = DocumentProblem.TOO_LARGE
+        } catch (e: Exception) {
+          logger.w(e) { "A picked document was not added" }
+          problem = DocumentProblem.NOT_ADDED
+        }
+      }
+      updateSources { it.copy(isAdding = false, problem = problem ?: it.problem) }
+    }
+  }
+
+  /** ✕ on a document: out of the run, and its copy let go of (no record holds it). */
+  fun onRemoveDocument(attachmentId: String) {
+    val removed = uiState.value.sources?.documents?.firstOrNull { it.id == attachmentId } ?: return
+    updateSources { it.copy(documents = it.documents - removed) }
+    viewModelScope.launch { attachmentManager.release(removed, owner = null) }
+  }
+
+  /** The sheet's problem line, once shown. */
+  fun onDocumentProblemShown() {
+    updateSources { it.copy(problem = null) }
+  }
+
+  /** The sheet closed without *Suggest*: its documents are let go of, and the list stays if any. */
+  fun onSourcesDismissed() {
+    val documents = uiState.value.sources?.documents.orEmpty()
+    // With no cards behind it (a template with no curated list) there is nothing left to show.
+    _uiState.update { it.copy(sources = null, isDone = it.items.isEmpty() && !it.isSuggesting) }
+    releaseAll(documents)
+  }
+
+  /**
+   * *Suggest* on the sources sheet: starts the model run with the documents picked, whose first
+   * result is the same curated list, so the cards stay while it works and its answer replaces them
+   * (design §9.2).
    */
   fun onSuggest() {
-    if (!uiState.value.canSuggest) return
-    startModelRun(onRefused = { it.copy(canSuggest = true) })
+    val state = uiState.value
+    if (!state.canSuggest) return
+    val sources = state.sources
+    if (sources != null && !sources.canSuggest) return
+    _uiState.update { it.copy(sources = null) }
+    startModelRun(
+      documents = sources?.documents.orEmpty(),
+      onRefused = { it.copy(canSuggest = true) },
+    )
   }
 
   /** *Try again* after a failed model run: starts a new one over the cards still on screen. */
   fun onRetry() {
     if (uiState.value.failure == null) return
-    startModelRun(onRefused = { it })
+    startModelRun(documents = emptyList(), onRefused = { it })
   }
 
   /** The refusal of *Suggest more* or *Try again*, once shown. */
@@ -288,7 +396,10 @@ class StarterPackViewModel(
     run?.jobIdOrNull?.let { viewModelScope.launch { suggestionManager.dismiss(it) } }
   }
 
-  private fun startModelRun(onRefused: (StarterPackUiState) -> StarterPackUiState) {
+  private fun startModelRun(
+    documents: List<Attachment>,
+    onRefused: (StarterPackUiState) -> StarterPackUiState,
+  ) {
     modelRequested = true
     _uiState.update {
       it.copy(
@@ -303,12 +414,15 @@ class StarterPackViewModel(
       val started = suggestionManager.start(
         thingId,
         entryPoint = Screen.StarterPack.MODE_STARTER,
-        curatedOnly = false
+        curatedOnly = false,
+        documents = documents,
       )
       if (started !is AiStartResult.Started) {
         logger.i { "The model run did not start: $started" }
         val reason = (started as AiStartResult.Refused).reason
         failed(reason)
+        // No run took them, so nothing else will let them go.
+        releaseAll(documents)
         _uiState.update {
           onRefused(
             it.copy(
@@ -320,7 +434,8 @@ class StarterPackViewModel(
         return@launch
       }
       followedJob = started.jobId
-      requested(SUGGEST_MORE)
+      requested(entryPoint, documents.size)
+      entryPoint = SUGGEST_MORE
       // The run on screen (curated-only, or failed) is finished with; the new one carries the
       // same curated list.
       curatedRun?.jobIdOrNull?.takeIf { it != started.jobId }
@@ -473,14 +588,23 @@ class StarterPackViewModel(
     return written
   }
 
+  private fun updateSources(change: (SourcesState) -> SourcesState) {
+    _uiState.update { state -> state.sources?.let { state.copy(sources = change(it)) } ?: state }
+  }
+
+  private fun releaseAll(documents: List<Attachment>) {
+    if (documents.isEmpty()) return
+    viewModelScope.launch { documents.forEach { attachmentManager.release(it, owner = null) } }
+  }
+
   /** R50: the model was asked; its answer or failure is reported once per job by [report]. */
-  private fun requested(entryPoint: String) {
+  private fun requested(entryPoint: String, documentCount: Int) {
     requestedAt = clock.now()
     analytics.log(
       TaskSuggestionsRequested(
         templateId = uiState.value.template?.id.orEmpty(),
         entryPoint = entryPoint,
-        documentCount = 0,
+        documentCount = documentCount,
       ),
     )
   }
@@ -533,6 +657,10 @@ class StarterPackViewModel(
 
     /** The entry point a model run asked from the curated list reports (R50). */
     const val SUGGEST_MORE = "suggest_more"
+
+    /** What the document reader takes: a PDF, or a photo of pages (PRD R7). */
+    fun PickedFile.isReadableDocument(): Boolean =
+      mimeType == "application/pdf" || mimeType.startsWith("image/")
 
     /**
      * Cards for [result], none checked to start (PRD R27, revised 2026-10-03: the user checks what
