@@ -2,6 +2,9 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
 import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
+import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -34,6 +37,17 @@ val tasksSuggestionsDataManagerModule: Module = module {
       templateRegistry = get<TemplateRegistry>(),
     )
   }
+  // createdAtStart so it releases finished runs' documents from the first session on, with no host
+  // wiring; its Firebase-backed parts are providers, as SessionBoundaryScanTrigger's are.
+  single<JobDocumentReleaser>(createdAtStart = true) {
+    JobDocumentReleaser(
+      store = get<AiJobDocumentStore>(),
+      currentUid = { get<CurrentUidProvider>().currentUid() },
+      client = { get<AiJobClient>() },
+      attachments = { get<AttachmentManager>() },
+      foreground = get<AppForegroundObserver>(),
+    ).also { it.start() }
+  }
   single<TaskSuggestionManager> {
     TaskSuggestionManagerImpl(
       client = get<AiJobClient>(),
@@ -45,6 +59,7 @@ val tasksSuggestionsDataManagerModule: Module = module {
       scopeResolver = get<ThingScopeResolver>(),
       syncObserver = get<EntitySyncObserver>(),
       attachmentManager = get<AttachmentManager>(),
+      jobDocuments = get<JobDocumentReleaser>(),
     )
   }
 }

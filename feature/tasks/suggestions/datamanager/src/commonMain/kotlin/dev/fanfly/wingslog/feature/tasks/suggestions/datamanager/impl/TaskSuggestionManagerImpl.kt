@@ -16,6 +16,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMapper
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
@@ -51,6 +52,7 @@ class TaskSuggestionManagerImpl(
   private val scopeResolver: ThingScopeResolver,
   private val syncObserver: EntitySyncObserver,
   private val attachmentManager: AttachmentManager,
+  private val jobDocuments: JobDocumentReleaser,
 ) : TaskSuggestionManager {
 
   override suspend fun eligibility(thingId: String, withDocuments: Boolean): AiEligibility =
@@ -100,7 +102,11 @@ class TaskSuggestionManagerImpl(
     } else {
       built
     }
-    return client.start(KIND, request.encodeByteString())
+    val result = client.start(KIND, request.encodeByteString())
+    // Noted on a join too: the run in flight ignores this request, so its documents are let go
+    // with that run.
+    if (result is AiStartResult.Started) jobDocuments.record(result.jobId, thingId, documents)
+    return result
   }
 
   override fun observeRun(thingId: String): Flow<SuggestionRun> =
@@ -132,11 +138,14 @@ class TaskSuggestionManagerImpl(
         .isSuccess
     }
     client.close(run.jobId)
+    // After the writes, so a document a written task now holds is kept by the reference check.
+    jobDocuments.release(run.jobId)
     return written
   }
 
   override suspend fun dismiss(jobId: AiJobId) {
     client.close(jobId)
+    jobDocuments.release(jobId)
   }
 
   /**

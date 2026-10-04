@@ -35,6 +35,7 @@ kotlin {
       implementation(project(":core:appinfo"))
       implementation(project(":core:template"))
       implementation(project(":core:datetime"))
+      implementation(project(":core:lifecycle"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
