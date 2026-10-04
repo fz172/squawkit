@@ -64,8 +64,6 @@ fun SquawkDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
-  /** *Find tasks in this document* on PDF and image attachments; null where suggestions cannot run. */
-  onFindTasks: ((Attachment) -> Unit)? = null,
   /**
    * The squawk's next state, offered as the sheet's primary action: *Resolve* (Fixed / Dismiss)
    * while it is open, *Reopen* once dismissed, nothing once a log has addressed it. All null for
@@ -209,7 +207,6 @@ fun SquawkDetailSheet(
       syncStates = syncStates,
       dataLogs = dataLogs,
       openError = openError,
-      onFindTasks = onFindTasks,
     )
 
     if (comments != null) {

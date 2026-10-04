@@ -61,11 +61,6 @@ sealed interface ThingOverviewUiState {
     val shared: Boolean = false,
     /** Guest account. Sharing needs a permanent one, so its entry points are hidden entirely. */
     val isAnonymous: Boolean = false,
-    /**
-     * Suggestions can run for this Thing (signed in, described well enough, a developer build
-     * until v1), so attachment rows offer *Find tasks in this document* (PRD R4).
-     */
-    val canFindTasksInDocuments: Boolean = false,
   ) : ThingOverviewUiState {
     /**
      * Owner-only affordances: Edit Aircraft, Delete, Manage Access. Technicians get a read-only

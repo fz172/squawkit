@@ -51,8 +51,6 @@ fun MaintenanceLogDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
-  /** *Find tasks in this document* on PDF and image attachments; null where suggestions cannot run. */
-  onFindTasks: ((Attachment) -> Unit)? = null,
   onTaskClick: ((String) -> Unit)? = null,
   availableSquawks: List<Squawk> = emptyList(),
   onSquawkClick: ((String) -> Unit)? = null,
@@ -122,7 +120,6 @@ fun MaintenanceLogDetailSheet(
       syncStates = syncStates,
       dataLogs = dataLogs,
       openError = openError,
-      onFindTasks = onFindTasks,
     )
 
     // Footer: technician (if enabled) | date
