@@ -36,7 +36,8 @@ interface TaskSuggestionManager {
    *
    * [documents] are files the user picked for the model to read, already added through the
    * attachment manager. Waits for each to finish uploading, because the server reads it from
-   * Storage, and refuses with [AiErrorCode.DOCUMENT_MISSING] when one fails or takes too long.
+   * Storage, and refuses with [AiErrorCode.DOCUMENT_MISSING] when one fails or takes too long. A
+   * [curatedOnly] run reads none, so it neither waits for nor sends them.
    */
   suspend fun start(
     thingId: String,

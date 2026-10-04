@@ -43,6 +43,7 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
@@ -216,6 +217,72 @@ class TaskSuggestionManagerImplTest {
     assertThat(manager.start(THING, "overview", documents = listOf(manual)))
       .isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
     coVerify(exactly = 0) { client.start(any(), any()) }
+  }
+
+  @Test
+  fun `one failed upload refuses at once, without waiting on the others`() = runTest {
+    every { attachments.observeStatus("blob-1") } returns
+      MutableStateFlow(AttachmentStatus.Uploading(0.1f))
+    every { attachments.observeStatus("blob-2") } returns
+      flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
+
+    val result = manager.start(THING, "overview", documents = listOf(manual, manual.copy(id = "blob-2")))
+
+    assertThat(result).isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
+    assertThat(testScheduler.currentTime).isEqualTo(0)
+  }
+
+  @Test
+  fun `waits for several documents together, within one wait`() = runTest {
+    val first = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
+    val second = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
+    every { attachments.observeStatus("blob-1") } returns first
+    every { attachments.observeStatus("blob-2") } returns second
+    coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
+    coEvery { client.start(any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+
+    val started = backgroundScope.async {
+      manager.start(THING, "overview", documents = listOf(manual, manual.copy(id = "blob-2")))
+    }
+    testScheduler.advanceTimeBy(90_000)
+    first.value = AttachmentStatus.Synced
+    testScheduler.advanceTimeBy(20_000)
+    second.value = AttachmentStatus.Synced
+
+    // 110 s in all: each took most of the two minutes, but they were waited on side by side.
+    assertThat(started.await()).isEqualTo(AiStartResult.Started(JOB, joined = false))
+  }
+
+  @Test
+  fun `the wait is two minutes for all the documents, not for each`() = runTest {
+    val first = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
+    val second = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
+    every { attachments.observeStatus("blob-1") } returns first
+    every { attachments.observeStatus("blob-2") } returns second
+
+    val started = backgroundScope.async {
+      manager.start(THING, "overview", documents = listOf(manual, manual.copy(id = "blob-2")))
+    }
+    testScheduler.advanceTimeBy(110_000)
+    first.value = AttachmentStatus.Synced
+    testScheduler.advanceTimeBy(20_000)
+    second.value = AttachmentStatus.Synced
+
+    // Waited one after the other, each would have made it inside its own two minutes.
+    assertThat(started.await()).isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
+    coVerify(exactly = 0) { client.start(any(), any()) }
+  }
+
+  @Test
+  fun `a curated-only run neither waits for nor sends documents`() = runTest {
+    coEvery { builder.build(THING, "created") } returns SuggestTasksRequest()
+    val sent = slot<ByteString>()
+    coEvery { client.start(any(), capture(sent)) } returns AiStartResult.Started(JOB, joined = false)
+
+    manager.start(THING, "created", curatedOnly = true, documents = listOf(manual))
+
+    assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured).documents).isEmpty()
+    verify(exactly = 0) { attachments.observeStatus(any()) }
   }
 
   @Test

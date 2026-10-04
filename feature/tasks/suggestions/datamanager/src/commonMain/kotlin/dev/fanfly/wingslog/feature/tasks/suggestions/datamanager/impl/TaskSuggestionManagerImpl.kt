@@ -33,7 +33,7 @@ import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -79,14 +79,15 @@ class TaskSuggestionManagerImpl(
     ) {
       logger.w { "Starting suggestions before the Thing is confirmed on the server" }
     }
+    // A curated-only run reads nothing, and the server refuses one that names documents.
+    val sent = if (curatedOnly) emptyList() else documents
     // The worker reads each document from Storage, so it has to be there before the run starts.
-    val notUploaded = documents.firstOrNull { !awaitUploaded(it) }
-    if (notUploaded != null) {
+    if (!allUploaded(sent)) {
       logger.w { "A document did not reach Storage; not starting" }
       return AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
     }
     val built = contextBuilder.build(thingId, entryPoint)
-      .copy(documents = documents.map { it.toRef() })
+      .copy(documents = sent.map { it.toRef() })
     // The curated list is fitted to the Thing's slots, meters and tasks (§6.8), never its logs.
     val request = if (curatedOnly) {
       built.copy(
@@ -139,16 +140,17 @@ class TaskSuggestionManagerImpl(
   }
 
   /**
-   * Whether [document]'s bytes are in Storage: uploaded, or never on this device at all (a file
-   * another device added). False when its upload failed or is still going after [UPLOAD_WAIT].
+   * Whether every one of [documents] is in Storage: uploaded, or never on this device at all (a
+   * file another device added). Watched together, so the wait is [UPLOAD_WAIT] however many there
+   * are, and one failed upload answers at once. False when one failed or any is still going.
    */
-  private suspend fun awaitUploaded(document: Attachment): Boolean {
-    val settled = withTimeoutOrNull(UPLOAD_WAIT) {
-      attachmentManager.observeStatus(document.id)
-        .filter { it.isSettled() }
-        .first()
-    }
-    return settled == AttachmentStatus.Synced || settled == AttachmentStatus.RemoteOnly
+  private suspend fun allUploaded(documents: List<Attachment>): Boolean {
+    if (documents.isEmpty()) return true
+    val statuses = withTimeoutOrNull(UPLOAD_WAIT) {
+      combine(documents.map { attachmentManager.observeStatus(it.id) }) { it.toList() }
+        .first { all -> all.any { it is AttachmentStatus.Failed } || all.all { it.isSettled() } }
+    } ?: return false
+    return statuses.all { it == AttachmentStatus.Synced || it == AttachmentStatus.RemoteOnly }
   }
 
   private suspend fun hostUidOf(thingId: String): String =
