@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <application>
+    <!--
+      In-app PDF viewing, opening an AI suggestion's cited page (task population PRD R30).
+      Declared in the module that holds it; the manifest merger unions it into every host.
+      Its own Material theme: Jetpack PDF's views need Material Components, which the app's
+      framework theme is not. exported="false": only this app starts it.
+    -->
+    <activity
+      android:name="dev.fanfly.wingslog.feature.attachment.viewing.pdf.PdfViewerActivity"
+      android:exported="false"
+      android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+  </application>
+
+</manifest>
