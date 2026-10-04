@@ -52,13 +52,15 @@ sealed class Screen(val route: String) {
   /**
    * The template's recommended schedule (PRD §4.9), and the AI suggestions that join it
    * (docs/ai/task_population_design.md §9.1). Reached from an empty Tasks tab (`starter`, the
-   * default) and from the task list's *Suggest tasks* action (`suggest`); not after creating a
+   * default), from the task list's *Suggest tasks* action (`suggest`), and from the add-task form's
+   * *Tasks from a document* (`document`, which opens the file picker at once); not after creating a
    * Thing (2026-10-03). The id and the mode are all the route carries.
    */
   data object StarterPack :
     Screen("starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}") {
     const val MODE_STARTER = "starter"
     const val MODE_SUGGEST = "suggest"
+    const val MODE_DOCUMENT = "document"
 
     fun createRoute(thingId: String, mode: String = MODE_STARTER) =
       if (mode == MODE_STARTER) "starter_pack/$thingId" else "starter_pack/$thingId?$SUGGESTIONS_MODE=$mode"

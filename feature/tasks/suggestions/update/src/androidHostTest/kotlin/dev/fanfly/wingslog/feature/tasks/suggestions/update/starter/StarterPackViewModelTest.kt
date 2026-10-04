@@ -450,6 +450,33 @@ class StarterPackViewModelTest {
   }
 
   @Test
+  fun tasksFromADocumentOpensTheSheetToPickOnce() = runTest(dispatcher) {
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      AiStartResult.Started(CURATED_JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, true, null)
+    coEvery { suggestions.isOwner(THING_ID) } returns true
+    val vm = viewModel(pack, mode = Screen.StarterPack.MODE_DOCUMENT, serverSource = true)
+    runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.sources?.pickOnOpen).isTrue()
+    vm.onPickOnOpenHandled()
+    assertThat(vm.uiState.value.sources?.pickOnOpen).isFalse()
+
+    // Opened again from *Suggest more*, it waits for the user.
+    vm.onSourcesDismissed()
+    vm.onOpenSources()
+    assertThat(vm.uiState.value.sources?.pickOnOpen).isFalse()
+  }
+
+  @Test
+  fun theSuggestModeDoesNotPickByItself() = runTest(dispatcher) {
+    val vm = openSheet()
+    assertThat(vm.uiState.value.sources?.pickOnOpen).isFalse()
+  }
+
+  @Test
   fun aPickedPdfOrPhotoIsStoredAtTheAiDocumentCap() = runTest(dispatcher) {
     val vm = openSheet()
     storing("POH.pdf", "page.jpg")

@@ -951,6 +951,7 @@ feature/tasks/update	initial_due_section_label	First due · optional
 feature/tasks/update	initial_due_subtitle	Leave it empty and the first due is counted from today or the current reading. The schedule takes over after the first log.
 feature/tasks/update	due_summary_schedule_alone_date	Schedule alone: %1$s
 feature/tasks/update	due_summary_schedule_alone_meter	Schedule alone: %1$s %2$s
+feature/tasks/update	tasks_from_document	From a document
 feature/search/sharedassets	clear	Clear
 feature/search/sharedassets	clear_filters	Clear filters
 feature/search/sharedassets	clear_search	Clear search

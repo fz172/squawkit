@@ -21,6 +21,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -74,9 +75,22 @@ internal fun SourcesSheet(
   onUpsell: () -> Unit,
   onSuggest: () -> Unit,
   onDismiss: () -> Unit,
+  onPickOnOpenHandled: () -> Unit,
 ) {
   val pickFiles = rememberFilePicker(onResult = onAddDocuments, onReadError = onPickError)
   val takePhoto = rememberCameraCapture(onResult = onAddDocuments, onError = onPickError)
+
+  // *Tasks from a document* (PRD R3): the picker first, or the upsell for a free owner. A member
+  // of a free owner's Thing just sees the sheet, which says whose plan it is. On web a browser may
+  // refuse a picker it did not see a tap open; *Choose file* is there either way.
+  LaunchedEffect(state.pickOnOpen, state.isChecking) {
+    if (!state.pickOnOpen || state.isChecking) return@LaunchedEffect
+    onPickOnOpenHandled()
+    when {
+      state.documentsAllowed -> pickFiles()
+      state.isOwner -> onUpsell()
+    }
+  }
   val thingNoun = LocalThingLexicon.current.thingNoun.singular
 
   ModalBottomSheet(

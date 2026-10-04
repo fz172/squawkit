@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -69,6 +70,8 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ok
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
+import wingslog.feature.tasks.update.generated.resources.Res
+import wingslog.feature.tasks.update.generated.resources.tasks_from_document
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
@@ -101,6 +104,8 @@ fun AddTaskScreen(
   attachmentSection: @Composable () -> Unit = {},
   /** Attachments added or removed since load — unsaved until the form is saved. */
   hasAttachmentChanges: Boolean = false,
+  /** *Tasks from a document* (PRD R3); null where suggestions cannot run for this Thing. */
+  onTasksFromDocument: (() -> Unit)? = null,
 ) {
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
   var showDatePicker by remember { mutableStateOf(false) }
@@ -210,6 +215,18 @@ fun AddTaskScreen(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
               )
+            },
+            actions = {
+              if (onTasksFromDocument != null) {
+                TextButton(onClick = onTasksFromDocument) {
+                  Icon(
+                    Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = Spacing.small),
+                  )
+                  Text(stringResource(Res.string.tasks_from_document))
+                }
+              }
             },
             navigationIcon = {
               IconButton(onClick = { tryCancel() }) {

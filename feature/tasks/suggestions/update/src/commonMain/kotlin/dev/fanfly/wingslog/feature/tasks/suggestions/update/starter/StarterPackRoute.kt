@@ -189,6 +189,7 @@ fun StarterPackRoute(
         },
         onSuggest = viewModel::onSuggest,
         onDismiss = { viewModel.onSourcesDismissed() },
+        onPickOnOpenHandled = viewModel::onPickOnOpenHandled,
       )
     }
     if (upsell) {

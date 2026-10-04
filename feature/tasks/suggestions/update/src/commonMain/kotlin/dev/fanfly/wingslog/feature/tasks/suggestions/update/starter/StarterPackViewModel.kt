@@ -105,6 +105,9 @@ class StarterPackViewModel(
    */
   private var trackedTitles: Set<String> = emptySet()
 
+  /** The sheet has been opened once; only that first opening picks by itself. */
+  private var sheetOpened = false
+
   /** What the next model run reports as its entry point (R50): the mode that opened the sheet, then *Suggest more*. */
   private var entryPoint: String = SUGGEST_MORE
 
@@ -275,7 +278,9 @@ class StarterPackViewModel(
   fun onOpenSources() {
     val state = uiState.value
     if (!state.canSuggest || state.sources != null) return
-    _uiState.update { it.copy(sources = SourcesState()) }
+    val pickOnOpen = state.mode == Screen.StarterPack.MODE_DOCUMENT && !sheetOpened
+    sheetOpened = true
+    _uiState.update { it.copy(sources = SourcesState(pickOnOpen = pickOnOpen)) }
     viewModelScope.launch {
       // Without documents: that call still says whether they are allowed, where asking with them
       // refuses a free owner's run outright.
@@ -338,6 +343,11 @@ class StarterPackViewModel(
   /** The picker could not read what was picked. */
   fun onPickFailed() {
     updateSources { it.copy(problem = DocumentProblem.NOT_ADDED) }
+  }
+
+  /** The screen opened the picker (or the upsell) for [SourcesState.pickOnOpen]. */
+  fun onPickOnOpenHandled() {
+    updateSources { it.copy(pickOnOpen = false) }
   }
 
   /** ✕ on a document: out of the run, and its copy let go of (no record holds it). */

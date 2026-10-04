@@ -23,6 +23,11 @@ data class SourcesState(
   val availableAt: Instant? = null,
   /** A picked file is being stored. */
   val isAdding: Boolean = false,
+  /**
+   * Opened from *Tasks from a document* (PRD R3): once eligibility is in, the picker opens by
+   * itself, or for a free owner the Pro upsell. Cleared once the screen has acted on it.
+   */
+  val pickOnOpen: Boolean = false,
   /** Why the last pick was not (all) added; cleared by the next. */
   val problem: DocumentProblem? = null,
 ) {
