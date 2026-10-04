@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.dashboard.host
 
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
@@ -69,7 +70,7 @@ internal fun rememberSectionActionHandler(
         navController.navigate(Screen.StarterPack.createRoute(thingId))
 
       is ThingOverviewAction.SuggestTasksClick ->
-        navController.navigate(Screen.StarterPack.createRoute(thingId, Screen.StarterPack.MODE_SUGGEST))
+        navController.navigate(Screen.StarterPack.createRoute(thingId, SuggestionsMode.SUGGEST))
 
       is ThingOverviewAction.EditTaskClick -> {
         viewModel.onAction(ThingOverviewAction.DismissTaskDetail)

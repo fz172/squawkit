@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.shell
 
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -82,7 +83,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       },
       navArgument(Screen.SUGGESTIONS_MODE) {
         type = NavType.StringType
-        defaultValue = Screen.StarterPack.MODE_STARTER
+        defaultValue = SuggestionsMode.STARTER.wire
       },
       navArgument(Screen.SUGGESTIONS_DOCUMENT) {
         type = NavType.StringType

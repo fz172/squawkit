@@ -66,19 +66,22 @@ sealed class Screen(val route: String) {
       "starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}" +
         "&$SUGGESTIONS_DOCUMENT={$SUGGESTIONS_DOCUMENT}"
     ) {
-    const val MODE_STARTER = "starter"
-    const val MODE_SUGGEST = "suggest"
-    const val MODE_DOCUMENT = "document"
+    /**
+     * [document]: an encoded attachment (`toDocumentArg`), which makes the mode
+     * [SuggestionsMode.DOCUMENT]. The starter mode is the bare route, as before modes existed.
+     */
+    fun createRoute(
+      thingId: String,
+      mode: SuggestionsMode = SuggestionsMode.STARTER,
+      document: String? = null,
+    ) = when {
+      document != null ->
+        "starter_pack/$thingId?$SUGGESTIONS_MODE=${SuggestionsMode.DOCUMENT.wire}" +
+          "&$SUGGESTIONS_DOCUMENT=$document"
 
-    /** [document]: an encoded attachment (`toDocumentArg`), for [MODE_DOCUMENT] only. */
-    fun createRoute(thingId: String, mode: String = MODE_STARTER, document: String? = null) =
-      when {
-        document != null ->
-          "starter_pack/$thingId?$SUGGESTIONS_MODE=$MODE_DOCUMENT&$SUGGESTIONS_DOCUMENT=$document"
-
-        mode == MODE_STARTER -> "starter_pack/$thingId"
-        else -> "starter_pack/$thingId?$SUGGESTIONS_MODE=$mode"
-      }
+      mode == SuggestionsMode.STARTER -> "starter_pack/$thingId"
+      else -> "starter_pack/$thingId?$SUGGESTIONS_MODE=${mode.wire}"
+    }
   }
 
   data object EnterInviteCode : Screen("enter_invite_code")

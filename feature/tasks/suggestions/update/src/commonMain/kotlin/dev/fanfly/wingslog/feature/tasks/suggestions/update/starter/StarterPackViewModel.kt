@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -98,8 +99,7 @@ class StarterPackViewModel(
 
   private val _uiState = MutableStateFlow(
     StarterPackUiState(
-      mode = savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE)
-        ?: Screen.StarterPack.MODE_STARTER,
+      mode = SuggestionsMode.fromWire(savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE)),
     ),
   )
   val uiState = _uiState.asStateFlow()
@@ -194,7 +194,7 @@ class StarterPackViewModel(
     // suggest mode opens at once (design §9.1, §9.3).
     val started = suggestionManager.start(
       thingId,
-      entryPoint = uiState.value.mode,
+      entryPoint = uiState.value.mode.wire,
       curatedOnly = true
     )
     if (started !is AiStartResult.Started) {
@@ -257,7 +257,7 @@ class StarterPackViewModel(
           // the sources sheet it opened.
           if (finished) _uiState.update {
             val close = it.items.isEmpty() && !notEnough &&
-              (modelRequested || it.mode == Screen.StarterPack.MODE_STARTER)
+              (modelRequested || it.mode == SuggestionsMode.STARTER)
             it.copy(
               isLoading = false,
               isDone = close,
@@ -306,9 +306,8 @@ class StarterPackViewModel(
       return
     }
     _uiState.update { it.copy(isCheckingAi = false, canSuggest = true) }
-    if (uiState.value.mode != Screen.StarterPack.MODE_STARTER) entryPoint =
-      uiState.value.mode
-    if (uiState.value.mode == Screen.StarterPack.MODE_DOCUMENT) openSheet()
+    if (uiState.value.mode != SuggestionsMode.STARTER) entryPoint = uiState.value.mode.wire
+    if (uiState.value.mode == SuggestionsMode.DOCUMENT) openSheet()
   }
 
   /** What the server said when the screen opened; the sheet opens from it with no wait. */
@@ -344,7 +343,7 @@ class StarterPackViewModel(
     if (!state.canSuggest || state.sources != null) return
     val firstOpening = !sheetOpened
     val pickOnOpen =
-      state.mode == Screen.StarterPack.MODE_DOCUMENT && firstOpening
+      state.mode == SuggestionsMode.DOCUMENT && firstOpening
     sheetOpened = true
     val known = access
     if (known != null) {
@@ -528,7 +527,7 @@ class StarterPackViewModel(
       val curatedRun = run
       val started = suggestionManager.start(
         thingId,
-        entryPoint = Screen.StarterPack.MODE_STARTER,
+        entryPoint = SuggestionsMode.STARTER.wire,
         curatedOnly = false,
         documents = documents,
       )

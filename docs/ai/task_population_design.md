@@ -990,8 +990,9 @@ like a task draft (built in T23), so the screen needs no search of the Thing's r
 
 - **The empty task list**: `mode=starter`. Since 2026-10-02 the screen starts a `curated_only` run
   on opening (PRD R1) rather than showing a built-in pack. No model call: AI runs only when the user
-  taps *Suggest tasks* there, which opens the sources sheet as `mode=suggest` does (#1263 makes the
-  mode an enum).
+  taps *Suggest tasks* there, which opens the sources sheet as `mode=suggest` does. The mode is
+  `SuggestionsMode` (core/nav, #1263); the route keeps its lowercase word, and an unknown one is
+  `starter`.
 - **A held answer comes back** (fixed 2026-10-03). The model's answer is kept until it is
   accepted or replaced, for up to its 24 h TTL (PRD R19): leaving the screen does not close it,
   and opening either mode shows it instead of starting a run, which would hide it behind a newer
