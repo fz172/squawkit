@@ -13,23 +13,28 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMapper
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
 import dev.fanfly.wingslog.rpc.suggesttasks.LogSummary
+import dev.fanfly.wingslog.rpc.suggesttasks.SourceDocumentRef
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksRequest
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestionContext
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TaskOriginKind
+import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -38,8 +43,10 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import okio.ByteString
 import org.junit.Test
@@ -79,6 +86,8 @@ class TaskSuggestionManagerImplTest {
     } returns true
   }
 
+  private val attachments = mockk<AttachmentManager>()
+
   private val manager = TaskSuggestionManagerImpl(
     client,
     builder,
@@ -88,6 +97,15 @@ class TaskSuggestionManagerImplTest {
     registry,
     scopes,
     sync,
+    attachments,
+  )
+
+  private val manual = Attachment(
+    id = "blob-1",
+    name = "POH.pdf",
+    mime_type = "application/pdf",
+    size_bytes = 2_000_000,
+    sha256 = "abc123",
   )
 
   private val suggestion =
@@ -134,6 +152,80 @@ class TaskSuggestionManagerImplTest {
         false,
       )
     }
+  }
+
+  @Test
+  fun `asks with documents when the caller will offer them`() = runTest {
+    coEvery { client.eligibility(any(), any(), any(), any()) } returns
+      AiEligibility(true, null, true, null)
+
+    manager.eligibility(THING, withDocuments = true)
+
+    coVerify {
+      client.eligibility(
+        AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
+        ThingId(value_ = THING),
+        UserId(value_ = "host"),
+        true,
+      )
+    }
+  }
+
+  @Test
+  fun `waits for each document to upload, then sends its reference`() = runTest {
+    val status = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.5f))
+    every { attachments.observeStatus("blob-1") } returns status
+    coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
+    val sent = slot<ByteString>()
+    coEvery { client.start(any(), capture(sent)) } coAnswers {
+      AiStartResult.Started(JOB, joined = false)
+    }
+
+    val started = backgroundScope.async { manager.start(THING, "overview", documents = listOf(manual)) }
+    testScheduler.runCurrent()
+    assertThat(sent.isCaptured).isFalse()
+
+    status.value = AttachmentStatus.Synced
+    assertThat(started.await()).isEqualTo(AiStartResult.Started(JOB, joined = false))
+    assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured).documents).containsExactly(
+      SourceDocumentRef(
+        blob_id = AttachmentId(value_ = "blob-1"),
+        name = "POH.pdf",
+        mime_type = "application/pdf",
+        sha256 = "abc123",
+        size_bytes = 2_000_000,
+      ),
+    )
+  }
+
+  @Test
+  fun `refuses without starting when a document failed to upload`() = runTest {
+    every { attachments.observeStatus("blob-1") } returns
+      flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
+
+    assertThat(manager.start(THING, "overview", documents = listOf(manual)))
+      .isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
+    coVerify(exactly = 0) { client.start(any(), any()) }
+  }
+
+  @Test
+  fun `refuses without starting when a document is still uploading after the wait`() = runTest {
+    every { attachments.observeStatus("blob-1") } returns
+      MutableStateFlow(AttachmentStatus.Uploading(0.1f))
+
+    assertThat(manager.start(THING, "overview", documents = listOf(manual)))
+      .isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
+    coVerify(exactly = 0) { client.start(any(), any()) }
+  }
+
+  @Test
+  fun `takes a document already in Storage from another device as uploaded`() = runTest {
+    every { attachments.observeStatus("blob-1") } returns flowOf(AttachmentStatus.RemoteOnly)
+    coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
+    coEvery { client.start(any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+
+    assertThat(manager.start(THING, "overview", documents = listOf(manual)))
+      .isEqualTo(AiStartResult.Started(JOB, joined = false))
   }
 
   @Test

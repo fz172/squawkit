@@ -12,6 +12,8 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
@@ -19,18 +21,24 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMappe
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
+import dev.fanfly.wingslog.rpc.suggesttasks.SourceDocumentRef
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class TaskSuggestionManagerImpl(
@@ -42,20 +50,22 @@ class TaskSuggestionManagerImpl(
   private val templateRegistry: TemplateRegistry,
   private val scopeResolver: ThingScopeResolver,
   private val syncObserver: EntitySyncObserver,
+  private val attachmentManager: AttachmentManager,
 ) : TaskSuggestionManager {
 
-  override suspend fun eligibility(thingId: String): AiEligibility =
+  override suspend fun eligibility(thingId: String, withDocuments: Boolean): AiEligibility =
     client.eligibility(
       KIND,
       ThingId(value_ = thingId),
       UserId(value_ = hostUidOf(thingId)),
-      withDocuments = false
+      withDocuments = withDocuments
     )
 
   override suspend fun start(
     thingId: String,
     entryPoint: String,
-    curatedOnly: Boolean
+    curatedOnly: Boolean,
+    documents: List<Attachment>,
   ): AiStartResult {
     val hostUid = hostUidOf(thingId)
     // A Thing made seconds ago on this device may not be on the server yet, and the server refuses
@@ -69,7 +79,14 @@ class TaskSuggestionManagerImpl(
     ) {
       logger.w { "Starting suggestions before the Thing is confirmed on the server" }
     }
+    // The worker reads each document from Storage, so it has to be there before the run starts.
+    val notUploaded = documents.firstOrNull { !awaitUploaded(it) }
+    if (notUploaded != null) {
+      logger.w { "A document did not reach Storage; not starting" }
+      return AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
+    }
     val built = contextBuilder.build(thingId, entryPoint)
+      .copy(documents = documents.map { it.toRef() })
     // The curated list is fitted to the Thing's slots, meters and tasks (§6.8), never its logs.
     val request = if (curatedOnly) {
       built.copy(
@@ -121,6 +138,19 @@ class TaskSuggestionManagerImpl(
     client.close(jobId)
   }
 
+  /**
+   * Whether [document]'s bytes are in Storage: uploaded, or never on this device at all (a file
+   * another device added). False when its upload failed or is still going after [UPLOAD_WAIT].
+   */
+  private suspend fun awaitUploaded(document: Attachment): Boolean {
+    val settled = withTimeoutOrNull(UPLOAD_WAIT) {
+      attachmentManager.observeStatus(document.id)
+        .filter { it.isSettled() }
+        .first()
+    }
+    return settled == AttachmentStatus.Synced || settled == AttachmentStatus.RemoteOnly
+  }
+
   private suspend fun hostUidOf(thingId: String): String =
     scopeResolver.resolveNow(thingId).segments.getOrNull(1)
       .orEmpty()
@@ -138,7 +168,23 @@ class TaskSuggestionManagerImpl(
     /** Long enough for an ordinary push on a slow connection; the server decides after. */
     val SYNC_WAIT = 20.seconds
 
+    /** A 25 MB manual on a slow connection; the sheet shows the upload meanwhile. */
+    val UPLOAD_WAIT = 2.minutes
+
     val logger = Logger.withTag("TaskSuggestionManager")
+
+    fun AttachmentStatus.isSettled(): Boolean =
+      this == AttachmentStatus.Synced ||
+        this == AttachmentStatus.RemoteOnly ||
+        this is AttachmentStatus.Failed
+
+    fun Attachment.toRef() = SourceDocumentRef(
+      blob_id = AttachmentId(value_ = id),
+      name = name,
+      mime_type = mime_type,
+      sha256 = sha256,
+      size_bytes = size_bytes,
+    )
 
     fun AiJob.toRun(): SuggestionRun {
       val decoded =

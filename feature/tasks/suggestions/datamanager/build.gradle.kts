@@ -38,6 +38,7 @@ kotlin {
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
+      implementation(project(":feature:attachment:datamanager"))
       implementation(libs.koin.core)
       implementation(libs.kermit)
       implementation(libs.gitlive.firebase.auth)
