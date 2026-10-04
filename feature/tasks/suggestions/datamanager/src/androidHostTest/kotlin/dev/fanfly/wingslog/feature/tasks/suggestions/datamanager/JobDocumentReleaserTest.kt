@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.AiJobDocument
 import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.thing.Attachment
+import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -45,6 +46,16 @@ class JobDocumentReleaserTest {
     releaser.record(AiJobId("job-1"), "thing-1", listOf(manual))
 
     coVerify(exactly = 0) { store.record(any(), any(), any(), any()) }
+  }
+
+  @Test
+  fun `hands back a run's documents`() = runTest {
+    coEvery { store.forJob("alice", "job-1") } returns
+      listOf(AiJobDocument("alice", "job-1", "thing-1", manual))
+
+    assertThat(releaser.documentsOf(AiJobId("job-1"))).containsExactly(manual)
+    uid = null
+    assertThat(releaser.documentsOf(AiJobId("job-1"))).isEmpty()
   }
 
   @Test

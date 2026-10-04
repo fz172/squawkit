@@ -69,6 +69,7 @@ interface TaskSuggestionManager {
   /**
    * Writes [chosen] as tasks, one write each like the starter pack (a failure drops only its own
    * card), then closes the run and lets go of its documents, keeping any a written task holds.
+   * A suggestion that cites a document is written holding it, as the same blob (PRD R37).
    * Returns how many were written.
    */
   suspend fun accept(

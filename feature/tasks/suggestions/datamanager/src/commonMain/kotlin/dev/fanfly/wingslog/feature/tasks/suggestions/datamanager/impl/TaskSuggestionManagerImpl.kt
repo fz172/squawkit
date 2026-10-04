@@ -131,13 +131,16 @@ class TaskSuggestionManagerImpl(
     chosen: List<AcceptedSuggestion>,
   ): Int {
     val template = templateOf(thingId)
+    val documents = jobDocuments.documentsOf(run.jobId)
     val written = chosen.count { accepted ->
-      val task = accepted.edited
-        ?: mapper.toTask(
-          accepted.suggestion,
-          template,
-          run.result.generation_version
-        )
+      val task = (
+        accepted.edited
+          ?: mapper.toTask(
+            accepted.suggestion,
+            template,
+            run.result.generation_version
+          )
+        ).withCitedDocument(accepted.suggestion, documents)
       taskDataManager.addTask(thingId, task)
         .onFailure { logger.w(it) { "A suggested task was not written" } }
         .isSuccess
@@ -201,6 +204,21 @@ class TaskSuggestionManagerImpl(
       sha256 = sha256,
       size_bytes = size_bytes,
     )
+
+    /**
+     * [task] holding the document [suggestion] cites, as the same blob the run read: one document
+     * is stored once however many tasks it yields (PRD R37). Unchanged when it cites none, or the
+     * document is not this device's to hand on (the run started elsewhere).
+     */
+    fun MaintenanceTask.withCitedDocument(
+      suggestion: TaskSuggestion,
+      documents: List<Attachment>,
+    ): MaintenanceTask {
+      val cited = suggestion.source_document?.value_?.takeIf { it.isNotEmpty() } ?: return this
+      val document = documents.firstOrNull { it.id == cited } ?: return this
+      if (attachments.any { it.id == cited }) return this
+      return copy(attachments = attachments + document)
+    }
 
     fun AiJob.toRun(): SuggestionRun {
       val decoded =
