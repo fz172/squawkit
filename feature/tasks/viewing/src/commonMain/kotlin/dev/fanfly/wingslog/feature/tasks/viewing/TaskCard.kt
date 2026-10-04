@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.tasks.sharedassets.generated.resources.suggested_by_ai
+import org.jetbrains.compose.resources.stringResource
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,6 +47,8 @@ fun TaskCard(
   highlight: Set<String> = emptySet(),
   /** A match the card cannot otherwise show, e.g. a reference number. */
   matchNote: AnnotatedString? = null,
+  /** The AI drafted this task: a ✦ marks the card, as the task's own detail says. */
+  aiSuggested: Boolean = false,
 ) {
   val highlightStyle = searchHighlightStyle()
   val badgeTier = when (dueStatus) {
@@ -86,6 +92,14 @@ fun TaskCard(
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
       ) {
+        if (aiSuggested) {
+          Icon(
+            imageVector = Icons.Default.AutoAwesome,
+            contentDescription = stringResource(SharedRes.string.suggested_by_ai),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(Spacing.large),
+          )
+        }
         if (badgeText.isNotBlank()) StatusChip(
           label = badgeText,
           tier = badgeTier

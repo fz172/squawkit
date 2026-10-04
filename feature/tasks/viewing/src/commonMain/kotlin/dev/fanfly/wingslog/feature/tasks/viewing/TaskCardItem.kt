@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
+import dev.fanfly.wingslog.feature.tasks.model.isAiSuggested
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CalendarToday
@@ -100,6 +101,7 @@ fun TaskCardItem(
     modifier = modifier,
     highlight = highlight,
     matchNote = matchNote,
+    aiSuggested = cardWithStatus.card.isAiSuggested,
   )
 }
 

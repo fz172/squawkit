@@ -1,5 +1,14 @@
 package dev.fanfly.wingslog.feature.tasks.viewing.detail
 
+import wingslog.feature.tasks.sharedassets.generated.resources.suggested_by_ai
+import dev.fanfly.wingslog.feature.tasks.model.isAiSuggested
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -91,6 +100,25 @@ fun TaskDetailSheet(
         text = card.title,
         style = MaterialTheme.typography.displaySmall,
       )
+      if (card.isAiSuggested) {
+        // The whole task is the AI's draft, so the mark sits with its title (owner, 2026-10-04).
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+        ) {
+          Icon(
+            imageVector = Icons.Default.AutoAwesome,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(Spacing.large),
+          )
+          Text(
+            text = stringResource(SharedRes.string.suggested_by_ai),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
     },
   ) {
 
