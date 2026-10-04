@@ -15,5 +15,11 @@ interface AttachmentOpener {
   /** IDs of attachments currently being downloaded by this opener. */
   val downloadingIds: StateFlow<Set<String>>
 
-  fun open(attachment: Attachment): Flow<OpenState>
+  /**
+   * [page], 1-based, asks for a PDF to open at that page, as an AI suggestion's citation does
+   * (task population PRD R30). Only the web honours it, through the browser's PDF viewer: Android
+   * and iOS hand the file to a viewer that takes no page, so they open it at the start (owner's
+   * decision, 2026-10-04: no in-app viewer).
+   */
+  fun open(attachment: Attachment, page: Int? = null): Flow<OpenState>
 }

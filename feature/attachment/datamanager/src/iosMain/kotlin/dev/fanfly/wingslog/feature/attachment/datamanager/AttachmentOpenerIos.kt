@@ -49,7 +49,8 @@ class AttachmentOpenerIos(
   override val downloadingIds: StateFlow<Set<String>> =
     _downloadingIds.asStateFlow()
 
-  override fun open(attachment: Attachment): Flow<OpenState> = flow {
+  // [page] is not passed on: the system preview takes none (see the interface).
+  override fun open(attachment: Attachment, page: Int?): Flow<OpenState> = flow {
     emit(OpenState.Downloading)
 
     if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
