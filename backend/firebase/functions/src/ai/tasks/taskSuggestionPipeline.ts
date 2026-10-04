@@ -3,6 +3,9 @@ import { SuggestTasksResult as SuggestTasksResultProto } from "../../generated/p
 import { AiError } from "../errors.js";
 import { createProvider } from "../providers/registry.js";
 import type { AiProvider } from "../providers/types.js";
+import { documentAiProcessor } from "../../config/env.js";
+import { createDocumentAiOcr } from "../document/ocr/documentAiOcr.js";
+import type { OcrProvider } from "../document/ocr/types.js";
 import type { AiJobFinish, AiPipeline } from "../worker.js";
 import { ENTITY_SEGMENT_THING } from "../../config/entitySegment.js";
 import { readThingLabel } from "../../notifications/onRecordWritten.js";
@@ -50,6 +53,7 @@ export function createTaskSuggestionPipeline(
         loadDocument: async () => {
           throw new AiError("document_missing", "no document runs yet");
         },
+        ocr: productionOcr(),
         onStage: (stage, arg) => context.reportStage(stage, arg),
         onCall: (record) => context.recordCall(record),
         // The bake-off's settings (§12.5): keyword locating, table pages as PDF, recall on fast.
@@ -108,6 +112,12 @@ export async function pushFinished(finish: AiJobFinish): Promise<void> {
     targets,
     suggestionsPushData({ thingId: finish.job.thingId, tailNumber, status: finish.status }),
   );
+}
+
+/** Document AI OCR for image-only pages, when the functions config names a processor. */
+function productionOcr(): OcrProvider | undefined {
+  const processorName = documentAiProcessor();
+  return processorName ? createDocumentAiOcr({ processorName }) : undefined;
 }
 
 /**
