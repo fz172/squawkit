@@ -1182,3 +1182,13 @@ feature/tasks/suggestions/update	review_documents_from	From: %1$s
 feature/tasks/suggestions/update	review_document_revision	%1$s rev %2$s
 feature/tasks/suggestions/update	review_document_mismatch	%1$s doesn’t look like it’s for this %2$s
 feature/tasks/suggestions/update	starter_pack_checking	Checking for AI suggestions…
+feature/tasks/suggestions/update	add_tasks_title	Add %1$s
+feature/tasks/suggestions/update	add_tasks_basis	Based on this %1$s’s details and common practice
+feature/tasks/suggestions/update	add_tasks_manuals	Manuals · optional
+feature/tasks/suggestions/update	add_tasks_add_manual	Add manual
+feature/tasks/suggestions/update	add_tasks_manual_limits	Suggestions follow the manual’s schedule. PDFs or photos, up to %1$d, %2$d MB each.
+feature/tasks/suggestions/update	add_tasks_promo	Follow the schedule in your service manuals
+feature/tasks/suggestions/update	add_tasks_upgrade	Upgrade
+feature/tasks/suggestions/update	add_tasks_create_manually	Create Manually
+feature/tasks/suggestions/update	add_tasks_sign_in	Sign in
+feature/tasks/suggestions/update	add_tasks_missing_identity	Add %1$s to get suggestions

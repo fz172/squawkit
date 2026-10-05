@@ -17,6 +17,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_LINK_ACCOUNT
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SELECT_THING_ID
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveAppShell
@@ -173,6 +174,15 @@ fun AdaptiveShellRoute(
   val linkAccount = {
     viewModel.openSettings()
     upgradeViewModel.choose()
+  }
+  // A guest's *Suggest* on the Add Tasks sheet: that dialog has closed, and the flow is hosted here.
+  val linkAccountAsked by shellEntry.savedStateHandle
+    .getStateFlow(CROSS_SCREEN_LINK_ACCOUNT, false)
+    .collectAsState()
+  LaunchedEffect(linkAccountAsked) {
+    if (!linkAccountAsked) return@LaunchedEffect
+    shellEntry.savedStateHandle[CROSS_SCREEN_LINK_ACCOUNT] = false
+    linkAccount()
   }
   AdaptiveAppShell(
     state = state,

@@ -71,4 +71,15 @@
   <string name="ai_error_unavailable">No internet connection</string>
   <string name="ai_error_app_unverified">This copy of the app couldn’t be verified</string>
   <string name="ai_error_unknown">Something went wrong. Try again.</string>
+  <!-- The Add Tasks sheet: Suggest, with optional manuals, or Create manually. -->
+  <string name="add_tasks_title">Add <xliff:g example="Tasks">%1$s</xliff:g></string>
+  <string name="add_tasks_basis">Based on this <xliff:g example="plane">%1$s</xliff:g>’s details and common practice</string>
+  <string name="add_tasks_manuals">Manuals · optional</string>
+  <string name="add_tasks_add_manual">Add manual</string>
+  <string name="add_tasks_manual_limits">Suggestions follow the manual’s schedule. PDFs or photos, up to <xliff:g example="3">%1$d</xliff:g>, <xliff:g example="25">%2$d</xliff:g> MB each.</string>
+  <string name="add_tasks_promo">Follow the schedule in your service manuals</string>
+  <string name="add_tasks_upgrade">Upgrade</string>
+  <string name="add_tasks_create_manually">Create Manually</string>
+  <string name="add_tasks_sign_in">Sign in</string>
+  <string name="add_tasks_missing_identity">Add <xliff:g example="Make, Model">%1$s</xliff:g> to get suggestions</string>
 </resources>

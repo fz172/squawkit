@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
 import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.add.AddTasksRoute
 import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.StarterPackRoute
 import dev.fanfly.wingslog.feature.tasks.update.form.AddTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.form.EditTaskRoute
@@ -96,6 +97,14 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
     AdaptiveFormDialogFrame {
       StarterPackRoute(navController = navController)
     }
+  }
+  // Draws its own sheet (or, wide, its own card) over the scrimmed task tab.
+  selectionDialog(
+    route = Screen.AddTasks.route,
+    arguments = listOf(navArgument(Screen.THING_ID) { type = NavType.StringType }),
+    dialogProperties = formDialogProperties(),
+  ) {
+    AddTasksRoute(navController = navController)
   }
   selectionDialog(
     route = Screen.AddMaintenanceTask.route,

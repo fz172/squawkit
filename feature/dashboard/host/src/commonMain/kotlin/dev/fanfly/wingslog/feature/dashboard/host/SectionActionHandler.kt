@@ -60,11 +60,7 @@ internal fun rememberSectionActionHandler(
         )
 
       is ThingOverviewAction.AddTaskClick ->
-        navController.navigate(
-          Screen.AddMaintenanceTask.createRoute(
-            thingId
-          )
-        )
+        navController.navigate(Screen.AddTasks.createRoute(thingId))
 
       is ThingOverviewAction.AddStarterPackClick ->
         navController.navigate(Screen.StarterPack.createRoute(thingId))
