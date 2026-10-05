@@ -50,9 +50,6 @@ import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlinx.coroutines.launch
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 
 private const val TEST_THING_ID = "thing-456"
 private const val TEST_CARD_ID = "card-789"
@@ -73,10 +70,6 @@ class TaskViewModelTest {
   private lateinit var subscriptionManager: SubscriptionManager
   private lateinit var sharingManager: SharingManager
   private lateinit var taskDueManager: TaskDueManager
-  private var entryState: SuggestEntry = SuggestEntry.Available
-  private val suggestEntry = mockk<TaskSuggestionEntry> {
-    every { observe(TEST_THING_ID) } answers { flowOf(entryState) }
-  }
 
   @Before
   fun setUp() {
@@ -538,31 +531,6 @@ class TaskViewModelTest {
       onSuccess = {},
     )
 
-  @Test
-  fun `the add form offers tasks from a document where suggestions can run`() = runTest(testDispatcher) {
-    val vm = buildViewModelForNew()
-    backgroundScope.launch { vm.offersTasksFromDocument.collect {} }
-    advanceUntilIdle()
-    assertThat(vm.offersTasksFromDocument.value).isTrue()
-  }
-
-  @Test
-  fun `not where they cannot, nor when editing or changing a suggestion`() = runTest(testDispatcher) {
-    entryState = SuggestEntry.SignInRequired
-    val guest = buildViewModelForNew()
-    entryState = SuggestEntry.Available
-    val edit = buildViewModelForEdit()
-    val draft = buildViewModelForNew(draft = MaintenanceTask(title = "Oil change"))
-    listOf(guest, edit, draft).forEach { vm ->
-      backgroundScope.launch { vm.offersTasksFromDocument.collect {} }
-    }
-    advanceUntilIdle()
-
-    assertThat(guest.offersTasksFromDocument.value).isFalse()
-    assertThat(edit.offersTasksFromDocument.value).isFalse()
-    assertThat(draft.offersTasksFromDocument.value).isFalse()
-  }
-
   private fun buildViewModelForNew(draft: MaintenanceTask? = null): TaskViewModel =
     TaskViewModel(
       inspectionDataManager = inspectionDataManager,
@@ -574,7 +542,6 @@ class TaskViewModelTest {
       taskDueManager = taskDueManager,
       analytics = NoOpAnalyticsManager,
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
-      suggestEntry = suggestEntry,
       savedStateHandle = SavedStateHandle(
         buildMap {
           put(Screen.THING_ID, TEST_THING_ID)
@@ -594,7 +561,6 @@ class TaskViewModelTest {
       taskDueManager = taskDueManager,
       analytics = analytics,
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
-      suggestEntry = suggestEntry,
       savedStateHandle = SavedStateHandle(
         mapOf(
           Screen.THING_ID to TEST_THING_ID,

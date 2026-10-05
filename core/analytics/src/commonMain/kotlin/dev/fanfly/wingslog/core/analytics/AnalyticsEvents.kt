@@ -386,7 +386,7 @@ object DataLogBuckets {
 }
 
 /**
- * The user asked the model for suggestions (PRD R50): *Suggest tasks* on the task list, or
+ * The user asked the model for suggestions (PRD R50): *Suggest* on the Add Tasks sheet (`add`), or
  * *Suggest more* on the curated list. Not the curated-only list, which `StarterTasksOffered`
  * counts. [entryPoint] is where it was asked from.
  */

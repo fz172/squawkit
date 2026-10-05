@@ -42,7 +42,7 @@ import kotlin.math.roundToInt
 fun MaintenanceTasksTab(
   state: ThingOverviewUiState.Success,
   onAction: (ThingOverviewAction) -> Unit,
-  /** Opens the account upgrade, for a guest's *Suggest tasks* (PRD R47). */
+  /** Opens the account upgrade, for a guest's *Browse suggested tasks* (PRD R47). */
   onLinkAccount: () -> Unit = {},
   /** Jumped-to task (from a log's Affected Tasks): switch to its sub-view and scroll to it. */
   scrollToTaskId: String? = null,
@@ -127,19 +127,10 @@ fun MaintenanceTasksTab(
       .padding(bottom = navPillAndFabClearance),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
-    // An empty list offers the template's curated list instead (below), which carries its own AI
-    // button (R1). Every template has one on the server but the custom one, whose empty list asks
-    // the AI here from the start.
+    // Suggestions are asked for from the add button's sheet. An empty list also offers the
+    // template's curated list (below), for a template the server keeps one for.
     val isEmpty = state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
     val hasCuratedList = hasCuratedList(LocalThingTemplate.current?.id)
-    if (!isEmpty || !hasCuratedList) {
-      SuggestTasksAction(
-        entry = suggestEntry,
-        onSuggest = { onAction(ThingOverviewAction.SuggestTasksClick(state.thing.id)) },
-        onSignIn = onLinkAccount,
-        onEditThing = { onAction(ThingOverviewAction.EditClick(state.thing.id)) },
-      )
-    }
     ComplianceSection(
       activeTasks = activeTasks,
       completedTasks = completedTasks,

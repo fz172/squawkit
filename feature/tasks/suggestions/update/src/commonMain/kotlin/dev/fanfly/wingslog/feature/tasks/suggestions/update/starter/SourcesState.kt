@@ -5,8 +5,8 @@ import dev.fanfly.wingslog.thing.Attachment
 import kotlin.time.Instant
 
 /**
- * The sources sheet (design §9.3, PRD R6): the documents picked for the next model run, and what
- * the Thing's owner and the day allow. Open while non-null on [StarterPackUiState.sources].
+ * The Add Tasks sheet's sources (design §9.3, PRD R6): the manuals picked for the model run, and
+ * what the Thing's owner and the day allow.
  */
 data class SourcesState(
   /** Picked and stored on this device, uploading; the run waits for each (§8.1). */
@@ -23,11 +23,6 @@ data class SourcesState(
   val availableAt: Instant? = null,
   /** A picked file is being stored. */
   val isAdding: Boolean = false,
-  /**
-   * Opened from *Tasks from a document* (PRD R3): once eligibility is in, the picker opens by
-   * itself, or for a free owner the Pro upsell. Cleared once the screen has acted on it.
-   */
-  val pickOnOpen: Boolean = false,
   /** Why the last pick was not (all) added; cleared by the next. */
   val problem: DocumentProblem? = null,
 ) {

@@ -11,9 +11,8 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 
 data class StarterPackUiState(
   /**
-   * How the screen was opened ([SuggestionsMode]): `starter` from the empty list,
-   * `suggest` from the task list's *Suggest tasks*, `document` from the add form's *From a
-   * document* (design §9.1). The last two open the sources sheet at once; `document` also picks.
+   * How the screen was opened ([SuggestionsMode]): `starter` from the empty list or a finished
+   * run's push, `add` from the Add Tasks sheet's *Suggest*, which starts the model run at once.
    */
   val mode: SuggestionsMode = SuggestionsMode.STARTER,
   val isLoading: Boolean = true,
@@ -48,8 +47,6 @@ data class StarterPackUiState(
   val aiSkipped: AiSkipped? = null,
   /** The model had nothing confident to say (PRD R21a); the screen offers *Add details*. */
   val notEnough: Boolean = false,
-  /** The sources sheet, open while non-null (design §9.3). */
-  val sources: SourcesState? = null,
   /** Why *Suggest more* or *Try again* did not start; shown once, as a snackbar. */
   val notice: AiErrorCode? = null,
   val isSaving: Boolean = false,

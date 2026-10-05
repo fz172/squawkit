@@ -64,8 +64,6 @@ import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
-import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProUpsellSheet
-import dev.fanfly.wingslog.feature.subscription.viewing.paywall.UpsellTrigger
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -103,8 +101,8 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 /**
  * The recommended tasks (PRD §4.9): per-item checkboxes, and Skip as a real button.
  *
- * Reached from the Tasks tab (its empty state, or *Suggest tasks*), never after creating a Thing
- * (2026-10-03), so finishing pops straight back to the shell.
+ * Reached from the Tasks tab (its empty state, or the Add Tasks sheet's *Suggest*), never after
+ * creating a Thing (2026-10-03), so finishing pops straight back to the shell.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -172,33 +170,6 @@ fun StarterPackRoute(
     val noticeMessage = uiState.notice?.message()
     var sourceShown by remember { mutableStateOf<TaskSuggestion?>(null) }
     sourceShown?.let { SourceSheet(it) { sourceShown = null } }
-    var upsell by remember { mutableStateOf(false) }
-    uiState.sources?.let { sources ->
-      SourcesSheet(
-        state = sources,
-        onAddDocuments = viewModel::onAddDocuments,
-        onPickError = viewModel::onPickFailed,
-        onRemove = viewModel::onRemoveDocument,
-        // The promo replaces the sheet rather than stacking on it.
-        onUpsell = {
-          viewModel.onSourcesDismissed(closeIfEmpty = false)
-          upsell = true
-        },
-        onSuggest = viewModel::onSuggest,
-        onDismiss = { viewModel.onSourcesDismissed() },
-        onPickOnOpenHandled = viewModel::onPickOnOpenHandled,
-      )
-    }
-    if (upsell) {
-      ProUpsellSheet(
-        trigger = UpsellTrigger.AI_DOCUMENTS,
-        onSeePlans = {
-          upsell = false
-          navController.navigate(Screen.Subscription.route)
-        },
-        onDismiss = { upsell = false },
-      )
-    }
     LaunchedEffect(noticeMessage) {
       if (noticeMessage == null) return@LaunchedEffect
       snackbarHostState.showSnackbar(noticeMessage)
@@ -342,7 +313,7 @@ fun StarterPackRoute(
           }
           if (uiState.canSuggest) {
             OutlinedButton(
-              onClick = viewModel::onOpenSources,
+              onClick = viewModel::onSuggest,
               enabled = !uiState.isSaving
             ) {
               Row(verticalAlignment = Alignment.CenterVertically) {

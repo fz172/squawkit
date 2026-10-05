@@ -952,7 +952,6 @@ feature/tasks/update	initial_due_section_label	First due · optional
 feature/tasks/update	initial_due_subtitle	Leave it empty and the first due is counted from today or the current reading. The schedule takes over after the first log.
 feature/tasks/update	due_summary_schedule_alone_date	Schedule alone: %1$s
 feature/tasks/update	due_summary_schedule_alone_meter	Schedule alone: %1$s %2$s
-feature/tasks/update	tasks_from_document	From a document
 feature/search/sharedassets	clear	Clear
 feature/search/sharedassets	clear_filters	Clear filters
 feature/search/sharedassets	clear_search	Clear search
@@ -1121,9 +1120,6 @@ feature/developeroptions/aiecho	ai_echo_failed	Failed: %1$s
 feature/developeroptions/aiecho	ai_echo_mismatch	Came back changed
 feature/developeroptions/aiecho	ai_echo_timed_out	No result after 2 minutes
 feature/developeroptions/aiecho	ai_echo_no_thing	Add a Thing first
-feature/tasks/dashboard	suggest_tasks_action	Suggest %1$s
-feature/tasks/dashboard	suggest_tasks_sign_in	Sign in to get suggestions for this list
-feature/tasks/dashboard	suggest_tasks_missing_identity	Add %1$s to get suggestions
 feature/tasks/suggestions/update	starter_rule_every_days	Every %1$d days
 feature/tasks/suggestions/update	starter_pack_suggest	Suggest more %1$s
 feature/tasks/suggestions/update	starter_pack_suggesting	Tailoring these to your %1$s…
@@ -1144,11 +1140,6 @@ feature/tasks/suggestions/update	ai_error_stale	That run stopped before it finis
 feature/tasks/suggestions/update	ai_error_unavailable	No internet connection
 feature/tasks/suggestions/update	ai_error_app_unverified	This copy of the app couldn’t be verified
 feature/tasks/suggestions/update	ai_error_unknown	Something went wrong. Try again.
-feature/tasks/suggestions/update	sources_documents	Add your manuals or service documents and the suggestions will follow them. Or skip, and they come from the details of this %1$s and common practice.
-feature/tasks/suggestions/update	sources_add_documents	Add documents
-feature/tasks/suggestions/update	sources_add_more	Add more
-feature/tasks/suggestions/update	sources_limits	PDFs or photos of the pages, up to %1$d, %2$d MB each
-feature/tasks/suggestions/update	sources_pro	PRO
 feature/tasks/suggestions/update	sources_problem_not_added	That file couldn’t be added
 feature/tasks/suggestions/update	sources_problem_too_large	That file is over %1$d MB
 feature/tasks/suggestions/update	sources_problem_too_many	Up to %1$d documents at a time

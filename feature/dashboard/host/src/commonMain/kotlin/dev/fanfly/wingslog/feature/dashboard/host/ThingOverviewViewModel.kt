@@ -391,7 +391,6 @@ class ThingOverviewViewModel(
 
       // Navigation only — ThingSectionContent drives the navController and never forwards it.
       is ThingOverviewAction.AddStarterPackClick -> Unit
-      is ThingOverviewAction.SuggestTasksClick -> Unit
 
       is ThingOverviewAction.TaskCardClick -> {
         showTaskDetails(action.card)
