@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -84,7 +86,6 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pac
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_stage_hint
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
@@ -199,6 +200,9 @@ fun StarterPackRoute(
         if (uiState.isLoading) {
           CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
           return@Box
+        }
+        if (uiState.isSuggesting) {
+          LinearProgressIndicator(modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter))
         }
         Column(
           modifier = Modifier
@@ -331,28 +335,7 @@ fun StarterPackRoute(
               }
             }
           }
-          if (uiState.isSuggesting) {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-            ) {
-              CircularProgressIndicator(
-                modifier = Modifier.size(Spacing.large),
-                strokeWidth = 2.dp
-              )
-              Column {
-                Text(
-                  text = stageText(uiState.stage, uiState.stageArg),
-                  style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                  text = stringResource(Res.string.starter_pack_stage_hint),
-                  style = MaterialTheme.typography.bodySmall,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-              }
-            }
-          }
+          if (uiState.isSuggesting) SuggestingNote(uiState.stage, uiState.stageArg)
           val groups = groupsOf(uiState.items)
           groups.forEach { group ->
             // Headed only when there is more than one group to tell apart (PRD R25).
@@ -415,6 +398,8 @@ fun StarterPackRoute(
               },
             )
           }
+          // The model's rows land here when the run ends; the ones above can be picked meanwhile.
+          if (uiState.isSuggesting) ComingGroup(uiState.readsDocuments)
           // R31: said once, and only when the model drafted some of what is on screen.
           if (uiState.items.any { it.suggestion.isFromModel() }) {
             Text(

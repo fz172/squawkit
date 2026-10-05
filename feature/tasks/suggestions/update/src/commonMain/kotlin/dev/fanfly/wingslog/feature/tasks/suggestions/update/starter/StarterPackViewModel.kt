@@ -160,7 +160,9 @@ class StarterPackViewModel(
    */
   private suspend fun startAdded(): Boolean {
     modelRequested = true
-    _uiState.update { it.copy(isSuggesting = true) }
+    _uiState.update {
+      it.copy(isSuggesting = true, readsDocuments = pickedDocuments.isNotEmpty())
+    }
     val started = suggestionManager.start(
       thingId,
       entryPoint = mode.wire,
@@ -233,6 +235,7 @@ class StarterPackViewModel(
         _uiState.update {
           it.copy(
             isSuggesting = !finished,
+            readsDocuments = it.readsDocuments || working?.stageArg != null,
             failure = failure,
             stage = working?.stage,
             stageArg = working?.stageArg,

@@ -241,6 +241,34 @@ class StarterPackViewModelTest {
   }
 
   @Test
+  fun theRowsStillToComeAreTheManualsWhenTheRunReadsThem() = runTest(dispatcher) {
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+      AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+
+    val withManuals = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
+    advanceUntilIdle()
+    runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+    advanceUntilIdle()
+    assertThat(withManuals.uiState.value.readsDocuments).isTrue()
+
+    val without = viewModel(mode = SuggestionsMode.ADD)
+    advanceUntilIdle()
+    assertThat(without.uiState.value.readsDocuments).isFalse()
+  }
+
+  @Test
+  fun aRunOpenedAgainReadsDocumentsWhenAStageNamesOne() = runTest(dispatcher) {
+    serving(SuggestionRun.Working(AI_JOB, "reading_document", "MM.pdf", curatedList))
+
+    val vm = viewModel()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isSuggesting).isTrue()
+    assertThat(vm.uiState.value.readsDocuments).isTrue()
+  }
+
+  @Test
   fun aRefusedAddRunLetsGoOfTheFilesAndFallsBackToTheCuratedList() = runTest(dispatcher) {
     coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
       AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
