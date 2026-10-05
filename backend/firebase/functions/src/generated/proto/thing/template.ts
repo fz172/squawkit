@@ -6,7 +6,6 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { StarterTask } from "../task/starter_task";
 import { Capabilities } from "./capabilities";
 import { Lexicon } from "./lexicon";
 
@@ -229,7 +228,6 @@ export interface ThingTemplate {
    * before this field renders sensibly.
    */
   metersLabel: string;
-  starterTasks: StarterTask[];
   /**
    * How many fields of the user's own the form offers, beyond `spec_fields`. 0 — the proto3
    * default — means none, which is every preset that describes a real domain.
@@ -1025,7 +1023,6 @@ function createBaseThingTemplate(): ThingTemplate {
     componentSlots: [],
     meters: [],
     metersLabel: "",
-    starterTasks: [],
     customSpecFields: 0,
     certifications: [],
     displayName: "",
@@ -1062,9 +1059,6 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     }
     if (message.metersLabel !== "") {
       writer.uint32(122).string(message.metersLabel);
-    }
-    for (const v of message.starterTasks) {
-      StarterTask.encode(v!, writer.uint32(74).fork()).join();
     }
     if (message.customSpecFields !== 0) {
       writer.uint32(104).int32(message.customSpecFields);
@@ -1163,14 +1157,6 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
           message.metersLabel = reader.string();
           continue;
         }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
-
-          message.starterTasks.push(StarterTask.decode(reader, reader.uint32()));
-          continue;
-        }
         case 13: {
           if (tag !== 104) {
             break;
@@ -1249,11 +1235,6 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
         : isSet(object.meters_label)
         ? globalThis.String(object.meters_label)
         : "",
-      starterTasks: globalThis.Array.isArray(object?.starterTasks)
-        ? object.starterTasks.map((e: any) => StarterTask.fromJSON(e))
-        : globalThis.Array.isArray(object?.starter_tasks)
-        ? object.starter_tasks.map((e: any) => StarterTask.fromJSON(e))
-        : [],
       customSpecFields: isSet(object.customSpecFields)
         ? globalThis.Number(object.customSpecFields)
         : isSet(object.custom_spec_fields)
@@ -1305,9 +1286,6 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     if (message.metersLabel !== "") {
       obj.metersLabel = message.metersLabel;
     }
-    if (message.starterTasks?.length) {
-      obj.starterTasks = message.starterTasks.map((e) => StarterTask.toJSON(e));
-    }
     if (message.customSpecFields !== 0) {
       obj.customSpecFields = Math.round(message.customSpecFields);
     }
@@ -1344,7 +1322,6 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     message.componentSlots = object.componentSlots?.map((e) => ComponentSlot.fromPartial(e)) || [];
     message.meters = object.meters?.map((e) => MeterDef.fromPartial(e)) || [];
     message.metersLabel = object.metersLabel ?? "";
-    message.starterTasks = object.starterTasks?.map((e) => StarterTask.fromPartial(e)) || [];
     message.customSpecFields = object.customSpecFields ?? 0;
     message.certifications = object.certifications?.map((e) => CertificationDef.fromPartial(e)) || [];
     message.displayName = object.displayName ?? "";

@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
-import dev.fanfly.wingslog.task.StarterTask
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.MeterDef
@@ -73,21 +72,6 @@ class TemplateValidationTest {
     )
     assertThat(meterless.structuralProblems())
       .containsExactly("car: schedule_types lists METER but meters is off")
-  }
-
-  @Test
-  fun aStarterTaskNeedsTheScheduleTypeItUses() {
-    val seasonalOnACar = valid().copy(
-      starter_tasks = listOf(
-        StarterTask(
-          title = "Wax",
-          description = "Spring",
-          months = listOf(4)
-        )
-      ),
-    )
-    assertThat(seasonalOnACar.structuralProblems())
-      .containsExactly("car: starter task 'Wax' is seasonal but schedule_types does not list SEASONAL")
   }
 
   @Test

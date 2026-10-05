@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-import "task/starter_task.proto";
 import "thing/capabilities.proto";
 import "thing/lexicon.proto";
 
@@ -212,7 +211,11 @@ message ThingTemplate {
     // before this field renders sensibly.
     string meters_label = 15;
 
-    repeated StarterTask starter_tasks = 9;
+    // Was `repeated StarterTask starter_tasks`, the template's own suggested schedule. Suggested
+    // tasks come from the server's curated list since AI suggestions shipped (task population T25,
+    // #1220). A Thing whose DNA froze a pack before then keeps the bytes as an unknown field.
+    reserved 9;
+    reserved "starter_tasks";
 
     // How many fields of the user's own the form offers, beyond `spec_fields`. 0 — the proto3
     // default — means none, which is every preset that describes a real domain.

@@ -16,11 +16,11 @@ slots, an empty meter list — so it is the one that finds screens with an aviat
 in. **`custom` is the floor**: it declares almost nothing, so a screen that breaks on it is reading
 something no template promises.
 
-Every preset but `custom` ends with a `starter_tasks` block — the schedule offered when a Thing is
-created and again from an empty Tasks tab (PRD §4.9). `CanonicalTemplatesTest` holds each item to
-what the task form could produce: a title, a description, at least one rule (an interval, a meter
-interval, or calendar `months`), and a meter or slot the preset declares. The airplane pack is
-pinned by content to universal intervals — no ADs, SBs, or model-specific ones.
+No preset carries a schedule of its own any more. The `starter_tasks` block each preset but
+`custom` used to end with was the schedule offered from an empty Tasks tab (PRD §4.9); since AI
+suggestions shipped (T25, #1220) that list lives on the server, per template, in
+`backend/firebase/functions/src/ai/tasks/curated/`, and the field is reserved in
+`template.proto`.
 
 ## Editing a template
 
