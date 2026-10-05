@@ -22,3 +22,13 @@ fun attachmentFromDocumentArg(arg: String): Attachment? =
 /** A file the suggestion run's document reader takes: a PDF, or a photo of pages (PRD R7). */
 fun Attachment.isReadableDocument(): Boolean =
   type.isFile && (mime_type == "application/pdf" || mime_type.startsWith("image/"))
+
+/**
+ * Several attachments as one argument: each [toDocumentArg], comma-separated (base64url has no
+ * comma). The Add Tasks sheet hands the suggestions screen the files picked there this way.
+ */
+fun List<Attachment>.toDocumentsArg(): String = joinToString(",") { it.toDocumentArg() }
+
+/** The attachments [arg] encodes; one that does not decode is left out. */
+fun attachmentsFromDocumentsArg(arg: String): List<Attachment> =
+  arg.split(",").filter { it.isNotEmpty() }.mapNotNull(::attachmentFromDocumentArg)

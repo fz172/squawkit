@@ -16,7 +16,10 @@ sealed class Screen(val route: String) {
     const val TEMPLATE_ID = "templateId"
     const val SUGGESTIONS_MODE = "mode"
 
-    /** A file already on a record for the suggestions screen to read (task population R4). */
+    /**
+     * Files for the suggestions screen to read: one already on a record in `document` mode (task
+     * population R4), or the ones picked on the Add Tasks sheet in `add` mode, comma-separated.
+     */
     const val SUGGESTIONS_DOCUMENT = "document"
     const val DATA_LOG_ID = "dataLogId"
 
@@ -56,7 +59,8 @@ sealed class Screen(val route: String) {
    * The template's recommended schedule (PRD §4.9), and the AI suggestions that join it
    * (docs/ai/task_population_design.md §9.1). Reached from an empty Tasks tab (`starter`, the
    * default), from the task list's *Suggest tasks* action (`suggest`), and from the add-task form's
-   * *Tasks from a document* (`document`, which opens the file picker at once); not after creating a
+   * *Tasks from a document* (`document`, which opens the file picker at once), and from the Add Tasks
+   * sheet's *Suggest* (`add`, which starts the model run at once); not after creating a
    * Thing (2026-10-03). In `document` mode it may also carry [SUGGESTIONS_DOCUMENT], an attachment
    * already on a record (*Find tasks in this document*, R4), which the sheet starts with instead of
    * the picker.
@@ -67,17 +71,20 @@ sealed class Screen(val route: String) {
         "&$SUGGESTIONS_DOCUMENT={$SUGGESTIONS_DOCUMENT}"
     ) {
     /**
-     * [document]: an encoded attachment (`toDocumentArg`), which makes the mode
-     * [SuggestionsMode.DOCUMENT]. The starter mode is the bare route, as before modes existed.
+     * [document]: encoded attachments (`toDocumentArg`), for the `document` mode or, as a
+     * comma-separated list, the `add` mode. Any other mode with one is the `document` mode. The
+     * starter mode is the bare route, as before modes existed.
      */
     fun createRoute(
       thingId: String,
       mode: SuggestionsMode = SuggestionsMode.STARTER,
       document: String? = null,
     ) = when {
-      document != null ->
-        "starter_pack/$thingId?$SUGGESTIONS_MODE=${SuggestionsMode.DOCUMENT.wire}" +
+      document != null -> {
+        val withDocument = if (mode == SuggestionsMode.ADD) mode else SuggestionsMode.DOCUMENT
+        "starter_pack/$thingId?$SUGGESTIONS_MODE=${withDocument.wire}" +
           "&$SUGGESTIONS_DOCUMENT=$document"
+      }
 
       mode == SuggestionsMode.STARTER -> "starter_pack/$thingId"
       else -> "starter_pack/$thingId?$SUGGESTIONS_MODE=${mode.wire}"
