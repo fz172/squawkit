@@ -43,7 +43,6 @@ function legacyTemplate() {
     sortOrder: 0,
     specFields: [],
     meters: [],
-    starterTasks: [],
     componentSlots: [
       {
         slotKey: "airframe",

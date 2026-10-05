@@ -66,34 +66,6 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
   if (ScheduleType.SCHEDULE_TYPE_METER in declared && capabilities?.meters != true) {
     add("$id: schedule_types lists METER but meters is off")
   }
-  val offered = scheduleTypesOffered(declared)
-
-    // A starter task becomes an ordinary MaintenanceTask the moment it is accepted, so anything the
-    // task form would refuse — no title, no rule, a meter the Thing cannot read — is refused here.
-    .toSet()
-  starter_tasks.forEach { task ->
-    val label = task.title.ifEmpty { "(untitled)" }
-    if (task.title.isEmpty()) add("$id: starter task with blank title")
-    val hasRule = task.interval_months > 0 || task.months.isNotEmpty() ||
-      (task.meter_key.isNotEmpty() && task.interval > 0f)
-    if (!hasRule) add("$id: starter task '$label' carries no rule")
-    task.months.filter { it !in 1..12 }
-      .forEach { add("$id: starter task '$label' names month $it, which is not 1–12") }
-    // A starter task the preset's own form could not edit is a task the user cannot change.
-    if (task.months.isNotEmpty() && ScheduleType.SCHEDULE_TYPE_SEASONAL !in offered) {
-      add("$id: starter task '$label' is seasonal but schedule_types does not list SEASONAL")
-    }
-    if (task.meter_key.isNotEmpty() && ScheduleType.SCHEDULE_TYPE_METER !in offered) {
-      add("$id: starter task '$label' is metered but schedule_types does not list METER")
-    }
-    if (task.meter_key.isNotEmpty() && task.meter_key !in meterKeys) {
-      add("$id: starter task '$label' schedules against meter '${task.meter_key}', which is not declared")
-    }
-    if (task.component_slot_key.isNotEmpty() && task.component_slot_key !in slotKeys) {
-      add("$id: starter task '$label' names slot '${task.component_slot_key}', which is not declared")
-    }
-  }
-  addAll(duplicates("starter task", starter_tasks.map { it.title }))
 }
 
 /** Every slot in the tree, not only the top level — slots nest, and keys are unique across all of them. */
