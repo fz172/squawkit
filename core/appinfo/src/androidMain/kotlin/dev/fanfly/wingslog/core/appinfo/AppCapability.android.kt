@@ -12,6 +12,4 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   supportUrl = "https://squawkit.fanfly.dev/support.html",
   termsUrl = "https://squawkit.fanfly.dev/privacy.html",
   storeListingUrl = PLAY_LISTING,
-  // Developer builds only until v1 (PRD R48), then the field goes.
-  isTaskSuggestionsSupported = isDeveloperBuild,
 )

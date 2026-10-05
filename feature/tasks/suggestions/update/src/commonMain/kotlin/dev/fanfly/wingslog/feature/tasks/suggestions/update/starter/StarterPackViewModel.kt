@@ -18,8 +18,6 @@ import dev.fanfly.wingslog.core.analytics.TaskSuggestionsFailed
 import dev.fanfly.wingslog.core.analytics.TaskSuggestionsRequested
 import dev.fanfly.wingslog.core.analytics.TaskSuggestionsShown
 import dev.fanfly.wingslog.core.analytics.log
-import dev.fanfly.wingslog.core.appinfo.AppCapability
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -30,7 +28,6 @@ import dev.fanfly.wingslog.feature.attachment.model.attachmentFromDocumentArg
 import dev.fanfly.wingslog.feature.attachment.model.isReadableDocument
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.toMaintenanceTask
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
@@ -39,7 +36,6 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionE
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
-import dev.fanfly.wingslog.feature.tasks.suggestions.model.toSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -60,15 +56,12 @@ import kotlin.time.Instant
  * The empty task list's recommended tasks, and the task list's *Suggest tasks* (PRD R1, R2). Not a
  * step after creating a Thing since 2026-10-03.
  *
- * Two sources until the v1 flag removal (T25):
- * - **The app's starter pack**, off the Thing's own DNA, where suggestions are not supported yet
- *   (production). The DNA is what the Thing was created from, and what an empty Tasks tab
- *   re-offers later.
- * - **The suggestion RPC**, where they are (developer builds; design §6.8, PRD R1). Every mode
- *   asks for the curated suggestions alone first; the model run starts from the sources sheet
- *   (design §9.3), which the suggest mode opens at once, and its first result is the same list.
+ * Every card comes from the suggestion RPC (design §6.8, PRD R1); the app's own starter pack went
+ * with the v1 flag (T25). Every mode asks for the curated suggestions alone first; the model run
+ * starts from the AI button (with the sources sheet where documents are allowed, design §9.3), and
+ * its first result is the same list.
  *
- * Both §13 events are emitted from here either way: `starter_tasks_offered` when cards are first
+ * Both §13 events are emitted from here: `starter_tasks_offered` when cards are first
  * shown, the denominator that tells "declined" apart from "never offered", and
  * `starter_tasks_accepted` with how many survived.
  */
@@ -77,7 +70,6 @@ class StarterPackViewModel(
   private val taskDataManager: TaskDataManager,
   private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
-  private val capability: AppCapability,
   private val suggestionManager: TaskSuggestionManager,
   private val suggestEntry: TaskSuggestionEntry,
   private val attachmentManager: AttachmentManager,
@@ -104,7 +96,7 @@ class StarterPackViewModel(
   )
   val uiState = _uiState.asStateFlow()
 
-  /** The run the cards come from, on the server source; null on the app's pack. */
+  /** The run the cards come from; null until the first one is in. */
   private var run: SuggestionRun? = null
 
   /** The job the cards follow: the one this screen started last. */
@@ -144,33 +136,8 @@ class StarterPackViewModel(
       trackedTitles = taskDataManager.observeTasks(thingId)
         .first()
         .mapTo(mutableSetOf()) { normalizeTitle(it.title) }
-      if (capability.isTaskSuggestionsSupported) showRun(template) else showPack(
-        template
-      )
+      showRun(template)
     }
-  }
-
-  private fun showPack(template: ThingTemplate?) {
-    val items = template?.starter_tasks.orEmpty()
-      .mapIndexed { index, task ->
-        StarterPackItem(
-          suggestion = task.toSuggestion(index),
-          // Nothing is checked to start (PRD R27, revised 2026-10-03).
-          selected = false,
-          starterTask = task
-        )
-      }
-      .filter { it.isShown() }
-    // Nothing to offer — a stale route, or a pack removed by a DNA refresh. Not an offer, so not
-    // counted as one.
-    _uiState.update {
-      it.copy(
-        isLoading = false,
-        items = items,
-        isDone = items.isEmpty()
-      )
-    }
-    if (items.isNotEmpty()) offered(template, items.size)
   }
 
   private suspend fun showRun(template: ThingTemplate?) {
@@ -499,8 +466,8 @@ class StarterPackViewModel(
 
   /**
    * Shown unless the Thing already has it: the server says so (the model by meaning, a curated item
-   * by title), or a task with the same title, ignoring case and spacing, is on the Thing. The second
-   * check also covers the app's own pack, which the server never sees.
+   * by title), or a task with the same title, ignoring case and spacing, is on the Thing: the
+   * second catches a task added since the run started, which the server could not see.
    */
   private fun StarterPackItem.isShown(): Boolean =
     !isAlreadyTracked && normalizeTitle(suggestion.title) !in trackedTitles
@@ -562,12 +529,11 @@ class StarterPackViewModel(
 
   /**
    * The draft argument for changing card [index] in the task form before adding it (PRD R28):
-   * the user's earlier edit, or the suggestion as accepting would write it. Null for a card that
-   * cannot be changed: one from the app's own pack, or one already tracked.
+   * the user's earlier edit, or the suggestion as accepting would write it. Null for a card with
+   * no id to come back to.
    */
   suspend fun draftFor(index: Int): String? {
     val item = uiState.value.items.getOrNull(index) ?: return null
-    if (item.starterTask != null) return null
     editingId = item.suggestion.suggestion_id?.value_ ?: return null
     val draft = item.edited ?: suggestionManager.draftOf(
       thingId,
@@ -611,11 +577,7 @@ class StarterPackViewModel(
     viewModelScope.launch {
       _uiState.update { it.copy(isSaving = true) }
       val current = run
-      val written =
-        if (current == null) writePack(chosen, state.template) else writeRun(
-          current,
-          chosen
-        )
+      val written = current?.let { writeRun(it, chosen) } ?: 0
       if (written > 0) {
         analytics.log(
           StarterTasksAccepted(
@@ -650,27 +612,6 @@ class StarterPackViewModel(
       }
     }
     _uiState.update { it.copy(isDone = true) }
-  }
-
-  /**
-   * One write per card, and a failure drops only its own card: the pack is a convenience, not a
-   * transaction, and a half-written pack is still a better Tasks tab than an empty one.
-   */
-  private suspend fun writePack(
-    chosen: List<StarterPackItem>,
-    template: ThingTemplate?
-  ): Int {
-    val now = Clock.System.now()
-    val createdAt = toWireInstant(now.epochSeconds, now.nanosecondsOfSecond)
-    return chosen.mapNotNull { it.starterTask }
-      .count { task ->
-        taskDataManager.addTask(
-          thingId,
-          task.toMaintenanceTask(template, createdAt)
-        )
-          .onFailure { logger.w(it) { "Starter task '${task.title}' was not written" } }
-          .isSuccess
-      }
   }
 
   /**
