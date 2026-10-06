@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 /**
  * The Thing glyphs as tintable [ImageVector]s, built from the generated [ThingGlyphPaths]. Each
  * vector's viewport is the glyph's own tight square, so `Icon(glyph, Modifier.size(n))` fills `n`
- * the way [BrandPlane] does.
+ * exactly.
  */
 object ThingGlyphs {
   val Car: ImageVector = ThingGlyphPaths.CAR.toImageVector()
@@ -20,7 +20,7 @@ object ThingGlyphs {
   val Home: ImageVector = ThingGlyphPaths.HOME.toImageVector()
   val Toolbox: ImageVector = ThingGlyphPaths.TOOLBOX.toImageVector()
 
-  /** The open box the login hero pours the others into before it becomes the plane. */
+  /** The open box the login hero pours the others into before it becomes the brand stack. */
   val Crate: ImageVector = ThingGlyphPaths.CRATE.toImageVector()
 
   /** The order the hero flies them in. */

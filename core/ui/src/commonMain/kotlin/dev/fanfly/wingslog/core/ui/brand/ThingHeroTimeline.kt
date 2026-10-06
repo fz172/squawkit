@@ -12,9 +12,10 @@ import kotlin.math.sin
  *
  * 1. The crate pops in at the centre.
  * 2. Five Thing glyphs fly in from off-screen, one after another, shrinking into the crate.
- * 3. The crate's outline morphs into the plane body; the plane's details fade in over it.
- * 4. The five glyphs re-emerge smaller behind the plane, hold a beat, then drift out and fade.
- * 5. The plane, alone, bobs gently forever.
+ * 3. The crate's outline morphs into the bottom plate of the brand stack.
+ * 4. The two plates above it fall into place, the honey one last.
+ * 5. The five glyphs re-emerge smaller behind the stack, hold a beat, then drift out and fade.
+ * 6. The stack, alone, breathes gently forever.
  */
 object ThingHeroTimeline {
   const val GLYPH_COUNT = 5
@@ -27,7 +28,16 @@ object ThingHeroTimeline {
   const val MORPH_START = 2560
   private const val MORPH_MS = 900
   const val MORPH_END = MORPH_START + MORPH_MS
-  const val FAN_START = MORPH_END
+
+  /** The stack's upper plates start falling as the bottom one finishes forming. */
+  const val PLATE_START = MORPH_END - 140
+  private const val PLATE_STAGGER = 240
+  private const val PLATE_MS = 460
+  const val STACK_END =
+    PLATE_START + (BrandStackGeometry.PLATE_COUNT - 2) * PLATE_STAGGER + PLATE_MS
+
+  /** The fan opens as the last plate settles, so the finished stack is what it frames. */
+  const val FAN_START = STACK_END - 160
   private const val FAN_STAGGER = 90
   private const val FAN_MS = 620
   private const val FAN_HOLD_MS = 900
@@ -36,14 +46,7 @@ object ThingHeroTimeline {
     FAN_START + (GLYPH_COUNT - 1) * FAN_STAGGER + FAN_MS + FAN_HOLD_MS
   const val FAN_END =
     FAN_OUT_START + (GLYPH_COUNT - 1) * FAN_STAGGER / 2 + FAN_OUT_MS
-  const val IDLE_START = FAN_START + 540
-
-  /** The stack's upper plates start falling as the bottom one finishes forming. */
-  const val PLATE_START = MORPH_END - 140
-  private const val PLATE_STAGGER = 240
-  private const val PLATE_MS = 460
-  const val STACK_END =
-    PLATE_START + (BrandStackGeometry.PLATE_COUNT - 2) * PLATE_STAGGER + PLATE_MS
+  const val IDLE_START = STACK_END
 
   /** How far above its seat a plate starts, as a fraction of the stack's own square. */
   const val PLATE_DROP = 0.5f
@@ -63,7 +66,7 @@ object ThingHeroTimeline {
   )
   private const val FLY_DISTANCE = 0.95f
 
-  /** Where each glyph pauses in the fan behind the plane before drifting out along the same line. */
+  /** Where each glyph pauses in the fan behind the stack before drifting out along the same line. */
   private val FAN_AT = listOf(
     -0.36f to -0.20f,
     0.36f to -0.18f,
@@ -73,7 +76,7 @@ object ThingHeroTimeline {
   )
 
   /** Sizes as fractions of the hero box. */
-  const val PLANE_SIZE = 0.62f
+  const val MARK_SIZE = 0.62f
   const val FLY_SIZE = 0.34f
   const val FAN_SIZE = 0.28f
 
@@ -92,25 +95,17 @@ object ThingHeroTimeline {
     return Frame(0f, 0f, 0.6f + 0.4f * pop, alpha)
   }
 
-  /** 0 → crate outline, 1 → plane body outline. */
+  /** 0 → crate outline, 1 → the bottom plate's outline. */
   fun morph(ms: Int): Float = ease(progress(ms, MORPH_START, MORPH_MS))
 
-  /** The interpolated outline is drawn from the morph's start until the real plane takes over. */
+  /** The interpolated outline is drawn from the morph's start until the real plate takes over. */
   fun morphOutlineAlpha(ms: Int): Float {
     if (ms < MORPH_START) return 0f
-    return 1f - progress(ms, MORPH_START + MORPH_MS - 140, 140)
+    return 1f - bottomPlateAlpha(ms)
   }
 
-  fun planeAlpha(ms: Int): Float =
-    progress(ms, MORPH_START + MORPH_MS - 140, 140)
-
-  /** Tail pieces and speed dashes fade in over the second half of the morph. */
-  fun detailsAlpha(ms: Int): Float =
-    progress(
-      ms,
-      MORPH_START + MORPH_MS / 2,
-      MORPH_MS / 2
-    ) * (1f - planeAlpha(ms))
+  /** The bottom plate, in its own colours, cross-fading in over the last of the morph. */
+  fun bottomPlateAlpha(ms: Int): Float = progress(ms, PLATE_START, MORPH_END - PLATE_START)
 
   /** Glyph [index] on its way into the crate; alpha 0 before and after. */
   fun flying(index: Int, ms: Int): Frame {
@@ -130,8 +125,8 @@ object ThingHeroTimeline {
   }
 
   /**
-   * Glyph [index] behind the plane: emerging into its fan slot, holding, then drifting further out
-   * along the same line while fading. Hidden before and after, so the idle state is the plane alone.
+   * Glyph [index] behind the stack: emerging into its fan slot, holding, then drifting further out
+   * along the same line while fading. Hidden before and after, so the idle state is the stack alone.
    */
   fun fanned(index: Int, ms: Int): Frame {
     val p = ease(progress(ms, FAN_START + index * FAN_STAGGER, FAN_MS))
@@ -157,7 +152,7 @@ object ThingHeroTimeline {
    */
   fun plate(index: Int, ms: Int, phase: Float): PlatePose {
     val idle = idleLift(index, ms, phase)
-    if (index == 0) return PlatePose(lift = idle, alpha = planeAlpha(ms))
+    if (index == 0) return PlatePose(lift = idle, alpha = bottomPlateAlpha(ms))
     val p = progress(ms, PLATE_START + (index - 1) * PLATE_STAGGER, PLATE_MS)
     if (p <= 0f) return PlatePose(lift = PLATE_DROP, alpha = 0f)
     return PlatePose(
@@ -170,13 +165,8 @@ object ThingHeroTimeline {
   fun idleLift(index: Int, ms: Int, phase: Float): Float =
     idleWeight(ms) * (IDLE_RISE + index * IDLE_SPREAD) * (0.5f + 0.5f * sin(phase))
 
-  /** 0 before the idle wobble begins, 1 once it is fully in. */
+  /** 0 before the idle breath begins, 1 once it is fully in. */
   fun idleWeight(ms: Int): Float = progress(ms, IDLE_START, 600)
-
-  /** The plane's bob, matching the pre-existing hero: about six points up and a degree of roll. */
-  fun planeBobY(phase: Float): Float = -0.017f * (0.5f + 0.5f * sin(phase))
-
-  fun planeBobRotation(phase: Float): Float = -0.25f + 1.25f * sin(phase)
 
   const val IDLE_PERIOD_MS = 3400
   const val TWO_PI = (2 * PI).toFloat()
