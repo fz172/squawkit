@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.ui.brand
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.PLATE_COUNT
 import dev.fanfly.wingslog.core.ui.brand.ThingHeroTimeline.GLYPH_COUNT
 import dev.fanfly.wingslog.core.ui.brand.ThingHeroTimeline.TOTAL_MS
 import org.junit.Test
@@ -122,5 +123,65 @@ class ThingHeroTimelineTest {
         1.5f
       )
     }
+  }
+
+  @Test
+  fun `no plate shows before the crate has all but become the bottom one`() {
+    for (plate in 0 until PLATE_COUNT) {
+      assertThat(ThingHeroTimeline.plate(plate, ThingHeroTimeline.PLATE_START, 0f).alpha)
+        .isEqualTo(0f)
+    }
+  }
+
+  @Test
+  fun `plates appear bottom first`() {
+    var lastStart = -1
+    for (plate in 0 until PLATE_COUNT) {
+      val start = (0..TOTAL_MS).first { ThingHeroTimeline.plate(plate, it, 0f).alpha > 0f }
+      assertThat(start).isAtLeast(lastStart)
+      lastStart = start
+    }
+    assertThat(ThingHeroTimeline.plate(0, ThingHeroTimeline.MORPH_END, 0f).alpha).isEqualTo(1f)
+  }
+
+  @Test
+  fun `an upper plate falls from above and settles without overshooting`() {
+    for (plate in 1 until PLATE_COUNT) {
+      // Phase 3π/2 is the bottom of the idle breath, which leaves the fall on its own.
+      var last = ThingHeroTimeline.PLATE_DROP
+      for (ms in ThingHeroTimeline.PLATE_START..ThingHeroTimeline.STACK_END) {
+        val lift = ThingHeroTimeline.plate(plate, ms, REST_PHASE).lift
+        assertThat(lift).isAtMost(last)
+        assertThat(lift).isAtLeast(-TOLERANCE)
+        last = lift
+      }
+      assertThat(last).isWithin(TOLERANCE).of(0f)
+    }
+  }
+
+  @Test
+  fun `the built stack is every plate in its seat, fully shown`() {
+    for (plate in 0 until PLATE_COUNT) {
+      val pose = ThingHeroTimeline.plate(plate, TOTAL_MS, REST_PHASE)
+      assertThat(pose.alpha).isEqualTo(1f)
+      assertThat(pose.lift).isWithin(TOLERANCE).of(0f)
+    }
+  }
+
+  @Test
+  fun `the idle breath lifts the stack and parts its plates, by a few percent at most`() {
+    val crest = (kotlin.math.PI / 2).toFloat()
+    var below = 0f
+    for (plate in 0 until PLATE_COUNT) {
+      val lift = ThingHeroTimeline.plate(plate, TOTAL_MS, crest).lift
+      assertThat(lift).isGreaterThan(below)
+      assertThat(lift).isAtMost(0.05f)
+      below = lift
+    }
+  }
+
+  private companion object {
+    const val TOLERANCE = 1e-5f
+    val REST_PHASE = (3 * kotlin.math.PI / 2).toFloat()
   }
 }
