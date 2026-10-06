@@ -133,13 +133,14 @@ multiplatform vector, `docs/product/store_assets/appstore/app_icon_1024.png` the
 `favicon-192.png` / `apple-touch-icon.png` already ship beside `index.html`. Export an SVG from the
 launcher foreground for the static page — crisp at any size, a couple of KB, no Kotlin involved.
 
-Do **not** reach for `BrandPlane` here. It is deliberately single-colour — the same artwork cropped
-tight for `Icon()` tinting — which is why today's web header mark is monochrome. Its docstring is
-worth reading before anyone "fixes" the colour by tinting it.
+`BrandPlane`, the single-colour crop of the same artwork that the login hero used to end on, has
+since been removed: the hero now ends on `BrandStack`, the record-stack mark, which carries its own
+colours. The web header's monochrome mark is `brand-plane.svg`, a separate file.
 
 **Login card — the motion hero.** `LoginPlaneArt()` in `feature/login/LoginCommon.kt`, which renders
-`ThingHero`: five Thing glyphs fly into a crate, the crate morphs into the plane, the glyphs fan out
-behind it for a beat and drift away, and the plane bobs alone. `animate = false` gives the resting
+`ThingHero`: five Thing glyphs fly into a crate, the crate morphs into the bottom plate of the brand
+stack, the other two plates land on it, the glyphs fan out behind it for a beat and drift away, and
+the stack breathes alone. `animate = false` gives the resting
 state, which is what surfaces reached *from* the login page should use so the sequence does not
 replay — the email step included.
 

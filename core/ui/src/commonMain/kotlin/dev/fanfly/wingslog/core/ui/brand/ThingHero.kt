@@ -20,19 +20,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.CORNER_STROKE
 
 /**
  * The brand hero for the sign-in surfaces: five Thing glyphs fly into a crate, the crate becomes
- * the plane, the glyphs show behind it for a beat and drift away, and the plane bobs alone. See
- * [ThingHeroTimeline] for the choreography.
+ * the bottom plate of the brand stack, the other two plates land on it, the glyphs show behind it
+ * for a beat and drift away, and the stack breathes alone. See [ThingHeroTimeline] for the
+ * choreography.
  *
- * [size] is the square the plane and its fan are laid out in; flying glyphs start outside it, so
+ * [size] is the square the stack and its fan are laid out in; flying glyphs start outside it, so
  * a parent that clips (a card) will cut them at its edge, which reads as flying into the card.
- * With [animate] false the hero renders its resting state: the plane, bobbing.
+ * With [animate] false the hero renders its resting state: the stack, breathing.
+ *
+ * [tint] colours the crate and the glyphs. The stack keeps its own colours ([BrandStack]).
  */
 @Composable
 fun ThingHero(
@@ -77,19 +83,19 @@ fun ThingHero(
           (p.y - crate.viewportY) / crate.viewportSize,
         )
       },
-      to = OutlineMorph.sample(BrandPlaneGeometry.BODY_OUTLINE) { p ->
-        with(BrandPlaneGeometry) {
-          Offset((p.x * SCALE + TRANSLATE_X) / VIEWPORT, (p.y * SCALE + TRANSLATE_Y) / VIEWPORT)
+      to = OutlineMorph.sample(BrandStackGeometry.silhouette(0)) { p ->
+        with(BrandStackGeometry) {
+          Offset((p.x - VIEWPORT_X) / VIEWPORT, (p.y - VIEWPORT_Y) / VIEWPORT)
         }
       },
     )
   }
   val morphPath = remember { Path() }
   val sizePx = with(LocalDensity.current) { size.toPx() }
-  val planeSize = size * ThingHeroTimeline.PLANE_SIZE
+  val markSize = size * ThingHeroTimeline.MARK_SIZE
 
   Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
-    // Fan: the glyphs re-emerging behind the plane for a beat before they drift away.
+    // Fan: the glyphs re-emerging behind the stack for a beat before they drift away.
     for (i in 0 until ThingHeroTimeline.GLYPH_COUNT) {
       Glyph(
         vector = ThingGlyphs.heroSequence[i],
@@ -103,58 +109,35 @@ fun ThingHero(
     // The crate, as a real vector while glyphs are flying into it.
     Glyph(
       vector = ThingGlyphs.Crate,
-      size = planeSize,
+      size = markSize,
       tint = tint,
       sizePx = sizePx,
       frame = { ThingHeroTimeline.crate(clock.value.toInt()) },
     )
 
-    // The crate outline becoming the plane body.
+    // The crate outline becoming the bottom plate. The plate's corners are rounded by a stroke
+    // (see BrandStackGeometry), so the stroke grows in with the morph to land on the same shape.
     Canvas(
       modifier = Modifier
-        .size(planeSize)
+        .size(markSize)
         .graphicsLayer {
           alpha = ThingHeroTimeline.morphOutlineAlpha(clock.value.toInt())
         },
     ) {
       val t = ThingHeroTimeline.morph(clock.value.toInt())
-      drawPath(morph.pathAt(t, this.size.width, morphPath), color = tint)
+      val outline = morph.pathAt(t, this.size.width, morphPath)
+      val corner = t * this.size.width * CORNER_STROKE / BrandStackGeometry.VIEWPORT
+      drawPath(outline, color = tint)
+      if (corner > 0f) {
+        drawPath(outline, color = tint, style = Stroke(width = corner, join = StrokeJoin.Round))
+      }
     }
 
-    // The plane's tail pieces and dashes, fading in over the morphing body.
-    Glyph(
-      vector = BrandPlaneDetails,
-      size = planeSize,
-      tint = tint,
-      sizePx = sizePx,
-      frame = {
-        ThingHeroTimeline.Frame(
-          0f,
-          0f,
-          1f,
-          ThingHeroTimeline.detailsAlpha(clock.value.toInt())
-        )
-      },
-    )
-
-    // The finished plane, bobbing.
-    Glyph(
-      vector = BrandPlane,
-      size = planeSize,
-      tint = tint,
-      sizePx = sizePx,
-      frame = {
-        val ms = clock.value.toInt()
-        val w = ThingHeroTimeline.idleWeight(ms)
-        ThingHeroTimeline.Frame(
-          x = 0f,
-          y = ThingHeroTimeline.planeBobY(phase) * w,
-          scale = 1f,
-          alpha = ThingHeroTimeline.planeAlpha(ms),
-          rotation = ThingHeroTimeline.planeBobRotation(phase) * w,
-        )
-      },
-    )
+    // The stack: the bottom plate takes over from the outline, the others land on it, then all
+    // three breathe.
+    BrandStack(Modifier.size(markSize)) { plate ->
+      ThingHeroTimeline.plate(plate, clock.value.toInt(), phase)
+    }
 
     // Flying glyphs, above the crate so they visibly drop in.
     for (i in 0 until ThingHeroTimeline.GLYPH_COUNT) {

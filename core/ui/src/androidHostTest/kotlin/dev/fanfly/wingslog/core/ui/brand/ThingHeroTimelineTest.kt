@@ -9,12 +9,11 @@ import org.junit.Test
 class ThingHeroTimelineTest {
 
   @Test
-  fun `the resting state is the plane alone`() {
+  fun `the resting state is the stack alone`() {
     val ms = TOTAL_MS
-    assertThat(ThingHeroTimeline.planeAlpha(ms)).isEqualTo(1f)
+    assertThat(ThingHeroTimeline.bottomPlateAlpha(ms)).isEqualTo(1f)
     assertThat(ThingHeroTimeline.crate(ms).alpha).isEqualTo(0f)
     assertThat(ThingHeroTimeline.morphOutlineAlpha(ms)).isEqualTo(0f)
-    assertThat(ThingHeroTimeline.detailsAlpha(ms)).isEqualTo(0f)
     for (i in 0 until GLYPH_COUNT) {
       assertThat(ThingHeroTimeline.flying(i, ms).alpha).isEqualTo(0f)
       assertThat(ThingHeroTimeline.fanned(i, ms).alpha).isEqualTo(0f)
@@ -32,7 +31,7 @@ class ThingHeroTimelineTest {
       val leaving =
         ThingHeroTimeline.fanned(i, ThingHeroTimeline.FAN_OUT_START + 400)
       assertThat(leaving.alpha).isLessThan(held.alpha)
-      // Further out along the same line, not back towards the plane.
+      // Further out along the same line, not back towards the stack.
       assertThat(kotlin.math.abs(leaving.x) + kotlin.math.abs(leaving.y))
         .isGreaterThan(kotlin.math.abs(held.x) + kotlin.math.abs(held.y))
       assertThat(
@@ -46,7 +45,7 @@ class ThingHeroTimelineTest {
 
   @Test
   fun `the opening frame shows only the crate popping in`() {
-    assertThat(ThingHeroTimeline.planeAlpha(0)).isEqualTo(0f)
+    assertThat(ThingHeroTimeline.bottomPlateAlpha(0)).isEqualTo(0f)
     assertThat(ThingHeroTimeline.crate(0).alpha).isEqualTo(0f)
     assertThat(ThingHeroTimeline.crate(420).alpha).isEqualTo(1f)
     for (i in 0 until GLYPH_COUNT) {
@@ -83,18 +82,16 @@ class ThingHeroTimelineTest {
   }
 
   @Test
-  fun `the crate hands over to the outline, and the outline to the plane, without a gap`() {
+  fun `the crate hands over to the outline, and the outline to the bottom plate, without a gap`() {
     val morphStart = ThingHeroTimeline.MORPH_START
     // Just before the morph the crate vector is fully visible; at the morph the outline takes over.
     assertThat(ThingHeroTimeline.crate(morphStart - 1).alpha).isEqualTo(1f)
     assertThat(ThingHeroTimeline.crate(morphStart).alpha).isEqualTo(0f)
     assertThat(ThingHeroTimeline.morphOutlineAlpha(morphStart)).isEqualTo(1f)
-    // Outline and plane cross-fade: their alphas always sum to one while the outline is shown.
+    // Outline and plate cross-fade: their alphas always sum to one while the outline is shown.
     for (ms in morphStart..TOTAL_MS) {
       val sum =
-        ThingHeroTimeline.morphOutlineAlpha(ms) + ThingHeroTimeline.planeAlpha(
-          ms
-        )
+        ThingHeroTimeline.morphOutlineAlpha(ms) + ThingHeroTimeline.bottomPlateAlpha(ms)
       assertThat(sum).isWithin(1e-5f)
         .of(1f)
     }
@@ -117,12 +114,9 @@ class ThingHeroTimelineTest {
   }
 
   @Test
-  fun `the plane bob stays within a degree and a half`() {
-    for (phase in listOf(0f, 1f, 2f, 3f, 4f, 5f, 6f)) {
-      assertThat(kotlin.math.abs(ThingHeroTimeline.planeBobRotation(phase))).isAtMost(
-        1.5f
-      )
-    }
+  fun `the fan waits for the stack, and the stack is built before the fan leaves`() {
+    assertThat(ThingHeroTimeline.FAN_START).isAtLeast(ThingHeroTimeline.MORPH_END)
+    assertThat(ThingHeroTimeline.STACK_END).isLessThan(ThingHeroTimeline.FAN_OUT_START)
   }
 
   @Test

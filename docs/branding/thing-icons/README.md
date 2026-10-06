@@ -15,8 +15,9 @@ these shapes. Each glyph is authored in a 1024×1024 box like `ic_launcher_foreg
 script emits a tight square viewport per glyph so `Icon(glyph, Modifier.size(n))` fills `n` the way
 the cropped plane does.
 
-The plane itself is not generated here. Its paths live in `core/ui/.../brand/BrandPlane.kt`, copied
-from the launcher foreground; the launcher stays the source of truth for the brand mark.
+The brand mark the crate turns into is not generated here. It is the record stack: its master
+artwork is `docs/branding/app-icon-record-stack.svg`, and `core/ui/.../brand/BrandStackGeometry.kt`
+carries the same plates as numbers for Compose to draw.
 
 ```bash
 python3 docs/branding/thing-icons/generate_icons.py

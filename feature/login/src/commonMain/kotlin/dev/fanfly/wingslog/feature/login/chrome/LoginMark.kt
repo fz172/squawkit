@@ -50,10 +50,10 @@ import wingslog.core.sharedassets.generated.resources.Res as UiRes
 private const val BRAND_SUFFIX = "It"
 
 /**
- * The brand block above the card: the plane hero, the wordmark, and the tagline.
+ * The brand block above the card: the stack hero, the wordmark, and the tagline.
  *
  * The mark is [ThingHero] rather than the canvas's static tile — Thing glyphs fly into a crate that
- * becomes the plane. [animate] false shows the resting state, for surfaces reached *from* the login
+ * becomes the brand stack. [animate] false shows the resting state, for surfaces reached *from* the login
  * page (the email step), where replaying the sequence would be noise.
  */
 @Composable
