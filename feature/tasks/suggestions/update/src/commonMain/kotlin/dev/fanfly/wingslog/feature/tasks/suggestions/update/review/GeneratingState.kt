@@ -18,14 +18,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -69,7 +68,8 @@ internal fun ComingGroup(readsDocuments: Boolean) {
       LocalThingLexicon.current.thingNoun.singular,
     )
   }
-  val pulse by rememberInfiniteTransition(label = "placeholder").animateFloat(
+  // Read in the layer block alone, so each frame redraws the box and recomposes nothing.
+  val pulse = rememberInfiniteTransition(label = "placeholder").animateFloat(
     initialValue = 1f,
     targetValue = 0.5f,
     animationSpec = infiniteRepeatable(
@@ -106,7 +106,7 @@ internal fun ComingGroup(readsDocuments: Boolean) {
           )
         }
         .padding(Spacing.large)
-        .alpha(pulse),
+        .graphicsLayer { alpha = pulse.value },
       verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
       PlaceholderRow(titleWidth = 0.6f, lineWidth = 0.35f, color = bar)

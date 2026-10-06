@@ -249,7 +249,7 @@ class SuggestionsViewModel(
         _uiState.update {
           it.copy(
             isSuggesting = !finished,
-            readsDocuments = it.readsDocuments || working?.stageArg != null,
+            readsDocuments = it.readsDocuments || working?.stage in DOCUMENT_STAGES,
             failure = failure,
             stage = working?.stage,
             stageArg = working?.stageArg,
@@ -697,6 +697,9 @@ class SuggestionsViewModel(
 
     /** The entry point a model run asked from the curated list reports (R50). */
     const val SUGGEST_MORE = "suggest_more"
+
+    /** The pipeline stages that work on a document, whose argument names it (see `stageText`). */
+    val DOCUMENT_STAGES = setOf("reading_document", "finding_schedule", "extracting_schedule")
 
     /**
      * Cards for [result], none checked to start (PRD R27, revised 2026-10-03: the user checks what

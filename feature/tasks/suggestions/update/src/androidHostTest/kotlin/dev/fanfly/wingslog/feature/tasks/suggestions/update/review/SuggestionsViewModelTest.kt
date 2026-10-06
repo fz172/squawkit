@@ -406,6 +406,17 @@ class SuggestionsViewModelTest {
     }
 
   @Test
+  fun aStageArgumentAloneDoesNotMeanTheRunReadsDocuments() = runTest(dispatcher) {
+    serving(SuggestionRun.Working(AI_JOB, "tailoring", "Rotax 915", curatedList))
+
+    val vm = viewModel()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isSuggesting).isTrue()
+    assertThat(vm.uiState.value.readsDocuments).isFalse()
+  }
+
+  @Test
   fun aRunOpenedAgainReadsDocumentsWhenAStageNamesOne() = runTest(dispatcher) {
     serving(
       SuggestionRun.Working(
