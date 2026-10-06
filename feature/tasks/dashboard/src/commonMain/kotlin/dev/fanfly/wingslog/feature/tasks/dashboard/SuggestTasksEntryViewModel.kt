@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
-/** What the task list's *Suggest tasks* action shows for one Thing (PRD R2, §9.1). */
+/** What the empty task list's *Browse suggested tasks* shows for one Thing (PRD R2, §9.1). */
 class SuggestTasksEntryViewModel(
   entry: TaskSuggestionEntry,
   thingId: String,

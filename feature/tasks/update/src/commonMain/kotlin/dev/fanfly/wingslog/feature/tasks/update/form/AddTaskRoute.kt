@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.update.form
 
-import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +36,6 @@ fun AddTaskRoute(
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
   val hasAttachmentChanges by viewModel.hasAttachmentChanges.collectAsStateWithLifecycle()
-  val offersTasksFromDocument by viewModel.offersTasksFromDocument.collectAsStateWithLifecycle()
   val successState = uiState as? TaskUiState.Success
 
   val successMessage = stringResource(Res.string.task_added)
@@ -143,18 +141,6 @@ fun AddTaskRoute(
         )
       },
       hasAttachmentChanges = hasAttachmentChanges,
-      // In place of the form: the suggestions screen, with the file picker open (PRD R3).
-      onTasksFromDocument = if (offersTasksFromDocument) {
-        {
-          navController.navigate(
-            Screen.StarterPack.createRoute(viewModel.thingId, SuggestionsMode.DOCUMENT),
-          ) {
-            popUpTo(Screen.AddMaintenanceTask.route) { inclusive = true }
-          }
-        }
-      } else {
-        null
-      },
     )
   }
 }

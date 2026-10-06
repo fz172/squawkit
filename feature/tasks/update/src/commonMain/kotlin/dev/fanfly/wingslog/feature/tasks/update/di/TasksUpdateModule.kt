@@ -11,7 +11,6 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.update.form.TaskViewModel
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -27,7 +26,6 @@ val tasksUpdateModule = module {
       get<TaskDueManager>(),
       get<AnalyticsManager>(),
       get<CurrentThingTemplate>(),
-      get<TaskSuggestionEntry>(),
       get<SavedStateHandle>(),
     )
   }

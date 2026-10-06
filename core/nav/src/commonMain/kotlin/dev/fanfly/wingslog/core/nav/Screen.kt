@@ -16,10 +16,7 @@ sealed class Screen(val route: String) {
     const val TEMPLATE_ID = "templateId"
     const val SUGGESTIONS_MODE = "mode"
 
-    /**
-     * Files for the suggestions screen to read: one already on a record in `document` mode (task
-     * population R4), or the ones picked on the Add Tasks sheet in `add` mode, comma-separated.
-     */
+    /** The manuals picked on the Add Tasks sheet, for the suggestions screen's `add` mode. */
     const val SUGGESTIONS_DOCUMENT = "document"
     const val DATA_LOG_ID = "dataLogId"
 
@@ -63,13 +60,10 @@ sealed class Screen(val route: String) {
 
   /**
    * The template's recommended schedule (PRD §4.9), and the AI suggestions that join it
-   * (docs/ai/task_population_design.md §9.1). Reached from an empty Tasks tab (`starter`, the
-   * default), from the task list's *Suggest tasks* action (`suggest`), and from the add-task form's
-   * *Tasks from a document* (`document`, which opens the file picker at once), and from the Add Tasks
-   * sheet's *Suggest* (`add`, which starts the model run at once); not after creating a
-   * Thing (2026-10-03). In `document` mode it may also carry [SUGGESTIONS_DOCUMENT], an attachment
-   * already on a record (*Find tasks in this document*, R4), which the sheet starts with instead of
-   * the picker.
+   * (docs/ai/task_population_design.md §9.1). Reached from an empty Tasks tab and a finished run's
+   * push (`starter`, the default), and from the Add Tasks sheet's *Suggest* (`add`, which starts the
+   * model run at once with the manuals picked there, in [SUGGESTIONS_DOCUMENT]); not after creating
+   * a Thing (2026-10-03).
    */
   data object StarterPack :
     Screen(
@@ -77,23 +71,17 @@ sealed class Screen(val route: String) {
         "&$SUGGESTIONS_DOCUMENT={$SUGGESTIONS_DOCUMENT}"
     ) {
     /**
-     * [document]: encoded attachments (`toDocumentArg`), for the `document` mode or, as a
-     * comma-separated list, the `add` mode. Any other mode with one is the `document` mode. The
-     * starter mode is the bare route, as before modes existed.
+     * [documents]: the add mode's manuals (`toDocumentsArg`). The starter mode is the bare route, as
+     * before modes existed.
      */
     fun createRoute(
       thingId: String,
       mode: SuggestionsMode = SuggestionsMode.STARTER,
-      document: String? = null,
+      documents: String? = null,
     ) = when {
-      document != null -> {
-        val withDocument = if (mode == SuggestionsMode.ADD) mode else SuggestionsMode.DOCUMENT
-        "starter_pack/$thingId?$SUGGESTIONS_MODE=${withDocument.wire}" +
-          "&$SUGGESTIONS_DOCUMENT=$document"
-      }
-
       mode == SuggestionsMode.STARTER -> "starter_pack/$thingId"
-      else -> "starter_pack/$thingId?$SUGGESTIONS_MODE=${mode.wire}"
+      documents == null -> "starter_pack/$thingId?$SUGGESTIONS_MODE=${mode.wire}"
+      else -> "starter_pack/$thingId?$SUGGESTIONS_MODE=${mode.wire}&$SUGGESTIONS_DOCUMENT=$documents"
     }
   }
 

@@ -133,5 +133,4 @@
 
   <!-- Starter pack (PRD §4.9): the template's recommended schedule, offered once a Thing exists -->
   <!-- The add form's way into AI suggestions from a manual (task population PRD R3). -->
-  <string name="tasks_from_document">From a document</string>
 </resources>
