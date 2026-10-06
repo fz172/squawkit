@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 
 /**
@@ -19,20 +17,15 @@ class AddedTasksViewModel(
   private val thingId: String,
 ) : ViewModel() {
 
-  private val batch = recentlyAdded.batch.map { it?.takeIf { batch -> batch.thingId == thingId } }
+  /**
+   * The ids of each batch added to this Thing, once: a batch is taken as it is handed out, so
+   * showing its snackbar changes nothing the snackbar depends on.
+   */
+  val added: Flow<List<String>> =
+    recentlyAdded.batch.mapNotNull { recentlyAdded.take(thingId)?.taskIds }
 
-  /** How many were just added, until the tab has said so; null otherwise. */
-  val toAnnounce: StateFlow<Int?> = batch
-    .map { it?.takeIf { batch -> !batch.announced }?.taskIds?.size }
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-  /** The snackbar is up; it is not shown again. */
-  fun onAnnounced() = recentlyAdded.markAnnounced()
-
-  /** *Undo*: the batch's tasks are deleted. */
-  fun onUndo() {
-    val ids = recentlyAdded.batch.value?.takeIf { it.thingId == thingId }?.taskIds ?: return
-    recentlyAdded.clear()
-    viewModelScope.launch { ids.forEach { taskDataManager.deleteTask(thingId, it) } }
+  /** *Undo* on a batch's snackbar: its tasks are deleted. */
+  fun onUndo(taskIds: List<String>) {
+    viewModelScope.launch { taskIds.forEach { taskDataManager.deleteTask(thingId, it) } }
   }
 }
