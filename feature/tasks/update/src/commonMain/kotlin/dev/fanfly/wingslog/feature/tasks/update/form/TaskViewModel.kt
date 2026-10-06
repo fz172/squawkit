@@ -16,7 +16,7 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
-import dev.fanfly.wingslog.core.template.currentFor
+import dev.fanfly.wingslog.core.template.currentReadings
 import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -42,7 +42,6 @@ import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
@@ -152,15 +151,16 @@ class TaskViewModel(
       combine(
         inspectionDataManager.observeTasks(thingId),
         maintenanceLogManager.observeLogs(thingId),
-        maintenanceLogManager.observeMaintenanceOverview(thingId),
         maintenanceLogManager.observeManualReadings(thingId),
-      ) { cards, logs, overview, manual ->
-        LoadedThingData(cards, logs, overview, manual)
-      }.collect { (cards, logs, overview, manual) ->
-        // By meter key, not by field name. `currentFor` falls back to the aviation field, so an
-        // overview written before `current` existed still answers (#730).
+      ) { cards, logs, manual ->
+        LoadedThingData(cards, logs, manual)
+      }.collect { (cards, logs, manual) ->
+        // From the same records the due preview is computed from, so the banner’s "now" and its
+        // "due at" cannot disagree — the stored overview can lag both (#1368).
+        val current = currentReadings(logs, manual)
         val engineHours =
-          overview?.currentFor(MeterKeys.ENGINE_HOURS)
+          current.firstOrNull { it.meter_key == MeterKeys.ENGINE_HOURS }
+            ?.value_
             ?.toFloat() ?: 0f
         _uiState.update { prev ->
           TaskUiState.Success(
@@ -169,7 +169,7 @@ class TaskViewModel(
             availableLogs = logs,
             manualReadings = manual,
             currentEngineHours = engineHours,
-            currentReadings = overview?.current.orEmpty()
+            currentReadings = current
               .associate { it.meter_key to it.value_.toFloat() },
             error = (prev as? TaskUiState.Success)?.error,
           )
@@ -514,7 +514,6 @@ class TaskViewModel(
 private data class LoadedThingData(
   val cards: List<MaintenanceTask>,
   val logs: List<MaintenanceLog>,
-  val overview: MaintenanceOverview?,
   val manualReadings: List<ManualMeterReading>,
 )
 

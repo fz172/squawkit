@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -19,7 +20,6 @@ import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Spec
@@ -131,22 +131,11 @@ class SuggestionContextBuilderTest {
     }
     val logManager = mockk<MaintenanceLogManager> {
       every { observeLogs(THING) } returns flowOf(logs)
-      every { observeMaintenanceOverview(THING) } returns flowOf(
-        MaintenanceOverview(
-          current = listOf(
-            MeterReading(
-              meter_key = "engine_hours",
-              component_id = "c-engine",
-              value_ = 410.0
-            ),
-            MeterReading(
-              meter_key = "engine_hours",
-              component_id = "c-engine-2",
-              value_ = 395.0
-            ),
-            MeterReading(meter_key = "airframe_hours", value_ = 412.0),
-          ),
-        ),
+      every { observeCurrentReadings(THING) } returns flowOf(
+        listOf(
+          CurrentReading("airframe_hours", 412.0, asOf = null, isManual = false),
+          CurrentReading("engine_hours", 410.0, asOf = null, isManual = true),
+        )
       )
     }
     val registry =
@@ -203,7 +192,7 @@ class SuggestionContextBuilderTest {
   }
 
   @Test
-  fun `takes each meter's highest current reading, and says when there is none`() =
+  fun `takes each meter's current reading, and says when there is none`() =
     runTest {
       val meters = builder().build(
         THING,

@@ -14,7 +14,7 @@ sealed interface TaskUiState {
     /** Readings set by hand on the dashboard; with the logs, what a meter rule is due against. */
     val manualReadings: List<ManualMeterReading> = emptyList(),
     val currentEngineHours: Float,
-    /** The latest reading of every meter the overview knows, by key — for the form's banner. */
+    /** The current reading of every meter that has one, by key — for the form's banner. */
     val currentReadings: Map<String, Float> = emptyMap(),
     val error: UiText? = null,
   ) : TaskUiState
