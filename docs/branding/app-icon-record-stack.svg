@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- The SquawkIt app icon: three record plates stacked in perspective on a vellum ground, the top
+       one honey. This is the master artwork. The plate geometry is mirrored, unscaled, in
+       core/ui/.../brand/BrandStackGeometry.kt, which the in-app mark and the login hero draw from. -->
+  <defs>
+    <linearGradient id="ground" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1024">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D9E1EC"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.3" cy="0.15" r="0.9">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bottom" gradientUnits="userSpaceOnUse" x1="262" y1="496" x2="762" y2="756">
+      <stop offset="0" stop-color="#1F68BC"/><stop offset="1" stop-color="#124F97"/>
+    </linearGradient>
+    <linearGradient id="middle" gradientUnits="userSpaceOnUse" x1="262" y1="382" x2="762" y2="642">
+      <stop offset="0" stop-color="#66A8F2"/><stop offset="1" stop-color="#3F8ADF"/>
+    </linearGradient>
+    <linearGradient id="top" gradientUnits="userSpaceOnUse" x1="262" y1="268" x2="762" y2="528">
+      <stop offset="0" stop-color="#F4D48F"/><stop offset="1" stop-color="#E4A94B"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#1B3050" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#ground)"/>
+  <rect width="1024" height="1024" fill="url(#sheen)"/>
+  <g transform="translate(512 512) scale(1.12) translate(-512 -512)" stroke-width="44" stroke-linejoin="round">
+    <g filter="url(#shadow)">
+      <path d="M512 534 L762 664 L512 794 L262 664 Z" fill="#0A3870" stroke="#0A3870"/>
+      <path d="M512 496 L762 626 L512 756 L262 626 Z" fill="url(#bottom)" stroke="url(#bottom)"/>
+    </g>
+    <g filter="url(#shadow)">
+      <path d="M512 420 L762 550 L512 680 L262 550 Z" fill="#1F68BC" stroke="#1F68BC"/>
+      <path d="M512 382 L762 512 L512 642 L262 512 Z" fill="url(#middle)" stroke="url(#middle)"/>
+    </g>
+    <g filter="url(#shadow)">
+      <path d="M512 306 L762 436 L512 566 L262 436 Z" fill="#B27A24" stroke="#B27A24"/>
+      <path d="M512 268 L762 398 L512 528 L262 398 Z" fill="url(#top)" stroke="url(#top)"/>
+    </g>
+  </g>
+</svg>
