@@ -1191,3 +1191,8 @@ feature/tasks/suggestions/update	suggestions_clear	Clear
 feature/tasks/suggestions/update	suggestion_tag_document	Manual
 feature/tasks/suggestions/update	suggestion_tag_manufacturer	Manufacturer
 feature/tasks/suggestions/update	suggestion_tag_logs	Your logs
+feature/tasks/suggestions/update	suggestion_field_every	Every %1$s
+feature/tasks/suggestions/update	suggestion_field_or	Or %1$s
+feature/tasks/suggestions/update	suggestion_unit_months	months
+feature/tasks/suggestions/update	suggestion_unit_days	days
+feature/tasks/suggestions/update	suggestion_more_options	More options

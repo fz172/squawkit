@@ -32,6 +32,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionM
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
+import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +42,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -76,7 +79,8 @@ class StarterPackViewModel(
   private val mode = SuggestionsMode.fromWire(savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE))
 
   /**
-   * The add mode's files, picked on the Add Tasks sheet and stored on this device, held by no record.
+   * The add mode's files, picked on the Add Tasks sheet and stored on this device, held by no
+   * record.
    * The run they go to lets them go when it ends; anything else that drops them lets them go here.
    */
   private val pickedDocuments: List<Attachment> =
@@ -405,6 +409,69 @@ class StarterPackViewModel(
           ) else item
         },
       )
+    }
+  }
+
+  /** One inline edit at a time: each starts from the one before it, never from a stale card. */
+  private val editing = Mutex()
+
+  /** The row's meter interval, changed in place (1d): "every 50 hrs" becomes [interval]. */
+  fun onMeterIntervalChange(index: Int, interval: Float) {
+    if (interval <= 0f) return
+    editRules(index) { rule ->
+      rule.meter_rule?.let { rule.copy(meter_rule = it.copy(interval = interval)) } ?: rule
+    }
+  }
+
+  /** The row's calendar interval, changed in place, in months; years fold into them. */
+  fun onMonthsChange(index: Int, months: Int) {
+    if (months <= 0) return
+    editRules(index) { rule ->
+      rule.time_rule?.takeIf { it.interval_days == 0 }
+        ?.let { rule.copy(time_rule = it.copy(interval_months = months, interval_years = 0)) }
+        ?: rule
+    }
+  }
+
+  /** The row's calendar interval, changed in place, for a rule kept in days. */
+  fun onDaysChange(index: Int, days: Int) {
+    if (days <= 0) return
+    editRules(index) { rule ->
+      rule.time_rule?.takeIf { it.interval_days > 0 }
+        ?.let { rule.copy(time_rule = it.copy(interval_days = days)) }
+        ?: rule
+    }
+  }
+
+  /**
+   * Changes card [index]'s rules in place, as the task form's draft mode would (PRD R28): the user's
+   * earlier edit, or the suggestion as accepting would write it, with [change] applied to each
+   * rule. A changed card is checked, as one edited in the form is.
+   */
+  private fun editRules(index: Int, change: (InspectionRule) -> InspectionRule) {
+    val id = uiState.value.items.getOrNull(index)?.suggestion?.suggestion_id?.value_ ?: return
+    viewModelScope.launch {
+      editing.withLock {
+        val item = uiState.value.items.firstOrNull { it.suggestion.suggestion_id?.value_ == id }
+          ?: return@withLock
+        val base = item.edited ?: suggestionManager.draftOf(
+          thingId,
+          item.suggestion,
+          generationVersion = run?.resultOrNull?.generation_version.orEmpty(),
+        )
+        val edited = base.copy(rules = base.rules.map(change))
+        _uiState.update { state ->
+          state.copy(
+            items = state.items.map {
+              if (it.suggestion.suggestion_id?.value_ == id) {
+                it.copy(edited = edited, selected = true)
+              } else {
+                it
+              }
+            },
+          )
+        }
+      }
     }
   }
 

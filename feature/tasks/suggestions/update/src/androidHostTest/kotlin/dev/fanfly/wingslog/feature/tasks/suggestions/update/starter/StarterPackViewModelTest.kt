@@ -27,9 +27,12 @@ import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
 import dev.fanfly.wingslog.id.SuggestionId
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
+import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.feature.attachment.model.attachmentsFromDocumentsArg
 import dev.fanfly.wingslog.feature.attachment.model.toDocumentsArg
@@ -238,6 +241,41 @@ class StarterPackViewModelTest {
     coVerify(exactly = 0) { attachments.release(any(), any()) }
     assertThat(analytics.paramsFor("task_suggestions_requested").single())
       .containsAtLeastEntriesIn(mapOf("source" to "add", "document_count" to "2"))
+  }
+
+  @Test
+  fun anIntervalChangedInPlaceEditsTheDraftAndChecksTheRow() = runTest(dispatcher) {
+    val oil = curated("c1", "Oil change").copy(
+      rules = listOf(
+        InspectionRule(meter_rule = MeterRule(meter_key = "tach", interval = 50f)),
+        InspectionRule(time_rule = TimeRule(interval_years = 1)),
+      ),
+    )
+    serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, SuggestTasksResult(suggestions = listOf(oil))))
+    coEvery { suggestions.draftOf(THING_ID, oil, any()) } returns
+      MaintenanceTask(title = "Oil change", rules = oil.rules)
+    val vm = viewModel()
+    advanceUntilIdle()
+
+    vm.onMeterIntervalChange(0, 25f)
+    vm.onMonthsChange(0, 6)
+    advanceUntilIdle()
+
+    val item = vm.uiState.value.items.single()
+    assertThat(item.selected).isTrue()
+    // Both edits landed, the second on top of the first.
+    assertThat(item.edited?.rules).containsExactly(
+      InspectionRule(meter_rule = MeterRule(meter_key = "tach", interval = 25f)),
+      InspectionRule(time_rule = TimeRule(interval_months = 6, interval_years = 0)),
+    ).inOrder()
+    coVerify(exactly = 1) { suggestions.draftOf(THING_ID, oil, any()) }
+
+    // Nothing to change on a rule it does not have, and no zero interval.
+    vm.onDaysChange(0, 30)
+    vm.onMeterIntervalChange(0, 0f)
+    advanceUntilIdle()
+    assertThat(vm.uiState.value.items.single().edited?.rules?.first()?.meter_rule?.interval)
+      .isEqualTo(25f)
   }
 
   @Test
