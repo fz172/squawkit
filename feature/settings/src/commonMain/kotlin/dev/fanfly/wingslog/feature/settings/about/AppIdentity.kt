@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.settings.about
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,12 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import dev.fanfly.wingslog.core.ui.brand.BrandAppIcon
 import dev.fanfly.wingslog.core.ui.hero.heroBob
 import dev.fanfly.wingslog.core.ui.hero.rememberHeroPulse
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.app_icon
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
@@ -33,10 +31,9 @@ internal fun AppIdentity() {
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(Spacing.large),
   ) {
-    // The store icon itself, in colour; only the corners are ours — the same radius the launchers use.
-    Image(
-      painter = painterResource(CoreRes.drawable.app_icon),
-      contentDescription = null,
+    // The app icon, drawn rather than loaded; only the corners are ours — the same radius the
+    // launchers use.
+    BrandAppIcon(
       modifier = Modifier
         .size(AppIconSize)
         .heroBob { pulse.value }
