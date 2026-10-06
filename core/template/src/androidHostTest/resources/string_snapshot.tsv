@@ -1183,3 +1183,5 @@ feature/tasks/suggestions/update	add_tasks_upgrade	Upgrade
 feature/tasks/suggestions/update	add_tasks_create_manually	Create Manually
 feature/tasks/suggestions/update	add_tasks_sign_in	Sign in
 feature/tasks/suggestions/update	add_tasks_missing_identity	Add %1$s to get suggestions
+feature/tasks/suggestions/update	suggestions_coming_documents	From your manuals
+feature/tasks/suggestions/update	suggestions_coming_thing	Tailored to this %1$s
