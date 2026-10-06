@@ -8,14 +8,10 @@ import dev.fanfly.wingslog.core.analytics.QuickActionSource
 import dev.fanfly.wingslog.core.analytics.QuickActionSurface
 import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.log
-import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
-import dev.fanfly.wingslog.core.template.currentFor
-import dev.fanfly.wingslog.core.template.currentReadings
-import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.text.UiText
@@ -194,7 +190,10 @@ class ThingOverviewViewModel(
           .distinctUntilChanged(),
         taskStatusManager.observeTasksWithStatus(thingId)
           .distinctUntilChanged(),
-        logManager.observeMaintenanceOverview(thingId)
+        // The readings as the records give them, not the stored overview: that is only as current
+        // as the last client to rebuild it, and one that predates readings set by hand rebuilds
+        // it without them (#1368).
+        logManager.observeCurrentReadings(thingId)
           .distinctUntilChanged(),
         combine(
           squawkManager.observeSquawks(thingId)
@@ -223,7 +222,7 @@ class ThingOverviewViewModel(
         ) { squawks, syncs, myRole, shared, dataLogs ->
           ShareContext(squawks, syncs, myRole, shared, dataLogs)
         }
-      ) { thing, logs, cardsWithStatus, overview, shareContext ->
+      ) { thing, logs, cardsWithStatus, currentReadings, shareContext ->
         val (squawkList, syncStates, myRole, isShared, dataLogs) = shareContext
         cachedLogs = logs
         val degraded = thing?.let {
@@ -236,46 +235,23 @@ class ThingOverviewViewModel(
           ThingOverviewUiState.Degraded(thing, degraded.reason)
         } else if (thing != null) {
           val template = templateRegistry.forThingWithFallback(thing)
-          val readingsAsOf = logs
-            .filter { log -> template.meters.any { log.readingFor(it.key) != null } }
-            .maxByOrNull { it.timestamp?.getEpochSecond() ?: 0L }
-            ?.timestamp
-            ?.toLocalDate()
-          val stats = if (overview != null) {
-            LogStats(
-              total = overview.total_log_count.toLong(),
-              airframe = overview.airframe_log_count.toLong(),
-              engine = overview.engine_log_count.toLong(),
-              propeller = overview.propeller_log_count.toLong(),
-              // Every meter this template declares that the overview has a value for. `currentFor`
-              // falls back to the three aviation fields, so an overview written before `current`
-              // existed still answers (#730).
-              readings = template.meters.mapNotNull { meter ->
-                overview.currentFor(meter.key)
-                  ?.let { meter.key to it }
-              }
-                .toMap(),
-              readingsAsOf = readingsAsOf,
-            )
-          } else {
-            // No overview stored yet — compute the same readings straight from the logs.
-            val fromLogs =
-              currentReadings(logs).associate { it.meter_key to it.value_ }
-            LogStats(
-              total = logs.size.toLong(),
-              airframe = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME }
-                .toLong(),
-              engine = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE }
-                .toLong(),
-              propeller = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER }
-                .toLong(),
-              readings = template.meters.mapNotNull { meter ->
-                fromLogs[meter.key]?.let { meter.key to it }
-              }
-                .toMap(),
-              readingsAsOf = readingsAsOf,
-            )
+          // Every meter this template declares that has a reading. A reading whose meter the
+          // template no longer declares stays stored and is not shown.
+          val declared = currentReadings.filter { reading ->
+            template.meters.any { it.key == reading.meterKey }
           }
+          val stats = LogStats(
+            total = logs.size.toLong(),
+            airframe = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME }
+              .toLong(),
+            engine = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE }
+              .toLong(),
+            propeller = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER }
+              .toLong(),
+            readings = declared.associate { it.meterKey to it.value },
+            readingsAsOf = declared.mapNotNull { it.asOf }
+              .maxOrNull(),
+          )
 
           val active =
             cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
@@ -357,6 +333,9 @@ class ThingOverviewViewModel(
           )
         }
       }
+
+      is ThingOverviewAction.SetMeterReading ->
+        setMeterReading(action.meterKey, action.value)
 
       is ThingOverviewAction.AddLogClick -> {
         viewModelScope.launch {
@@ -567,6 +546,19 @@ class ThingOverviewViewModel(
   /** The words this build renders the thing in — what the snackbars name a record with (R24). */
   private fun lexicon(state: ThingOverviewUiState.Success) =
     templateRegistry.lexiconFor(templateRegistry.forThingWithFallback(state.thing))
+
+  private fun setMeterReading(meterKey: String, value: Double) {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    viewModelScope.launch {
+      // Nothing to do on success: the card redraws from the reading the manager just stored.
+      logManager.setManualReading(state.thing.id, meterKey, value)
+        .onFailure {
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
+          )
+        }
+    }
+  }
 
   private fun dismissSquawk(reason: SquawkDismissReason) {
     val state = _uiState.value as? ThingOverviewUiState.Success ?: return

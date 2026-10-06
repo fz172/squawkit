@@ -58,6 +58,8 @@ fun ThingDataCard(
   thing: Thing,
   /** The meters' current readings; null hides the block, as does a template with no meters. */
   stats: LogStats? = null,
+  /** Sets a meter's reading from its cell; null draws the readings as plain read-outs. */
+  onSetReading: ((meterKey: String, value: Double) -> Unit)? = null,
   onEditClick: (() -> Unit)? = null,
   onManageAccessClick: (() -> Unit)? = null,
 ) {
@@ -149,7 +151,7 @@ fun ThingDataCard(
           val meters = template?.meters.orEmpty()
           if (stats != null && LocalThingCapabilities.current.meters && meters.isNotEmpty()) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            MeterReadings(meters, stats)
+            MeterReadings(meters, stats, onSetReading)
           }
 
           // Every stored component, walked from the template's slots.

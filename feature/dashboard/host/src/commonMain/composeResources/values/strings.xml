@@ -13,5 +13,8 @@
   <string name="overview_title_with_count"><xliff:g example="Work logs">%1$s</xliff:g> · <xliff:g example="40">%2$d</xliff:g></string>
   <string name="overview_meters">Meters</string>
   <string name="overview_meters_as_of">as of <xliff:g example="09/05/2026">%1$s</xliff:g></string>
+  <string name="meter_reading_update">Update reading</string>
+  <string name="meter_reading_field">Current reading</string>
+  <string name="meter_reading_lower_warning">Lower than the current reading, <xliff:g example="1200.0 HRS">%1$s</xliff:g>.</string>
   <string name="overview_open_squawks">Open <xliff:g example="squawks">%1$s</xliff:g></string>
 </resources>

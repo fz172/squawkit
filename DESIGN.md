@@ -759,7 +759,10 @@ beneath (`DashboardLowerGrid`): recent logs and open defects side by side.
   and a link, not a bullet list
 - The data card sits under the alerts and stays expanded; health never changes the dashboard's shape
   (§8)
-- Meter readings live inside the data card, each with the date it was taken
+- Meter readings live inside the data card, each with the date it was taken. Each is a control: a
+  small edit glyph beside its label, and a tap opens a one-number dialog that sets what the meter
+  reads now without writing a log (#1368). A reading below the current one is warned about, never
+  refused
 - Every heading, label and empty line comes from the template; `Spacing.screenPadding` = 16dp on all
   content
 
