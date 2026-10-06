@@ -49,7 +49,6 @@ import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.popup.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
 import dev.fanfly.wingslog.feature.tasks.datamanager.toDueInstant
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
@@ -173,7 +172,10 @@ fun AddTaskScreen(
       is_one_time = state.schedule.isOneTime,
       force_due_date = firstDueDate,
       notes = "",
-    ).withForcedDueMeter(meterKeyFor(state.component, rules), firstDueReading)
+    ).withForcedDueMeter(
+      state.schedule.forcedDueMeterKey(state.component, rules),
+      firstDueReading,
+    )
   }
   val draft = buildDraft()
   val effectiveDue = previewDue(draft)
