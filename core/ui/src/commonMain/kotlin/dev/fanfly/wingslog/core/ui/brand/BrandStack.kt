@@ -21,6 +21,7 @@ import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.CORNER_STROKE
 import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.HALF_HEIGHT
 import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.HALF_WIDTH
 import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.PLATE_COUNT
+import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.THICKNESS
 import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.VIEWPORT
 import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.VIEWPORT_X
 import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.VIEWPORT_Y
@@ -83,7 +84,10 @@ private class BrandStackArt {
         val own = pose(plate)
         if (own.alpha <= 0f) continue
         translate(top = -own.lift * VIEWPORT) {
-          rounded(edges[plate], edgeBrushes[plate], own.alpha)
+          // A thinner plate keeps its face where it is and draws its edge closer under it.
+          translate(top = -THICKNESS * (1f - own.thickness.coerceIn(0f, 1f))) {
+            rounded(edges[plate], edgeBrushes[plate], own.alpha)
+          }
           rounded(faces[plate], faceBrushes[plate], own.alpha)
           if (plate + 1 < PLATE_COUNT) castShadow(plate, own, pose(plate + 1))
         }
