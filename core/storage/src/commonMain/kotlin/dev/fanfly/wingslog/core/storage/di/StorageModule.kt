@@ -30,6 +30,7 @@ import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
@@ -107,6 +108,10 @@ val storageModule: Module = module {
       register(
         CollectionKind.DataLog,
         WireCodec(DataLog.ADAPTER)
+      )
+      register(
+        CollectionKind.ManualReading,
+        WireCodec(ManualMeterReading.ADAPTER)
       )
       verifyCoverage()
     }

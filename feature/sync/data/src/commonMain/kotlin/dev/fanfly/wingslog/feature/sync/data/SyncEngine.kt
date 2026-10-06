@@ -748,6 +748,7 @@ class SyncEngine(
       CollectionKind.Squawk,
       CollectionKind.Comment,
       CollectionKind.DataLog,
+      CollectionKind.ManualReading,
     )
   }
 }

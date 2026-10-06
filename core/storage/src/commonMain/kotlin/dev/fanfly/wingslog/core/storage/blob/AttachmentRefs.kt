@@ -35,6 +35,7 @@ object AttachmentRefs {
       CollectionKind.Thing,
       CollectionKind.Comment,
       CollectionKind.MaintenanceOverview,
+      CollectionKind.ManualReading,
       CollectionKind.Technician,
       CollectionKind.UserInfo,
       CollectionKind.DeveloperOptions,

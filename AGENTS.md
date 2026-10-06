@@ -227,9 +227,9 @@ EntityStore<Aircraft>.observeAll (SQLDelight Flow, FleetManagerImpl)
 ### Local-first storage (R1 — shipped, the only path)
 
 `core/storage` provides `EntityStore` (SQLDelight-backed), `EntityScope`, `EntityCodecRegistry`,
-Koin modules, and `CollectionKind` — **12 kinds**: Thing, MaintenanceTask, MaintenanceLog,
+Koin modules, and `CollectionKind` — **14 kinds**: Thing, MaintenanceTask, MaintenanceLog,
 MaintenanceOverview, Technician, UserInfo, DeveloperOptions, Subscription, Squawk, Comment,
-SharedAircraftRef, NotificationSettings.
+SharedAircraftRef, NotificationSettings, DataLog, ManualReading.
 `CollectionKind.ALL` is asserted complete against `sealedSubclasses` by a coverage test, so a
 forgotten entry fails the build instead of corrupting data at runtime. The `collection` column is
 `TEXT`, so adding a kind is a zero-migration change.

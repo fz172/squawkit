@@ -127,6 +127,15 @@ sealed interface CollectionKind {
     override val schemaName = "datalog.DataLog"
   }
 
+  /**
+   * A meter’s reading as set by hand on the dashboard (#1368). One row per meter, keyed by the
+   * meter’s key, so each edit overwrites the last and two meters never contend for one row.
+   */
+  data object ManualReading : CollectionKind {
+    override val wireName = "manual_reading"
+    override val schemaName = "thing.ManualMeterReading"
+  }
+
   companion object {
     /**
      * The complete, ordered list of [CollectionKind] subtypes. The CollectionKindCoverageTest in
@@ -147,6 +156,7 @@ sealed interface CollectionKind {
       SharedAircraftRef,
       NotificationSettings,
       DataLog,
+      ManualReading,
     )
 
     private val byWire: Map<String, CollectionKind> =
