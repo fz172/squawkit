@@ -197,6 +197,28 @@ describe("nested maintenance data", () => {
     );
   });
 
+  it("member may set a manual reading, and replace one the host set (attested)", async () => {
+    // One record per meter, overwritten by whoever reads the meter next (#1368) — unlike a comment,
+    // it is nobody’s in particular, so a technician replaces the host’s.
+    const readingDoc = `${thingDoc}/manual_reading/engine_hours`;
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), readingDoc), { payload: "x", writerUid: HOST });
+    });
+    await assertSucceeds(setDoc(doc(as(TECH), readingDoc), { payload: "y", writerUid: TECH }));
+    await assertSucceeds(
+      setDoc(doc(as(TECH), `${thingDoc}/manual_reading/airframe_hours`), {
+        payload: "x",
+        writerUid: TECH,
+      }),
+    );
+  });
+
+  it("non-member may NOT read or set a manual reading", async () => {
+    const readingDoc = `${thingDoc}/manual_reading/engine_hours`;
+    await assertFails(getDoc(doc(as(STRANGER), readingDoc)));
+    await assertFails(setDoc(doc(as(STRANGER), readingDoc), { payload: "x", writerUid: STRANGER }));
+  });
+
   it("member may update their own comment", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), `${thingDoc}/comment/mine`), {
