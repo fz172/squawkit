@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.toDueDate
 import dev.fanfly.wingslog.task.ImmediateRule
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.LinkedRule
@@ -14,6 +15,10 @@ import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.task.SeasonalRule
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ComponentType
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
 /**
@@ -134,13 +139,22 @@ data class ScheduleState(
       ?: meterKeyFor(component, rules)
 
   companion object {
-    fun fromTask(task: MaintenanceTask): ScheduleState {
+    /** 600.0 → "600", 7.5 → "7.5": a meter amount as the interval field holds it. */
+    private fun Float.toIntervalText(): String =
+      if (this == toInt().toFloat()) toInt().toString() else toString()
+
+    /** [today] is what a rule-less item's due date is counted from, for its "in how long". */
+    fun fromTask(
+      task: MaintenanceTask,
+      today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+    ): ScheduleState {
       val timeRule = task.rules.firstNotNullOfOrNull { it.time_rule }
       val meterRule = task.rules.firstNotNullOfOrNull { it.meter_rule }
       val seasonalRule = task.rules.firstNotNullOfOrNull { it.seasonal_rule }
       val linkedRule = task.rules.firstNotNullOfOrNull { it.linked_rule }
       val immediateRule = task.rules.firstNotNullOfOrNull { it.immediate_rule }
       val forcedDue = task.forcedDueMeter()
+      val forcedDate = task.force_due_date?.takeIf { it.getEpochSecond() > 0L }?.toDueDate()
 
       val baseRecurrence = when {
         immediateRule != null -> ScheduleRecurrence.ASAP
@@ -179,14 +193,7 @@ data class ScheduleState(
         meterRule != null -> ScheduleState(
           mode = ScheduleMode.HOURS,
           recurrence = baseRecurrence,
-          hourValue = meterRule.interval
-            .takeIf { it > 0f }
-            ?.let {
-              if (it == it.toInt()
-                  .toFloat()
-              ) it.toInt()
-                .toString() else it.toString()
-            } ?: "",
+          hourValue = meterRule.interval.takeIf { it > 0f }?.toIntervalText() ?: "",
           // A rule stored without a key predates MeterRule carrying one; the default is what its
           // component always implied.
           meterKey = meterRule.meter_key.takeIf { it.isNotEmpty() }
@@ -203,16 +210,20 @@ data class ScheduleState(
 
         // No rule at all, only the point it is due at: a one-time item as a suggestion writes
         // it ("first service at 600 mi", "within 30 days"). It is tracked by whichever it is due
-        // by, in the meter the reading is on, with no interval to show.
+        // by, in the meter the reading is on, and that point is its "in how long": once, 600 mi.
         forcedDue != null -> ScheduleState(
           mode = ScheduleMode.HOURS,
           recurrence = baseRecurrence,
+          hourValue = forcedDue.value.toIntervalText(),
           meterKey = forcedDue.meterKey,
         )
 
-        task.force_due_date != null -> ScheduleState(
+        forcedDate != null -> ScheduleState(
           mode = ScheduleMode.TIME,
           recurrence = baseRecurrence,
+          // The days left until it; a date already here or past has no "in how long" to show.
+          calValue = today.daysUntil(forcedDate).takeIf { it > 0 }?.toString().orEmpty(),
+          calUnit = ScheduleTimeUnit.DAYS,
         )
 
         else -> ScheduleState()

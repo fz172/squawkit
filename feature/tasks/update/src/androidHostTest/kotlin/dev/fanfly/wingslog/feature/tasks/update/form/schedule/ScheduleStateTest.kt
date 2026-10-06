@@ -1,13 +1,14 @@
 package dev.fanfly.wingslog.feature.tasks.update.form.schedule
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.feature.tasks.datamanager.toDueInstant
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MeterReading
+import kotlinx.datetime.LocalDate
 import org.junit.Test
 
 class ScheduleStateTest {
@@ -25,6 +26,7 @@ class ScheduleStateTest {
     assertThat(state.mode).isEqualTo(ScheduleMode.HOURS)
     assertThat(state.recurrence).isEqualTo(ScheduleRecurrence.ONE_TIME)
     assertThat(state.meterKey).isEqualTo(MeterKeys.AIRFRAME_HOURS)
+    assertThat(state.hourValue).isEqualTo("25")
     assertThat(state.isOneTime).isTrue()
   }
 
@@ -40,20 +42,30 @@ class ScheduleStateTest {
 
     assertThat(state.mode).isEqualTo(ScheduleMode.HOURS)
     assertThat(state.meterKey).isEqualTo("odometer")
-    // Saved back with no rule, the reading stays on the odometer.
-    assertThat(state.toRules()).isEmpty()
-    assertThat(state.forcedDueMeterKey(ComponentType.COMPONENT_UNKNOWN, emptyList()))
+    // Once, 600 mi: the point it is due at is its "in how long".
+    assertThat(state.hourValue).isEqualTo("600")
+    val rules = state.toRules()
+    assertThat(rules.single().meter_rule)
+      .isEqualTo(MeterRule(meter_key = "odometer", interval = 600f))
+    // The reading it is due at stays on the odometer.
+    assertThat(state.forcedDueMeterKey(ComponentType.COMPONENT_UNKNOWN, rules))
       .isEqualTo("odometer")
   }
 
   @Test
   fun aOneTimeItemDueByADateIsTrackedByCalendarOnce() {
-    val state = ScheduleState.fromTask(
-      MaintenanceTask(is_one_time = true, force_due_date = toWireInstant(1_800_000_000)),
-    )
+    val due = LocalDate(2027, 3, 31)
+    val task = MaintenanceTask(is_one_time = true, force_due_date = due.toDueInstant())
+
+    val state = ScheduleState.fromTask(task, today = LocalDate(2027, 3, 1))
 
     assertThat(state.mode).isEqualTo(ScheduleMode.TIME)
     assertThat(state.recurrence).isEqualTo(ScheduleRecurrence.ONE_TIME)
+    // In 30 days.
+    assertThat(state.calValue).isEqualTo("30")
+    assertThat(state.calUnit).isEqualTo(ScheduleTimeUnit.DAYS)
+    // One already past has no "in how long".
+    assertThat(ScheduleState.fromTask(task, today = LocalDate(2027, 4, 2)).calValue).isEmpty()
   }
 
   @Test
