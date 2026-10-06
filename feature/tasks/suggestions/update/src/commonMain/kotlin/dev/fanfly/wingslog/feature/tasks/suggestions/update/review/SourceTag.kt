@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,8 +44,9 @@ internal fun SourceTag(suggestion: TaskSuggestion, onClick: () -> Unit) {
     .filter { it.isNotEmpty() }
     .joinToString(" · ")
     .uppercase()
-  val filled = suggestion.source_kind == TaskSourceKind.TASK_SOURCE_KIND_DOCUMENT ||
-    suggestion.source_kind == TaskSourceKind.TASK_SOURCE_KIND_MANUFACTURER_SCHEDULE
+  val filled =
+    suggestion.source_kind == TaskSourceKind.TASK_SOURCE_KIND_DOCUMENT ||
+      suggestion.source_kind == TaskSourceKind.TASK_SOURCE_KIND_MANUFACTURER_SCHEDULE
   val shape = RoundedCornerShape(Spacing.badgeCornerRadius)
   Text(
     text = text,
@@ -61,7 +62,11 @@ internal fun SourceTag(suggestion: TaskSuggestion, onClick: () -> Unit) {
         if (filled) {
           Modifier.background(MaterialTheme.colorScheme.primaryContainer, shape)
         } else {
-          Modifier.border(Spacing.hairline, MaterialTheme.colorScheme.outline, shape)
+          Modifier.border(
+            Spacing.hairline,
+            MaterialTheme.colorScheme.outline,
+            shape
+          )
         },
       )
       .clickable(onClick = onClick)

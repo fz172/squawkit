@@ -131,6 +131,4 @@
   <string name="task_added">Task added</string>
   <string name="no_tasks_configured">No tasks configured. Add them from the <xliff:g example="aircraft">%1$s</xliff:g> overview to track recurring maintenance.</string>
 
-  <!-- Starter pack (PRD §4.9): the template's recommended schedule, offered once a Thing exists -->
-  <!-- The add form's way into AI suggestions from a manual (task population PRD R3). -->
 </resources>

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

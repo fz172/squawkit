@@ -48,7 +48,7 @@ import wingslog.feature.search.sharedassets.generated.resources.match_reference
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
-import wingslog.feature.tasks.sharedassets.generated.resources.starter_pack_empty_action
+import wingslog.feature.tasks.sharedassets.generated.resources.suggestions_empty_action
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
@@ -59,8 +59,8 @@ fun ComplianceSection(
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
-  /** Offers the template's starter pack from the empty state; null when there is none to offer. */
-  onAddStarterPack: (() -> Unit)? = null,
+  /** Offers the template's curated list from the empty state; null when there is none. */
+  onBrowseSuggestions: (() -> Unit)? = null,
   /** Task to report the on-screen position of, so the tab can scroll it into view. */
   scrollTargetId: String? = null,
   /** Receives the vertical middle of the [scrollTargetId] card, in root coordinates. */
@@ -139,13 +139,13 @@ fun ComplianceSection(
           ),
           description = LocalThingLexicon.current.taskEmptyHint,
           icon = Icons.Default.CheckCircle,
-          actionText = onAddStarterPack?.let {
+          actionText = onBrowseSuggestions?.let {
             stringResource(
-              SharedRes.string.starter_pack_empty_action,
+              SharedRes.string.suggestions_empty_action,
               LocalThingLexicon.current.taskNoun.plural,
             )
           },
-          onActionClick = onAddStarterPack,
+          onActionClick = onBrowseSuggestions,
         )
       } else {
         Text(

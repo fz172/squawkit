@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="starter_pack_screen_title">Suggested <xliff:g example="Tasks">%1$s</xliff:g></string>
-  <string name="starter_pack_suggest">Suggest more <xliff:g example="inspections">%1$s</xliff:g></string>
-  <string name="starter_pack_suggesting">Tailoring these to your <xliff:g example="plane">%1$s</xliff:g>…</string>
+  <string name="suggestions_screen_title">Suggested <xliff:g example="Tasks">%1$s</xliff:g></string>
+  <string name="suggestions_suggest">Suggest more <xliff:g example="inspections">%1$s</xliff:g></string>
+  <string name="suggestions_suggesting">Tailoring these to your <xliff:g example="plane">%1$s</xliff:g>…</string>
   <!-- The model run’s progress (PRD R19), one per pipeline stage key. -->
-  <string name="starter_pack_stage_waiting">Getting ready…</string>
-  <string name="starter_pack_stage_recalling">Looking up the schedule for this <xliff:g example="plane">%1$s</xliff:g>…</string>
-  <string name="starter_pack_stage_reading">Reading <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
-  <string name="starter_pack_stage_finding">Finding the schedule in <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
-  <string name="starter_pack_stage_extracting">Reading the schedule in <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
-  <string name="starter_pack_stage_validating">Checking the suggestions…</string>
-  <string name="starter_pack_stage_other">Preparing suggestions…</string>
-  <string name="starter_pack_checking">Checking for AI suggestions…</string>
+  <string name="suggestions_stage_waiting">Getting ready…</string>
+  <string name="suggestions_stage_recalling">Looking up the schedule for this <xliff:g example="plane">%1$s</xliff:g>…</string>
+  <string name="suggestions_stage_reading">Reading <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
+  <string name="suggestions_stage_finding">Finding the schedule in <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
+  <string name="suggestions_stage_extracting">Reading the schedule in <xliff:g example="Rotax 915 iS MM.pdf">%1$s</xliff:g>…</string>
+  <string name="suggestions_stage_validating">Checking the suggestions…</string>
+  <string name="suggestions_stage_other">Preparing suggestions…</string>
+  <string name="suggestions_checking">Checking for AI suggestions…</string>
   <!-- Where the model’s rows will land while the run works (1c). -->
   <string name="suggestions_coming_documents">From your manuals</string>
   <string name="suggestions_coming_thing">Tailored to this <xliff:g example="plane">%1$s</xliff:g></string>
-  <string name="starter_pack_stage_hint">This can take a few minutes. You can leave and come back.</string>
-  <string name="starter_pack_skipped_until">AI suggestions for this <xliff:g example="plane">%1$s</xliff:g> are available again at <xliff:g example="3:10 PM">%2$s</xliff:g></string>
-  <string name="starter_pack_add_details">Add details</string>
+  <string name="suggestions_stage_hint">This can take a few minutes. You can leave and come back.</string>
+  <string name="suggestions_skipped_until">AI suggestions for this <xliff:g example="plane">%1$s</xliff:g> are available again at <xliff:g example="3:10 PM">%2$s</xliff:g></string>
+  <string name="suggestions_add_details">Add details</string>
   <!-- Suggest, and the manuals picked for it (design §9.3, PRD R6). -->
   <string name="sources_title">Suggest <xliff:g example="tasks">%1$s</xliff:g></string>
   <string name="sources_suggest">Suggest</string>
@@ -59,14 +59,14 @@
   <string name="suggestions_improve_body">Add details such as make and model, or a manual, for tasks specific to this <xliff:g example="aircraft">%1$s</xliff:g>.</string>
   <string name="suggestions_use_manual">Use a manual</string>
   <string name="suggestion_ai_disclosure">Suggestions are drafted by AI from the sources shown on each one. The manufacturer’s documents govern.</string>
-  <string name="starter_pack_edited">Edited</string>
-  <string name="starter_rule_every_days">Every <xliff:g example="30">%1$d</xliff:g> days</string>
-  <string name="starter_rule_every_month">Every month</string>
-  <string name="starter_rule_every_months">Every <xliff:g example="6">%1$d</xliff:g> months</string>
-  <string name="starter_rule_every_year">Every year</string>
-  <string name="starter_rule_every_years">Every <xliff:g example="2">%1$d</xliff:g> years</string>
-  <string name="starter_rule_every_meter">Every <xliff:g example="5,000">%1$s</xliff:g> <xliff:g example="mi">%2$s</xliff:g></string>
-  <string name="starter_rule_either"><xliff:g example="Every 5,000 mi">%1$s</xliff:g> or <xliff:g example="every 6 months">%2$s</xliff:g></string>
+  <string name="suggestions_edited">Edited</string>
+  <string name="suggestion_rule_every_days">Every <xliff:g example="30">%1$d</xliff:g> days</string>
+  <string name="suggestion_rule_every_month">Every month</string>
+  <string name="suggestion_rule_every_months">Every <xliff:g example="6">%1$d</xliff:g> months</string>
+  <string name="suggestion_rule_every_year">Every year</string>
+  <string name="suggestion_rule_every_years">Every <xliff:g example="2">%1$d</xliff:g> years</string>
+  <string name="suggestion_rule_every_meter">Every <xliff:g example="5,000">%1$s</xliff:g> <xliff:g example="mi">%2$s</xliff:g></string>
+  <string name="suggestion_rule_either"><xliff:g example="Every 5,000 mi">%1$s</xliff:g> or <xliff:g example="every 6 months">%2$s</xliff:g></string>
   <!-- One per AiErrorCode (design §5.7, PRD R21). -->
   <string name="ai_error_sign_in_required">Sign in to get suggestions</string>
   <string name="ai_error_disabled">Suggestions are turned off for now. Try again later.</string>

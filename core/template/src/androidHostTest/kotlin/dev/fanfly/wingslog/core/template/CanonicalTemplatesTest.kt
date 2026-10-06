@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ScheduleType
@@ -269,8 +268,7 @@ class CanonicalTemplatesTest {
   }
 
   /**
-   * PRD §4.9: every preset but `custom` ships a starter pack, and what it ships is something the
-   * task form could have produced. `structuralProblems` is the same check the client runs on a
+   * PRD §4.9: what every preset ships is something the task form could have produced. `structuralProblems` is the same check the client runs on a
    * fetched template; this is what makes sure the baked-in ones would pass it too.
    */
   /**

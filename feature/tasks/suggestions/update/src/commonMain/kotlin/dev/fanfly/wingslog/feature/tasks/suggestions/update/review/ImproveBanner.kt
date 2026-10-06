@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +29,7 @@ import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_improve_body
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_improve_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_use_manual
@@ -78,7 +78,7 @@ internal fun ImproveBanner(onAddDetails: () -> Unit, onUseManual: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
         OutlinedButton(onClick = onAddDetails) {
-          Text(stringResource(Res.string.starter_pack_add_details))
+          Text(stringResource(Res.string.suggestions_add_details))
         }
         TextButton(onClick = onUseManual) {
           Icon(

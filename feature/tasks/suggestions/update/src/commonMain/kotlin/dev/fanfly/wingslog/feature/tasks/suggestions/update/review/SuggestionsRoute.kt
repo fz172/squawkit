@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,10 +70,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_ai_disclosure
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_checking
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_screen_title
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_suggest
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
@@ -84,9 +84,9 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun StarterPackRoute(
+fun SuggestionsRoute(
   navController: NavController,
-  viewModel: StarterPackViewModel = koinViewModel(),
+  viewModel: SuggestionsViewModel = koinViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -170,7 +170,7 @@ fun StarterPackRoute(
         ConstrainedTopBar(ContentWidth.Form) {
           WingsLogTopAppBar(
             title = stringResource(
-              Res.string.starter_pack_screen_title,
+              Res.string.suggestions_screen_title,
               LexiconFormatter.titleCasePlural(taskNoun),
             ),
             onBackClick = { viewModel.onSkip() },
@@ -220,7 +220,7 @@ fun StarterPackRoute(
             val leaveFor = { route: String ->
               viewModel.onAddDetails()
               navController.navigate(route) {
-                popUpTo(Screen.StarterPack.route) { inclusive = true }
+                popUpTo(Screen.Suggestions.route) { inclusive = true }
               }
             }
             ImproveBanner(
@@ -258,7 +258,7 @@ fun StarterPackRoute(
                 strokeWidth = 2.dp
               )
               Text(
-                text = stringResource(Res.string.starter_pack_checking),
+                text = stringResource(Res.string.suggestions_checking),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
               )
@@ -295,7 +295,7 @@ fun StarterPackRoute(
                 )
                 Text(
                   stringResource(
-                    Res.string.starter_pack_suggest,
+                    Res.string.suggestions_suggest,
                     LexiconFormatter.plural(taskNoun)
                   )
                 )

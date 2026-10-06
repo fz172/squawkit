@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,14 +28,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.SuggestionItem
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_edited
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_more_options
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_clear
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_edited
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_group_count
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_select_all
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -59,7 +59,12 @@ internal fun SuggestionGroupHeader(
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
-      text = stringResource(Res.string.suggestions_group_count, title, selected, total).uppercase(),
+      text = stringResource(
+        Res.string.suggestions_group_count,
+        title,
+        selected,
+        total
+      ).uppercase(),
       style = MaterialTheme.typography.labelSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.weight(1f),
@@ -99,7 +104,7 @@ internal fun SuggestionGroupHeader(
  */
 @Composable
 internal fun SuggestionRow(
-  item: StarterPackItem,
+  item: SuggestionItem,
   template: ThingTemplate?,
   wide: Boolean,
   enabled: Boolean,
@@ -112,7 +117,8 @@ internal fun SuggestionRow(
 ) {
   val edited = item.edited
   val title = edited?.title ?: item.suggestion.title
-  val rule = ruleText(edited?.rules ?: item.suggestion.rules, template)?.uppercase()
+  val rule =
+    ruleText(edited?.rules ?: item.suggestion.rules, template)?.uppercase()
   val description = edited?.notes ?: item.suggestion.description
   Row(
     modifier = Modifier
@@ -129,7 +135,12 @@ internal fun SuggestionRow(
         onClickLabel = stringResource(CoreRes.string.edit),
         onClick = { onExpandedChange(!expanded) },
       )
-      .padding(start = Spacing.large, end = Spacing.small, top = 14.dp, bottom = 14.dp),
+      .padding(
+        start = Spacing.large,
+        end = Spacing.small,
+        top = 14.dp,
+        bottom = 14.dp
+      ),
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
     // The box alone picks the row, centred on the title's first line; its touch target spills
@@ -172,7 +183,12 @@ internal fun SuggestionRow(
         )
       }
       if (!wide) {
-        Tags(item, edited != null, onSource, Modifier.padding(top = Spacing.extraSmall))
+        Tags(
+          item,
+          edited != null,
+          onSource,
+          Modifier.padding(top = Spacing.extraSmall)
+        )
       }
       if (expanded) {
         Text(
@@ -180,7 +196,11 @@ internal fun SuggestionRow(
           style = MaterialTheme.typography.labelLarge,
           color = MaterialTheme.colorScheme.primary,
           modifier = Modifier
-            .clickable(enabled = enabled, role = Role.Button, onClick = onMoreOptions)
+            .clickable(
+              enabled = enabled,
+              role = Role.Button,
+              onClick = onMoreOptions
+            )
             .padding(vertical = Spacing.small),
         )
       }
@@ -220,7 +240,7 @@ private fun RuleLine(rule: String) {
 /** The source tag, and *Edited* once the user has changed the suggestion (R28). */
 @Composable
 private fun Tags(
-  item: StarterPackItem,
+  item: SuggestionItem,
   edited: Boolean,
   onSource: () -> Unit,
   modifier: Modifier = Modifier,
@@ -233,7 +253,7 @@ private fun Tags(
     SourceTag(item.suggestion, onSource)
     if (edited) {
       Text(
-        text = stringResource(Res.string.starter_pack_edited).uppercase(),
+        text = stringResource(Res.string.suggestions_edited).uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

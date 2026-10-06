@@ -458,7 +458,7 @@ class TaskViewModel(
           notes = notes,
           attachments = attachments,
           // The form does not show where a task came from, so an edit keeps it (PRD R35): the card
-          // is rebuilt from the form, and without this every edit would erase a starter or AI
+          // is rebuilt from the form, and without this every edit would erase a curated or AI
           // task's origin.
           origin = storedTask(cardId)?.origin,
         )

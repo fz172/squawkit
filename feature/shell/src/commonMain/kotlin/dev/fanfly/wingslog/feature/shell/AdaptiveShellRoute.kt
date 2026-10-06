@@ -38,9 +38,9 @@ import dev.fanfly.wingslog.feature.thing.update.picker.PickThingTypeSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.dismiss
 import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The adaptive-shell destination body shared by every host: wires [AdaptiveShellViewModel]
@@ -146,7 +146,7 @@ fun AdaptiveShellRoute(
     // A finished suggestion run (PRD R20): its screen, in the default mode, which shows the held
     // answer and never starts a model run from a tap.
     if (target is NotificationTapTarget.Suggestions) {
-      navController.navigate(Screen.StarterPack.createRoute(target.thingId))
+      navController.navigate(Screen.Suggestions.createRoute(target.thingId))
     }
   }
   val scrollTargetId by viewModel.pendingScrollTargetId.collectAsStateWithLifecycle()

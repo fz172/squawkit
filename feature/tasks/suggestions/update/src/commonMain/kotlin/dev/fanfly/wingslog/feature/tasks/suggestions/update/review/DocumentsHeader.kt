@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,29 +35,35 @@ internal fun DocumentsHeader(documents: List<IdentifiedDocument>) {
     Text(
       text = stringResource(
         Res.string.review_documents_from,
-        documents.map { it.label() }.joinToString(" · "),
+        documents.map { it.label() }
+          .joinToString(" · "),
       ),
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    documents.filterNot { it.matches_thing }.forEach { document ->
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-      ) {
-        Icon(
-          Icons.Outlined.WarningAmber,
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.error,
-          modifier = Modifier.size(Spacing.large),
-        )
-        Text(
-          text = stringResource(Res.string.review_document_mismatch, document.name, thing),
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.error,
-        )
+    documents.filterNot { it.matches_thing }
+      .forEach { document ->
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        ) {
+          Icon(
+            Icons.Outlined.WarningAmber,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(Spacing.large),
+          )
+          Text(
+            text = stringResource(
+              Res.string.review_document_mismatch,
+              document.name,
+              thing
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+          )
+        }
       }
-    }
   }
 }
 
@@ -65,7 +71,11 @@ internal fun DocumentsHeader(documents: List<IdentifiedDocument>) {
 @Composable
 private fun IdentifiedDocument.label(): String {
   val title = displayTitle()
-  return if (revision.isBlank()) title else stringResource(Res.string.review_document_revision, title, revision)
+  return if (revision.isBlank()) title else stringResource(
+    Res.string.review_document_revision,
+    title,
+    revision
+  )
 }
 
 /** The title the run read in the document, else the file's own name. */

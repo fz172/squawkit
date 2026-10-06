@@ -28,8 +28,8 @@ kotlin {
   iosArm64()
   iosSimulatorArm64()
 
-  // The suggestions screen (design §3, §9): today the template's starter pack, moved here from
-  // feature:tasks:update; the AI review joins it in phase C.
+  // The suggestions screen (design §3, §9) and the Add Tasks sheet: the server's curated list and
+  // the AI review.
   sourceSets {
     commonMain.dependencies {
       implementation(project(":feature:tasks:suggestions:model"))

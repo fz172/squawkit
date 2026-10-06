@@ -1,14 +1,14 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.SuggestionItem
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import org.junit.Test
 
 class CardGroupsTest {
 
   private fun card(title: String, slot: String) =
-    StarterPackItem(
+    SuggestionItem(
       suggestion = TaskSuggestion(
         title = title,
         component_slot_key = slot

@@ -128,14 +128,14 @@ data class ThingCreated(
 }
 
 /**
- * Starter tasks were shown for a new Thing. The denominator of the §13 ≥60% acceptance target —
- * without it, a low [StarterTasksAccepted] count cannot be told apart from packs never offered.
+ * Suggested tasks were shown for a Thing. The denominator of the §13 ≥60% acceptance target —
+ * without it, a low [SuggestedTasksAccepted] count cannot be told apart from packs never offered.
  */
-data class StarterTasksOffered(
+data class SuggestedTasksOffered(
   override val templateId: String,
   val taskCount: Int,
 ) : ThingScopedEvent {
-  override val name = Name.STARTER_TASKS_OFFERED
+  override val name = Name.SUGGESTED_TASKS_OFFERED
   override val params = mapOf(
     Param.TEMPLATE_ID to templateId,
     Param.TASK_COUNT to taskCount.toString(),
@@ -143,14 +143,14 @@ data class StarterTasksOffered(
 }
 
 /**
- * At least one starter task was kept. The numerator of the §13 ≥60% target; [taskCount] is how many
+ * At least one suggested task was kept. The numerator of the §13 ≥60% target; [taskCount] is how many
  * of the offered set survived.
  */
-data class StarterTasksAccepted(
+data class SuggestedTasksAccepted(
   override val templateId: String,
   val taskCount: Int,
 ) : ThingScopedEvent {
-  override val name = Name.STARTER_TASKS_ACCEPTED
+  override val name = Name.SUGGESTED_TASKS_ACCEPTED
   override val params = mapOf(
     Param.TEMPLATE_ID to templateId,
     Param.TASK_COUNT to taskCount.toString(),
@@ -387,7 +387,7 @@ object DataLogBuckets {
 
 /**
  * The user asked the model for suggestions (PRD R50): *Suggest* on the Add Tasks sheet (`add`), or
- * *Suggest more* on the curated list. Not the curated-only list, which `StarterTasksOffered`
+ * *Suggest more* on the curated list. Not the curated-only list, which `SuggestedTasksOffered`
  * counts. [entryPoint] is where it was asked from.
  */
 data class TaskSuggestionsRequested(

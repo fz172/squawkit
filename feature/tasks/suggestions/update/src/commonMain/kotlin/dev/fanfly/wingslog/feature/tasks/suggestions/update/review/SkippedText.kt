@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.ai.AiErrorCode
@@ -11,7 +11,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skipped_until
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_skipped_until
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -25,7 +25,7 @@ fun AiSkipped.text(): String {
   val next = nextAvailableAt
   if (reason != AiErrorCode.DAILY_LIMIT || next == null) return reason.message()
   return stringResource(
-    Res.string.starter_pack_skipped_until,
+    Res.string.suggestions_skipped_until,
     LocalThingLexicon.current.thingNoun.singular,
     next.toDisplayWhen(Clock.System.now()),
   )

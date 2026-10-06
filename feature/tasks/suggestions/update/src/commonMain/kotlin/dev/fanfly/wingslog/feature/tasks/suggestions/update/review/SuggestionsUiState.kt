@@ -1,24 +1,24 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
-import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiSkipped
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.GenericLexicon
-import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.SuggestionItem
 import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
 
-data class StarterPackUiState(
+data class SuggestionsUiState(
   /**
-   * How the screen was opened ([SuggestionsMode]): `starter` from the empty list or a finished
+   * How the screen was opened ([SuggestionsMode]): `curated` from the empty list or a finished
    * run's push, `add` from the Add Tasks sheet's *Suggest*, which starts the model run at once.
    */
-  val mode: SuggestionsMode = SuggestionsMode.STARTER,
+  val mode: SuggestionsMode = SuggestionsMode.CURATED,
   val isLoading: Boolean = true,
   val template: ThingTemplate? = null,
   val lexicon: Lexicon = GenericLexicon.LEXICON,
-  val items: List<StarterPackItem> = emptyList(),
+  val items: List<SuggestionItem> = emptyList(),
   /**
    * What the run made of each document it read, for the review header: what it is, and whether it
    * looks like it is for this Thing (design §9.5).

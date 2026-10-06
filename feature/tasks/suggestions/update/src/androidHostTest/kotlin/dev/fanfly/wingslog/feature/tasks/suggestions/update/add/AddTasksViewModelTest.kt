@@ -17,7 +17,7 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.DocumentProblem
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.DocumentProblem
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
@@ -90,7 +90,12 @@ class AddTasksViewModelTest {
   ).also { store.put("add", it) }
 
   private fun picked(name: String, mime: String = "application/pdf") =
-    PickedFile(uri = "file://$name", name = name, mimeType = mime, sizeBytes = 1_000)
+    PickedFile(
+      uri = "file://$name",
+      name = name,
+      mimeType = mime,
+      sizeBytes = 1_000
+    )
 
   private fun storing(vararg names: String) {
     names.forEach { name ->
@@ -180,7 +185,11 @@ class AddTasksViewModelTest {
       Attachment(id = "blob-LM.pdf", name = "LM.pdf"),
     )
     assertThat(route).isEqualTo(
-      Screen.StarterPack.createRoute(THING_ID, SuggestionsMode.ADD, manuals.toDocumentsArg()),
+      Screen.Suggestions.createRoute(
+        THING_ID,
+        SuggestionsMode.ADD,
+        manuals.toDocumentsArg()
+      ),
     )
     // The run lets them go from now on, not the sheet.
     store.clear()
@@ -193,22 +202,23 @@ class AddTasksViewModelTest {
     val vm = viewModel()
     advanceUntilIdle()
 
-    assertThat(vm.onSuggest()).isEqualTo("starter_pack/$THING_ID?mode=add")
+    assertThat(vm.onSuggest()).isEqualTo("suggestions/$THING_ID?mode=add")
   }
 
   @Test
-  fun atTheDailyLimitSuggestOpensTheCuratedListAndSaysWhen() = runTest(dispatcher) {
-    val back = Instant.fromEpochMilliseconds(9_000)
-    allowing(AiEligibility(false, AiErrorCode.DAILY_LIMIT, true, back))
+  fun atTheDailyLimitSuggestOpensTheCuratedListAndSaysWhen() =
+    runTest(dispatcher) {
+      val back = Instant.fromEpochMilliseconds(9_000)
+      allowing(AiEligibility(false, AiErrorCode.DAILY_LIMIT, true, back))
 
-    val vm = viewModel()
-    advanceUntilIdle()
+      val vm = viewModel()
+      advanceUntilIdle()
 
-    assertThat(vm.uiState.value.sources.blocked).isEqualTo(AiErrorCode.DAILY_LIMIT)
-    assertThat(vm.uiState.value.sources.availableAt).isEqualTo(back)
-    assertThat(vm.uiState.value.showsManuals).isFalse()
-    assertThat(vm.onSuggest()).isEqualTo("starter_pack/$THING_ID")
-  }
+      assertThat(vm.uiState.value.sources.blocked).isEqualTo(AiErrorCode.DAILY_LIMIT)
+      assertThat(vm.uiState.value.sources.availableAt).isEqualTo(back)
+      assertThat(vm.uiState.value.showsManuals).isFalse()
+      assertThat(vm.onSuggest()).isEqualTo("suggestions/$THING_ID")
+    }
 
   @Test
   fun closingWithoutSuggestingLetsTheManualsGo() = runTest(dispatcher) {
@@ -221,7 +231,14 @@ class AddTasksViewModelTest {
     store.clear()
     advanceUntilIdle()
 
-    coVerify { attachments.release(Attachment(id = "blob-MM.pdf", name = "MM.pdf"), null) }
+    coVerify {
+      attachments.release(
+        Attachment(
+          id = "blob-MM.pdf",
+          name = "MM.pdf"
+        ), null
+      )
+    }
   }
 
   @Test
@@ -236,14 +253,26 @@ class AddTasksViewModelTest {
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.sources.documents).isEmpty()
-    coVerify { attachments.release(Attachment(id = "blob-MM.pdf", name = "MM.pdf"), null) }
+    coVerify {
+      attachments.release(
+        Attachment(
+          id = "blob-MM.pdf",
+          name = "MM.pdf"
+        ), null
+      )
+    }
   }
 
   @Test
   fun aPickIsCheckedForTypeSizeAndCount() = runTest(dispatcher) {
     storing("a.pdf", "b.pdf", "c.pdf", "d.pdf")
     coEvery {
-      attachments.addPickedFile(THING_ID, match { it.name == "big.pdf" }, "big.pdf", any())
+      attachments.addPickedFile(
+        THING_ID,
+        match { it.name == "big.pdf" },
+        "big.pdf",
+        any()
+      )
     } throws FileTooLargeException(1)
     val vm = viewModel()
     advanceUntilIdle()
@@ -256,7 +285,14 @@ class AddTasksViewModelTest {
     advanceUntilIdle()
     assertThat(vm.uiState.value.sources.problem).isEqualTo(DocumentProblem.TOO_LARGE)
 
-    vm.onAddDocuments(listOf(picked("a.pdf"), picked("b.pdf"), picked("c.pdf"), picked("d.pdf")))
+    vm.onAddDocuments(
+      listOf(
+        picked("a.pdf"),
+        picked("b.pdf"),
+        picked("c.pdf"),
+        picked("d.pdf")
+      )
+    )
     advanceUntilIdle()
     assertThat(vm.uiState.value.sources.documents).hasSize(3)
     assertThat(vm.uiState.value.sources.problem).isEqualTo(DocumentProblem.TOO_MANY)

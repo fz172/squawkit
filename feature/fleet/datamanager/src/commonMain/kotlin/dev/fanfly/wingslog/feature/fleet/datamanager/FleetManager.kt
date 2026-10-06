@@ -28,7 +28,7 @@ interface FleetManager {
   /**
    * Writes [thing], creating it when it has no id. Returns the Thing as written — id assigned and
    * DNA inflated — because a create is the one place the caller cannot know either beforehand,
-   * and the starter-pack hand-off (PRD §4.9) needs both.
+   * and the suggestions hand-off (PRD §4.9) needs both.
    */
   suspend fun updateThing(thing: Thing): Result<Thing>
 

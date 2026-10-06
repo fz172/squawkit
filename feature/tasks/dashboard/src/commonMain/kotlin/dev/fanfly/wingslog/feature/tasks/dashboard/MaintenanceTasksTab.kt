@@ -39,10 +39,10 @@ import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.math.roundToInt
 import wingslog.feature.tasks.dashboard.generated.resources.Res
 import wingslog.feature.tasks.dashboard.generated.resources.tasks_added
 import wingslog.feature.tasks.dashboard.generated.resources.undo
+import kotlin.math.roundToInt
 
 @Composable
 fun MaintenanceTasksTab(
@@ -151,7 +151,7 @@ fun MaintenanceTasksTab(
       ReadySuggestionsCard(
         ready = ready,
         // The default mode shows the held answer rather than starting a run (R19).
-        onReview = { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) },
+        onReview = { onAction(ThingOverviewAction.BrowseSuggestionsClick(state.thing.id)) },
       )
     }
     val isEmpty = state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
@@ -167,10 +167,10 @@ fun MaintenanceTasksTab(
       onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
       // "Can add it later from an empty Tasks tab" (PRD §4.9): only while the tab is empty in
       // both sub-views, and only for a template the server keeps a curated list for.
-      onAddStarterPack = if (isEmpty && hasCuratedList) {
+      onBrowseSuggestions = if (isEmpty && hasCuratedList) {
         browseSuggestedAction(
           entry = suggestEntry,
-          browse = { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) },
+          browse = { onAction(ThingOverviewAction.BrowseSuggestionsClick(state.thing.id)) },
           signIn = onLinkAccount,
         )
       } else null,
@@ -245,7 +245,8 @@ private fun AddedSnackbar(viewModel: AddedTasksViewModel) {
   LaunchedEffect(message) {
     if (message == null) return@LaunchedEffect
     viewModel.onAnnounced()
-    val result = snackbarHostState.showSnackbar(message = message, actionLabel = undo)
+    val result =
+      snackbarHostState.showSnackbar(message = message, actionLabel = undo)
     if (result == SnackbarResult.ActionPerformed) viewModel.onUndo()
   }
 }

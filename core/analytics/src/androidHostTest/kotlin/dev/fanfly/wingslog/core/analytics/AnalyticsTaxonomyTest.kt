@@ -213,10 +213,23 @@ class AnalyticsTaxonomyTest {
   @Test
   fun suggestionLatencyIsBucketed() {
     assertThat(listOf(3L, 40L, 200L, 900L).map(SuggestionBuckets::latency))
-      .containsExactly("0-10s", "10-60s", "1-5m", "5m+").inOrder()
-    assertThat(TaskSuggestionsShown("home", 1, 2, latencySeconds = 75).toParams())
+      .containsExactly("0-10s", "10-60s", "1-5m", "5m+")
+      .inOrder()
+    assertThat(
+      TaskSuggestionsShown(
+        "home",
+        1,
+        2,
+        latencySeconds = 75
+      ).toParams()
+    )
       .containsExactlyEntriesIn(
-        mapOf("template_id" to "home", "curated_count" to "1", "ai_count" to "2", "latency_bucket" to "1-5m"),
+        mapOf(
+          "template_id" to "home",
+          "curated_count" to "1",
+          "ai_count" to "2",
+          "latency_bucket" to "1-5m"
+        ),
       )
   }
 
@@ -224,13 +237,30 @@ class AnalyticsTaxonomyTest {
   fun everyThingScopedEventCarriesTemplateId() {
     val events: List<ThingScopedEvent> = listOf(
       ThingCreated(templateId = "airplane", source = "picker"),
-      StarterTasksOffered(templateId = "airplane", taskCount = 5),
-      StarterTasksAccepted(templateId = "airplane", taskCount = 3),
-      TaskSuggestionsRequested(templateId = "airplane", entryPoint = "suggest", documentCount = 0),
-      TaskSuggestionsShown(templateId = "airplane", curatedCount = 6, aiCount = 4, latencySeconds = 95),
-      TaskSuggestionsAccepted(templateId = "airplane", curatedCount = 2, aiCount = 3),
+      SuggestedTasksOffered(templateId = "airplane", taskCount = 5),
+      SuggestedTasksAccepted(templateId = "airplane", taskCount = 3),
+      TaskSuggestionsRequested(
+        templateId = "airplane",
+        entryPoint = "suggest",
+        documentCount = 0
+      ),
+      TaskSuggestionsShown(
+        templateId = "airplane",
+        curatedCount = 6,
+        aiCount = 4,
+        latencySeconds = 95
+      ),
+      TaskSuggestionsAccepted(
+        templateId = "airplane",
+        curatedCount = 2,
+        aiCount = 3
+      ),
       TaskSuggestionsFailed(templateId = "airplane", reason = "unavailable"),
-      TaskOriginEdited(templateId = "airplane", originKind = "ai_thing", fieldGroup = "schedule"),
+      TaskOriginEdited(
+        templateId = "airplane",
+        originKind = "ai_thing",
+        fieldGroup = "schedule"
+      ),
       TaskCompleted(templateId = "airplane"),
       DefectCreated(templateId = "airplane"),
       LogCreated(templateId = "airplane"),
@@ -320,7 +350,10 @@ class AnalyticsTaxonomyTest {
     analytics.log(ThingCreated(templateId = "bicycle", source = "picker"))
 
     assertThat(recorded).containsExactly(
-      RecordedEvent("thing_created", mapOf("template_id" to "bicycle", "source" to "picker"))
+      RecordedEvent(
+        "thing_created",
+        mapOf("template_id" to "bicycle", "source" to "picker")
+      )
     )
   }
 }

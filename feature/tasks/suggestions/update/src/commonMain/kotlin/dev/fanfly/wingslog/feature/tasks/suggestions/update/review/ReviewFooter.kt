@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,7 +51,10 @@ internal fun ReviewFooter(
 ) {
   val taskNoun = LocalThingLexicon.current.taskNoun
   val label = if (selected == 0) {
-    stringResource(Res.string.suggestions_select_to_add, LexiconFormatter.plural(taskNoun))
+    stringResource(
+      Res.string.suggestions_select_to_add,
+      LexiconFormatter.plural(taskNoun)
+    )
   } else {
     stringResource(
       Res.string.suggestions_add_count,
@@ -74,7 +77,10 @@ internal fun ReviewFooter(
         Row(
           modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.extraLarge, vertical = Spacing.medium),
+            .padding(
+              horizontal = Spacing.extraLarge,
+              vertical = Spacing.medium
+            ),
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
@@ -86,7 +92,10 @@ internal fun ReviewFooter(
           )
           if (selected > 0) {
             Text(
-              text = stringResource(Res.string.suggestions_selected_count, selected),
+              text = stringResource(
+                Res.string.suggestions_selected_count,
+                selected
+              ),
               style = MaterialTheme.typography.bodyMedium,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -137,9 +146,16 @@ private fun AddButton(
     modifier = modifier,
   ) {
     if (isSaving) {
-      CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+      CircularProgressIndicator(
+        modifier = Modifier.size(20.dp),
+        strokeWidth = 2.dp
+      )
     } else if (selected > 0) {
-      Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+      Icon(
+        Icons.Default.Add,
+        contentDescription = null,
+        modifier = Modifier.size(20.dp)
+      )
     }
     if (isSaving || selected > 0) Spacer(Modifier.width(Spacing.small))
     Text(label, maxLines = 1)
