@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -33,7 +34,7 @@ internal sealed interface IntervalEdit {
 }
 
 /**
- * The row's intervals, open to change in place (1d): "Every hrs 50.0", "Or months 12". One field
+ * The row's intervals, open to change in place (1d): "Every hrs 50", "Or months 12". One field
  * per rule that has a number; a seasonal or on-condition rule has none to change here.
  */
 @Composable
@@ -67,7 +68,8 @@ internal fun IntervalFields(
           Res.string.suggestion_field_every,
           template.meter(meter.meter_key)?.unit_label ?: meter.meter_key,
         ),
-        initial = meter.interval.toString(),
+        initial = meter.interval.toFieldText(),
+        max = MAX_METER_INTERVAL,
         decimal = true,
         enabled = enabled,
         onNumber = { onInterval(IntervalEdit.Meter(it.toFloat())) },
@@ -78,6 +80,7 @@ internal fun IntervalFields(
       NumberField(
         label = stringResource(calendarLabel, calendarUnit),
         initial = days.toString(),
+        max = MAX_DAYS,
         decimal = false,
         enabled = enabled,
         onNumber = { onInterval(IntervalEdit.Days(it.toInt())) },
@@ -87,6 +90,7 @@ internal fun IntervalFields(
       NumberField(
         label = stringResource(calendarLabel, calendarUnit),
         initial = months.toString(),
+        max = MAX_MONTHS,
         decimal = false,
         enabled = enabled,
         onNumber = { onInterval(IntervalEdit.Months(it.toInt())) },
@@ -97,27 +101,32 @@ internal fun IntervalFields(
 }
 
 /**
- * A field for one number, in mono. What is typed stays as typed; each value that reads as a
- * positive number is passed on.
+ * A field for one number, in mono. Each value that reads as a number above zero and up to [max] is
+ * passed on. Anything else (nothing, zero, too large) is marked as an error and passed nowhere,
+ * and leaving the field puts back the last number passed on, so the field never shows something
+ * other than what the row will add.
  */
 @Composable
 private fun NumberField(
   label: String,
   initial: String,
+  max: Double,
   decimal: Boolean,
   enabled: Boolean,
   onNumber: (Double) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var text by remember { mutableStateOf(initial) }
+  var lastValid by remember { mutableStateOf(initial) }
   OutlinedTextField(
     value = text,
     onValueChange = { typed ->
       val kept = typed.filter { it.isDigit() || (decimal && it == '.') }
       text = kept
-      kept.toDoubleOrNull()
-        ?.takeIf { it > 0 }
-        ?.let(onNumber)
+      parseInterval(kept, max)?.let {
+        lastValid = kept
+        onNumber(it)
+      }
     },
     label = {
       Text(
@@ -128,9 +137,27 @@ private fun NumberField(
     textStyle = WingslogTypography.dataMedium,
     singleLine = true,
     enabled = enabled,
+    isError = parseInterval(text, max) == null,
     keyboardOptions = KeyboardOptions(
       keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number,
     ),
-    modifier = modifier,
+    modifier = modifier.onFocusChanged {
+      if (!it.isFocused && parseInterval(text, max) == null) text = lastValid
+    },
   )
 }
+
+/** The number [text] reads as, when it is above zero and no more than [max]; null otherwise. */
+internal fun parseInterval(text: String, max: Double): Double? =
+  text.toDoubleOrNull()?.takeIf { it > 0 && it <= max }
+
+/** 50.0 → "50", 7.5 → "7.5": a meter interval as the field shows it, with no stray ".0". */
+internal fun Float.toFieldText(): String {
+  val whole = toLong()
+  return if (this == whole.toFloat()) whole.toString() else toString()
+}
+
+/** The most an interval field takes: a century, or a meter no Thing reaches. */
+internal const val MAX_MONTHS = 1_200.0
+internal const val MAX_DAYS = 36_500.0
+internal const val MAX_METER_INTERVAL = 1_000_000.0
