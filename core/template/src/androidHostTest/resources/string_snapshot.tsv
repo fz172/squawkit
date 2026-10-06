@@ -902,6 +902,9 @@ feature/dashboard/host	degraded_reload	Reload
 feature/dashboard/host	degraded_stored_details	Stored details
 feature/dashboard/host	degraded_title	Needs a newer version of the app
 feature/dashboard/host	degraded_update	Update the app
+feature/dashboard/host	meter_reading_field	Current reading
+feature/dashboard/host	meter_reading_lower_warning	Lower than the current reading, %1$s.
+feature/dashboard/host	meter_reading_update	Update reading
 feature/dashboard/host	overview_all_logs	All logs
 feature/dashboard/host	overview_meters	Meters
 feature/dashboard/host	overview_meters_as_of	as of %1$s

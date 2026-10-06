@@ -11,6 +11,13 @@ sealed interface ThingOverviewAction {
   data class ManageAccessClick(val thingId: String) : ThingOverviewAction
   data object DeleteConfirm : ThingOverviewAction
   data class AddLogClick(val thingId: String) : ThingOverviewAction
+
+  /**
+   * A meter’s reading was set by hand on the data card (#1368). [value] may be lower than the
+   * current one: the dialog warns about that and lets it through.
+   */
+  data class SetMeterReading(val meterKey: String, val value: Double) :
+    ThingOverviewAction
   data class EditLogClick(val thingId: String, val logId: String) :
     ThingOverviewAction
 

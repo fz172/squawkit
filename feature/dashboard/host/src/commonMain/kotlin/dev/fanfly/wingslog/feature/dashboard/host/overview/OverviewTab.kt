@@ -73,6 +73,13 @@ fun OverviewTab(
       ThingDataCard(
         state.thing,
         stats = state.logStats,
+        // Open to every member, technicians included: whoever can write a log can already move a
+        // reading, so setting one directly is no new power (#1368).
+        onSetReading = onMutationAction?.let { act ->
+          { meterKey, value ->
+            act(ThingOverviewAction.SetMeterReading(meterKey, value))
+          }
+        },
         // Edit + Manage Access are owner-only; technicians get a read-only thing card (§6.3).
         onEditClick = manageAction(state, onMutationAction) {
           ThingOverviewAction.EditClick(state.thing.id)

@@ -7,17 +7,19 @@ data class LogStats(
   val airframe: Long,
   val engine: Long,
   val propeller: Long,
-  /** Current value per meter key, from `MaintenanceOverview.current` (#730). */
+  /**
+   * Current value per meter key: the most recent of the logs’ readings and the one set by hand on
+   * this card, if any (#1368).
+   */
   val readings: Map<String, Double> = emptyMap(),
-  /** Date of the newest log that recorded any of [readings]; null when none has. */
+  /** The newest day any of [readings] was taken, by a log or by hand; null when there are none. */
   val readingsAsOf: LocalDate? = null,
 ) {
   /**
    * The current reading for a meter key, or null when nothing has recorded one.
    *
-   * Reads whatever the overview holds. It used to map three aviation fields by name, so a car's
-   * odometer had no answer to give and the dashboard drew a dash — now every declared meter lands
-   * in `MaintenanceOverview.current` and this is a lookup (#730).
+   * It used to map three aviation fields by name, so a car's odometer had no answer to give and
+   * the dashboard drew a dash — now every declared meter is keyed and this is a lookup (#730).
    *
    * Null rather than 0.0 on purpose: a meter nobody has recorded is not a meter reading zero.
    */
