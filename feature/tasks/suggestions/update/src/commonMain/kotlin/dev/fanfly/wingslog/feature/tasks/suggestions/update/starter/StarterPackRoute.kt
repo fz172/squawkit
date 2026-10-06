@@ -52,50 +52,37 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.slotLabel
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.form.BottomButtons
-import dev.fanfly.wingslog.core.ui.grouped.GroupedCheckboxRow
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
+import dev.fanfly.wingslog.core.ui.layout.LayoutTier
+import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
-import dev.fanfly.wingslog.task.InspectionRule
-import dev.fanfly.wingslog.task.MaintenanceTask
-import dev.fanfly.wingslog.task.TimeRule
-import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.add
-import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_edited
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_either
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_days
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_meter
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_month
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_months
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_year
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_rule_every_years
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_ai_disclosure
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
@@ -336,63 +323,40 @@ fun StarterPackRoute(
             }
           }
           if (uiState.isSuggesting) SuggestingNote(uiState.stage, uiState.stageArg)
-          val groups = groupsOf(uiState.items)
-          groups.forEach { group ->
-            // Headed only when there is more than one group to tell apart (PRD R25).
-            if (groups.size > 1) {
-              Text(
-                text = if (group.slotKey.isEmpty()) {
-                  LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun)
-                } else {
-                  uiState.template.slotLabel(
-                    group.slotKey,
-                    ifAbsent = group.slotKey
-                  )
-                },
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-            }
+          val wide = LocalLayoutTier.current != LayoutTier.COMPACT
+          groupsOf(uiState.items).forEach { group ->
+            // Every section is headed: its count and *Select all* are worth having for one too.
+            SuggestionGroupHeader(
+              title = if (group.slotKey.isEmpty()) {
+                LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun)
+              } else {
+                uiState.template.slotLabel(group.slotKey, ifAbsent = group.slotKey)
+              },
+              selected = group.cards.count { it.value.selected },
+              total = group.cards.size,
+              enabled = !uiState.isSaving,
+              onToggleAll = { viewModel.onToggleGroup(group.slotKey) },
+            )
             GroupedRowGroup(
+              dividerStartInset = 52.dp,
               rows = group.cards.map { (index, item) ->
                 {
-                  val edited = item.edited
-                  GroupedCheckboxRow(
-                    title = edited?.title ?: item.suggestion.title,
-                    subtitle = if (edited != null) {
-                      edited.editedSummary(uiState.template)
-                    } else {
-                      item.suggestion.summary(uiState.template)
-                    },
-                    checked = item.selected,
+                  SuggestionRow(
+                    item = item,
+                    template = uiState.template,
+                    wide = wide,
                     enabled = !uiState.isSaving,
-                    supporting = {
-                      Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                      ) {
-                        SourceChip(item.suggestion) {
-                          sourceShown = item.suggestion
-                        }
-                        // R28: change it before adding it, in the task form.
-                        TextButton(
-                          enabled = !uiState.isSaving,
-                          onClick = {
-                            scope.launch {
-                              val draft =
-                                viewModel.draftFor(index) ?: return@launch
-                              navController.navigate(
-                                Screen.AddMaintenanceTask.createRoute(
-                                  viewModel.thingId,
-                                  draft
-                                ),
-                              )
-                            }
-                          },
-                        ) { Text(stringResource(CoreRes.string.edit)) }
+                    onToggle = { viewModel.onToggle(index) },
+                    onSource = { sourceShown = item.suggestion },
+                    // R28: change it before adding it, in the task form.
+                    onEdit = {
+                      scope.launch {
+                        val draft = viewModel.draftFor(index) ?: return@launch
+                        navController.navigate(
+                          Screen.AddMaintenanceTask.createRoute(viewModel.thingId, draft),
+                        )
                       }
                     },
-                    onCheckedChange = { viewModel.onToggle(index) },
                   )
                 }
               },
@@ -433,87 +397,4 @@ fun StarterPackRoute(
       }
     }
   }
-}
-
-/**
- * "Every 6 months · why" — the rule first, because it is the part worth scanning for. A seasonal
- * rule says nothing here, as the starter pack never did; an on-condition rule shows its own words.
- */
-@Composable
-private fun TaskSuggestion.summary(template: ThingTemplate?): String =
-  rulesSummary(rules, description, template)
-
-/** An edited card's line: "Edited · Every 6 months · its notes" (PRD R28). */
-@Composable
-private fun MaintenanceTask.editedSummary(template: ThingTemplate?): String =
-  listOf(
-    stringResource(Res.string.starter_pack_edited),
-    rulesSummary(rules, notes, template)
-  )
-    .filter { it.isNotEmpty() }
-    .joinToString(" · ")
-
-@Composable
-private fun rulesSummary(
-  rules: List<InspectionRule>,
-  description: String,
-  template: ThingTemplate?
-): String {
-  val calendar = rules.firstNotNullOfOrNull { it.time_rule }
-    ?.let { calendarText(it) }
-  val meter = rules.firstNotNullOfOrNull { it.meter_rule }
-    ?.takeIf { it.meter_key.isNotEmpty() && it.interval > 0f }
-    ?.let {
-      stringResource(
-        Res.string.starter_rule_every_meter,
-        formatInterval(it.interval),
-        template.meter(it.meter_key)?.unit_label ?: it.meter_key,
-      )
-    }
-  val onCondition =
-    rules.firstNotNullOfOrNull { it.on_condition_rule }?.description?.takeIf { it.isNotBlank() }
-  val rule = when {
-    meter != null && calendar != null -> stringResource(
-      Res.string.starter_rule_either,
-      meter,
-      calendar
-    )
-
-    else -> meter ?: calendar ?: onCondition
-  }
-  return listOfNotNull(
-    rule,
-    description.takeIf { it.isNotEmpty() }).joinToString(" · ")
-}
-
-@Composable
-private fun calendarText(rule: TimeRule): String? {
-  val months = rule.interval_months + 12 * rule.interval_years
-  return when {
-    months == 1 -> stringResource(Res.string.starter_rule_every_month)
-    months == 12 -> stringResource(Res.string.starter_rule_every_year)
-    months > 0 && months % 12 == 0 -> stringResource(
-      Res.string.starter_rule_every_years,
-      months / 12
-    )
-
-    months > 0 -> stringResource(Res.string.starter_rule_every_months, months)
-    rule.interval_days > 0 -> stringResource(
-      Res.string.starter_rule_every_days,
-      rule.interval_days
-    )
-
-    else -> null
-  }
-}
-
-/** 5000 → "5,000"; 7.5 → "7.5". Grouping by hand because `String.format` is not common code. */
-private fun formatInterval(value: Float): String {
-  val whole = value.toLong()
-  if (value != whole.toFloat()) return value.toString()
-  return whole.toString()
-    .reversed()
-    .chunked(3)
-    .joinToString(",")
-    .reversed()
 }

@@ -1,15 +1,20 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
@@ -22,15 +27,46 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_source_manufacturer
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_source_page
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_source_verify
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_tag_document
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_tag_logs
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_tag_manufacturer
 
 /**
- * The card's source chip (PRD R17, R26): what the suggestion rests on, as text, never a color.
- * Nothing for a card with no source kind (the app's own pack, in production).
+ * The row's source tag (PRD R17, R26; 1d): what the suggestion rests on, in words, with the page
+ * where there is one ("MANUAL · P. 42"). A schedule from a document or the manufacturer is filled,
+ * common practice and the logs outlined, so the stronger sources stand out without a new color.
+ * Nothing for a suggestion with no source kind. Tapping it shows the full citation.
  */
 @Composable
-fun SourceChip(suggestion: TaskSuggestion, onClick: () -> Unit) {
-  val label = suggestion.source_kind.label() ?: return
-  SuggestionChip(onClick = onClick, label = { Text(label) })
+internal fun SourceTag(suggestion: TaskSuggestion, onClick: () -> Unit) {
+  val label = suggestion.source_kind.tag() ?: return
+  val text = listOf(label, suggestion.page_ref.trim())
+    .filter { it.isNotEmpty() }
+    .joinToString(" · ")
+    .uppercase()
+  val filled = suggestion.source_kind == TaskSourceKind.TASK_SOURCE_KIND_DOCUMENT ||
+    suggestion.source_kind == TaskSourceKind.TASK_SOURCE_KIND_MANUFACTURER_SCHEDULE
+  val shape = RoundedCornerShape(Spacing.badgeCornerRadius)
+  Text(
+    text = text,
+    style = MaterialTheme.typography.labelSmall,
+    color = if (filled) {
+      MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+      MaterialTheme.colorScheme.onSurfaceVariant
+    },
+    modifier = Modifier
+      .clip(shape)
+      .then(
+        if (filled) {
+          Modifier.background(MaterialTheme.colorScheme.primaryContainer, shape)
+        } else {
+          Modifier.border(Spacing.hairline, MaterialTheme.colorScheme.outline, shape)
+        },
+      )
+      .clickable(onClick = onClick)
+      .padding(horizontal = 6.dp, vertical = 2.dp),
+  )
 }
 
 /**
@@ -75,6 +111,20 @@ fun SourceSheet(suggestion: TaskSuggestion, onDismiss: () -> Unit) {
       }
     }
   }
+}
+
+/** The tag's short word for where a suggestion comes from. */
+@Composable
+private fun TaskSourceKind.tag(): String? = when (this) {
+  TaskSourceKind.TASK_SOURCE_KIND_DOCUMENT -> stringResource(Res.string.suggestion_tag_document)
+  TaskSourceKind.TASK_SOURCE_KIND_MANUFACTURER_SCHEDULE ->
+    stringResource(Res.string.suggestion_tag_manufacturer)
+
+  TaskSourceKind.TASK_SOURCE_KIND_COMMON_PRACTICE ->
+    stringResource(Res.string.suggestion_source_common_practice)
+
+  TaskSourceKind.TASK_SOURCE_KIND_LOGS -> stringResource(Res.string.suggestion_tag_logs)
+  TaskSourceKind.TASK_SOURCE_KIND_UNSPECIFIED -> null
 }
 
 @Composable
