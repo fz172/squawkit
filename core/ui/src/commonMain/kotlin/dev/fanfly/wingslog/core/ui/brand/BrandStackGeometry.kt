@@ -2,12 +2,40 @@ package dev.fanfly.wingslog.core.ui.brand
 
 /**
  * How one plate of the brand stack is placed for a frame. [lift] raises it, as a fraction of the
- * mark's own square, and [alpha] fades it; the resting stack is every plate at [Rest].
+ * mark's own square, [alpha] fades it, and [thickness] runs from 0, a face with no edge under it,
+ * to 1, the full plate. The resting stack is every plate at [Rest].
  */
-data class PlatePose(val lift: Float = 0f, val alpha: Float = 1f) {
+data class PlatePose(val lift: Float = 0f, val alpha: Float = 1f, val thickness: Float = 1f) {
   companion object {
     val Rest = PlatePose()
   }
+}
+
+/**
+ * How one sheet of paper is placed for a frame: [x] and [y] are how far it is from its seat on the
+ * plate it settles on, as fractions of the mark's own square, and [alpha] fades it.
+ */
+data class SheetPose(val x: Float, val y: Float, val alpha: Float) {
+  companion object {
+    val Hidden = SheetPose(0f, 0f, 0f)
+  }
+}
+
+/**
+ * Lays a flat square drawing down on a plate's face: `x' = a·x + c·y + tx`, `y' = b·x + d·y + ty`.
+ * The drawing's x axis runs down the face's right-hand edge and its y axis down the left-hand one,
+ * which is how something printed on a sheet lying in this perspective looks.
+ */
+data class FaceTransform(
+  val a: Float,
+  val b: Float,
+  val c: Float,
+  val d: Float,
+  val tx: Float,
+  val ty: Float,
+) {
+  fun mapX(x: Float, y: Float): Float = a * x + c * y + tx
+  fun mapY(x: Float, y: Float): Float = b * x + d * y + ty
 }
 
 /**
@@ -33,6 +61,12 @@ object BrandStackGeometry {
   const val THICKNESS = 38f
   const val CORNER_STROKE = 44f
 
+  /** A sheet of paper is a plate's face with this much edge under it. */
+  const val SHEET_THICKNESS = 9f
+
+  /** How much of a face a drawing printed on it spans, corner to corner. */
+  const val PRINT_SPAN = 0.6f
+
   private const val BOTTOM_FACE_Y = 626f
   private const val PLATE_PITCH = 114f
 
@@ -44,6 +78,37 @@ object BrandStackGeometry {
 
   /** The underside of [plate]; filled in the edge colour beneath the face, it reads as thickness. */
   fun edge(plate: Int): String = diamond(faceY(plate) + THICKNESS)
+
+  /** The underside of a sheet of paper lying on [plate]'s face. */
+  fun sheetEdge(plate: Int): String = diamond(faceY(plate) + SHEET_THICKNESS)
+
+  /**
+   * The transform that prints a drawing on [plate]'s face, centred. The drawing is the square at
+   * ([viewportX], [viewportY]) with side [viewportSize], as a [GlyphSpec] describes its artwork.
+   */
+  fun printOnFace(
+    plate: Int,
+    viewportX: Float,
+    viewportY: Float,
+    viewportSize: Float,
+  ): FaceTransform {
+    // Half the face's right-hand and left-hand edges, per unit of the drawing.
+    val k = PRINT_SPAN / viewportSize
+    val a = HALF_WIDTH * k
+    val b = HALF_HEIGHT * k
+    val c = -HALF_WIDTH * k
+    val d = HALF_HEIGHT * k
+    val centreX = viewportX + viewportSize / 2
+    val centreY = viewportY + viewportSize / 2
+    return FaceTransform(
+      a = a,
+      b = b,
+      c = c,
+      d = d,
+      tx = CENTRE_X - a * centreX - c * centreY,
+      ty = faceY(plate) - b * centreX - d * centreY,
+    )
+  }
 
   /**
    * The outline of the whole of [plate], face and edge together, as one closed contour. This is
