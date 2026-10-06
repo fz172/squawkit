@@ -37,6 +37,20 @@ object ThingHeroTimeline {
   const val FAN_END =
     FAN_OUT_START + (GLYPH_COUNT - 1) * FAN_STAGGER / 2 + FAN_OUT_MS
   const val IDLE_START = FAN_START + 540
+
+  /** The stack's upper plates start falling as the bottom one finishes forming. */
+  const val PLATE_START = MORPH_END - 140
+  private const val PLATE_STAGGER = 240
+  private const val PLATE_MS = 460
+  const val STACK_END =
+    PLATE_START + (BrandStackGeometry.PLATE_COUNT - 2) * PLATE_STAGGER + PLATE_MS
+
+  /** How far above its seat a plate starts, as a fraction of the stack's own square. */
+  const val PLATE_DROP = 0.5f
+
+  /** The idle breath: every plate rises by [IDLE_RISE], and each one up by [IDLE_SPREAD] more. */
+  private const val IDLE_RISE = 0.02f
+  private const val IDLE_SPREAD = 0.012f
   const val TOTAL_MS = FAN_END
 
   /** Where each glyph flies in from, as a direction; multiplied by [FLY_DISTANCE]. */
@@ -135,6 +149,27 @@ object ThingHeroTimeline {
     )
   }
 
+  /**
+   * Plate [index] of the brand stack, bottom first. The bottom plate is what the crate's outline
+   * turns into, so it only cross-fades in over the end of the morph. Each plate above it falls from
+   * [PLATE_DROP] up, fading in on the way and slowing into its seat without overshooting. Once the
+   * stack is built, [phase] opens and closes it: see [idleLift].
+   */
+  fun plate(index: Int, ms: Int, phase: Float): PlatePose {
+    val idle = idleLift(index, ms, phase)
+    if (index == 0) return PlatePose(lift = idle, alpha = planeAlpha(ms))
+    val p = progress(ms, PLATE_START + (index - 1) * PLATE_STAGGER, PLATE_MS)
+    if (p <= 0f) return PlatePose(lift = PLATE_DROP, alpha = 0f)
+    return PlatePose(
+      lift = PLATE_DROP * (1f - easeOut(p)) + idle,
+      alpha = progress(p, 0f, 0.4f),
+    )
+  }
+
+  /** The stack breathing at rest: it floats up a little, and the plates part a little as it does. */
+  fun idleLift(index: Int, ms: Int, phase: Float): Float =
+    idleWeight(ms) * (IDLE_RISE + index * IDLE_SPREAD) * (0.5f + 0.5f * sin(phase))
+
   /** 0 before the idle wobble begins, 1 once it is fully in. */
   fun idleWeight(ms: Int): Float = progress(ms, IDLE_START, 600)
 
@@ -156,4 +191,7 @@ object ThingHeroTimeline {
 
   /** Fast-out slow-in, as a smoothstep-like cubic. */
   private fun ease(t: Float): Float = t * t * (3f - 2f * t)
+
+  /** Decelerating all the way in, for something that lands. */
+  private fun easeOut(t: Float): Float = 1f - (1f - t) * (1f - t) * (1f - t)
 }
