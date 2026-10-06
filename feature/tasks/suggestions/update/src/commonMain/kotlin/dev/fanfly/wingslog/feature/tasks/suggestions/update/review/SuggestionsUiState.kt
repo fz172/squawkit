@@ -52,6 +52,13 @@ data class SuggestionsUiState(
   val aiSkipped: AiSkipped? = null,
   /** The model had nothing confident to say (PRD R21a); the screen offers *Add details*. */
   val notEnough: Boolean = false,
+  /**
+   * With [notEnough]: another run can start now, so *Use a manual* leads somewhere. Asked once the
+   * run comes back empty; false until the answer is in.
+   */
+  val canUseManual: Boolean = false,
+  /** With [notEnough]: why no run can start now and, for the daily limit, when one can. */
+  val manualBlocked: AiSkipped? = null,
   /** Why *Suggest more* or *Try again* did not start; shown once, as a snackbar. */
   val notice: AiErrorCode? = null,
   val isSaving: Boolean = false,

@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -38,9 +39,16 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions
  * The model had nothing confident to say (PRD R21a; 1e): more about the Thing is what would help,
  * either its details or a manual. The common-practice rows below stay usable. Amber, the advisory
  * accent, only on the outline and the icon.
+ *
+ * [onUseManual] is null where no run can start now, so a manual added could not be read: the
+ * button is left out, and [blocked] says why and when one can.
  */
 @Composable
-internal fun ImproveBanner(onAddDetails: () -> Unit, onUseManual: () -> Unit) {
+internal fun ImproveBanner(
+  onAddDetails: () -> Unit,
+  onUseManual: (() -> Unit)?,
+  blocked: AiSkipped? = null,
+) {
   Surface(
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
@@ -80,15 +88,24 @@ internal fun ImproveBanner(onAddDetails: () -> Unit, onUseManual: () -> Unit) {
         OutlinedButton(onClick = onAddDetails) {
           Text(stringResource(Res.string.suggestions_add_details))
         }
-        TextButton(onClick = onUseManual) {
-          Icon(
-            Icons.Outlined.UploadFile,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-          )
-          Spacer(Modifier.width(6.dp))
-          Text(stringResource(Res.string.suggestions_use_manual))
+        if (onUseManual != null) {
+          TextButton(onClick = onUseManual) {
+            Icon(
+              Icons.Outlined.UploadFile,
+              contentDescription = null,
+              modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(stringResource(Res.string.suggestions_use_manual))
+          }
         }
+      }
+      if (onUseManual == null && blocked != null) {
+        Text(
+          text = blocked.text(),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
       }
     }
   }

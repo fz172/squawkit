@@ -242,6 +242,10 @@ class SuggestionsViewModel(
         // a template with no list.
         val notEnough = latest is SuggestionRun.Empty && modelRequested
         if (finished && modelRequested) report(latest)
+        if (notEnough && !askedAfterEmpty) {
+          askedAfterEmpty = true
+          viewModelScope.launch { checkManual() }
+        }
         _uiState.update {
           it.copy(
             isSuggesting = !finished,
@@ -283,6 +287,31 @@ class SuggestionsViewModel(
           offered(template, uiState.value.items.size)
         }
       }
+  }
+
+  /** [checkManual] has been asked for this screen's empty run. */
+  private var askedAfterEmpty = false
+
+  /**
+   * Asks, once a model run has come back empty, whether another can start: *Use a manual* opens
+   * the Add Tasks sheet, which is a dead end while the day's run is spent (R49). When none can,
+   * the banner says when instead of offering it.
+   */
+  private suspend fun checkManual() {
+    val eligibility = suggestionManager.eligibility(thingId)
+    _uiState.update {
+      if (eligibility.allowed) {
+        it.copy(canUseManual = true, manualBlocked = null)
+      } else {
+        it.copy(
+          canUseManual = false,
+          manualBlocked = AiSkipped(
+            eligibility.reason ?: AiErrorCode.UNKNOWN,
+            eligibility.nextAvailableAt,
+          ),
+        )
+      }
+    }
   }
 
   /**
