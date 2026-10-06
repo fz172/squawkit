@@ -68,6 +68,11 @@ class LogbookExportAggregator(
       squawkManager.observeSquawks(thingId)
         .first()
     }
+    // The exported next-due is measured against the readings the dashboard shows (#1368).
+    val manualReadingsDeferred = async {
+      logsManager.observeManualReadings(thingId)
+        .first()
+    }
     val dataLogsDeferred = async {
       dataLogManager.observe(ThingId(thingId))
         .first()
@@ -75,6 +80,7 @@ class LogbookExportAggregator(
 
     val thing = requireNotNull(thingDeferred.await())
     val allLogs = logsDeferred.await()
+    val manualReadings = manualReadingsDeferred.await()
     val allTasks = tasksDeferred.await()
     val allSquawks = squawksDeferred.await()
 
@@ -101,7 +107,12 @@ class LogbookExportAggregator(
     // Next-due is a forward-looking fact, so it is computed from the full history; last-complied
     // reflects the in-range compliance shown alongside the task.
     val dueByTaskId = tasksInRange.associate { task ->
-      task.id to taskDueManager.computeNextDue(task, allLogs, allTasks)
+      task.id to taskDueManager.computeNextDue(
+        task,
+        allLogs,
+        allTasks,
+        manualReadings
+      )
     }
     val lastCompliedByTaskId = tasksInRange.associate { task ->
       task.id to logsInRange

@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.currentReadings
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
@@ -14,6 +15,8 @@ import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.SeasonalRule
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.ManualMeterReading
+import dev.fanfly.wingslog.thing.MeterReading
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -31,12 +34,22 @@ class TaskDueManagerImpl(
     card: MaintenanceTask,
     logs: List<MaintenanceLog>,
     allCards: List<MaintenanceTask>,
+    manualReadings: List<ManualMeterReading>,
   ): DueMetadata =
-    computeNextDueRecursive(card, logs, logs, allCards, mutableSetOf())
+    computeNextDueRecursive(
+      card,
+      logs,
+      // Once, not per card in the chain: every linked parent is due against the same meters.
+      currentReadings(logs, manualReadings, timeZone),
+      logs,
+      allCards,
+      mutableSetOf()
+    )
 
   private fun computeNextDueRecursive(
     card: MaintenanceTask,
     logs: List<MaintenanceLog>,
+    current: List<MeterReading>,
     allLogs: List<MaintenanceLog>,
     allCards: List<MaintenanceTask>,
     visited: MutableSet<String>,
@@ -71,10 +84,10 @@ class TaskDueManagerImpl(
     val hasForcedEngine = forcedDue != null
     val forcedMeterKey = forcedDue?.meterKey ?: card.defaultMeterKey()
 
-    /** The highest reading any log carries for [meterKey]. */
+    /** What [meterKey] reads now — the most recent reading, from a log or set by hand. */
     fun currentReading(meterKey: String): Float =
-      allLogs.mapNotNull { it.readingFor(meterKey) }
-        .maxOrNull()
+      current.firstOrNull { it.meter_key == meterKey }
+        ?.value_
         ?.toFloat() ?: 0f
 
     // The meter the *forced* value is measured against. A rule names its own below — this is only
@@ -221,7 +234,7 @@ class TaskDueManagerImpl(
             }
 
             val parentMetadata = computeNextDueRecursive(
-              parentCard, parentLogs, allLogs, allCards, visited
+              parentCard, parentLogs, current, allLogs, allCards, visited
             )
 
             // Inherit due properties from parent

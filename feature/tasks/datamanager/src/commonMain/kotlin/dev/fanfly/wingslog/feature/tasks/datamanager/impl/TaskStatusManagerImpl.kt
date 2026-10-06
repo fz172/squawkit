@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,10 @@ class TaskStatusManagerImpl(
     storeFactory.create(CollectionKind.MaintenanceTask)
   private val logStore: EntityStore<MaintenanceLog> =
     storeFactory.create(CollectionKind.MaintenanceLog)
+
+  // A reading set on the dashboard moves what every meter rule is due against (#1368).
+  private val manualStore: EntityStore<ManualMeterReading> =
+    storeFactory.create(CollectionKind.ManualReading)
   private val refreshTick = MutableStateFlow(0)
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -53,8 +58,11 @@ class TaskStatusManagerImpl(
           logStore.observeAll(scope)
             .map { rows -> rows.map { it.value } }
             .distinctUntilChanged(),
+          manualStore.observeAll(scope)
+            .map { rows -> rows.map { it.value } }
+            .distinctUntilChanged(),
           refreshTick,
-        ) { tasks, logs, _ -> withStatus(tasks, logs) }
+        ) { tasks, logs, manual, _ -> withStatus(tasks, logs, manual) }
           .catch { e ->
             logger.w(e) { "Error observing task status for thing $thingId" }
             emit(emptyList())
@@ -67,15 +75,16 @@ class TaskStatusManagerImpl(
 
   private fun withStatus(
     tasks: List<MaintenanceTask>,
-    logs: List<MaintenanceLog>
+    logs: List<MaintenanceLog>,
+    manual: List<ManualMeterReading>,
   ): List<MaintenanceTaskWithStatus> {
     val withStatus = tasks.map {
       MaintenanceTaskWithStatus(
         it,
-        dueManager.computeNextDue(it, logs, tasks)
+        dueManager.computeNextDue(it, logs, tasks, manual)
       )
     }
-    val readings = currentReadings(logs).associate { it.meter_key to it.value_ }
+    val readings = currentReadings(logs, manual, timeZone)
     val today = clock.now()
       .toLocalDateTime(timeZone).date
     val active = withStatus
@@ -87,7 +96,8 @@ class TaskStatusManagerImpl(
         due.nextDueDate?.let { candidates.add(it.toEpochDays() - today.toEpochDays()) }
         due.nextDueEngine?.let {
           // Remaining in the due’s own meter; raw values would sort mileage tasks behind hours (#759).
-          val current = readings[due.nextDueMeterKey.orEmpty()] ?: 0.0
+          val current = readings.firstOrNull { it.meter_key == due.nextDueMeterKey }
+            ?.value_ ?: 0.0
           candidates.add((it.toDouble() - current).toLong())
         }
         candidates.minOrNull() ?: Long.MAX_VALUE

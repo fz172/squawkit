@@ -42,6 +42,8 @@ import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceOverview
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -150,10 +152,11 @@ class TaskViewModel(
       combine(
         inspectionDataManager.observeTasks(thingId),
         maintenanceLogManager.observeLogs(thingId),
-        maintenanceLogManager.observeMaintenanceOverview(thingId)
-      ) { cards, logs, overview ->
-        Triple(cards, logs, overview)
-      }.collect { (cards, logs, overview) ->
+        maintenanceLogManager.observeMaintenanceOverview(thingId),
+        maintenanceLogManager.observeManualReadings(thingId),
+      ) { cards, logs, overview, manual ->
+        LoadedThingData(cards, logs, overview, manual)
+      }.collect { (cards, logs, overview, manual) ->
         // By meter key, not by field name. `currentFor` falls back to the aviation field, so an
         // overview written before `current` existed still answers (#730).
         val engineHours =
@@ -164,6 +167,7 @@ class TaskViewModel(
             thingId = thingId,
             allInspections = cards,
             availableLogs = logs,
+            manualReadings = manual,
             currentEngineHours = engineHours,
             currentReadings = overview?.current.orEmpty()
               .associate { it.meter_key to it.value_.toFloat() },
@@ -197,7 +201,8 @@ class TaskViewModel(
     return taskDueManager.computeNextDue(
       draft,
       loaded.availableLogs,
-      loaded.allInspections
+      loaded.allInspections,
+      loaded.manualReadings
     )
   }
 
@@ -504,6 +509,14 @@ class TaskViewModel(
     }
   }
 }
+
+/** What [TaskViewModel] loads about its Thing before it can show the form. */
+private data class LoadedThingData(
+  val cards: List<MaintenanceTask>,
+  val logs: List<MaintenanceLog>,
+  val overview: MaintenanceOverview?,
+  val manualReadings: List<ManualMeterReading>,
+)
 
 /**
  * Maps every skip reason from [AttachmentFormController] to a message. Nothing the user picked is

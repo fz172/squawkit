@@ -16,6 +16,7 @@ import dev.fanfly.wingslog.task.SeasonalRule
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.fanfly.wingslog.thing.MeterReading
 import io.mockk.every
 import io.mockk.mockk
@@ -260,6 +261,43 @@ class TaskDueManagerImplTest {
 
     assertThat(result.status).isEqualTo(DueStatus.OVERDUE)
     assertThat(result.nextDueEngine).isEqualTo(80f)
+  }
+
+  @Test
+  fun forcedDueEngine_isMeasuredAgainstAReadingSetByHand() {
+    // The last log says 70 hours; the engine was read at 100 on the dashboard since. Against the
+    // logs alone this card would still be 10 hours away (#1368).
+    val card = card(
+      component = ComponentType.COMPONENT_ENGINE,
+      forceDueEngine = 80f,
+    )
+    val log = log(timestamp = iso("2026-03-01"), engineHour = 70.0)
+    val setByHand = ManualMeterReading(
+      reading = MeterReading(MeterKeys.ENGINE_HOURS, value_ = 100.0),
+      set_at = iso("2026-04-10"),
+    )
+
+    val result =
+      manager.computeNextDue(card, listOf(log), listOf(card), listOf(setByHand))
+
+    assertThat(result.status).isEqualTo(DueStatus.OVERDUE)
+  }
+
+  @Test
+  fun forcedDueEngine_isMeasuredAgainstTheLatestLogNotTheHighest() {
+    // A mistyped 1000 in February, read correctly at 60 in March: the card due at 80 is not overdue.
+    val card = card(
+      component = ComponentType.COMPONENT_ENGINE,
+      forceDueEngine = 80f,
+    )
+    val logs = listOf(
+      log(id = "typo", timestamp = iso("2026-02-01"), engineHour = 1000.0),
+      log(id = "right", timestamp = iso("2026-03-01"), engineHour = 60.0),
+    )
+
+    val result = manager.computeNextDue(card, logs, listOf(card))
+
+    assertThat(result.status).isEqualTo(DueStatus.NORMAL)
   }
 
   @Test

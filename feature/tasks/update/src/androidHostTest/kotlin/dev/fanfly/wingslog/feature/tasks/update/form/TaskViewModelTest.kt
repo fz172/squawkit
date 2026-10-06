@@ -100,6 +100,9 @@ class TaskViewModelTest {
     every { maintenanceLogManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
       null
     )
+    every { maintenanceLogManager.observeManualReadings(TEST_THING_ID) } returns flowOf(
+      emptyList()
+    )
   }
 
   @After
