@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "thing/meter_reading.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+// A meter's reading as set by hand on the dashboard, rather than recorded on a log (#1368).
+//
+// One per meter, stored under the meter's key and overwritten by the next edit: it says what the
+// meter reads now, and carries no history. It competes with the logs' readings for the current
+// value — the most recent wins — so a log written afterwards supersedes it without deleting it.
+//
+// Its own record rather than a field on MaintenanceOverview, which is rebuilt from the logs on every
+// log write and which a client that predates this message would rebuild without it. Not on the Thing
+// either: a technician can add a log and so can set a reading, but cannot write the Thing.
+message ManualMeterReading {
+  MeterReading reading = 1;
+
+  // When it was set. Compared by calendar day against a log's work date, then by time against the
+  // log's `readings_saved_at`.
+  google.protobuf.Timestamp set_at = 2;
+}

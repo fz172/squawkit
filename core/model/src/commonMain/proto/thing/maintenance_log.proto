@@ -39,6 +39,18 @@ message MaintenanceLog {
   // to go, which is what made "every 5,000 miles" unexpressible.
   repeated MeterReading readings = 15;
 
+  // When `readings` was last written: stamped on the save that created the log, and again on any
+  // edit that changes a reading (#1368).
+  //
+  // `timestamp` is the day the work was done, at midnight, so it cannot order two readings taken on
+  // one day — a log against another log, or against a reading set on the dashboard. The current
+  // reading is the most recent one, and this breaks that tie. Unset on a log saved before the field
+  // existed, which sorts it before anything that has one.
+  //
+  // Not the row's `updated_at`: that is rewritten by every save, so correcting a typo in the
+  // description would make an old reading the newest again.
+  google.protobuf.Timestamp readings_saved_at = 16;
+
   // Retired in #761 once every stored log carried the keyed form. Bytes written before that still
   // carry these numbers and decode as unknown fields, which is harmless — but reusing a number
   // would silently reinterpret them as the new field's type.
