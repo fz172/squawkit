@@ -4,11 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -56,7 +54,6 @@ import dev.fanfly.wingslog.core.template.slotLabel
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.form.BottomButtons
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
@@ -70,16 +67,13 @@ import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_disclaimer
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_skip
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
@@ -166,8 +160,20 @@ fun StarterPackRoute(
       snackbarHostState.showSnackbar(noticeMessage)
       viewModel.onNoticeShown()
     }
+    val wide = LocalLayoutTier.current != LayoutTier.COMPACT
     Scaffold(
       modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+      // Pinned, with the liability line (PRD §4.9); no *Skip*, as back already says no.
+      bottomBar = {
+        if (!uiState.isLoading) {
+          ReviewFooter(
+            selected = uiState.selectedCount,
+            wide = wide,
+            isSaving = uiState.isSaving,
+            onAdd = viewModel::onAccept,
+          )
+        }
+      },
       snackbarHost = { SnackbarHost(snackbarHostState) },
       topBar = {
         ConstrainedTopBar(ContentWidth.Form) {
@@ -326,7 +332,6 @@ fun StarterPackRoute(
             }
           }
           if (uiState.isSuggesting) SuggestingNote(uiState.stage, uiState.stageArg)
-          val wide = LocalLayoutTier.current != LayoutTier.COMPACT
           groupsOf(uiState.items).forEach { group ->
             // Every section is headed: its count and *Select all* are worth having for one too.
             SuggestionGroupHeader(
@@ -387,28 +392,7 @@ fun StarterPackRoute(
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
-          // PRD §4.9's liability posture: recommendations, never authority.
-          Text(
-            text = stringResource(
-              Res.string.starter_pack_disclaimer,
-              LocalThingLexicon.current.thingNoun.singular,
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-          Spacer(Modifier.height(Spacing.buttonHeight + Spacing.huge))
         }
-        BottomButtons(
-          modifier = Modifier.align(Alignment.BottomCenter),
-          // Just "Add": the checkboxes already say what will be added.
-          primaryLabel = stringResource(CoreRes.string.add),
-          primaryEnabled = uiState.selectedCount > 0 && !uiState.isSaving,
-          isPrimaryFunctionInProgress = uiState.isSaving,
-          onPrimaryClick = { viewModel.onAccept() },
-          secondaryLabel = stringResource(Res.string.starter_pack_skip),
-          secondaryEnabled = !uiState.isSaving,
-          onSecondaryClick = { viewModel.onSkip() },
-        )
       }
     }
   }
