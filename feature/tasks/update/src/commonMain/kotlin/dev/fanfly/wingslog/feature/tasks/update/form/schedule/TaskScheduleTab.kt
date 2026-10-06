@@ -273,10 +273,13 @@ fun TaskScheduleTab(
     }
 
     // First due — create only, and only once the schedule it overrides exists. No switch: the
-    // field is there, and leaving it empty means the schedule counts from today.
-    if (initialDue != null && state.isComplete) {
-      val set = if (state.isDated) initialDue.forcedDateMillis != null
+    // field is there, and leaving it empty means the schedule counts from today. A first due
+    // already set shows whatever the schedule: a one-time suggestion has that and no interval.
+    val firstDueSet = initialDue != null && state.mode != null &&
+      if (state.isDated) initialDue.forcedDateMillis != null
       else initialDue.forcedEngineHours.isNotBlank()
+    if (initialDue != null && (state.isComplete || firstDueSet)) {
+      val set = firstDueSet
       ScheduleSection(
         labelRes = Res.string.initial_due_section_label,
         complete = set,

@@ -4,6 +4,8 @@ import com.squareup.wire.Instant
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.task.ImmediateRule
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.LinkedRule
@@ -11,6 +13,7 @@ import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.task.SeasonalRule
 import dev.fanfly.wingslog.task.TimeRule
+import dev.fanfly.wingslog.thing.ComponentType
 import kotlin.time.Clock
 
 /**
@@ -119,6 +122,17 @@ data class ScheduleState(
     }
   }
 
+  /**
+   * The meter a first due or an override is read on, for a card filed against [component] with
+   * [rules]: the rules' own, else the one this schedule tracks, else the component's default. The
+   * middle step is what keeps a rule-less one-time item's reading on its meter (an odometer's, say)
+   * where the default knows only an aircraft's.
+   */
+  fun forcedDueMeterKey(component: ComponentType, rules: List<InspectionRule>): String =
+    rules.firstNotNullOfOrNull { rule -> rule.meter_rule?.meter_key?.takeIf { it.isNotEmpty() } }
+      ?: meterKey.takeIf { mode == ScheduleMode.HOURS && it.isNotEmpty() }
+      ?: meterKeyFor(component, rules)
+
   companion object {
     fun fromTask(task: MaintenanceTask): ScheduleState {
       val timeRule = task.rules.firstNotNullOfOrNull { it.time_rule }
@@ -126,6 +140,7 @@ data class ScheduleState(
       val seasonalRule = task.rules.firstNotNullOfOrNull { it.seasonal_rule }
       val linkedRule = task.rules.firstNotNullOfOrNull { it.linked_rule }
       val immediateRule = task.rules.firstNotNullOfOrNull { it.immediate_rule }
+      val forcedDue = task.forcedDueMeter()
 
       val baseRecurrence = when {
         immediateRule != null -> ScheduleRecurrence.ASAP
@@ -185,6 +200,20 @@ data class ScheduleState(
             recurrence = ScheduleRecurrence.ASAP
           )
         }
+
+        // No rule at all, only the point it is due at: a one-time item as a suggestion writes
+        // it ("first service at 600 mi", "within 30 days"). It is tracked by whichever it is due
+        // by, in the meter the reading is on, with no interval to show.
+        forcedDue != null -> ScheduleState(
+          mode = ScheduleMode.HOURS,
+          recurrence = baseRecurrence,
+          meterKey = forcedDue.meterKey,
+        )
+
+        task.force_due_date != null -> ScheduleState(
+          mode = ScheduleMode.TIME,
+          recurrence = baseRecurrence,
+        )
 
         else -> ScheduleState()
       }

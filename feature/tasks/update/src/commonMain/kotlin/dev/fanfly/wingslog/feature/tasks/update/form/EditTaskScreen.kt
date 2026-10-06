@@ -50,7 +50,6 @@ import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.popup.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
-import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
 import dev.fanfly.wingslog.feature.tasks.datamanager.toDueInstant
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
@@ -172,7 +171,7 @@ fun EditTaskScreen(
     )
       .withForcedDueMeter(
         // The meter this task schedules against — the override is in the same one.
-        meterKeyFor(state.component, ruleList),
+        state.schedule.forcedDueMeterKey(state.component, ruleList),
         updatedForceDueEngine.takeIf { it > 0f },
       )
   }
