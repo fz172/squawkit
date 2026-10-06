@@ -156,7 +156,9 @@ fun SuggestionsRoute(
       modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
       // Pinned, with the liability line (PRD §4.9); no *Skip*, as back already says no.
       bottomBar = {
-        if (!uiState.isLoading) {
+        // Only over rows to pick from: with none (an empty answer, a failure) its button could
+        // never be enabled.
+        if (!uiState.isLoading && uiState.items.isNotEmpty()) {
           ReviewFooter(
             selected = uiState.selectedCount,
             wide = wide,
