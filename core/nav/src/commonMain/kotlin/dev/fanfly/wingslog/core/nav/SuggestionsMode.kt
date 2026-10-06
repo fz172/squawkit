@@ -13,6 +13,12 @@ enum class SuggestionsMode(val wire: String) {
 
   /** *From a document*: the sources sheet opens by itself, with the picker or a given file. */
   DOCUMENT("document"),
+
+  /**
+   * *Suggest* on the Add Tasks sheet: the model run starts at once, with the documents picked
+   * there ([Screen.SUGGESTIONS_DOCUMENT], a list), over the curated list it carries.
+   */
+  ADD("add"),
   ;
 
   companion object {

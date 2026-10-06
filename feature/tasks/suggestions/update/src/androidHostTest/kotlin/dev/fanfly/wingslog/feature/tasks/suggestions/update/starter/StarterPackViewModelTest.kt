@@ -40,7 +40,9 @@ import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.feature.attachment.model.attachmentFromDocumentArg
+import dev.fanfly.wingslog.feature.attachment.model.attachmentsFromDocumentsArg
 import dev.fanfly.wingslog.feature.attachment.model.toDocumentArg
+import dev.fanfly.wingslog.feature.attachment.model.toDocumentsArg
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -105,6 +107,7 @@ class StarterPackViewModelTest {
   private fun viewModel(
     mode: SuggestionsMode? = null,
     document: Attachment? = null,
+    picked: List<Attachment> = emptyList(),
   ): StarterPackViewModel {
     val thing = Thing(
       id = THING_ID,
@@ -127,6 +130,7 @@ class StarterPackViewModelTest {
           put(Screen.THING_ID, THING_ID)
           if (mode != null) put(Screen.SUGGESTIONS_MODE, mode.wire)
           if (document != null) put(Screen.SUGGESTIONS_DOCUMENT, document.toDocumentArg())
+          if (picked.isNotEmpty()) put(Screen.SUGGESTIONS_DOCUMENT, picked.toDocumentsArg())
         },
       ),
     )
@@ -236,6 +240,79 @@ class StarterPackViewModelTest {
     assertThat(vm.uiState.value.canSuggest).isTrue()
     // Owner's decision, 2026-10-04: nothing pops up unasked.
     assertThat(vm.uiState.value.sources).isNull()
+  }
+
+  private val manuals = listOf(
+    Attachment(id = "blob-mm", name = "MM.pdf", mime_type = "application/pdf"),
+    Attachment(id = "blob-lm", name = "LM.pdf", mime_type = "application/pdf"),
+  )
+
+  @Test
+  fun theAddModeStartsTheModelRunAtOnceWithThePickedDocuments() = runTest(dispatcher) {
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+      AiStartResult.Started(JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+
+    val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
+    advanceUntilIdle()
+    runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+    advanceUntilIdle()
+
+    coVerify { suggestions.start(THING_ID, "add", curatedOnly = false, documents = manuals) }
+    coVerify(exactly = 0) { suggestions.start(THING_ID, any(), curatedOnly = true, any()) }
+    // The curated list the run starts with is up, and can be picked from while it works.
+    assertThat(vm.uiState.value.items).hasSize(3)
+    assertThat(vm.uiState.value.isSuggesting).isTrue()
+    assertThat(vm.uiState.value.canSuggest).isFalse()
+    // The run owns them now.
+    coVerify(exactly = 0) { attachments.release(any(), any()) }
+    assertThat(analytics.paramsFor("task_suggestions_requested").single())
+      .containsAtLeastEntriesIn(mapOf("source" to "add", "document_count" to "2"))
+  }
+
+  @Test
+  fun aRefusedAddRunLetsGoOfTheFilesAndFallsBackToTheCuratedList() = runTest(dispatcher) {
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+      AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      AiStartResult.Started(CURATED_JOB, joined = false)
+    every { suggestions.observeRun(THING_ID) } returns runs
+
+    val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
+    advanceUntilIdle()
+    runs.emit(SuggestionRun.Ready(CURATED_JOB, curatedList))
+    advanceUntilIdle()
+
+    manuals.forEach { coVerify { attachments.release(it, null) } }
+    assertThat(vm.uiState.value.notice).isEqualTo(AiErrorCode.DOCUMENT_MISSING)
+    assertThat(vm.uiState.value.isSuggesting).isFalse()
+    assertThat(vm.uiState.value.items).hasSize(3)
+    // The AI button is back, to try again.
+    assertThat(vm.uiState.value.canSuggest).isTrue()
+  }
+
+  @Test
+  fun anAnswerAlreadyHeldIsShownAndThePickedFilesAreLetGo() = runTest(dispatcher) {
+    serving(SuggestionRun.Working(AI_JOB, "tailoring", null, curatedList))
+
+    viewModel(mode = SuggestionsMode.ADD, picked = manuals)
+    advanceUntilIdle()
+
+    coVerify(exactly = 0) { suggestions.start(any(), any(), any(), any()) }
+    manuals.forEach { coVerify { attachments.release(it, null) } }
+  }
+
+  @Test
+  fun theAddRouteCarriesThePickedDocuments() {
+    val arg = manuals.toDocumentsArg()
+
+    assertThat(Screen.StarterPack.createRoute(THING_ID, SuggestionsMode.ADD, arg))
+      .isEqualTo("starter_pack/$THING_ID?mode=add&document=$arg")
+    assertThat(attachmentsFromDocumentsArg(arg)).isEqualTo(manuals)
+    assertThat(attachmentsFromDocumentsArg("")).isEmpty()
+    // A document with any other mode is the document mode, as before.
+    assertThat(Screen.StarterPack.createRoute(THING_ID, SuggestionsMode.SUGGEST, "x"))
+      .isEqualTo("starter_pack/$THING_ID?mode=document&document=x")
   }
 
   private fun picked(name: String, mime: String = "application/pdf") =

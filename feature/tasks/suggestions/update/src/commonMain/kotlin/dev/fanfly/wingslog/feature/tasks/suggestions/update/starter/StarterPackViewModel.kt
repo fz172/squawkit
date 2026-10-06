@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.attachmentFromDocumentArg
+import dev.fanfly.wingslog.feature.attachment.model.attachmentsFromDocumentsArg
 import dev.fanfly.wingslog.feature.attachment.model.isReadableDocument
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -57,9 +58,10 @@ import kotlin.time.Instant
  * step after creating a Thing since 2026-10-03.
  *
  * Every card comes from the suggestion RPC (design §6.8, PRD R1); the app's own starter pack went
- * with the v1 flag (T25). Every mode asks for the curated suggestions alone first; the model run
- * starts from the AI button (with the sources sheet where documents are allowed, design §9.3), and
- * its first result is the same list.
+ * with the v1 flag (T25). The add mode starts the model run at once, with the documents picked on
+ * the Add Tasks sheet. Every other mode asks for the curated suggestions alone first; the model run
+ * starts from the AI button (with the sources sheet where documents are allowed, design §9.3).
+ * Either way the model run's first result is the curated list.
  *
  * Both §13 events are emitted from here: `starter_tasks_offered` when cards are first
  * shown, the denominator that tells "declined" apart from "never offered", and
@@ -84,16 +86,25 @@ class StarterPackViewModel(
    * sheet starts with it rather than the picker, and the run reads the stored blob, uploading
    * nothing. Its record keeps holding it, so ending the run never lets it go (design §8.3).
    */
+  private val mode = SuggestionsMode.fromWire(savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE))
+
   private val presetDocument: Attachment? =
     savedStateHandle.get<String>(Screen.SUGGESTIONS_DOCUMENT)
+      ?.takeIf { mode == SuggestionsMode.DOCUMENT }
       ?.let(::attachmentFromDocumentArg)
       ?.takeIf { it.isReadableDocument() }
 
-  private val _uiState = MutableStateFlow(
-    StarterPackUiState(
-      mode = SuggestionsMode.fromWire(savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE)),
-    ),
-  )
+  /**
+   * The add mode's files, picked on the Add Tasks sheet and stored on this device, held by no record.
+   * The run they go to lets them go when it ends; anything else that drops them lets them go here.
+   */
+  private val pickedDocuments: List<Attachment> =
+    savedStateHandle.get<String>(Screen.SUGGESTIONS_DOCUMENT)
+      ?.takeIf { mode == SuggestionsMode.ADD }
+      ?.let(::attachmentsFromDocumentsArg)
+      .orEmpty()
+
+  private val _uiState = MutableStateFlow(StarterPackUiState(mode = mode))
   val uiState = _uiState.asStateFlow()
 
   /** The run the cards come from; null until the first one is in. */
@@ -150,6 +161,9 @@ class StarterPackViewModel(
         .firstOrNull()
     }
     if (earlier != null && earlier.holdsModelAnswer()) {
+      // The answer held is what this screen shows; a new run would be refused for the day (R49),
+      // so the files picked for one are not read.
+      releaseAll(pickedDocuments)
       modelRequested = true
       followedJob = earlier.jobIdOrNull
       // Already reported when it first arrived.
@@ -157,11 +171,47 @@ class StarterPackViewModel(
       follow(template)
       return
     }
-    // Every mode opens on the curated list; the model is asked from the sources sheet, which the
-    // suggest mode opens at once (design §9.1, §9.3).
+    if (mode == SuggestionsMode.ADD && startAdded()) {
+      follow(template)
+      return
+    }
+    showCurated(template)
+  }
+
+  /**
+   * The add mode: the model run, at once, with the sheet's files. False when it was refused: the
+   * files are let go of, the screen says why once, and the curated list follows, with its AI button
+   * where a run can still start.
+   */
+  private suspend fun startAdded(): Boolean {
+    modelRequested = true
+    _uiState.update { it.copy(isSuggesting = true) }
     val started = suggestionManager.start(
       thingId,
-      entryPoint = uiState.value.mode.wire,
+      entryPoint = mode.wire,
+      curatedOnly = false,
+      documents = pickedDocuments,
+    )
+    if (started is AiStartResult.Started) {
+      followedJob = started.jobId
+      requested(mode.wire, pickedDocuments.size)
+      return true
+    }
+    val reason = (started as AiStartResult.Refused).reason
+    logger.i { "The model run did not start: $started" }
+    failed(reason)
+    releaseAll(pickedDocuments)
+    modelRequested = false
+    _uiState.update { it.copy(isSuggesting = false, notice = reason) }
+    return false
+  }
+
+  /** Every mode but add opens on the curated list; the model is asked from the AI button. */
+  private suspend fun showCurated(template: ThingTemplate?) {
+    // The sources sheet opens at once in the document mode only (design §9.1, §9.3).
+    val started = suggestionManager.start(
+      thingId,
+      entryPoint = mode.wire,
       curatedOnly = true
     )
     if (started !is AiStartResult.Started) {
