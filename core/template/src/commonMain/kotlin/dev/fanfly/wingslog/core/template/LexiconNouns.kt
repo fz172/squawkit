@@ -33,3 +33,9 @@ val Lexicon.technicianNoun: Noun get() = technician ?: GENERIC.technician!!
 
 /** Null on every preset that predates the data-log section; the generic word reads right there. */
 val Lexicon.dataLogNoun: Noun get() = data_log ?: GENERIC.data_log!!
+
+/**
+ * The Thing's own tasks, as a section beside its components' ("Airframe"). Most presets name none,
+ * and there the Thing's own noun reads right ("Home").
+ */
+val Lexicon.thingSectionNoun: Noun get() = thing_section ?: thingNoun

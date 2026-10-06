@@ -1,5 +1,5 @@
 
-airplane"…	
+airplane"¡	
 
 aircraftaircraftan
 squawksquawksa"Squawks0
@@ -12,7 +12,8 @@ techniciantechniciansa:	AirworthyBAOGJAircraft on GroundRFleetjFAAr7
 Airworthiness DirectiveAirworthiness DirectivesADz)
 Service BulletinService BulletinsSB‚ø
 #Tap + to report a defect or anomaly>Tap + to add inspections, part replacements, and other checks.0Log work against a task to see its history here."cLog your first entry â€” oil change, annual, 100-hour, or any other airframe, engine, or prop work.*No logs yet2=Add the first maintenance entry to start the aircraft record.:No upcoming tasksB$Scheduled maintenance is up to date.J*No active discrepancies for this aircraft.R‘Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.Z5Upload a data log from the avionics to chart it here.ŠMaintenance due’*AOG squawks must be resolved before flightš.
-data logdata logs archivea"Data Archive¢=Flight data recorded by the avionics, charted on this device.* 0:BHj2
+data logdata logs archivea"Data Archive¢=Flight data recorded by the avionics, charted on this device.ª
+airframe	airframesan* 0:BHj2
 makeMake2
 modelModel2
 serialSerial Number 02 

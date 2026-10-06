@@ -152,4 +152,9 @@ message Lexicon {
   Noun data_log = 19;
   // The section subtitle — a whole sentence, like `down_alert_hint`.
   string data_log_description = 20;
+
+  // What the Thing itself is called where its own tasks sit beside its components' — the
+  // suggestions review's section headers (Airframe · Engine · Propeller). An airplane's tasks of its
+  // own are the airframe's; a preset that leaves this out heads them with its `thing` noun.
+  Noun thing_section = 21;  // airframe · (thing)
 }

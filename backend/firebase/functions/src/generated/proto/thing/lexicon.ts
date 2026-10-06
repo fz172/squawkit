@@ -184,6 +184,12 @@ export interface Lexicon {
     | undefined;
   /** The section subtitle — a whole sentence, like `down_alert_hint`. */
   dataLogDescription: string;
+  /**
+   * What the Thing itself is called where its own tasks sit beside its components' — the
+   * suggestions review's section headers (Airframe · Engine · Propeller). An airplane's tasks of its
+   * own are the airframe's; a preset that leaves this out heads them with its `thing` noun.
+   */
+  thingSection: Noun | undefined;
 }
 
 function createBaseNoun(): Noun {
@@ -686,6 +692,7 @@ function createBaseLexicon(): Lexicon {
     downAlertHint: "",
     dataLog: undefined,
     dataLogDescription: "",
+    thingSection: undefined,
   };
 }
 
@@ -744,6 +751,9 @@ export const Lexicon: MessageFns<Lexicon> = {
     }
     if (message.dataLogDescription !== "") {
       writer.uint32(162).string(message.dataLogDescription);
+    }
+    if (message.thingSection !== undefined) {
+      Noun.encode(message.thingSection, writer.uint32(170).fork()).join();
     }
     return writer;
   },
@@ -899,6 +909,14 @@ export const Lexicon: MessageFns<Lexicon> = {
           message.dataLogDescription = reader.string();
           continue;
         }
+        case 21: {
+          if (tag !== 170) {
+            break;
+          }
+
+          message.thingSection = Noun.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -976,6 +994,11 @@ export const Lexicon: MessageFns<Lexicon> = {
         : isSet(object.data_log_description)
         ? globalThis.String(object.data_log_description)
         : "",
+      thingSection: isSet(object.thingSection)
+        ? Noun.fromJSON(object.thingSection)
+        : isSet(object.thing_section)
+        ? Noun.fromJSON(object.thing_section)
+        : undefined,
     };
   },
 
@@ -1035,6 +1058,9 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.dataLogDescription !== "") {
       obj.dataLogDescription = message.dataLogDescription;
     }
+    if (message.thingSection !== undefined) {
+      obj.thingSection = Noun.toJSON(message.thingSection);
+    }
     return obj;
   },
 
@@ -1075,6 +1101,9 @@ export const Lexicon: MessageFns<Lexicon> = {
       ? Noun.fromPartial(object.dataLog)
       : undefined;
     message.dataLogDescription = object.dataLogDescription ?? "";
+    message.thingSection = (object.thingSection !== undefined && object.thingSection !== null)
+      ? Noun.fromPartial(object.thingSection)
+      : undefined;
     return message;
   },
 };

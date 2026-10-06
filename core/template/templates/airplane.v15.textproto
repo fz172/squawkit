@@ -60,7 +60,7 @@
 id: "airplane"
 # v14 drops `starter_tasks`: suggested tasks come from the server's curated list since AI
 # suggestions shipped (task population T25, #1220); the field is reserved in template.proto.
-version: 14
+version: 15
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -92,6 +92,8 @@ lexicon {
   # "Data Archive" is the pill label and "Data Logs Archive" the section title; the singular is what
   # every string about one file substitutes.
   data_log { singular: "data log" plural: "data logs archive" article: "a" short_plural: "Data Archive" }
+  # The aircraft's own tasks, beside its engine's and propeller's, are the airframe's (v15).
+  thing_section { singular: "airframe" plural: "airframes" article: "an" }
 
   ready_status: "Airworthy"
 
