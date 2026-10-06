@@ -1,8 +1,7 @@
 # Thing icons
 
 The Thing glyphs in the brand plane's style: car, bike, boat, home, toolbox (the "anything else"
-preset), and an open crate. The login hero prints the first five on its sheets of paper; the crate
-is from an earlier version of the hero and is currently unused.
+preset). The login hero prints them on its sheets of paper.
 
 ```
 generate_icons.py      the shapes — edit this, run it

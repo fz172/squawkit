@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Single source for the Thing glyphs: car, bike, boat, home, toolbox, plus the open crate the login
-hero pours them into. Drawn in the brand plane's style: chunky filled silhouettes, rounded corners,
-a few speed dashes on things that move.
+Single source for the Thing glyphs: car, bike, boat, home and toolbox, which the login hero prints
+on its sheets of paper. Chunky filled silhouettes, rounded corners, a few speed dashes on things
+that move.
 
     python3 docs/branding/thing-icons/generate_icons.py
 
@@ -138,24 +138,12 @@ def toolbox():
     return [(body + seam + latch, FILL), (handle, stroke(52))]
 
 
-def crate():
-    """The open box the hero pours things into. Its outer outline (first subpath) is what morphs
-    into the plane's body, so it stays one simple closed shape; the mouth is a hole."""
-    box = rounded_polygon(
-        [(250, 470), (140, 330), (395, 330), (445, 470), (579, 470), (629, 330), (884, 330), (774, 470), (774, 820), (250, 820)],
-        30,
-    )
-    mouth = rect(292, 470, 732, 545, 18, reverse=True)
-    return [(box + mouth, FILL)]
-
-
 GLYPHS = {
     "car": car,
     "bike": bike,
     "boat": boat,
     "home": home,
     "toolbox": toolbox,
-    "crate": crate,
 }
 
 
