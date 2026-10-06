@@ -53,6 +53,7 @@ import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.slotLabel
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.template.thingSectionNoun
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
@@ -71,9 +72,7 @@ import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_ai_disclosure
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
@@ -190,7 +189,10 @@ fun StarterPackRoute(
           return@Box
         }
         if (uiState.isSuggesting) {
-          LinearProgressIndicator(modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter))
+          LinearProgressIndicator(
+            modifier = Modifier.fillMaxWidth()
+              .align(Alignment.TopCenter)
+          )
         }
         Column(
           modifier = Modifier
@@ -203,21 +205,6 @@ fun StarterPackRoute(
             ),
           verticalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
-          Text(
-            text = stringResource(
-              Res.string.starter_pack_title,
-              taskNoun.plural
-            ),
-            style = MaterialTheme.typography.headlineSmall,
-          )
-          Text(
-            text = stringResource(
-              Res.string.starter_pack_subtitle,
-              LocalThingLexicon.current.thingNoun.singular,
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
           DocumentsHeader(uiState.documents)
           uiState.aiSkipped?.let { skipped ->
             // The curated cards came alone; say why, and when the model is back (PRD R9a).
@@ -315,56 +302,83 @@ fun StarterPackRoute(
               }
             }
           }
-          if (uiState.isSuggesting) SuggestingNote(uiState.stage, uiState.stageArg)
+          if (uiState.isSuggesting) SuggestingNote(
+            uiState.stage,
+            uiState.stageArg
+          )
+          // The Thing's own tasks, in its words: an airplane's are the airframe's.
+          val thingSection =
+            LexiconFormatter.titleCase(LocalThingLexicon.current.thingSectionNoun)
           groupsOf(uiState.items).forEach { group ->
-            // Every section is headed: its count and *Select all* are worth having for one too.
-            SuggestionGroupHeader(
-              title = if (group.slotKey.isEmpty()) {
-                LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun)
-              } else {
-                uiState.template.slotLabel(group.slotKey, ifAbsent = group.slotKey)
-              },
-              selected = group.cards.count { it.value.selected },
-              total = group.cards.size,
-              enabled = !uiState.isSaving,
-              onToggleAll = { viewModel.onToggleGroup(group.slotKey) },
-            )
-            GroupedRowGroup(
-              dividerStartInset = 52.dp,
-              rows = group.cards.map { (index, item) ->
-                {
-                  SuggestionRow(
-                    item = item,
-                    template = uiState.template,
-                    wide = wide,
-                    enabled = !uiState.isSaving,
-                    expanded = expandedId == item.suggestion.suggestion_id?.value_,
-                    onToggle = { viewModel.onToggle(index) },
-                    onExpandedChange = { open ->
-                      expandedId = item.suggestion.suggestion_id?.value_.takeIf { open }
-                    },
-                    onSource = { sourceShown = item.suggestion },
-                    onInterval = { edit ->
-                      when (edit) {
-                        is IntervalEdit.Meter ->
-                          viewModel.onMeterIntervalChange(index, edit.interval)
-                        is IntervalEdit.Months -> viewModel.onMonthsChange(index, edit.months)
-                        is IntervalEdit.Days -> viewModel.onDaysChange(index, edit.days)
-                      }
-                    },
-                    // R28: everything else about it, in the task form.
-                    onMoreOptions = {
-                      scope.launch {
-                        val draft = viewModel.draftFor(index) ?: return@launch
-                        navController.navigate(
-                          Screen.AddMaintenanceTask.createRoute(viewModel.thingId, draft),
-                        )
-                      }
-                    },
+            // The header sits on its card; the column's spacing separates the sections.
+            Column {
+              // Every section is headed: its count and *Select all* are worth having for one too.
+              SuggestionGroupHeader(
+                title = if (group.slotKey.isEmpty()) {
+                  thingSection
+                } else {
+                  uiState.template.slotLabel(
+                    group.slotKey,
+                    ifAbsent = group.slotKey
                   )
-                }
-              },
-            )
+                },
+                selected = group.cards.count { it.value.selected },
+                total = group.cards.size,
+                enabled = !uiState.isSaving,
+                onToggleAll = { viewModel.onToggleGroup(group.cards.map { it.index }) },
+              )
+              GroupedRowGroup(
+                dividerStartInset = 52.dp,
+                rows = group.cards.map { (index, item) ->
+                  {
+                    SuggestionRow(
+                      item = item,
+                      template = uiState.template,
+                      wide = wide,
+                      enabled = !uiState.isSaving,
+                      expanded = expandedId == item.suggestion.suggestion_id?.value_,
+                      onToggle = { viewModel.onToggle(index) },
+                      onExpandedChange = { open ->
+                        expandedId =
+                          item.suggestion.suggestion_id?.value_.takeIf { open }
+                      },
+                      onSource = { sourceShown = item.suggestion },
+                      onInterval = { edit ->
+                        when (edit) {
+                          is IntervalEdit.Meter ->
+                            viewModel.onMeterIntervalChange(
+                              index,
+                              edit.interval
+                            )
+
+                          is IntervalEdit.Months -> viewModel.onMonthsChange(
+                            index,
+                            edit.months
+                          )
+
+                          is IntervalEdit.Days -> viewModel.onDaysChange(
+                            index,
+                            edit.days
+                          )
+                        }
+                      },
+                      // R28: everything else about it, in the task form.
+                      onMoreOptions = {
+                        scope.launch {
+                          val draft = viewModel.draftFor(index) ?: return@launch
+                          navController.navigate(
+                            Screen.AddMaintenanceTask.createRoute(
+                              viewModel.thingId,
+                              draft
+                            ),
+                          )
+                        }
+                      },
+                    )
+                  }
+                },
+              )
+            }
           }
           // The model's rows land here when the run ends; the ones above can be picked meanwhile.
           if (uiState.isSuggesting) ComingGroup(uiState.readsDocuments)

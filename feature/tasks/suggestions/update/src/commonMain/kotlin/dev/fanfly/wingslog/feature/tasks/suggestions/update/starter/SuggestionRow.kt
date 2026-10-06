@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,19 +10,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,8 +41,8 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
- * A section's header (1d): its name with how many are picked of how many, and one action for the
- * whole section, *Select all* until every row is picked, then *Clear*.
+ * A section's header (1d), sitting on its card: its name with how many are picked of how many,
+ * and one action for the whole section, *Select all* until every row is picked, then *Clear*.
  */
 @Composable
 internal fun SuggestionGroupHeader(
@@ -51,7 +53,9 @@ internal fun SuggestionGroupHeader(
   onToggleAll: () -> Unit,
 ) {
   Row(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = Spacing.extraSmall),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
@@ -60,27 +64,38 @@ internal fun SuggestionGroupHeader(
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.weight(1f),
     )
-    TextButton(onClick = onToggleAll, enabled = enabled) {
-      Text(
-        stringResource(
-          if (selected == total) {
-            Res.string.suggestions_clear
-          } else {
-            Res.string.suggestions_select_all
-          },
-        ),
-      )
-    }
+    // A text action, not a button: a button's height would push the header off its card.
+    Text(
+      text = stringResource(
+        if (selected == total) {
+          Res.string.suggestions_clear
+        } else {
+          Res.string.suggestions_select_all
+        },
+      ),
+      style = MaterialTheme.typography.labelLarge,
+      color = if (enabled) {
+        MaterialTheme.colorScheme.primary
+      } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+      },
+      modifier = Modifier
+        .clip(RoundedCornerShape(Spacing.badgeCornerRadius))
+        .clickable(enabled = enabled, role = Role.Button, onClick = onToggleAll)
+        .padding(horizontal = Spacing.extraSmall, vertical = Spacing.small),
+    )
   }
 }
 
 /**
- * One suggestion (1d, 2b): the checkbox leads and the whole row toggles. The interval is in mono,
- * the part worth scanning for, then what the task is, then where it comes from. On a wide layout
- * the interval and the source sit in fixed columns at the end, so the list scans like a table.
+ * One suggestion (1d, 2b): the checkbox leads, on the title's line, and picks it. Closed, a phone
+ * row is the title, the interval in mono (the part worth scanning for) and where it comes from; a
+ * wide row adds what the task is, with the interval and the source in fixed columns, so the list
+ * scans like a table.
  *
- * The chevron opens the row to change its interval in place (R28) rather than in another screen;
- * *More options* still opens the whole task form.
+ * Tapping anywhere else on the row opens or closes it, as the chevron at its end says (R28): what
+ * the task is, its interval to change in place, and *More options* for the whole task form. The
+ * open row is tinted.
  */
 @Composable
 internal fun SuggestionRow(
@@ -102,21 +117,36 @@ internal fun SuggestionRow(
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .toggleable(
-        value = item.selected,
-        enabled = enabled,
-        role = Role.Checkbox,
-        onValueChange = { onToggle() },
+      .then(
+        if (expanded) {
+          Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = OpenRowTint))
+        } else {
+          Modifier
+        },
       )
-      .padding(start = Spacing.extraSmall, end = Spacing.extraSmall, top = Spacing.extraSmall),
-    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+      .clickable(
+        enabled = enabled,
+        onClickLabel = stringResource(CoreRes.string.edit),
+        onClick = { onExpandedChange(!expanded) },
+      )
+      .padding(start = Spacing.large, end = Spacing.small, top = 14.dp, bottom = 14.dp),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    // The row is the toggle; the box only shows it.
-    Checkbox(checked = item.selected, onCheckedChange = null, enabled = enabled)
+    // The box alone picks the row, centred on the title's first line; its touch target spills
+    // past the 24dp it takes in the layout.
+    Box(
+      modifier = Modifier.size(width = CheckSize, height = TitleLine),
+      contentAlignment = Alignment.Center,
+    ) {
+      Checkbox(
+        checked = item.selected,
+        onCheckedChange = { onToggle() },
+        enabled = enabled,
+        modifier = Modifier.wrapContentSize(unbounded = true),
+      )
+    }
     Column(
-      modifier = Modifier
-        .weight(1f)
-        .padding(top = Spacing.medium, bottom = Spacing.medium),
+      modifier = Modifier.weight(1f),
       verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
       Text(
@@ -124,16 +154,13 @@ internal fun SuggestionRow(
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
       )
-      if (!wide && rule != null) RuleLine(rule)
-      if (description.isNotEmpty()) {
+      if (!wide && !expanded && rule != null) RuleLine(rule)
+      if ((wide || expanded) && description.isNotEmpty()) {
         Text(
           text = description,
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-      }
-      if (!wide) {
-        Tags(item, edited != null, onSource, Modifier.padding(top = 2.dp))
       }
       if (expanded) {
         IntervalFields(
@@ -143,34 +170,37 @@ internal fun SuggestionRow(
           onInterval = onInterval,
           modifier = Modifier.padding(top = Spacing.small),
         )
-        TextButton(onClick = onMoreOptions, enabled = enabled) {
-          Text(stringResource(Res.string.suggestion_more_options))
-        }
+      }
+      if (!wide) {
+        Tags(item, edited != null, onSource, Modifier.padding(top = Spacing.extraSmall))
+      }
+      if (expanded) {
+        Text(
+          text = stringResource(Res.string.suggestion_more_options),
+          style = MaterialTheme.typography.labelLarge,
+          color = MaterialTheme.colorScheme.primary,
+          modifier = Modifier
+            .clickable(enabled = enabled, role = Role.Button, onClick = onMoreOptions)
+            .padding(vertical = Spacing.small),
+        )
       }
     }
     if (wide) {
-      Box(
-        modifier = Modifier
-          .width(RuleColumn)
-          .padding(top = Spacing.medium),
-        contentAlignment = Alignment.TopEnd,
-      ) {
+      Box(Modifier.width(RuleColumn), contentAlignment = Alignment.TopEnd) {
         if (rule != null) RuleLine(rule)
       }
-      Box(
-        modifier = Modifier
-          .width(SourceColumn)
-          .padding(top = Spacing.medium),
-        contentAlignment = Alignment.TopEnd,
-      ) {
+      Box(Modifier.width(SourceColumn), contentAlignment = Alignment.TopEnd) {
         Tags(item, edited != null, onSource)
       }
     }
-    // R28: change it before adding it, here.
-    IconButton(onClick = { onExpandedChange(!expanded) }, enabled = enabled) {
+    // Says what a tap on the row does; the row itself takes the tap.
+    Box(
+      modifier = Modifier.size(width = CheckSize, height = TitleLine),
+      contentAlignment = Alignment.Center,
+    ) {
       Icon(
         if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-        contentDescription = stringResource(CoreRes.string.edit),
+        contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.size(20.dp),
       )
@@ -211,5 +241,11 @@ private fun Tags(
   }
 }
 
+/** The checkbox's footprint, and the title's line it sits on (titleSmall). */
+private val CheckSize = 24.dp
+private val TitleLine = 20.dp
+
+/** How much the open row is tinted with the primary color (1d). */
+private const val OpenRowTint = 0.08f
 private val RuleColumn = 120.dp
 private val SourceColumn = 150.dp

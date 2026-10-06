@@ -295,16 +295,16 @@ class StarterPackViewModelTest {
     advanceUntilIdle()
     vm.onToggle(3)
 
-    vm.onToggleGroup("engine")
+    vm.onToggleGroup(listOf(3, 4))
     assertThat(vm.uiState.value.items.map { it.selected })
       .containsExactly(false, false, false, true, true).inOrder()
 
-    vm.onToggleGroup("engine")
+    vm.onToggleGroup(listOf(3, 4))
     assertThat(vm.uiState.value.items.map { it.selected })
       .containsExactly(false, false, false, false, false).inOrder()
 
     // The Thing's own section is the empty slot.
-    vm.onToggleGroup("")
+    vm.onToggleGroup(listOf(0, 1, 2))
     assertThat(vm.uiState.value.items.map { it.selected })
       .containsExactly(true, true, true, false, false).inOrder()
   }

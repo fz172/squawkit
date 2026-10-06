@@ -489,15 +489,14 @@ class StarterPackViewModel(
 
   /**
    * *Select all* on a section: every row in it picked, or, once they all are, *Clear*: none.
-   * [slotKey] is the section's component slot; empty is the Thing itself.
+   * [indices] are the section's rows ([CardGroup.cards]).
    */
-  fun onToggleGroup(slotKey: String) {
+  fun onToggleGroup(indices: List<Int>) {
     _uiState.update { state ->
-      val inGroup = state.items.filter { it.suggestion.component_slot_key == slotKey }
-      val select = inGroup.any { !it.selected }
+      val select = indices.any { state.items.getOrNull(it)?.selected == false }
       state.copy(
-        items = state.items.map { item ->
-          if (item.suggestion.component_slot_key == slotKey) item.copy(selected = select) else item
+        items = state.items.mapIndexed { i, item ->
+          if (i in indices) item.copy(selected = select) else item
         },
       )
     }
