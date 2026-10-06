@@ -52,8 +52,8 @@ private const val BRAND_SUFFIX = "It"
 /**
  * The brand block above the card: the stack hero, the wordmark, and the tagline.
  *
- * The mark is [ThingHero] rather than the canvas's static tile — Thing glyphs fly into a crate that
- * becomes the brand stack. [animate] false shows the resting state, for surfaces reached *from* the login
+ * The mark is [ThingHero] rather than the canvas's static tile — sheets of paper, a Thing printed
+ * on each, come in layer by layer and become the brand stack. [animate] false shows the resting state, for surfaces reached *from* the login
  * page (the email step), where replaying the sequence would be noise.
  */
 @Composable
@@ -68,12 +68,7 @@ internal fun LoginMark(animate: Boolean = true) {
       .height(124.dp),
     contentAlignment = Alignment.Center,
   ) {
-    ThingHero(
-      size = 116.dp,
-      tint = MaterialTheme.colorScheme.primary,
-      fanTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
-      animate = animate,
-    )
+    ThingHero(size = 116.dp, animate = animate)
   }
 
   Spacer(Modifier.height(Spacing.medium))

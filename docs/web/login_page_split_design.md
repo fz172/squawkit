@@ -138,9 +138,8 @@ since been removed: the hero now ends on `BrandStack`, the record-stack mark, wh
 colours. The web header's monochrome mark is `brand-plane.svg`, a separate file.
 
 **Login card — the motion hero.** `LoginPlaneArt()` in `feature/login/LoginCommon.kt`, which renders
-`ThingHero`: five Thing glyphs fly into a crate, the crate morphs into the bottom plate of the brand
-stack, the other two plates land on it, the glyphs fan out behind it for a beat and drift away, and
-the stack breathes alone. `animate = false` gives the resting
+`ThingHero`: sheets of paper, a Thing printed on each, come in layer by layer and become the plates
+of the brand stack, which then breathes alone. `animate = false` gives the resting
 state, which is what surfaces reached *from* the login page should use so the sequence does not
 replay — the email step included.
 
