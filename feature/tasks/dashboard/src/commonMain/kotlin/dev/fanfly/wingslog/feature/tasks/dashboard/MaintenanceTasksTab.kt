@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -36,6 +37,7 @@ import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -229,23 +231,22 @@ fun MaintenanceTasksTab(
  */
 @Composable
 private fun AddedSnackbar(viewModel: AddedTasksViewModel) {
-  val count by viewModel.toAnnounce.collectAsStateWithLifecycle()
   val snackbarHostState = LocalSnackbarHostState.current ?: return
-  val taskNoun = LocalThingLexicon.current.taskNoun
-  val message = count?.let {
-    stringResource(
-      Res.string.tasks_added,
-      it,
-      if (it == 1) taskNoun.singular else taskNoun.plural,
-    )
-  }
-  val undo = stringResource(Res.string.undo)
-  LaunchedEffect(message) {
-    if (message == null) return@LaunchedEffect
-    viewModel.onAnnounced()
-    val result =
-      snackbarHostState.showSnackbar(message = message, actionLabel = undo)
-    if (result == SnackbarResult.ActionPerformed) viewModel.onUndo()
+  val taskNoun by rememberUpdatedState(LocalThingLexicon.current.taskNoun)
+  // Keyed on nothing a batch changes: an effect keyed on the message restarted as the batch was
+  // marked said, and cancelling it took the snackbar down before *Undo* could be tapped.
+  LaunchedEffect(viewModel, snackbarHostState) {
+    viewModel.added.collect { taskIds ->
+      val message = getString(
+        Res.string.tasks_added,
+        taskIds.size,
+        if (taskIds.size == 1) taskNoun.singular else taskNoun.plural,
+      )
+      val result = snackbarHostState.showSnackbar(
+        message = message,
+        actionLabel = getString(Res.string.undo),
+      )
+      if (result == SnackbarResult.ActionPerformed) viewModel.onUndo(taskIds)
+    }
   }
 }
-

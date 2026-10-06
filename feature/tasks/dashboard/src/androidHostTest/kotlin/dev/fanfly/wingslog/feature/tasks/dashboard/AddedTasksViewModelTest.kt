@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -35,44 +36,56 @@ class AddedTasksViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   @Test
-  fun aBatchIsAnnouncedOnce() = runTest(dispatcher) {
+  fun aBatchIsHandedOutOnce() = runTest(dispatcher) {
     val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
-    backgroundScope.launch { vm.toAnnounce.collect {} }
+    val said = mutableListOf<List<String>>()
+    backgroundScope.launch { vm.added.collect { said += it } }
 
     recentlyAdded.record(THING, listOf("t1", "t2"))
-    advanceUntilIdle()
-    assertThat(vm.toAnnounce.value).isEqualTo(2)
+    runCurrent()
 
-    vm.onAnnounced()
-    advanceUntilIdle()
-    assertThat(vm.toAnnounce.value).isNull()
+    assertThat(said).containsExactly(listOf("t1", "t2"))
+    // Taken, so a tab opened later does not say it again.
+    assertThat(recentlyAdded.batch.value).isNull()
+    val later = mutableListOf<List<String>>()
+    backgroundScope.launch { vm.added.collect { later += it } }
+    runCurrent()
+    assertThat(later).isEmpty()
+  }
+
+  @Test
+  fun aBatchAddedBeforeTheTabOpensIsStillSaid() = runTest(dispatcher) {
+    recentlyAdded.record(THING, listOf("t1"))
+    val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
+    val said = mutableListOf<List<String>>()
+    backgroundScope.launch { vm.added.collect { said += it } }
+    runCurrent()
+
+    assertThat(said).containsExactly(listOf("t1"))
   }
 
   @Test
   fun undoDeletesTheBatch() = runTest(dispatcher) {
     val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
-    recentlyAdded.record(THING, listOf("t1", "t2"))
-    advanceUntilIdle()
 
-    vm.onUndo()
+    vm.onUndo(listOf("t1", "t2"))
     advanceUntilIdle()
 
     coVerify { tasks.deleteTask(THING, "t1") }
     coVerify { tasks.deleteTask(THING, "t2") }
-    assertThat(recentlyAdded.batch.value).isNull()
   }
 
   @Test
   fun anotherThingsBatchIsNotThisTabs() = runTest(dispatcher) {
     val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
-    backgroundScope.launch { vm.toAnnounce.collect {} }
+    val said = mutableListOf<List<String>>()
+    backgroundScope.launch { vm.added.collect { said += it } }
     recentlyAdded.record("other", listOf("t9"))
-    advanceUntilIdle()
+    runCurrent()
 
-    assertThat(vm.toAnnounce.value).isNull()
-    vm.onUndo()
-    advanceUntilIdle()
-    coVerify(exactly = 0) { tasks.deleteTask(any(), any()) }
+    assertThat(said).isEmpty()
+    // Left for its own tab.
+    assertThat(recentlyAdded.batch.value?.thingId).isEqualTo("other")
   }
 
   private companion object {
