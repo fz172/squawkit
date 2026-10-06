@@ -41,7 +41,6 @@ import dev.fanfly.wingslog.core.ui.layout.LayoutTier
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import org.jetbrains.compose.resources.stringResource
@@ -53,10 +52,6 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.sources_add
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_documents
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_limits
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_pro
-import wingslog.feature.tasks.suggestions.update.generated.resources.sources_problem_not_added
-import wingslog.feature.tasks.suggestions.update.generated.resources.sources_problem_too_large
-import wingslog.feature.tasks.suggestions.update.generated.resources.sources_problem_too_many
-import wingslog.feature.tasks.suggestions.update.generated.resources.sources_problem_unsupported
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_suggest
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
@@ -292,22 +287,3 @@ private fun SheetOrDialog(
     }
   }
 }
-
-@Composable
-private fun DocumentProblem.message(): String = when (this) {
-  DocumentProblem.TOO_LARGE -> stringResource(
-    Res.string.sources_problem_too_large,
-    MAX_DOCUMENT_MB
-  )
-
-  DocumentProblem.UNSUPPORTED -> stringResource(Res.string.sources_problem_unsupported)
-  DocumentProblem.TOO_MANY -> stringResource(
-    Res.string.sources_problem_too_many,
-    SourcesState.MAX_DOCUMENTS_PER_RUN,
-  )
-
-  DocumentProblem.NOT_ADDED -> stringResource(Res.string.sources_problem_not_added)
-}
-
-private val MAX_DOCUMENT_MB =
-  (QuotaChecker.MAX_AI_DOCUMENT_BYTES / (1024 * 1024)).toInt()

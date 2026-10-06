@@ -65,13 +65,8 @@ fun ShellSectionFab(
     ShellSection.TASKS ->
       SectionAddFab(
         label = stringResource(TasksRes.string.add_task),
-        onClick = {
-          navController.navigate(
-            Screen.AddMaintenanceTask.createRoute(
-              thingId
-            )
-          )
-        },
+        // The Add Tasks sheet: suggestions, or the form (*Create manually*).
+        onClick = { navController.navigate(Screen.AddTasks.createRoute(thingId)) },
       )
 
     ShellSection.LOGS ->

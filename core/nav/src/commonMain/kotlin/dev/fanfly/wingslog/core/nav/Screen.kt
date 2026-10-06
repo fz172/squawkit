@@ -26,6 +26,12 @@ sealed class Screen(val route: String) {
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
 
     /**
+     * Set true on the shell's entry by a dialog that a guest tapped to sign in from (the Add Tasks
+     * sheet's *Suggest*): the shell opens the link-account flow it hosts once the dialog closes.
+     */
+    const val CROSS_SCREEN_LINK_ACCOUNT = "link_account"
+
+    /**
      * The add-task form's draft mode (task population T18): [TASK_DRAFT] is the task it opens
      * pre-filled from, and [CROSS_SCREEN_TASK_DRAFT] the edited task it hands back, both encoded
      * by `toDraftArg`. The form writes nothing in this mode; the screen that opened it does.
@@ -116,6 +122,14 @@ sealed class Screen(val route: String) {
 
   data object ManageAccess : Screen("manage_access/{$THING_ID}") {
     fun createRoute(thingId: String) = "manage_access/$thingId"
+  }
+
+  /**
+   * The Add Tasks sheet (a dialog on wide layouts): *Suggest* with optional manuals, or *Create
+   * manually*. What the task tab's add button opens.
+   */
+  data object AddTasks : Screen("add_tasks/{$THING_ID}") {
+    fun createRoute(thingId: String) = "add_tasks/$thingId"
   }
 
   data object AddMaintenanceTask :
