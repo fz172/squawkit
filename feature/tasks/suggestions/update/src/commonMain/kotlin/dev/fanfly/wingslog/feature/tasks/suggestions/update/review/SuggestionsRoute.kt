@@ -339,7 +339,10 @@ fun SuggestionsRoute(
                       template = uiState.template,
                       wide = wide,
                       enabled = !uiState.isSaving,
-                      expanded = expandedId == item.suggestion.suggestion_id?.value_,
+                      // A suggestion with no id is never the open one: its null would equal
+                      // the null that means none is open.
+                      expanded = item.suggestion.suggestion_id?.value_
+                        ?.let { it == expandedId } == true,
                       onToggle = { viewModel.onToggle(index) },
                       onExpandedChange = { open ->
                         expandedId =
