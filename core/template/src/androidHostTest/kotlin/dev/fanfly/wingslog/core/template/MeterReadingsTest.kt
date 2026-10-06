@@ -1,13 +1,20 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
+import com.squareup.wire.Instant as WireInstant
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.fanfly.wingslog.thing.MeterReading
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import org.junit.Test
+import kotlin.time.Duration.Companion.hours
 
 /**
  * Reading meter values by key (#730).
@@ -73,40 +80,136 @@ class MeterReadingsTest {
   }
 
   @Test
-  fun theCurrentReadingIsTheMaximumAcrossLogs() {
+  fun theCurrentReadingIsTheMostRecentLogsNotTheHighest() {
+    // It was the maximum, which no later reading could lower: a mistyped 84512 stuck until someone
+    // found the log, and a replaced tach could not be recorded at all (#1368).
     val logs = listOf(
-      MaintenanceLog(
-        id = "a",
-        readings = listOf(
-          MeterReading(
-            "odometer",
-            value_ = 80000.0
-          )
-        )
-      ),
-      MaintenanceLog(
-        id = "b",
-        readings = listOf(
-          MeterReading(
-            "odometer",
-            value_ = 84512.0
-          )
-        )
-      ),
+      odometerLog("a", day = MAY_1, value = 84512.0),
+      odometerLog("b", day = MAY_3, value = 80000.0),
       MaintenanceLog(
         id = "c",
+        timestamp = MAY_1.atMidnight(),
         readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 1041.8))
       ),
     )
 
-    val current = currentReadings(logs)
+    val current = currentReadings(logs, timeZone = UTC)
 
-    assertThat(current.first { it.meter_key == "odometer" }.value_).isEqualTo(
-      84512.0
-    )
-    // Meters are independent: a key only one log carries still reports that log's value.
+    assertThat(current.first { it.meter_key == ODOMETER }.value_).isEqualTo(80000.0)
+    // Meters are independent: a key only one log carries still reports that log’s value.
     assertThat(current.first { it.meter_key == MeterKeys.ENGINE_HOURS }.value_)
       .isEqualTo(1041.8)
+  }
+
+  @Test
+  fun aBackdatedLogDoesNotMoveAManualReadingBack() {
+    // Set on the dashboard on the 3rd; a log for work done on the 1st is entered the day after.
+    val logs = listOf(
+      odometerLog("late", day = MAY_1, value = 1150.0, savedAt = MAY_3.at(hour = 30))
+    )
+    val manual = listOf(manualOdometer(1200.0, setAt = MAY_3.at(hour = 9)))
+
+    val current = currentReadingStates(logs, manual, UTC).single()
+
+    assertThat(current.value).isEqualTo(1200.0)
+    assertThat(current.isManual).isTrue()
+    assertThat(current.asOf).isEqualTo(MAY_3)
+  }
+
+  @Test
+  fun aLogDatedAfterAManualReadingSupersedesIt() {
+    val logs = listOf(odometerLog("next", day = MAY_5, value = 1210.0))
+    val manual = listOf(manualOdometer(1200.0, setAt = MAY_3.at(hour = 9)))
+
+    val current = currentReadingStates(logs, manual, UTC).single()
+
+    assertThat(current.value).isEqualTo(1210.0)
+    assertThat(current.isManual).isFalse()
+    assertThat(current.asOf).isEqualTo(MAY_5)
+  }
+
+  @Test
+  fun onOneDayTheLastSavedWinsWhicheverItIs() {
+    // A log’s timestamp is midnight of its work date, so against it a manual reading set that
+    // morning would always look newer. The saved-at times are what order the day.
+    val setAtNine = listOf(manualOdometer(1200.0, setAt = MAY_3.at(hour = 9)))
+
+    val logSavedAfter = listOf(
+      odometerLog("l", day = MAY_3, value = 1201.5, savedAt = MAY_3.at(hour = 17))
+    )
+    assertThat(currentReadings(logSavedAfter, setAtNine, UTC).single().value_)
+      .isEqualTo(1201.5)
+
+    val logSavedBefore = listOf(
+      odometerLog("l", day = MAY_3, value = 1201.5, savedAt = MAY_3.at(hour = 8))
+    )
+    assertThat(currentReadings(logSavedBefore, setAtNine, UTC).single().value_)
+      .isEqualTo(1200.0)
+  }
+
+  @Test
+  fun twoLogsOnOneDayAreOrderedBySavedAtTooEvenDownward() {
+    val logs = listOf(
+      odometerLog("typo", day = MAY_3, value = 12015.0, savedAt = MAY_3.at(hour = 8)),
+      odometerLog("fixed", day = MAY_3, value = 1201.5, savedAt = MAY_3.at(hour = 9)),
+    )
+
+    assertThat(currentReadings(logs, timeZone = UTC).single().value_).isEqualTo(1201.5)
+  }
+
+  @Test
+  fun aLogSavedBeforeSavedAtExistedLosesItsDayToAnythingThatHasOne() {
+    // No saved-at means it was written by a build that predates the field — so before whatever
+    // does carry one.
+    val logs = listOf(odometerLog("old", day = MAY_3, value = 1300.0))
+    val manual = listOf(manualOdometer(1200.0, setAt = MAY_3.at(hour = 9)))
+
+    assertThat(currentReadings(logs, manual, UTC).single().value_).isEqualTo(1200.0)
+  }
+
+  @Test
+  fun twoSuchOlderLogsOnOneDayFallBackToTheHigherValue() {
+    // Nothing orders them, and the maximum is what they were always read by.
+    val logs = listOf(
+      odometerLog("a", day = MAY_3, value = 1300.0),
+      odometerLog("b", day = MAY_3, value = 1250.0),
+    )
+
+    assertThat(currentReadings(logs, timeZone = UTC).single().value_).isEqualTo(1300.0)
+  }
+
+  @Test
+  fun theDayIsTheOneInTheReadersTimeZone() {
+    // 03:00 UTC on the 4th is still the 3rd in New York, where a log for the 4th is a day later.
+    val newYork = TimeZone.of("America/New_York")
+    val logs = listOf(
+      MaintenanceLog(
+        id = "l",
+        timestamp = MAY_4.atStartOfDayIn(newYork).toWireInstant(),
+        readings = listOf(MeterReading(ODOMETER, value_ = 1150.0)),
+      )
+    )
+    val manual = listOf(manualOdometer(1200.0, setAt = MAY_4.at(hour = 3)))
+
+    assertThat(currentReadings(logs, manual, newYork).single().value_).isEqualTo(1150.0)
+  }
+
+  @Test
+  fun aManualReadingAloneIsTheCurrentReading() {
+    // Setting a reading is also how a Thing with no logs gets its first one.
+    val manual = listOf(manualOdometer(42000.0, setAt = MAY_3.at(hour = 9)))
+
+    val current = currentReadingStates(emptyList(), manual, UTC).single()
+
+    assertThat(current.meterKey).isEqualTo(ODOMETER)
+    assertThat(current.value).isEqualTo(42000.0)
+  }
+
+  @Test
+  fun aManualReadingOfZeroCountsAsNotRecorded() {
+    val manual = listOf(manualOdometer(0.0, setAt = MAY_3.at(hour = 9)))
+
+    assertThat(currentReadings(emptyList(), manual, UTC)).isEmpty()
   }
 
   @Test
@@ -299,5 +402,39 @@ class MeterReadingsTest {
     )
     // An unkeyed value still reads as hours, which is what it always meant.
     assertThat(AirplaneTemplate.TEMPLATE.meterUnit(null)).isEqualTo("HRS")
+  }
+
+  private fun odometerLog(
+    id: String,
+    day: LocalDate,
+    value: Double,
+    savedAt: WireInstant? = null,
+  ) = MaintenanceLog(
+    id = id,
+    timestamp = day.atMidnight(),
+    readings = listOf(MeterReading(ODOMETER, value_ = value)),
+    readings_saved_at = savedAt,
+  )
+
+  private fun manualOdometer(value: Double, setAt: WireInstant) =
+    ManualMeterReading(
+      reading = MeterReading(ODOMETER, value_ = value),
+      set_at = setAt,
+    )
+
+  // Midnight of the work date, the way the log form stamps it.
+  private fun LocalDate.atMidnight(): WireInstant = at(hour = 0)
+
+  /** [hour] past midnight UTC — past 24 runs into the next day. */
+  private fun LocalDate.at(hour: Int): WireInstant =
+    (atStartOfDayIn(UTC) + hour.hours).toWireInstant()
+
+  private companion object {
+    const val ODOMETER = "odometer"
+    val UTC = TimeZone.UTC
+    val MAY_1 = LocalDate(2026, 5, 1)
+    val MAY_3 = LocalDate(2026, 5, 3)
+    val MAY_4 = LocalDate(2026, 5, 4)
+    val MAY_5 = LocalDate(2026, 5, 5)
   }
 }

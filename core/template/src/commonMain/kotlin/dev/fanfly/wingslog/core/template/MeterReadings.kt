@@ -1,10 +1,17 @@
 package dev.fanfly.wingslog.core.template
 
+import dev.fanfly.wingslog.core.datetime.toInstant
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.ThingTemplate
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 /**
  * Reading and writing meter values by key (#730).
@@ -27,27 +34,106 @@ fun MaintenanceLog.readingFor(meterKey: String): Double? =
     ?.takeIf { it > 0.0 }
 
 /**
- * The current reading for every meter [logs] carry — the maximum over them, per key.
+ * A meter’s current reading, and where it came from.
  *
- * The same computation the three `current_*` fields have always used, generalised. **Keyed off the
- * logs rather than off a template**, deliberately: the overview is written by the log manager,
- * which has no Thing in hand, and a reading whose meter a template later stops declaring is still
- * the user's data. The dashboard filters to what its template declares at render.
+ * @property asOf the day it was read — a log’s work date, or the day a manual reading was set. Null
+ *   for a log that carries no date.
+ * @property isManual set by hand on the dashboard rather than recorded on a log.
+ */
+data class CurrentReading(
+  val meterKey: String,
+  val value: Double,
+  val asOf: LocalDate?,
+  val isManual: Boolean,
+)
+
+/**
+ * The current reading of every meter [logs] and [manual] carry: per key, the **most recent** one
+ * (#1368).
  *
- * A meter no log has touched is absent rather than zero, so a reader can tell "not recorded yet"
+ * It was the maximum over the logs, which no later reading could ever lower — so a mistyped log
+ * stuck until it was found and fixed, and a replaced tach could not be recorded at all. Recency is
+ * decided in three steps:
+ *
+ * 1. **The later day wins** — a log’s work date against the day a manual reading was set, both read
+ *    in [timeZone]. A log backdated to last month never moves the reading back.
+ * 2. **Within a day, the last one saved wins** — a log’s `readings_saved_at` against the manual
+ *    reading’s `set_at`. A log’s `timestamp` is midnight of its work date and cannot order this. A
+ *    log saved before `readings_saved_at` existed has none and loses to anything that does, which is
+ *    right: whatever has one was saved after it.
+ * 3. **Two that still tie fall back to the higher value** — two such older logs on one day, where
+ *    the maximum is all there ever was to go on.
+ *
+ * **Keyed off the readings rather than off a template**, deliberately: the overview is written by
+ * the log manager, which has no Thing in hand, and a reading whose meter a template later stops
+ * declaring is still the user’s data. The dashboard filters to what its template declares at render.
+ *
+ * A meter nothing has recorded is absent rather than zero, so a reader can tell "not recorded yet"
  * from "reads zero".
  */
-fun currentReadings(logs: List<MaintenanceLog>): List<MeterReading> {
-  val keys = buildSet {
-    logs.forEach { log -> log.readings.forEach { add(it.meter_key) } }
+fun currentReadingStates(
+  logs: List<MaintenanceLog>,
+  manual: List<ManualMeterReading> = emptyList(),
+  timeZone: TimeZone = TimeZone.currentSystemDefault(),
+): List<CurrentReading> {
+  val candidates = buildList {
+    logs.forEach { log ->
+      val day = log.timestamp?.toLocalDate(timeZone)
+      val savedAt = log.readings_saved_at?.toInstant()
+      log.readings.map { it.meter_key }
+        .distinct()
+        .forEach { key ->
+          log.readingFor(key)
+            ?.let { add(Candidate(key, it, day, savedAt, isManual = false)) }
+        }
+    }
+    manual.forEach { entry ->
+      val reading = entry.reading ?: return@forEach
+      val setAt = entry.set_at?.toInstant()
+      // Zero is "not recorded" here as on a log, so the two can never disagree about it.
+      if (reading.value_ > 0.0) add(
+        Candidate(
+          meterKey = reading.meter_key,
+          value = reading.value_,
+          day = setAt?.toLocalDateTime(timeZone)?.date,
+          savedAt = setAt,
+          isManual = true,
+        )
+      )
+    }
   }
-  return keys.sorted()
-    .mapNotNull { key ->
-      val value = logs.mapNotNull { it.readingFor(key) }
-        .maxOrNull() ?: return@mapNotNull null
-      MeterReading(meter_key = key, value_ = value)
+  return candidates.groupBy { it.meterKey }
+    .toList()
+    .sortedBy { (key, _) -> key }
+    .map { (key, forKey) ->
+      val latest = forKey.maxWith(MOST_RECENT)
+      CurrentReading(key, latest.value, latest.day, latest.isManual)
     }
 }
+
+/** [currentReadingStates] as the bare key and value the overview stores. */
+fun currentReadings(
+  logs: List<MaintenanceLog>,
+  manual: List<ManualMeterReading> = emptyList(),
+  timeZone: TimeZone = TimeZone.currentSystemDefault(),
+): List<MeterReading> =
+  currentReadingStates(logs, manual, timeZone)
+    .map { MeterReading(meter_key = it.meterKey, value_ = it.value) }
+
+/** One reading competing to be a meter’s current one. */
+private data class Candidate(
+  val meterKey: String,
+  val value: Double,
+  val day: LocalDate?,
+  val savedAt: Instant?,
+  val isManual: Boolean,
+)
+
+// nullsFirst: a reading with no day, or no saved-at, is the oldest there is.
+private val MOST_RECENT: Comparator<Candidate> =
+  compareBy<Candidate, LocalDate?>(nullsFirst()) { it.day }
+    .thenBy(nullsFirst()) { it.savedAt }
+    .thenBy { it.value }
 
 /** The overview's current value for [meterKey], or null when no log has recorded one. */
 fun MaintenanceOverview.currentFor(meterKey: String): Double? =
