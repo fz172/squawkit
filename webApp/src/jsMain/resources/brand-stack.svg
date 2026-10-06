@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="227 246 570 570" role="img" aria-label="SquawkIt">
+  <title>SquawkIt</title>
+  <!-- The app icon's record stack on its own, without the vellum tile, cropped tight for the page
+       header. Same plates and colours as docs/branding/app-icon-record-stack.svg; no soft shadows,
+       which only smudge at this size. -->
+  <defs>
+    <linearGradient id="bottom" gradientUnits="userSpaceOnUse" x1="262" y1="496" x2="762" y2="756">
+      <stop offset="0" stop-color="#1F68BC"/><stop offset="1" stop-color="#124F97"/>
+    </linearGradient>
+    <linearGradient id="middle" gradientUnits="userSpaceOnUse" x1="262" y1="382" x2="762" y2="642">
+      <stop offset="0" stop-color="#66A8F2"/><stop offset="1" stop-color="#3F8ADF"/>
+    </linearGradient>
+    <linearGradient id="top" gradientUnits="userSpaceOnUse" x1="262" y1="268" x2="762" y2="528">
+      <stop offset="0" stop-color="#F4D48F"/><stop offset="1" stop-color="#E4A94B"/>
+    </linearGradient>
+  </defs>
+  <g stroke-width="44" stroke-linejoin="round">
+    <path d="M512 534 L762 664 L512 794 L262 664 Z" fill="#0A3870" stroke="#0A3870"/>
+    <path d="M512 496 L762 626 L512 756 L262 626 Z" fill="url(#bottom)" stroke="url(#bottom)"/>
+    <path d="M512 420 L762 550 L512 680 L262 550 Z" fill="#1F68BC" stroke="#1F68BC"/>
+    <path d="M512 382 L762 512 L512 642 L262 512 Z" fill="url(#middle)" stroke="url(#middle)"/>
+    <path d="M512 306 L762 436 L512 566 L262 436 Z" fill="#B27A24" stroke="#B27A24"/>
+    <path d="M512 268 L762 398 L512 528 L262 398 Z" fill="url(#top)" stroke="url(#top)"/>
+  </g>
+</svg>
