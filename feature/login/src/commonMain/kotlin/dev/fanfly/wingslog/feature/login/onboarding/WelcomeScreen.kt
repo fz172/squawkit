@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,18 +40,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
+import dev.fanfly.wingslog.core.ui.brand.BrandStack
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.onboarding_welcome_aboard
 import wingslog.feature.login.generated.resources.onboarding_welcome_no_name
 import wingslog.feature.login.generated.resources.onboarding_welcome_tagline
 import kotlin.time.Duration.Companion.milliseconds
-import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /**
  * The post-sign-in greeting. [name] is resolved by the caller before this step is entered — see
@@ -79,10 +76,10 @@ fun WelcomeScreen(
     animationSpec = tween(500, easing = FastOutSlowInEasing),
     label = "textAlpha",
   )
-  val planeAlpha by animateFloatAsState(
+  val markAlpha by animateFloatAsState(
     targetValue = if (showText) 0f else 1f,
     animationSpec = tween(400),
-    label = "planeAlpha",
+    label = "markAlpha",
   )
 
   val waveTransition = rememberInfiniteTransition(label = "wave")
@@ -149,15 +146,10 @@ fun WelcomeScreen(
     Box(
       modifier = Modifier
         .fillMaxSize()
-        .alpha(planeAlpha),
+        .alpha(markAlpha),
       contentAlignment = Alignment.Center,
     ) {
-      Icon(
-        painter = painterResource(UiRes.drawable.ic_launcher_foreground),
-        contentDescription = null,
-        modifier = Modifier.size(150.dp),
-        tint = AviationBlue80,
-      )
+      BrandStack(Modifier.size(96.dp))
     }
 
     Column(

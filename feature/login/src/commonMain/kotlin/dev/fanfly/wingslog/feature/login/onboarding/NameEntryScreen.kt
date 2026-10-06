@@ -41,7 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -58,13 +57,12 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
+import dev.fanfly.wingslog.core.ui.brand.BrandStack
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.continue_action
-import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.onboarding_name_body
 import wingslog.feature.login.generated.resources.onboarding_name_eyebrow
@@ -94,15 +92,6 @@ fun NameEntryScreen(
       repeatMode = RepeatMode.Reverse,
     ),
     label = "bobY",
-  )
-  val bobRotation by bobTransition.animateFloat(
-    initialValue = -1.5f,
-    targetValue = 1f,
-    animationSpec = infiniteRepeatable(
-      animation = tween(1700, easing = FastOutSlowInEasing),
-      repeatMode = RepeatMode.Reverse,
-    ),
-    label = "bobRotation",
   )
 
   LaunchedEffect(Unit) {
@@ -152,13 +141,9 @@ fun NameEntryScreen(
           .height(120.dp),
         contentAlignment = Alignment.Center,
       ) {
-        Icon(
-          painter = painterResource(UiRes.drawable.ic_launcher_foreground),
-          contentDescription = null,
-          modifier = Modifier.size(108.dp)
+        BrandStack(
+          Modifier.size(68.dp)
             .offset(y = bobY.dp)
-            .rotate(bobRotation),
-          tint = AviationBlue80,
         )
       }
 
