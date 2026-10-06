@@ -69,7 +69,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
@@ -116,18 +115,13 @@ fun StarterPackRoute(
   // Back is Skip: leaving without answering is declining, and the Thing already exists.
   BackHandler(enabled = !uiState.isDone) { viewModel.onSkip() }
 
-  val addedMessage = stringResource(
-    Res.string.starter_pack_added,
-    uiState.acceptedCount,
-    uiState.lexicon.taskNoun.let { if (uiState.acceptedCount == 1) it.singular else it.plural },
-  )
-  // Said on the task tab, in this Thing's words, when the screen closes with nothing to show.
+  // Said on the task tab, in this Thing's words, when the screen closes with nothing to show. What
+  // was added, the tab says itself, with *Undo* (1f).
   val closingMessage =
     uiState.closingError?.message(uiState.lexicon.thingNoun.singular)
   LaunchedEffect(uiState.isDone) {
     if (!uiState.isDone) return@LaunchedEffect
-    val message =
-      if (uiState.acceptedCount > 0) addedMessage else closingMessage
+    val message = closingMessage.takeIf { uiState.acceptedCount == 0 }
     if (message != null) {
       navController.previousBackStackEntry?.savedStateHandle?.set(
         CROSS_SCREEN_SUCCESS_MESSAGE,

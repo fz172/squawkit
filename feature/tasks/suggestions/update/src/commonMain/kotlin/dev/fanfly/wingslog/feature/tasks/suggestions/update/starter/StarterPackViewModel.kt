@@ -26,6 +26,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
@@ -70,6 +71,7 @@ class StarterPackViewModel(
   private val suggestionManager: TaskSuggestionManager,
   private val suggestEntry: TaskSuggestionEntry,
   private val attachmentManager: AttachmentManager,
+  private val recentlyAdded: RecentlyAddedTasks,
   savedStateHandle: SavedStateHandle,
   private val clock: Clock = Clock.System,
 ) : ViewModel() {
@@ -508,20 +510,22 @@ class StarterPackViewModel(
     viewModelScope.launch {
       _uiState.update { it.copy(isSaving = true) }
       val current = run
-      val written = current?.let { writeRun(it, chosen) } ?: 0
-      if (written > 0) {
+      val written = current?.let { writeRun(it, chosen) }.orEmpty()
+      if (written.isNotEmpty()) {
         analytics.log(
           StarterTasksAccepted(
             templateId = state.template?.id.orEmpty(),
-            taskCount = written
+            taskCount = written.size
           )
         )
       }
+      // The task tab says how many, with *Undo*, and marks them NEW (1f).
+      recentlyAdded.record(thingId, written)
       _uiState.update {
         it.copy(
           isSaving = false,
           isDone = true,
-          acceptedCount = written
+          acceptedCount = written.size
         )
       }
     }
@@ -552,16 +556,16 @@ class StarterPackViewModel(
   private suspend fun writeRun(
     current: SuggestionRun,
     chosen: List<StarterPackItem>
-  ): Int {
-    val jobId = current.jobIdOrNull ?: return 0
-    val result = current.resultOrNull ?: return 0
+  ): List<String> {
+    val jobId = current.jobIdOrNull ?: return emptyList()
+    val result = current.resultOrNull ?: return emptyList()
     val ready =
       current as? SuggestionRun.Ready ?: SuggestionRun.Ready(jobId, result)
     val written = suggestionManager.accept(
       thingId,
       ready,
       chosen.map { AcceptedSuggestion(it.suggestion, it.edited) })
-    if (written > 0) {
+    if (written.isNotEmpty()) {
       analytics.log(
         TaskSuggestionsAccepted(
           templateId = uiState.value.template?.id.orEmpty(),

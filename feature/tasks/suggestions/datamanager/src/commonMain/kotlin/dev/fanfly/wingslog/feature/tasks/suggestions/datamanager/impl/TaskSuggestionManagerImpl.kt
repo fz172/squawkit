@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.ai.AiJob
 import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiStartResult
+import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -129,10 +130,10 @@ class TaskSuggestionManagerImpl(
     thingId: String,
     run: SuggestionRun.Ready,
     chosen: List<AcceptedSuggestion>,
-  ): Int {
+  ): List<String> {
     val template = templateOf(thingId)
     val documents = jobDocuments.documentsOf(run.jobId)
-    val written = chosen.count { accepted ->
+    val written = chosen.mapNotNull { accepted ->
       val task = (
         accepted.edited
           ?: mapper.toTask(
@@ -141,9 +142,13 @@ class TaskSuggestionManagerImpl(
             run.result.generation_version
           )
         ).withCitedDocument(accepted.suggestion, documents)
-      taskDataManager.addTask(thingId, task)
-        .onFailure { logger.w(it) { "A suggested task was not written" } }
-        .isSuccess
+        // Named here, so *Undo* knows what to take back.
+        .let { if (it.id.isEmpty()) it.copy(id = generateRandomId()) else it }
+      task.id.takeIf {
+        taskDataManager.addTask(thingId, task)
+          .onFailure { logger.w(it) { "A suggested task was not written" } }
+          .isSuccess
+      }
     }
     client.close(run.jobId)
     // After the writes, so a document a written task now holds is kept by the reference check.

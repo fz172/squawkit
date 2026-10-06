@@ -28,6 +28,7 @@ val tasksSuggestionsDataManagerModule: Module = module {
     )
   }
   single<SuggestionMapper> { SuggestionMapper() }
+  single<RecentlyAddedTasks> { RecentlyAddedTasks() }
   single<TaskSuggestionEntry> {
     TaskSuggestionEntry(
       auth = get<FirebaseAuth>(),

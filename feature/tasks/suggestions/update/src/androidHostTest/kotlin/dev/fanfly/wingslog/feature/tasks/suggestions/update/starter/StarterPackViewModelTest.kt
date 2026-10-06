@@ -16,6 +16,8 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.AddedBatch
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
@@ -92,6 +94,7 @@ class StarterPackViewModelTest {
 
   private val suggestions = mockk<TaskSuggestionManager>(relaxUnitFun = true)
   private val attachments = mockk<AttachmentManager>(relaxUnitFun = true)
+  private val recentlyAdded = RecentlyAddedTasks()
   private val entry = mockk<TaskSuggestionEntry> {
     every { observe(THING_ID) } returns flowOf(SuggestEntry.Available)
   }
@@ -116,6 +119,7 @@ class StarterPackViewModelTest {
       suggestionManager = suggestions,
       suggestEntry = entry,
       attachmentManager = attachments,
+      recentlyAdded = recentlyAdded,
       savedStateHandle = SavedStateHandle(
         buildMap {
           put(Screen.THING_ID, THING_ID)
@@ -479,7 +483,7 @@ class StarterPackViewModelTest {
       val ready = SuggestionRun.Ready(JOB, curatedList)
       serving(ready)
       val chosen = slot<List<AcceptedSuggestion>>()
-      coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns 2
+      coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns listOf("t1", "t2")
       val vm = viewModel()
       advanceUntilIdle()
       vm.onToggle(0)
@@ -495,6 +499,8 @@ class StarterPackViewModelTest {
         .inOrder()
       coVerify(exactly = 0) { taskDataManager.addTask(any(), any()) }
       assertThat(vm.uiState.value.acceptedCount).isEqualTo(2)
+      // The task tab says so, with *Undo*, and marks them NEW.
+      assertThat(recentlyAdded.batch.value).isEqualTo(AddedBatch(THING_ID, listOf("t1", "t2")))
       assertThat(
         analytics.paramsFor("starter_tasks_accepted")
           .single()
@@ -944,7 +950,7 @@ class StarterPackViewModelTest {
     )
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
-    coEvery { suggestions.accept(THING_ID, ready, any()) } returns 2
+    coEvery { suggestions.accept(THING_ID, ready, any()) } returns listOf("t1", "t2")
     val vm = viewModel()
     advanceUntilIdle()
     vm.onToggle(0)
@@ -1075,7 +1081,7 @@ class StarterPackViewModelTest {
     val mapped = MaintenanceTask(title = "Annual")
     coEvery { suggestions.draftOf(THING_ID, any(), any()) } returns mapped
     val chosen = slot<List<AcceptedSuggestion>>()
-    coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns 1
+    coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns listOf("t1")
     val vm = viewModel()
     advanceUntilIdle()
     vm.draftFor(0)

@@ -38,6 +38,8 @@ fun TaskCardItem(
   modifier: Modifier = Modifier,
   highlight: Set<String> = emptySet(),
   matchNote: AnnotatedString? = null,
+  /** Just added from suggestions (1f). */
+  isNew: Boolean = false,
 ) {
   val status = cardWithStatus.dueStatus.status
   val dueDate = cardWithStatus.dueStatus.nextDueDate
@@ -102,6 +104,7 @@ fun TaskCardItem(
     highlight = highlight,
     matchNote = matchNote,
     aiSuggested = cardWithStatus.card.isAiSuggested,
+    isNew = isNew,
   )
 }
 

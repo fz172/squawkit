@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -34,9 +36,13 @@ import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.math.roundToInt
+import wingslog.feature.tasks.dashboard.generated.resources.Res
+import wingslog.feature.tasks.dashboard.generated.resources.tasks_added
+import wingslog.feature.tasks.dashboard.generated.resources.undo
 
 @Composable
 fun MaintenanceTasksTab(
@@ -72,6 +78,12 @@ fun MaintenanceTasksTab(
       key = "suggest:${state.thing.id}",
       parameters = { parametersOf(state.thing.id) })
   val suggestEntry by suggestViewModel.entry.collectAsStateWithLifecycle()
+  val addedViewModel: AddedTasksViewModel =
+    koinViewModel(
+      key = "added:${state.thing.id}",
+      parameters = { parametersOf(state.thing.id) })
+  val newIds by addedViewModel.newIds.collectAsStateWithLifecycle()
+  AddedSnackbar(addedViewModel)
   val taskFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange
   val activeTasks = tabState.activeTasks
@@ -151,6 +163,7 @@ fun MaintenanceTasksTab(
       } else null,
       scrollTargetId = scrollToTaskId,
       highlightedId = landedTaskId,
+      newIds = newIds,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,
       filterBar = {
@@ -198,3 +211,29 @@ fun MaintenanceTasksTab(
   // ThingSectionContent renders the skip and delete confirmations, so neither is clipped by the
   // swipe container.
 }
+
+/**
+ * "6 tasks added", with *Undo*, once per batch added from suggestions (1f), on the shell's snackbar
+ * host. A host that provides none (a preview) says nothing.
+ */
+@Composable
+private fun AddedSnackbar(viewModel: AddedTasksViewModel) {
+  val count by viewModel.toAnnounce.collectAsStateWithLifecycle()
+  val snackbarHostState = LocalSnackbarHostState.current ?: return
+  val taskNoun = LocalThingLexicon.current.taskNoun
+  val message = count?.let {
+    stringResource(
+      Res.string.tasks_added,
+      it,
+      if (it == 1) taskNoun.singular else taskNoun.plural,
+    )
+  }
+  val undo = stringResource(Res.string.undo)
+  LaunchedEffect(message) {
+    if (message == null) return@LaunchedEffect
+    viewModel.onAnnounced()
+    val result = snackbarHostState.showSnackbar(message = message, actionLabel = undo)
+    if (result == SnackbarResult.ActionPerformed) viewModel.onUndo()
+  }
+}
+
