@@ -34,6 +34,8 @@ kotlin {
 
     commonMain.dependencies {
       api(project(":core:model"))
+      // The current reading is the most recent one, by calendar day in a time zone (#1368).
+      api(project(":core:datetime"))
       // For APP_VERSION_CODE — the floor a template's min_app_version is compared against (#728).
       implementation(project(":core:appinfo"))
       api(libs.koin.core)
