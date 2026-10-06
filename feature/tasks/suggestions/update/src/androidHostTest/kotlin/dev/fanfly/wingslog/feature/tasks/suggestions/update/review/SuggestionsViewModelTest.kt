@@ -893,6 +893,33 @@ class SuggestionsViewModelTest {
     }
 
   @Test
+  fun anEmptyModelRunOffersAManualOnlyWhereAnotherRunCanStart() =
+    runTest(dispatcher) {
+      val vm = curatedModelRun()
+      runs.emit(SuggestionRun.Empty(JOB, curatedList))
+      advanceUntilIdle()
+
+      assertThat(vm.uiState.value.canUseManual).isTrue()
+      assertThat(vm.uiState.value.manualBlocked).isNull()
+    }
+
+  @Test
+  fun anEmptyModelRunSaysWhenAManualCanBeReadOnceTheDaysRunIsSpent() =
+    runTest(dispatcher) {
+      val vm = curatedModelRun()
+      val back = Instant.fromEpochMilliseconds(9_000)
+      coEvery { suggestions.eligibility(THING_ID, any()) } returns
+        AiEligibility(false, AiErrorCode.DAILY_LIMIT, false, back)
+      runs.emit(SuggestionRun.Empty(JOB, curatedList))
+      advanceUntilIdle()
+
+      assertThat(vm.uiState.value.notEnough).isTrue()
+      assertThat(vm.uiState.value.canUseManual).isFalse()
+      assertThat(vm.uiState.value.manualBlocked)
+        .isEqualTo(AiSkipped(AiErrorCode.DAILY_LIMIT, back))
+    }
+
+  @Test
   fun anEmptyModelRunWithNoCuratedListStaysToSayNotEnough() =
     runTest(dispatcher) {
       // The custom template: the message is the whole screen (R21a).

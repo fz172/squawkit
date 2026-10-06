@@ -225,7 +225,10 @@ fun SuggestionsRoute(
             }
             ImproveBanner(
               onAddDetails = { leaveFor(Screen.EditThing.createRoute(viewModel.thingId)) },
-              onUseManual = { leaveFor(Screen.AddTasks.createRoute(viewModel.thingId)) },
+              // Only where the sheet's *Suggest* can start a run; otherwise the banner says when.
+              onUseManual = { leaveFor(Screen.AddTasks.createRoute(viewModel.thingId)) }
+                .takeIf { uiState.canUseManual },
+              blocked = uiState.manualBlocked,
             )
           }
           uiState.failure?.let { failure ->
