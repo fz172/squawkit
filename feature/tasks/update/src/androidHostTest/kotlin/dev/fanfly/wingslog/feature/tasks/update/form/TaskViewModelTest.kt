@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -29,6 +30,8 @@ import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -96,9 +99,6 @@ class TaskViewModelTest {
     )
     every { maintenanceLogManager.observeLogs(TEST_THING_ID) } returns flowOf(
       emptyList()
-    )
-    every { maintenanceLogManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
-      null
     )
     every { maintenanceLogManager.observeManualReadings(TEST_THING_ID) } returns flowOf(
       emptyList()
@@ -282,6 +282,38 @@ class TaskViewModelTest {
    * it reads the effective due — the stored card, skip and override included — while the
    * rules-only natural due stays available for the reschedule "Was …" line.
    */
+  @Test
+  fun loadData_readsTheCurrentReadingFromLogsAndReadingsSetByHand() =
+    runTest(testDispatcher) {
+      // The banner’s "now": a reading set on the dashboard after the last log is the current one.
+      every { maintenanceLogManager.observeLogs(TEST_THING_ID) } returns flowOf(
+        listOf(
+          MaintenanceLog(
+            id = "log-1",
+            timestamp = toWireInstant(0L),
+            readings = listOf(
+              MeterReading(MeterKeys.ENGINE_HOURS, value_ = 70.0),
+              MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = 90.0),
+            ),
+          )
+        )
+      )
+      every { maintenanceLogManager.observeManualReadings(TEST_THING_ID) } returns flowOf(
+        listOf(
+          ManualMeterReading(
+            reading = MeterReading(MeterKeys.ENGINE_HOURS, value_ = 100.0),
+            set_at = toWireInstant(86_400L),
+          )
+        )
+      )
+
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+
+      assertThat(viewModel.currentReading(MeterKeys.ENGINE_HOURS)).isEqualTo(100f)
+      assertThat(viewModel.currentReading(MeterKeys.AIRFRAME_HOURS)).isEqualTo(90f)
+    }
+
   @Test
   fun loadData_exposesBothTheEffectiveAndTheRulesOnlyDue() =
     runTest(testDispatcher) {

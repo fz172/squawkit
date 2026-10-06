@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -22,7 +23,6 @@ import dev.fanfly.wingslog.rpc.suggesttasks.SuggestionContext
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -64,8 +64,10 @@ class SuggestionContextBuilder(
       .first()
     val logs = logManager.observeLogs(thingId)
       .first()
-    val current = logManager.observeMaintenanceOverview(thingId)
-      .first()?.current.orEmpty()
+    // What the dashboard shows, worked out from the records rather than read off the stored
+    // overview, which a client that predates manual readings rebuilds without them (#1368).
+    val current = logManager.observeCurrentReadings(thingId)
+      .first()
 
     val context = SuggestionContext(
       template_id = TemplateId(value_ = template.id),
@@ -177,11 +179,9 @@ class SuggestionContextBuilder(
       key: String,
       unit: String,
       slotKey: String,
-      current: List<MeterReading>
+      current: List<CurrentReading>
     ): MeterSummary {
-      // A twin has one reading per engine; the highest is the meter's current state.
-      val reading = current.filter { it.meter_key == key }
-        .maxOfOrNull { it.value_ }
+      val reading = current.firstOrNull { it.meterKey == key }?.value
       return MeterSummary(
         key = key,
         unit_label = unit,

@@ -16,6 +16,7 @@ import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityRef
+import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
@@ -23,7 +24,6 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
-import dev.fanfly.wingslog.core.template.currentFor
 import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.readingFor
@@ -49,6 +49,7 @@ import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
+import dev.fanfly.wingslog.thing.ThingTemplate
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -349,20 +350,22 @@ class MaintenanceLogFormViewModel(
    */
   private fun observeCurrentReadings() {
     combine(
-      logManager.observeMaintenanceOverview(thingId),
-      // The meters are the template's, and it may not be set yet when the overview lands.
+      // Worked out from the records, not read off the stored overview: that is only as current as
+      // the last client to rebuild it, and the prefill must agree with the dashboard (#1368).
+      logManager.observeCurrentReadings(thingId),
+      // The meters are the template's, and it may not be set yet when the readings land.
       currentThingTemplate.template,
-    ) { overview, template -> overview to template }
-      .onEach { (overview, template) ->
-        if (metersSeeded || overview == null) return@onEach
+    ) { current, template -> CurrentReadingsFor(template, current) }
+      .onEach { (template, current) ->
+        if (metersSeeded) return@onEach
         // The same gate the hours tab itself uses: a template with no meters has no tab, and
         // seeding a form that never shows the values would save readings nobody was asked for.
         // Read from the holder because it publishes capabilities with the template above.
         if (!currentThingTemplate.capabilities.value.meters) return@onEach
         val readings = template?.meters.orEmpty()
           .mapNotNull { meter ->
-            overview.currentFor(meter.key)
-              ?.let { meter to it }
+            current.firstOrNull { it.meterKey == meter.key }
+              ?.let { meter to it.value }
           }
         if (readings.isEmpty()) return@onEach
         metersSeeded = true
@@ -375,7 +378,7 @@ class MaintenanceLogFormViewModel(
             )
           }
         _uiState.update { state ->
-          // Anything already typed wins — the overview can arrive after the user reached the tab.
+          // Anything already typed wins — the readings can arrive after the user reached the tab.
           state.withMeterValues(seeds + state.meterValues)
         }
       }
@@ -842,6 +845,12 @@ private fun AttachmentFormController.AddFileError.toUiText(): UiText =
       message?.let { UiText.DynamicString(it) }
         ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
   }
+
+/** The Thing's current readings beside the template that says which meters it has. */
+private data class CurrentReadingsFor(
+  val template: ThingTemplate?,
+  val current: List<CurrentReading>,
+)
 
 /**
  * The meter's own text for [value] — the meter says whether it takes a fraction.
