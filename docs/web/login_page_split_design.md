@@ -135,7 +135,7 @@ launcher foreground for the static page — crisp at any size, a couple of KB, n
 
 `BrandPlane`, the single-colour crop of the same artwork that the login hero used to end on, has
 since been removed: the hero now ends on `BrandStack`, the record-stack mark, which carries its own
-colours. The web header's monochrome mark is `brand-plane.svg`, a separate file.
+colours. The web header's mark is `brand-stack.svg`, the same stack as a static file.
 
 **Login card — the motion hero.** `LoginPlaneArt()` in `feature/login/LoginCommon.kt`, which renders
 `ThingHero`: sheets of paper, a Thing printed on each, come in layer by layer and become the plates
