@@ -37,7 +37,7 @@ data class SuggestionsUiState(
   val isSuggesting: Boolean = false,
   /**
    * The working run reads documents, so the rows still to come are headed as the manuals'. Known
-   * from the files handed over, or for a run opened again, from a stage that names one.
+   * from the files handed over, or for a run opened again, from a stage that works on one.
    */
   val readsDocuments: Boolean = false,
   /** The working run's stage key and its argument (a document's name), for the progress line. */
