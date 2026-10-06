@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
@@ -32,6 +33,7 @@ class TaskStatusManagerImplTest {
   private val resolver: ThingScopeResolver = mockk()
   private val taskStore: EntityStore<MaintenanceTask> = mockk()
   private val logStore: EntityStore<MaintenanceLog> = mockk()
+  private val manualStore: EntityStore<ManualMeterReading> = mockk()
   private val storeFactory: EntityStoreFactory = mockk()
   private val dueManager: TaskDueManager = mockk()
 
@@ -47,6 +49,10 @@ class TaskStatusManagerImplTest {
   fun setUp() {
     every { storeFactory.create<MaintenanceTask>(CollectionKind.MaintenanceTask) } returns taskStore
     every { storeFactory.create<MaintenanceLog>(CollectionKind.MaintenanceLog) } returns logStore
+    every {
+      storeFactory.create<ManualMeterReading>(CollectionKind.ManualReading)
+    } returns manualStore
+    every { manualStore.observeAll(any()) } returns flowOf(emptyList())
     every { resolver.resolve(THING_ID) } returns flowOf(scope)
     every { taskStore.observeAll(scope) } returns flowOf(
       listOf(

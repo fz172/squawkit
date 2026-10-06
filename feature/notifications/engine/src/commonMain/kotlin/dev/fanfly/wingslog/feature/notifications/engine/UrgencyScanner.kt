@@ -190,6 +190,10 @@ class UrgencyScanner(
       .first()
     val logs = logManager.observeLogs(thingId)
       .first()
+    // Due against the same current readings the dashboard shows, or a task could alert as overdue
+    // beside a card that says it is not (#1368).
+    val manualReadings = logManager.observeManualReadings(thingId)
+      .first()
     val squawkRows = squawkStore.observeAll(scope)
       .first()
     val allTasks = taskRows.map { it.value }
@@ -198,7 +202,12 @@ class UrgencyScanner(
     val taskCommits = mutableListOf<RecordRank>()
     for (row in taskRows) {
       val status =
-        taskDueManager.computeNextDue(row.value, logs, allTasks).status
+        taskDueManager.computeNextDue(
+          row.value,
+          logs,
+          allTasks,
+          manualReadings
+        ).status
       val rank = status.urgencyRank()
       taskCommits += RecordRank(row.id, rank)
       val tier = status.reportableTier()

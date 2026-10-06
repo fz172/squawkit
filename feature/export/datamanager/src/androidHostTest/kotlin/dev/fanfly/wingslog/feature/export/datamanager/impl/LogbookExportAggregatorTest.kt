@@ -67,6 +67,7 @@ class LogbookExportAggregatorTest {
     }
     val logsManager = mockk<MaintenanceLogManager> {
       every { observeLogs(thingId) } returns flowOf(listOf(log2020, log2025))
+      every { observeManualReadings(thingId) } returns flowOf(emptyList())
     }
     val tasksManager = mockk<TaskDataManager> {
       every { observeTasks(thingId) } returns flowOf(
