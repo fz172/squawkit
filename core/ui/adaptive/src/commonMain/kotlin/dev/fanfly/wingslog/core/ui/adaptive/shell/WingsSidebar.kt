@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.adaptive.shell
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,11 +24,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.shell.switcher.SelectedThingBlock
 import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
+import dev.fanfly.wingslog.core.ui.brand.BrandStack
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.app_name
-import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /**
@@ -63,12 +63,13 @@ internal fun WingsSidebar(
         modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        Icon(
-          painter = painterResource(UiRes.drawable.ic_launcher_foreground),
-          contentDescription = null,
+        // The mark keeps its own colours, so it is drawn rather than tinted like an icon.
+        Box(
           modifier = Modifier.size(44.dp),
-          tint = MaterialTheme.colorScheme.primary,
-        )
+          contentAlignment = Alignment.Center
+        ) {
+          BrandStack(Modifier.size(30.dp))
+        }
         Spacer(Modifier.width(6.dp))
         Text(
           stringResource(UiRes.string.app_name),
