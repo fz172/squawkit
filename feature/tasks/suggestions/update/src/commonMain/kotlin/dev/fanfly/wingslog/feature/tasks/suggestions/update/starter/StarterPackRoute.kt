@@ -157,6 +157,9 @@ fun StarterPackRoute(
     val taskNoun = LocalThingLexicon.current.taskNoun
     val noticeMessage = uiState.notice?.message()
     var sourceShown by remember { mutableStateOf<TaskSuggestion?>(null) }
+    // The row opened to change its interval: one at a time, by suggestion, so it stays open when
+    // the model's answer replaces the list.
+    var expandedId by remember { mutableStateOf<String?>(null) }
     sourceShown?.let { SourceSheet(it) { sourceShown = null } }
     LaunchedEffect(noticeMessage) {
       if (noticeMessage == null) return@LaunchedEffect
@@ -346,10 +349,22 @@ fun StarterPackRoute(
                     template = uiState.template,
                     wide = wide,
                     enabled = !uiState.isSaving,
+                    expanded = expandedId == item.suggestion.suggestion_id?.value_,
                     onToggle = { viewModel.onToggle(index) },
+                    onExpandedChange = { open ->
+                      expandedId = item.suggestion.suggestion_id?.value_.takeIf { open }
+                    },
                     onSource = { sourceShown = item.suggestion },
-                    // R28: change it before adding it, in the task form.
-                    onEdit = {
+                    onInterval = { edit ->
+                      when (edit) {
+                        is IntervalEdit.Meter ->
+                          viewModel.onMeterIntervalChange(index, edit.interval)
+                        is IntervalEdit.Months -> viewModel.onMonthsChange(index, edit.months)
+                        is IntervalEdit.Days -> viewModel.onDaysChange(index, edit.days)
+                      }
+                    },
+                    // R28: everything else about it, in the task form.
+                    onMoreOptions = {
                       scope.launch {
                         val draft = viewModel.draftFor(index) ?: return@launch
                         navController.navigate(

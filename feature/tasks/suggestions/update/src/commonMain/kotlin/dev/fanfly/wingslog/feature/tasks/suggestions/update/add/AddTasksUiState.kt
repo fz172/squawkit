@@ -17,7 +17,7 @@ data class AddTasksUiState(
    * when it has nothing to show.
    */
   val details: String = "",
-  /** Whether *Suggest* can be offered at all: a guest signs in, a Thing missing details gets them. */
+  /** Whether *Suggest* can be offered: a guest signs in, a Thing missing details gets them. */
   val entry: SuggestEntry = SuggestEntry.Hidden,
   /** The manuals picked, and what the owner's plan and the day allow. */
   val sources: SourcesState = SourcesState(),
@@ -32,7 +32,7 @@ data class AddTasksUiState(
     get() = entry == SuggestEntry.Available && !sources.isChecking &&
       sources.blocked == null && !sources.documentsAllowed && sources.isOwner
 
-  /** *Suggest* does something now; a guest’s and a Thing missing details have their own actions. */
+  /** *Suggest* does something now; a guest and a Thing missing details have their own actions. */
   val canSuggest: Boolean
     get() = when (entry) {
       SuggestEntry.Available -> !sources.isChecking && !sources.isAdding

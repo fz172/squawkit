@@ -10,7 +10,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +32,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_edited
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_more_options
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_clear
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_group_count
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_select_all
@@ -61,7 +63,11 @@ internal fun SuggestionGroupHeader(
     TextButton(onClick = onToggleAll, enabled = enabled) {
       Text(
         stringResource(
-          if (selected == total) Res.string.suggestions_clear else Res.string.suggestions_select_all,
+          if (selected == total) {
+            Res.string.suggestions_clear
+          } else {
+            Res.string.suggestions_select_all
+          },
         ),
       )
     }
@@ -72,6 +78,9 @@ internal fun SuggestionGroupHeader(
  * One suggestion (1d, 2b): the checkbox leads and the whole row toggles. The interval is in mono,
  * the part worth scanning for, then what the task is, then where it comes from. On a wide layout
  * the interval and the source sit in fixed columns at the end, so the list scans like a table.
+ *
+ * The chevron opens the row to change its interval in place (R28) rather than in another screen;
+ * *More options* still opens the whole task form.
  */
 @Composable
 internal fun SuggestionRow(
@@ -79,9 +88,12 @@ internal fun SuggestionRow(
   template: ThingTemplate?,
   wide: Boolean,
   enabled: Boolean,
+  expanded: Boolean,
   onToggle: () -> Unit,
+  onExpandedChange: (Boolean) -> Unit,
   onSource: () -> Unit,
-  onEdit: () -> Unit,
+  onInterval: (IntervalEdit) -> Unit,
+  onMoreOptions: () -> Unit,
 ) {
   val edited = item.edited
   val title = edited?.title ?: item.suggestion.title
@@ -123,6 +135,18 @@ internal fun SuggestionRow(
       if (!wide) {
         Tags(item, edited != null, onSource, Modifier.padding(top = 2.dp))
       }
+      if (expanded) {
+        IntervalFields(
+          rules = edited?.rules ?: item.suggestion.rules,
+          template = template,
+          enabled = enabled,
+          onInterval = onInterval,
+          modifier = Modifier.padding(top = Spacing.small),
+        )
+        TextButton(onClick = onMoreOptions, enabled = enabled) {
+          Text(stringResource(Res.string.suggestion_more_options))
+        }
+      }
     }
     if (wide) {
       Box(
@@ -142,10 +166,10 @@ internal fun SuggestionRow(
         Tags(item, edited != null, onSource)
       }
     }
-    // R28: change it before adding it.
-    IconButton(onClick = onEdit, enabled = enabled) {
+    // R28: change it before adding it, here.
+    IconButton(onClick = { onExpandedChange(!expanded) }, enabled = enabled) {
       Icon(
-        Icons.Outlined.Edit,
+        if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
         contentDescription = stringResource(CoreRes.string.edit),
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.size(20.dp),
