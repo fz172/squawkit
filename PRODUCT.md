@@ -130,8 +130,10 @@ Store and Firebase registration. Surviving `aircraft` identifiers in code are gr
 - **Store imagery** in `docs/product/store_assets/`, generated from device captures.
 - **Web app and landing pages** live at `squawkit.fanfly.dev`, with a page per type (`/aircraft`,
   `/car`, `/boat`, `/bike`, `/home`). Both search consoles verified; sitemap submitted.
-- **Brand assets:** app icon at `docs/branding/cloud-console-app-icon-120.{png,svg}`; per-type icons,
-  mono and colour, at `docs/branding/thing-icons/`.
+- **Brand assets:** the app icon is the record stack; its master is
+  `docs/branding/app-icon-record-stack.svg`, and `docs/branding/render_app_icon.py` writes every
+  platform's copy from it, including `docs/branding/cloud-console-app-icon-120.{png,svg}`;
+  per-type icons, mono and colour, at `docs/branding/thing-icons/`.
 - **Product specs:** `docs/product/PRD.md` (overview as built) and
   `docs/product/multi_domain_maintenance_PRD.md` (the pivot), plus per-topic folders under `docs/`.
 - **No testimonials, case studies, press, named customers, usage numbers, install counts, review
