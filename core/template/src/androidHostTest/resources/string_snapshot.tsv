@@ -1185,3 +1185,9 @@ feature/tasks/suggestions/update	add_tasks_sign_in	Sign in
 feature/tasks/suggestions/update	add_tasks_missing_identity	Add %1$s to get suggestions
 feature/tasks/suggestions/update	suggestions_coming_documents	From your manuals
 feature/tasks/suggestions/update	suggestions_coming_thing	Tailored to this %1$s
+feature/tasks/suggestions/update	suggestions_group_count	%1$s · %2$d of %3$d
+feature/tasks/suggestions/update	suggestions_select_all	Select all
+feature/tasks/suggestions/update	suggestions_clear	Clear
+feature/tasks/suggestions/update	suggestion_tag_document	Manual
+feature/tasks/suggestions/update	suggestion_tag_manufacturer	Manufacturer
+feature/tasks/suggestions/update	suggestion_tag_logs	Your logs

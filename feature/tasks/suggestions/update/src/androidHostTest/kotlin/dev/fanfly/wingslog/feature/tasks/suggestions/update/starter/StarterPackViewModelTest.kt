@@ -241,6 +241,33 @@ class StarterPackViewModelTest {
   }
 
   @Test
+  fun selectAllPicksTheWholeSectionThenClearEmptiesIt() = runTest(dispatcher) {
+    val engine = curatedList.copy(
+      suggestions = curatedList.suggestions + listOf(
+        curated("e0", "Spark plugs").copy(component_slot_key = "engine"),
+        curated("e1", "Carb sync").copy(component_slot_key = "engine"),
+      ),
+    )
+    serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, engine))
+    val vm = viewModel()
+    advanceUntilIdle()
+    vm.onToggle(3)
+
+    vm.onToggleGroup("engine")
+    assertThat(vm.uiState.value.items.map { it.selected })
+      .containsExactly(false, false, false, true, true).inOrder()
+
+    vm.onToggleGroup("engine")
+    assertThat(vm.uiState.value.items.map { it.selected })
+      .containsExactly(false, false, false, false, false).inOrder()
+
+    // The Thing's own section is the empty slot.
+    vm.onToggleGroup("")
+    assertThat(vm.uiState.value.items.map { it.selected })
+      .containsExactly(true, true, true, false, false).inOrder()
+  }
+
+  @Test
   fun theRowsStillToComeAreTheManualsWhenTheRunReadsThem() = runTest(dispatcher) {
     coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
       AiStartResult.Started(JOB, joined = false)

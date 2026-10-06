@@ -418,6 +418,22 @@ class StarterPackViewModel(
     }
   }
 
+  /**
+   * *Select all* on a section: every row in it picked, or, once they all are, *Clear*: none.
+   * [slotKey] is the section's component slot; empty is the Thing itself.
+   */
+  fun onToggleGroup(slotKey: String) {
+    _uiState.update { state ->
+      val inGroup = state.items.filter { it.suggestion.component_slot_key == slotKey }
+      val select = inGroup.any { !it.selected }
+      state.copy(
+        items = state.items.map { item ->
+          if (item.suggestion.component_slot_key == slotKey) item.copy(selected = select) else item
+        },
+      )
+    }
+  }
+
   fun onAccept() {
     val state = uiState.value
     val chosen = state.items.filter { it.selected }
