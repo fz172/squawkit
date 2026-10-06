@@ -82,7 +82,6 @@ fun MaintenanceTasksTab(
     koinViewModel(
       key = "added:${state.thing.id}",
       parameters = { parametersOf(state.thing.id) })
-  val newIds by addedViewModel.newIds.collectAsStateWithLifecycle()
   val readyViewModel: ReadySuggestionsViewModel =
     koinViewModel(
       key = "ready:${state.thing.id}",
@@ -176,7 +175,6 @@ fun MaintenanceTasksTab(
       } else null,
       scrollTargetId = scrollToTaskId,
       highlightedId = landedTaskId,
-      newIds = newIds,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,
       filterBar = {

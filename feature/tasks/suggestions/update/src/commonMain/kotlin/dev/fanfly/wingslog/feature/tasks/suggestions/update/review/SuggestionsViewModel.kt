@@ -537,7 +537,7 @@ class SuggestionsViewModel(
           )
         )
       }
-      // The task tab says how many, with *Undo*, and marks them NEW (1f).
+      // The task tab says how many, with *Undo* (1f).
       recentlyAdded.record(thingId, written)
       _uiState.update {
         it.copy(

@@ -629,7 +629,7 @@ class SuggestionsViewModelTest {
         .inOrder()
       coVerify(exactly = 0) { taskDataManager.addTask(any(), any()) }
       assertThat(vm.uiState.value.acceptedCount).isEqualTo(2)
-      // The task tab says so, with *Undo*, and marks them NEW.
+      // The task tab says so, with *Undo*.
       assertThat(recentlyAdded.batch.value).isEqualTo(
         AddedBatch(
           THING_ID,

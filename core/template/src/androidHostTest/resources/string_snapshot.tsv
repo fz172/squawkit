@@ -1199,7 +1199,6 @@ feature/tasks/suggestions/update	suggestions_improve_body	Add details such as ma
 feature/tasks/suggestions/update	suggestions_use_manual	Use a manual
 feature/tasks/dashboard	tasks_added	%1$d %2$s added
 feature/tasks/dashboard	undo	Undo
-feature/tasks/viewing	badge_new	NEW
 feature/tasks/dashboard	suggestions_ready_one	1 more suggestion ready
 feature/tasks/dashboard	suggestions_ready_many	%1$d more suggestions ready
 feature/tasks/dashboard	suggestions_ready_from	From %1$s

@@ -15,7 +15,6 @@
   <string name="authority_reference_number"><xliff:g example="FAA">%1$s</xliff:g> · <xliff:g example="AD-2024-11-07">%2$s</xliff:g></string>
   <string name="badge_overdue">OVERDUE</string>
   <string name="badge_due">DUE</string>
-  <string name="badge_new">NEW</string>
   <string name="label_deadline">DEADLINE</string>
   <string name="label_due_engine">DUE @</string>
   <string name="label_due_engine_value">DUE @ <xliff:g example="3">%1$s</xliff:g></string>
