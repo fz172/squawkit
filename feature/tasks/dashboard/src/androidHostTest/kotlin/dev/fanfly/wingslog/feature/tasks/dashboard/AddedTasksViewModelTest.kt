@@ -35,27 +35,22 @@ class AddedTasksViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   @Test
-  fun aBatchIsAnnouncedOnceAndItsTasksAreMarkedNew() = runTest(dispatcher) {
+  fun aBatchIsAnnouncedOnce() = runTest(dispatcher) {
     val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
-    backgroundScope.launch { vm.newIds.collect {} }
     backgroundScope.launch { vm.toAnnounce.collect {} }
 
     recentlyAdded.record(THING, listOf("t1", "t2"))
     advanceUntilIdle()
     assertThat(vm.toAnnounce.value).isEqualTo(2)
-    assertThat(vm.newIds.value).containsExactly("t1", "t2")
 
     vm.onAnnounced()
     advanceUntilIdle()
     assertThat(vm.toAnnounce.value).isNull()
-    // Still NEW after the snackbar has gone.
-    assertThat(vm.newIds.value).containsExactly("t1", "t2")
   }
 
   @Test
-  fun undoDeletesTheBatchAndClearsTheBadges() = runTest(dispatcher) {
+  fun undoDeletesTheBatch() = runTest(dispatcher) {
     val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
-    backgroundScope.launch { vm.newIds.collect {} }
     recentlyAdded.record(THING, listOf("t1", "t2"))
     advanceUntilIdle()
 
@@ -64,7 +59,7 @@ class AddedTasksViewModelTest {
 
     coVerify { tasks.deleteTask(THING, "t1") }
     coVerify { tasks.deleteTask(THING, "t2") }
-    assertThat(vm.newIds.value).isEmpty()
+    assertThat(recentlyAdded.batch.value).isNull()
   }
 
   @Test

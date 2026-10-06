@@ -7,8 +7,7 @@ import kotlinx.coroutines.flow.update
 
 /**
  * The suggested tasks just added, held in memory for the task tab (1f): it says how many with an
- * *Undo* once, and marks them NEW until the next batch or the app is closed. The suggestions screen
- * records a batch; the task tab reads it.
+ * *Undo* once. The suggestions screen records a batch; the task tab reads it.
  */
 class RecentlyAddedTasks {
   private val _batch = MutableStateFlow<AddedBatch?>(null)
@@ -24,7 +23,7 @@ class RecentlyAddedTasks {
     _batch.update { it?.copy(announced = true) }
   }
 
-  /** *Undo*: the batch is gone, and nothing is marked NEW. */
+  /** *Undo*: the batch is gone. */
   fun clear() {
     _batch.value = null
   }

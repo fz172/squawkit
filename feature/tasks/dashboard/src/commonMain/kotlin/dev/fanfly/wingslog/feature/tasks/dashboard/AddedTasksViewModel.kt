@@ -11,8 +11,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * The suggested tasks just added to this Thing (1f): how many, to say once with *Undo*, and which,
- * to mark NEW in the list.
+ * The suggested tasks just added to this Thing (1f): how many, to say once with *Undo*.
  */
 class AddedTasksViewModel(
   private val recentlyAdded: RecentlyAddedTasks,
@@ -22,11 +21,6 @@ class AddedTasksViewModel(
 
   private val batch = recentlyAdded.batch.map { it?.takeIf { batch -> batch.thingId == thingId } }
 
-  /** The tasks to mark NEW. */
-  val newIds: StateFlow<Set<String>> = batch
-    .map { it?.taskIds.orEmpty().toSet() }
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
-
   /** How many were just added, until the tab has said so; null otherwise. */
   val toAnnounce: StateFlow<Int?> = batch
     .map { it?.takeIf { batch -> !batch.announced }?.taskIds?.size }
@@ -35,7 +29,7 @@ class AddedTasksViewModel(
   /** The snackbar is up; it is not shown again. */
   fun onAnnounced() = recentlyAdded.markAnnounced()
 
-  /** *Undo*: the batch's tasks are deleted, and nothing is marked NEW. */
+  /** *Undo*: the batch's tasks are deleted. */
   fun onUndo() {
     val ids = recentlyAdded.batch.value?.takeIf { it.thingId == thingId }?.taskIds ?: return
     recentlyAdded.clear()
