@@ -8,12 +8,24 @@ Android cannot use that file. An adaptive icon is a foreground over a background
 drawable, and vector drawables have no blur, so the plates are redrawn here from the same numbers
 with hard contact shadows. The numbers are the ones in core/ui/.../brand/BrandStackGeometry.kt.
 
+Everywhere else takes a PNG, rendered from the master by headless Chrome and resized by `sips`,
+so this part runs on a Mac with Chrome installed.
+
     python3 docs/branding/render_app_icon.py
 """
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+MASTER = Path(__file__).with_name("app-icon-record-stack.svg")
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 ANDROID_RES = REPO / "app/src/main/res/drawable"
+IOS_ICON = REPO / "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"
+
+# The master draws the stack at this scale about the centre of its 1024 box.
+MASTER_SCALE = "scale(1.12)"
 
 CENTRE_X, HALF_WIDTH, HALF_HEIGHT = 512, 250, 130
 THICKNESS, CORNER_STROKE = 38, 44
@@ -126,10 +138,41 @@ def android_monochrome():
     return vector(scaled(body), "The record stack in one flat colour, for themed icons.")
 
 
+def render(out, size, rounded=False, scale=None):
+    """Renders the master to a `size` pixel PNG at `out`.
+
+    Square and opaque by default, with no alpha channel, which is what the stores and iOS require:
+    they apply their own mask. `rounded` clips to a rounded tile on a transparent ground, for
+    places that show the file as it is. `scale` redraws the stack larger or smaller on the ground.
+    """
+    svg = MASTER.read_text()
+    assert MASTER_SCALE in svg, "the master no longer scales the stack the way this script expects"
+    if scale is not None:
+        svg = svg.replace(MASTER_SCALE, f"scale({scale})")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        (tmp / "icon.svg").write_text(svg)
+        radius = "22.4%" if rounded else "0"
+        (tmp / "page.html").write_text(
+            '<body style="margin:0"><img src="icon.svg" width="1024" height="1024"'
+            f' style="display:block;border-radius:{radius}">')
+        shot = tmp / "shot.png"
+        command = [CHROME, "--headless=new", "--hide-scrollbars", "--force-device-scale-factor=1",
+                   "--window-size=1024,1024", f"--screenshot={shot}"]
+        if rounded:
+            command.append("--default-background-color=00000000")
+        subprocess.run(command + [(tmp / "page.html").as_uri()], check=True, capture_output=True)
+        if size != 1024:
+            subprocess.run(["sips", "-z", str(size), str(size), str(shot)],
+                           check=True, capture_output=True)
+        shutil.copyfile(shot, out)
+
+
 def main():
     (ANDROID_RES / "ic_launcher_foreground.xml").write_text(android_foreground())
     (ANDROID_RES / "ic_launcher_background.xml").write_text(android_background())
     (ANDROID_RES / "ic_launcher_monochrome.xml").write_text(android_monochrome())
+    render(IOS_ICON, 1024)
 
 
 if __name__ == "__main__":
