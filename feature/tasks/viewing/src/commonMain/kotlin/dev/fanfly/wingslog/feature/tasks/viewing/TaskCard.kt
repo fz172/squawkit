@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.suggested_by_ai
 import org.jetbrains.compose.resources.stringResource
@@ -30,6 +34,8 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
+import wingslog.feature.tasks.viewing.generated.resources.badge_new
 
 @Composable
 fun TaskCard(
@@ -49,6 +55,8 @@ fun TaskCard(
   matchNote: AnnotatedString? = null,
   /** The AI drafted this task: a ✦ marks the card, as the task's own detail says. */
   aiSuggested: Boolean = false,
+  /** Just added from suggestions (1f): a NEW tag, until the next batch or the app closes. */
+  isNew: Boolean = false,
 ) {
   val highlightStyle = searchHighlightStyle()
   val badgeTier = when (dueStatus) {
@@ -92,6 +100,20 @@ fun TaskCard(
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
       ) {
+        if (isNew) {
+          // Not a status: the primary tint, so it does not read as due or overdue.
+          Text(
+            text = stringResource(ViewingRes.string.badge_new),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier
+              .background(
+                MaterialTheme.colorScheme.primaryContainer,
+                RoundedCornerShape(Spacing.badgeCornerRadius),
+              )
+              .padding(horizontal = 6.dp, vertical = 2.dp),
+          )
+        }
         if (aiSuggested) {
           Icon(
             imageVector = Icons.Default.AutoAwesome,

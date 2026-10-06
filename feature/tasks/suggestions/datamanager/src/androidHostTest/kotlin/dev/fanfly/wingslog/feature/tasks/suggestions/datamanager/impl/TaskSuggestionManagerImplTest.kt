@@ -485,7 +485,7 @@ class TaskSuggestionManagerImplTest {
         SuggestTasksResult(generation_version = "tasks-4")
       )
 
-      val count = manager.accept(
+      val ids = manager.accept(
         THING,
         run,
         listOf(
@@ -497,11 +497,14 @@ class TaskSuggestionManagerImplTest {
         ),
       )
 
-      assertThat(count).isEqualTo(2)
+      // Each written task is named, and its id is what comes back, for *Undo*.
+      assertThat(ids).isEqualTo(written.map { it.id })
+      assertThat(written.map { it.id }.distinct()).hasSize(2)
+      assertThat(written[0].id).isNotEmpty()
       assertThat(written[0].title).isEqualTo("Replace spark plugs")
       assertThat(written[0].origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_AI_THING)
       assertThat(written[0].origin?.generation_version).isEqualTo("tasks-4")
-      assertThat(written[1]).isEqualTo(edited)
+      assertThat(written[1]).isEqualTo(edited.copy(id = written[1].id))
       coVerifyOrder {
         taskData.addTask(THING, any())
         client.close(JOB)
@@ -589,13 +592,13 @@ class TaskSuggestionManagerImplTest {
       listOf(Result.failure(RuntimeException("disk")), Result.success(true))
     val run = SuggestionRun.Ready(JOB, SuggestTasksResult())
 
-    val count = manager.accept(
+    val ids = manager.accept(
       THING,
       run,
       listOf(AcceptedSuggestion(suggestion), AcceptedSuggestion(suggestion))
     )
 
-    assertThat(count).isEqualTo(1)
+    assertThat(ids).hasSize(1)
     coVerify(exactly = 1) { client.close(JOB) }
   }
 

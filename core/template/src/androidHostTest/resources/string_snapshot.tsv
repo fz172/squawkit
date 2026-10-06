@@ -929,7 +929,6 @@ feature/thing/update	custom_field_add	Add a field
 feature/tasks/suggestions/update	starter_pack_screen_title	Suggested %1$s
 feature/tasks/suggestions/update	starter_pack_title	Pick the %1$s you need
 feature/tasks/suggestions/update	starter_pack_subtitle	Check the ones that apply to this %1$s. Nothing is added until you do.
-feature/tasks/suggestions/update	starter_pack_added	%1$d %2$s added
 feature/tasks/suggestions/update	starter_rule_every_month	Every month
 feature/tasks/suggestions/update	starter_rule_every_months	Every %1$d months
 feature/tasks/suggestions/update	starter_rule_every_year	Every year
@@ -1200,3 +1199,6 @@ feature/tasks/suggestions/update	suggestions_footer_disclaimer	Recommendations, 
 feature/tasks/suggestions/update	suggestions_improve_title	Improve Suggestions
 feature/tasks/suggestions/update	suggestions_improve_body	Add details such as make and model, or a manual, for tasks specific to this %1$s.
 feature/tasks/suggestions/update	suggestions_use_manual	Use a manual
+feature/tasks/dashboard	tasks_added	%1$d %2$s added
+feature/tasks/dashboard	undo	Undo
+feature/tasks/viewing	badge_new	NEW

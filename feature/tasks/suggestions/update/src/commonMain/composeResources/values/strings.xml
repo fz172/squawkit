@@ -3,7 +3,6 @@
   <string name="starter_pack_screen_title">Suggested <xliff:g example="Tasks">%1$s</xliff:g></string>
   <string name="starter_pack_title">Pick the <xliff:g example="tasks">%1$s</xliff:g> you need</string>
   <string name="starter_pack_subtitle">Check the ones that apply to this <xliff:g example="home">%1$s</xliff:g>. Nothing is added until you do.</string>
-  <string name="starter_pack_added"><xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g> added</string>
   <string name="starter_pack_suggest">Suggest more <xliff:g example="inspections">%1$s</xliff:g></string>
   <string name="starter_pack_suggesting">Tailoring these to your <xliff:g example="plane">%1$s</xliff:g>…</string>
   <!-- The model run’s progress (PRD R19), one per pipeline stage key. -->

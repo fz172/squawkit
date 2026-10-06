@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.update.add.AddTasksViewModel
@@ -33,6 +34,7 @@ val tasksSuggestionsUpdateModule = module {
       suggestionManager = get<TaskSuggestionManager>(),
       suggestEntry = get<TaskSuggestionEntry>(),
       attachmentManager = get<AttachmentManager>(),
+      recentlyAdded = get<RecentlyAddedTasks>(),
       savedStateHandle = get<SavedStateHandle>(),
     )
   }

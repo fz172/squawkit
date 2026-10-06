@@ -67,6 +67,8 @@ fun ComplianceSection(
   onTargetPositioned: (Float) -> Unit = {},
   /** The jumped-to card, once the scroll to it has landed. */
   highlightedId: String? = null,
+  /** Tasks just added from suggestions, marked NEW (1f). */
+  newIds: Set<String> = emptySet(),
   showHeader: Boolean = true,
   /** The per-tab search and filter bar, under the header, and the result count below it. */
   filterBar: @Composable () -> Unit,
@@ -176,6 +178,7 @@ fun ComplianceSection(
             val taskCard = @Composable {
               TaskCardItem(
                 cardWithStatus = item,
+                isNew = item.card.id in newIds,
                 onClick = { onCardClick(item) },
                 highlight = matches.wordsIn(
                   TaskAdapter.FIELD_TITLE,
