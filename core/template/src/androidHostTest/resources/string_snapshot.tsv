@@ -1153,7 +1153,6 @@ feature/tasks/suggestions/update	starter_pack_stage_validating	Checking the sugg
 feature/tasks/suggestions/update	starter_pack_stage_other	Preparing suggestions…
 feature/tasks/suggestions/update	starter_pack_stage_hint	This can take a few minutes. You can leave and come back.
 feature/tasks/suggestions/update	starter_pack_skipped_until	AI suggestions for this %1$s are available again at %2$s
-feature/tasks/suggestions/update	starter_pack_not_enough	Not enough to go on for this %1$s. Add details, such as its make and model, for better suggestions.
 feature/tasks/suggestions/update	starter_pack_add_details	Add details
 feature/tasks/suggestions/update	suggestion_source_document	From your document
 feature/tasks/suggestions/update	suggestion_source_manufacturer	Manufacturer schedule
@@ -1198,3 +1197,6 @@ feature/tasks/suggestions/update	suggestions_add_count	Add %1$d %2$s
 feature/tasks/suggestions/update	suggestions_select_to_add	Select %1$s to add
 feature/tasks/suggestions/update	suggestions_selected_count	%1$d selected
 feature/tasks/suggestions/update	suggestions_footer_disclaimer	Recommendations, not requirements. Confirm against your service manual.
+feature/tasks/suggestions/update	suggestions_improve_title	Improve Suggestions
+feature/tasks/suggestions/update	suggestions_improve_body	Add details such as make and model, or a manual, for tasks specific to this %1$s.
+feature/tasks/suggestions/update	suggestions_use_manual	Use a manual

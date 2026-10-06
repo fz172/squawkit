@@ -20,7 +20,6 @@
   <string name="suggestions_coming_thing">Tailored to this <xliff:g example="plane">%1$s</xliff:g></string>
   <string name="starter_pack_stage_hint">This can take a few minutes. You can leave and come back.</string>
   <string name="starter_pack_skipped_until">AI suggestions for this <xliff:g example="plane">%1$s</xliff:g> are available again at <xliff:g example="3:10 PM">%2$s</xliff:g></string>
-  <string name="starter_pack_not_enough">Not enough to go on for this <xliff:g example="plane">%1$s</xliff:g>. Add details, such as its make and model, for better suggestions.</string>
   <string name="starter_pack_add_details">Add details</string>
   <!-- Suggest, and the manuals picked for it (design §9.3, PRD R6). -->
   <string name="sources_title">Suggest <xliff:g example="tasks">%1$s</xliff:g></string>
@@ -58,6 +57,10 @@
   <string name="suggestions_select_to_add">Select <xliff:g example="tasks">%1$s</xliff:g> to add</string>
   <string name="suggestions_selected_count"><xliff:g example="3">%1$d</xliff:g> selected</string>
   <string name="suggestions_footer_disclaimer">Recommendations, not requirements. Confirm against your service manual.</string>
+  <!-- Nothing confident to suggest (R21a, 1e). -->
+  <string name="suggestions_improve_title">Improve Suggestions</string>
+  <string name="suggestions_improve_body">Add details such as make and model, or a manual, for tasks specific to this <xliff:g example="aircraft">%1$s</xliff:g>.</string>
+  <string name="suggestions_use_manual">Use a manual</string>
   <string name="suggestion_ai_disclosure">Suggestions are drafted by AI from the sources shown on each one. The manufacturer’s documents govern.</string>
   <string name="starter_pack_edited">Edited</string>
   <string name="starter_rule_every_days">Every <xliff:g example="30">%1$d</xliff:g> days</string>

@@ -69,10 +69,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_added
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_not_enough
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_subtitle
 import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_suggest
@@ -236,26 +234,18 @@ fun StarterPackRoute(
             )
           }
           if (uiState.notEnough) {
-            // R21a: nothing confident to suggest; more about the Thing is what would help.
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-              Text(
-                text = stringResource(
-                  Res.string.starter_pack_not_enough,
-                  LocalThingLexicon.current.thingNoun.singular,
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-              )
-              OutlinedButton(
-                onClick = {
-                  viewModel.onAddDetails()
-                  navController.navigate(Screen.EditThing.createRoute(viewModel.thingId)) {
-                    popUpTo(Screen.StarterPack.route) { inclusive = true }
-                  }
-                },
-              ) {
-                Text(stringResource(Res.string.starter_pack_add_details))
+            // R21a: nothing confident to suggest; more about the Thing is what would help. Either
+            // way out ends this run and replaces the screen.
+            val leaveFor = { route: String ->
+              viewModel.onAddDetails()
+              navController.navigate(route) {
+                popUpTo(Screen.StarterPack.route) { inclusive = true }
               }
             }
+            ImproveBanner(
+              onAddDetails = { leaveFor(Screen.EditThing.createRoute(viewModel.thingId)) },
+              onUseManual = { leaveFor(Screen.AddTasks.createRoute(viewModel.thingId)) },
+            )
           }
           uiState.failure?.let { failure ->
             // The model run failed; the cards below are still there to pick from (PRD R21).
