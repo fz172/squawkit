@@ -25,6 +25,8 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 ANDROID_RES = REPO / "app/src/main/res/drawable"
 IOS_ICON = REPO / "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"
 WEB = REPO / "webApp/src/jsMain/resources"
+STORE = REPO / "docs/product/store_assets"
+CONSOLE_ICON = Path(__file__).with_name("cloud-console-app-icon-120")
 
 # A browser tab shows the icon 16 or 32 pixels across, where the stack at its usual size is a
 # smudge, so favicon.ico draws it larger on its tile.
@@ -200,6 +202,12 @@ def main():
     write_ico(WEB / "favicon.ico", TAB_SIZES)
     render(WEB / "favicon-192.png", 192, rounded=True)
     render(WEB / "apple-touch-icon.png", 180)
+    # What gets uploaded by hand: the two store listings and the OAuth consent screen.
+    shutil.copyfile(IOS_ICON, STORE / "appstore/app_icon_1024.png")
+    render(STORE / "play/icon_512.png", 512)
+    render(CONSOLE_ICON.with_suffix(".png"), 120)
+    CONSOLE_ICON.with_suffix(".svg").write_text(
+        MASTER.read_text().replace('width="1024" height="1024"', 'width="120" height="120"', 1))
 
 
 if __name__ == "__main__":
