@@ -133,6 +133,10 @@ multiplatform vector, `docs/product/store_assets/appstore/app_icon_1024.png` the
 `favicon-192.png` / `apple-touch-icon.png` already ship beside `index.html`. Export an SVG from the
 launcher foreground for the static page — crisp at any size, a couple of KB, no Kotlin involved.
 
+(Since superseded: the mark is now the record stack. The airplane vector in `core/sharedassets` has
+been removed, the page header uses `brand-stack.svg`, and the masters are
+`docs/branding/app-icon-record-stack.svg` and `docs/branding/render_app_icon.py`.)
+
 `BrandPlane`, the single-colour crop of the same artwork that the login hero used to end on, has
 since been removed: the hero now ends on `BrandStack`, the record-stack mark, which carries its own
 colours. The web header's mark is `brand-stack.svg`, the same stack as a static file.
