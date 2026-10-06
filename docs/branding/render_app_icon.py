@@ -14,6 +14,7 @@ so this part runs on a Mac with Chrome installed.
     python3 docs/branding/render_app_icon.py
 """
 import shutil
+import struct
 import subprocess
 import tempfile
 from pathlib import Path
@@ -23,6 +24,12 @@ MASTER = Path(__file__).with_name("app-icon-record-stack.svg")
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 ANDROID_RES = REPO / "app/src/main/res/drawable"
 IOS_ICON = REPO / "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png"
+WEB = REPO / "webApp/src/jsMain/resources"
+
+# A browser tab shows the icon 16 or 32 pixels across, where the stack at its usual size is a
+# smudge, so favicon.ico draws it larger on its tile.
+TAB_SCALE = 1.45
+TAB_SIZES = [16, 32]
 
 # The master draws the stack at this scale about the centre of its 1024 box.
 MASTER_SCALE = "scale(1.12)"
@@ -168,11 +175,31 @@ def render(out, size, rounded=False, scale=None):
         shutil.copyfile(shot, out)
 
 
+def write_ico(out, sizes):
+    """Packs one rounded tile per size into an .ico, each stored as a PNG."""
+    with tempfile.TemporaryDirectory() as tmp:
+        images = []
+        for size in sizes:
+            png = Path(tmp) / f"{size}.png"
+            render(png, size, rounded=True, scale=TAB_SCALE)
+            images.append(png.read_bytes())
+    header = struct.pack("<HHH", 0, 1, len(sizes))
+    offset = len(header) + 16 * len(sizes)
+    entries = b""
+    for size, image in zip(sizes, images):
+        entries += struct.pack("<BBBBHHII", size, size, 0, 0, 1, 32, len(image), offset)
+        offset += len(image)
+    out.write_bytes(header + entries + b"".join(images))
+
+
 def main():
     (ANDROID_RES / "ic_launcher_foreground.xml").write_text(android_foreground())
     (ANDROID_RES / "ic_launcher_background.xml").write_text(android_background())
     (ANDROID_RES / "ic_launcher_monochrome.xml").write_text(android_monochrome())
     render(IOS_ICON, 1024)
+    write_ico(WEB / "favicon.ico", TAB_SIZES)
+    render(WEB / "favicon-192.png", 192, rounded=True)
+    render(WEB / "apple-touch-icon.png", 180)
 
 
 if __name__ == "__main__":
