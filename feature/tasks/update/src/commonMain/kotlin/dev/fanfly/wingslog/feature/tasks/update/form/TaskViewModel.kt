@@ -343,6 +343,8 @@ class TaskViewModel(
     isOneTime: Boolean,
     forceDueDate: Instant?,
     forceDueEngine: Float,
+    /** The meter [forceDueEngine] is read on; the one the rules schedule against when not given. */
+    forceDueMeterKey: String = meterKeyFor(component, rules),
     notes: String = "",
     onSuccess: () -> Unit,
     onError: () -> Unit = {},
@@ -368,11 +370,7 @@ class TaskViewModel(
           // Made by hand here, so it says so (design §4.1); only tasks written before origins
           // existed carry none.
           origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_USER),
-        ).withForcedDueMeter(
-          // The meter the rules schedule against — an override is measured in the same one.
-          meterKeyFor(component, rules),
-          forceDueEngine.takeIf { it > 0f },
-        )
+        ).withForcedDueMeter(forceDueMeterKey, forceDueEngine.takeIf { it > 0f })
         inspectionDataManager.addTask(
           thingId,
           card
@@ -426,6 +424,8 @@ class TaskViewModel(
     isOneTime: Boolean,
     forceDueDate: Instant?,
     forceDueEngine: Float,
+    /** The meter [forceDueEngine] is read on; the one the rules schedule against when not given. */
+    forceDueMeterKey: String = meterKeyFor(component, rules),
     forceCompliedStatus: ForceCompliedStatus?,
     notes: String,
     onSuccess: () -> Unit,
@@ -462,6 +462,9 @@ class TaskViewModel(
           // task's origin.
           origin = storedTask(cardId)?.origin,
         )
+          // The card is rebuilt from the form, so the meter due has to be put back on it: left
+          // off, every save of an edit dropped the reading the task was due at.
+          .withForcedDueMeter(forceDueMeterKey, forceDueEngine.takeIf { it > 0f })
         val before = storedTask(cardId)
         inspectionDataManager.updateTask(
           thingId,
