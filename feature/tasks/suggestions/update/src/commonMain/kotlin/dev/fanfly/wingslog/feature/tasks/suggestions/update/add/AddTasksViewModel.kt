@@ -24,6 +24,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -49,7 +50,10 @@ class AddTasksViewModel(
   suggestEntry: TaskSuggestionEntry,
   private val attachmentManager: AttachmentManager,
   savedStateHandle: SavedStateHandle,
-  /** Outlives the ViewModel: [onCleared] lets the files go after `viewModelScope` is cancelled. */
+  /**
+   * Outlives the ViewModel: storing a file and letting one go both finish here, so closing the
+   * sheet part-way through neither strands a stored file nor drops its release.
+   */
   private val cleanupScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : ViewModel() {
 
@@ -123,22 +127,38 @@ class AddTasksViewModel(
           problem = DocumentProblem.UNSUPPORTED
           continue
         }
-        try {
-          val added = attachmentManager.addPickedFile(
-            thingId,
-            file,
-            displayName = file.name,
-            maxBytes = QuotaChecker.MAX_AI_DOCUMENT_BYTES,
-          )
-          updateSources { it.copy(documents = it.documents + added) }
-        } catch (e: CancellationException) {
-          throw e
-        } catch (e: FileTooLargeException) {
-          problem = DocumentProblem.TOO_LARGE
-        } catch (e: Exception) {
-          logger.w(e) { "A picked document was not added" }
-          problem = DocumentProblem.NOT_ADDED
+        // Stored on the scope that outlives the sheet: it runs to its end, so what it stored is
+        // always known, and can be let go of if the sheet has closed meanwhile.
+        val storing = cleanupScope.async {
+          runCatching {
+            attachmentManager.addPickedFile(
+              thingId,
+              file,
+              displayName = file.name,
+              maxBytes = QuotaChecker.MAX_AI_DOCUMENT_BYTES,
+            )
+          }
         }
+        val stored = try {
+          storing.await()
+        } catch (e: CancellationException) {
+          // The sheet closed first: nothing will list this file, so nothing else lets it go.
+          cleanupScope.launch {
+            storing.await().getOrNull()?.let { attachmentManager.release(it, owner = null) }
+          }
+          throw e
+        }
+        stored.fold(
+          onSuccess = { added -> updateSources { it.copy(documents = it.documents + added) } },
+          onFailure = { e ->
+            problem = if (e is FileTooLargeException) {
+              DocumentProblem.TOO_LARGE
+            } else {
+              logger.w(e) { "A picked document was not added" }
+              DocumentProblem.NOT_ADDED
+            }
+          },
+        )
       }
       updateSources { it.copy(isAdding = false, problem = problem) }
     }
@@ -155,7 +175,8 @@ class AddTasksViewModel(
       uiState.value.sources.documents.firstOrNull { it.id == attachmentId }
         ?: return
     updateSources { it.copy(documents = it.documents - removed) }
-    viewModelScope.launch { attachmentManager.release(removed, owner = null) }
+    // Not on `viewModelScope`: closing the sheet right after must not cancel it.
+    cleanupScope.launch { attachmentManager.release(removed, owner = null) }
   }
 
   /**

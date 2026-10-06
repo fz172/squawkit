@@ -26,6 +26,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -238,6 +239,43 @@ class AddTasksViewModelTest {
           name = "MM.pdf"
         ), null
       )
+    }
+  }
+
+  @Test
+  fun aFileStillBeingStoredWhenTheSheetClosesIsLetGo() = runTest(dispatcher) {
+    val stored = CompletableDeferred<Attachment>()
+    coEvery {
+      attachments.addPickedFile(THING_ID, any(), "MM.pdf", QuotaChecker.MAX_AI_DOCUMENT_BYTES)
+    } coAnswers { stored.await() }
+    val vm = viewModel()
+    advanceUntilIdle()
+    vm.onAddDocuments(listOf(picked("MM.pdf")))
+    advanceUntilIdle()
+
+    store.clear()
+    advanceUntilIdle()
+    val late = Attachment(id = "blob-MM.pdf", name = "MM.pdf")
+    stored.complete(late)
+    advanceUntilIdle()
+
+    coVerify { attachments.release(late, null) }
+  }
+
+  @Test
+  fun aManualRemovedJustBeforeTheSheetClosesIsStillLetGo() = runTest(dispatcher) {
+    storing("MM.pdf")
+    val vm = viewModel()
+    advanceUntilIdle()
+    vm.onAddDocuments(listOf(picked("MM.pdf")))
+    advanceUntilIdle()
+
+    vm.onRemoveDocument("blob-MM.pdf")
+    store.clear()
+    advanceUntilIdle()
+
+    coVerify(exactly = 1) {
+      attachments.release(Attachment(id = "blob-MM.pdf", name = "MM.pdf"), null)
     }
   }
 
