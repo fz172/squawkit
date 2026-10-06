@@ -83,6 +83,11 @@ fun MaintenanceTasksTab(
       key = "added:${state.thing.id}",
       parameters = { parametersOf(state.thing.id) })
   val newIds by addedViewModel.newIds.collectAsStateWithLifecycle()
+  val readyViewModel: ReadySuggestionsViewModel =
+    koinViewModel(
+      key = "ready:${state.thing.id}",
+      parameters = { parametersOf(state.thing.id) })
+  val readySuggestions by readyViewModel.ready.collectAsStateWithLifecycle()
   AddedSnackbar(addedViewModel)
   val taskFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange
@@ -141,6 +146,14 @@ fun MaintenanceTasksTab(
   ) {
     // Suggestions are asked for from the add button's sheet. An empty list also offers the
     // template's curated list (below), for a template the server keeps one for.
+    // An answer that came in while the user was elsewhere: the one place AI shows here (1f).
+    readySuggestions?.let { ready ->
+      ReadySuggestionsCard(
+        ready = ready,
+        // The default mode shows the held answer rather than starting a run (R19).
+        onReview = { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) },
+      )
+    }
     val isEmpty = state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
     val hasCuratedList = hasCuratedList(LocalThingTemplate.current?.id)
     ComplianceSection(

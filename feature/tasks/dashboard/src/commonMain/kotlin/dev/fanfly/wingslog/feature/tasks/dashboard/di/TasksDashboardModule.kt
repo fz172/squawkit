@@ -4,12 +4,14 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.tasks.dashboard.AddedTasksViewModel
+import dev.fanfly.wingslog.feature.tasks.dashboard.ReadySuggestionsViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.SuggestTasksEntryViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.TaskTabViewModel
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -26,6 +28,12 @@ val tasksDashboardModule = module {
       get<AnalyticsManager>(),
       params.get<String>(0),
       params.get<String>(1),
+    )
+  }
+  viewModel { params ->
+    ReadySuggestionsViewModel(
+      get<TaskSuggestionManager>(),
+      params.get<String>(0),
     )
   }
   viewModel { params ->

@@ -4,4 +4,9 @@
   <!-- Back from the suggestions with tasks added (1f). -->
   <string name="tasks_added"><xliff:g example="6">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g> added</string>
   <string name="undo">Undo</string>
+  <!-- A model answer that finished while the user was elsewhere (1f). -->
+  <string name="suggestions_ready_one">1 more suggestion ready</string>
+  <string name="suggestions_ready_many"><xliff:g example="3">%1$d</xliff:g> more suggestions ready</string>
+  <string name="suggestions_ready_from">From <xliff:g example="Rotax-915-Line-Maint.pdf">%1$s</xliff:g></string>
+  <string name="suggestions_review">Review</string>
 </resources>
