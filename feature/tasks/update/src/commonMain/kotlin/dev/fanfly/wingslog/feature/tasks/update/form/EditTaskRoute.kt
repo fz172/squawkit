@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -124,6 +125,8 @@ fun EditTaskRoute(
           isOneTime = updatedCard.is_one_time,
           forceDueDate = updatedCard.force_due_date,
           forceDueEngine = updatedCard.forcedDueMeter()?.value ?: 0f,
+          forceDueMeterKey = updatedCard.forcedDueMeter()?.meterKey
+            ?: meterKeyFor(updatedCard.component, updatedCard.rules),
           forceCompliedStatus = updatedCard.force_complied_status,
           notes = updatedCard.notes,
           onSuccess = {

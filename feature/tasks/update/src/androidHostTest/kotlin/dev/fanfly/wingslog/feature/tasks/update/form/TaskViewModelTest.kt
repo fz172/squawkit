@@ -449,6 +449,36 @@ class TaskViewModelTest {
   }
 
   @Test
+  fun saveEditedTask_keepsTheMeterDueInItsOwnMeter() = runTest(testDispatcher) {
+    // A one-time suggestion ("first service at 600 mi") has no rule, only the reading it is due at.
+    val stored = MaintenanceTask(
+      id = TEST_CARD_ID,
+      title = "First service",
+      is_one_time = true,
+      force_due_meter = MeterReading("odometer", value_ = 600.0),
+    )
+    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      listOf(stored)
+    )
+    coEvery {
+      inspectionDataManager.updateTask(TEST_THING_ID, any())
+    } returns Result.success(true)
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+
+    viewModel.saveEditedTaskFrom(stored.copy(title = "First service, renamed"))
+    advanceUntilIdle()
+
+    val persisted = slot<MaintenanceTask>()
+    coVerify {
+      inspectionDataManager.updateTask(TEST_THING_ID, capture(persisted))
+    }
+    assertThat(persisted.captured.force_due_meter)
+      .isEqualTo(MeterReading("odometer", value_ = 600.0))
+    assertThat(persisted.captured.is_one_time).isTrue()
+  }
+
+  @Test
   fun saveEditedTask_reportsAnEditToASuggestedTask() = runTest(testDispatcher) {
     // PRD R50: how suggested tasks survive. A rename is a details edit.
     val analytics = RecordingAnalyticsManager()
@@ -526,6 +556,7 @@ class TaskViewModelTest {
       isOneTime = card.is_one_time,
       forceDueDate = card.force_due_date,
       forceDueEngine = card.forcedDueMeter()?.value ?: 0f,
+      forceDueMeterKey = card.forcedDueMeter()?.meterKey ?: MeterKeys.ENGINE_HOURS,
       forceCompliedStatus = card.force_complied_status,
       notes = card.notes,
       onSuccess = {},

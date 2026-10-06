@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
@@ -106,6 +107,8 @@ fun AddTaskRoute(
           isOneTime = card.is_one_time,
           forceDueDate = card.force_due_date,
           forceDueEngine = card.forcedDueMeter()?.value ?: 0f,
+          forceDueMeterKey = card.forcedDueMeter()?.meterKey
+            ?: meterKeyFor(card.component, card.rules),
           notes = card.notes,
           onSuccess = {
             navController.previousBackStackEntry?.savedStateHandle?.set(
