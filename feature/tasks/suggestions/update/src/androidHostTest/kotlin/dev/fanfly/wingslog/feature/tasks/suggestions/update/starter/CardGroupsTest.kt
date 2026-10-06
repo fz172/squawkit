@@ -16,7 +16,7 @@ class CardGroupsTest {
     )
 
   @Test
-  fun `groups by component in the order each first appears, keeping each card's index`() {
+  fun `the thing's own section leads, then components in the order each first appears`() {
     val items = listOf(
       card("Spark plugs", "engine"),
       card("Annual", ""),
@@ -27,14 +27,14 @@ class CardGroupsTest {
     val groups = groupsOf(items)
 
     assertThat(groups.map { it.slotKey }).containsExactly(
-      "engine",
       "",
+      "engine",
       "propeller"
     )
       .inOrder()
-    assertThat(groups[0].cards.map { it.index }).containsExactly(0, 2)
+    assertThat(groups[1].cards.map { it.index }).containsExactly(0, 2)
       .inOrder()
-    assertThat(groups[1].cards.single().value.suggestion.title).isEqualTo("Annual")
+    assertThat(groups[0].cards.single().value.suggestion.title).isEqualTo("Annual")
   }
 
   @Test
