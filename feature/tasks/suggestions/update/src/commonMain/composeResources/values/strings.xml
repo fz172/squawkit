@@ -3,8 +3,6 @@
   <string name="starter_pack_screen_title">Suggested <xliff:g example="Tasks">%1$s</xliff:g></string>
   <string name="starter_pack_title">Pick the <xliff:g example="tasks">%1$s</xliff:g> you need</string>
   <string name="starter_pack_subtitle">Check the ones that apply to this <xliff:g example="home">%1$s</xliff:g>. Nothing is added until you do.</string>
-  <string name="starter_pack_disclaimer">Recommendations, not requirements. Confirm each interval against the manufacturer’s service manual for your <xliff:g example="car">%1$s</xliff:g>.</string>
-  <string name="starter_pack_skip">Skip</string>
   <string name="starter_pack_added"><xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g> added</string>
   <string name="starter_pack_suggest">Suggest more <xliff:g example="inspections">%1$s</xliff:g></string>
   <string name="starter_pack_suggesting">Tailoring these to your <xliff:g example="plane">%1$s</xliff:g>…</string>
@@ -55,6 +53,11 @@
   <string name="suggestion_unit_months">months</string>
   <string name="suggestion_unit_days">days</string>
   <string name="suggestion_more_options">More options</string>
+  <!-- The review's pinned footer (1d, 2b). -->
+  <string name="suggestions_add_count">Add <xliff:g example="6">%1$d</xliff:g> <xliff:g example="Tasks">%2$s</xliff:g></string>
+  <string name="suggestions_select_to_add">Select <xliff:g example="tasks">%1$s</xliff:g> to add</string>
+  <string name="suggestions_selected_count"><xliff:g example="3">%1$d</xliff:g> selected</string>
+  <string name="suggestions_footer_disclaimer">Recommendations, not requirements. Confirm against your service manual.</string>
   <string name="suggestion_ai_disclosure">Suggestions are drafted by AI from the sources shown on each one. The manufacturer’s documents govern.</string>
   <string name="starter_pack_edited">Edited</string>
   <string name="starter_rule_every_days">Every <xliff:g example="30">%1$d</xliff:g> days</string>
