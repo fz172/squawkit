@@ -1,12 +1,12 @@
 package dev.fanfly.wingslog.feature.shell
 
-import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.ui.adaptive.widget.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.feature.datalog.viewing.viewer.DataLogViewerScreen
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
@@ -23,7 +23,7 @@ import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
 import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.suggestions.update.add.AddTasksRoute
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.StarterPackRoute
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.SuggestionsRoute
 import dev.fanfly.wingslog.feature.tasks.update.form.AddTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.form.EditTaskRoute
 import dev.fanfly.wingslog.feature.technician.manage.edit.EditTechnicianScreen
@@ -77,14 +77,14 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
     }
   }
   selectionDialog(
-    route = Screen.StarterPack.route,
+    route = Screen.Suggestions.route,
     arguments = listOf(
       navArgument(Screen.THING_ID) {
         type = NavType.StringType
       },
       navArgument(Screen.SUGGESTIONS_MODE) {
         type = NavType.StringType
-        defaultValue = SuggestionsMode.STARTER.wire
+        defaultValue = SuggestionsMode.CURATED.wire
       },
       navArgument(Screen.SUGGESTIONS_DOCUMENT) {
         type = NavType.StringType
@@ -95,13 +95,15 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
     dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
-      StarterPackRoute(navController = navController)
+      SuggestionsRoute(navController = navController)
     }
   }
   // Draws its own sheet (or, wide, its own card) over the scrimmed task tab.
   selectionDialog(
     route = Screen.AddTasks.route,
-    arguments = listOf(navArgument(Screen.THING_ID) { type = NavType.StringType }),
+    arguments = listOf(navArgument(Screen.THING_ID) {
+      type = NavType.StringType
+    }),
     dialogProperties = formDialogProperties(),
   ) {
     AddTasksRoute(navController = navController)

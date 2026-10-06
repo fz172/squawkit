@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker

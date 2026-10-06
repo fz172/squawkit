@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.TaskOriginKind

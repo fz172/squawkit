@@ -61,27 +61,27 @@ sealed class Screen(val route: String) {
   /**
    * The template's recommended schedule (PRD §4.9), and the AI suggestions that join it
    * (docs/ai/task_population_design.md §9.1). Reached from an empty Tasks tab and a finished run's
-   * push (`starter`, the default), and from the Add Tasks sheet's *Suggest* (`add`, which starts the
+   * push (`curated`, the default), and from the Add Tasks sheet's *Suggest* (`add`, which starts the
    * model run at once with the manuals picked there, in [SUGGESTIONS_DOCUMENT]); not after creating
    * a Thing (2026-10-03).
    */
-  data object StarterPack :
+  data object Suggestions :
     Screen(
-      "starter_pack/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}" +
+      "suggestions/{$THING_ID}?$SUGGESTIONS_MODE={$SUGGESTIONS_MODE}" +
         "&$SUGGESTIONS_DOCUMENT={$SUGGESTIONS_DOCUMENT}"
     ) {
     /**
-     * [documents]: the add mode's manuals (`toDocumentsArg`). The starter mode is the bare route, as
+     * [documents]: the add mode's manuals (`toDocumentsArg`). The curated mode is the bare route, as
      * before modes existed.
      */
     fun createRoute(
       thingId: String,
-      mode: SuggestionsMode = SuggestionsMode.STARTER,
+      mode: SuggestionsMode = SuggestionsMode.CURATED,
       documents: String? = null,
     ) = when {
-      mode == SuggestionsMode.STARTER -> "starter_pack/$thingId"
-      documents == null -> "starter_pack/$thingId?$SUGGESTIONS_MODE=${mode.wire}"
-      else -> "starter_pack/$thingId?$SUGGESTIONS_MODE=${mode.wire}&$SUGGESTIONS_DOCUMENT=$documents"
+      mode == SuggestionsMode.CURATED -> "suggestions/$thingId"
+      documents == null -> "suggestions/$thingId?$SUGGESTIONS_MODE=${mode.wire}"
+      else -> "suggestions/$thingId?$SUGGESTIONS_MODE=${mode.wire}&$SUGGESTIONS_DOCUMENT=$documents"
     }
   }
 

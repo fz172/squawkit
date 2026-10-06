@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -35,9 +35,9 @@ import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_stage_hint
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_coming_documents
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_coming_thing
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_stage_hint
 
 /**
  * What the working run is doing, and that the user need not wait for it (1c): one quiet line
@@ -46,7 +46,10 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions
 @Composable
 internal fun SuggestingNote(stage: String?, stageArg: String?) {
   Text(
-    text = stageText(stage, stageArg) + " " + stringResource(Res.string.starter_pack_stage_hint),
+    text = stageText(
+      stage,
+      stageArg
+    ) + " " + stringResource(Res.string.suggestions_stage_hint),
     style = MaterialTheme.typography.bodySmall,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
   )
@@ -69,7 +72,10 @@ internal fun ComingGroup(readsDocuments: Boolean) {
   val pulse by rememberInfiniteTransition(label = "placeholder").animateFloat(
     initialValue = 1f,
     targetValue = 0.5f,
-    animationSpec = infiniteRepeatable(tween(durationMillis = 900), RepeatMode.Reverse),
+    animationSpec = infiniteRepeatable(
+      tween(durationMillis = 900),
+      RepeatMode.Reverse
+    ),
     label = "placeholder alpha",
   )
   val outline = MaterialTheme.colorScheme.outlineVariant
@@ -89,7 +95,12 @@ internal fun ComingGroup(readsDocuments: Boolean) {
             color = outline,
             style = Stroke(
               width = Spacing.hairline.toPx(),
-              pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
+              pathEffect = PathEffect.dashPathEffect(
+                floatArrayOf(
+                  4.dp.toPx(),
+                  4.dp.toPx()
+                )
+              ),
             ),
             cornerRadius = CornerRadius(Spacing.cardCornerRadius.toPx()),
           )
@@ -115,9 +126,16 @@ private fun PlaceholderRow(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    Box(Modifier.size(20.dp).background(color, shape))
+    Box(
+      Modifier.size(20.dp)
+        .background(color, shape)
+    )
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-      Box(Modifier.fillMaxWidth(titleWidth).height(12.dp).background(color, shape))
+      Box(
+        Modifier.fillMaxWidth(titleWidth)
+          .height(12.dp)
+          .background(color, shape)
+      )
       Box(
         Modifier
           .fillMaxWidth(lineWidth)

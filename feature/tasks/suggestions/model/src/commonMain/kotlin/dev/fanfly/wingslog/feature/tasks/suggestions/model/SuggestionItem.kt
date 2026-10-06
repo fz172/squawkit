@@ -4,7 +4,7 @@ import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 
 /** One card on the suggestions screen. */
-data class StarterPackItem(
+data class SuggestionItem(
   /** What the card shows, and what accepting writes (design §6.8). */
   val suggestion: TaskSuggestion,
   val selected: Boolean,

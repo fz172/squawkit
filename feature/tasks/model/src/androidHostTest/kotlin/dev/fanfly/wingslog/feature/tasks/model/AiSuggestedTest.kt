@@ -7,7 +7,8 @@ import dev.fanfly.wingslog.task.TaskOriginKind
 import org.junit.Test
 
 class AiSuggestedTest {
-  private fun from(kind: TaskOriginKind) = MaintenanceTask(title = "T", origin = TaskOrigin(kind = kind))
+  private fun from(kind: TaskOriginKind) =
+    MaintenanceTask(title = "T", origin = TaskOrigin(kind = kind))
 
   @Test
   fun `the AI's tasks are marked, from the Thing or a document`() {
@@ -17,7 +18,7 @@ class AiSuggestedTest {
   }
 
   @Test
-  fun `curated, starter and hand-made tasks are not`() {
+  fun `curated and hand-made tasks are not`() {
     assertThat(from(TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED).isAiSuggested).isFalse()
     assertThat(from(TaskOriginKind.TASK_ORIGIN_KIND_UNSPECIFIED).isAiSuggested).isFalse()
     assertThat(from(TaskOriginKind.TASK_ORIGIN_KIND_USER).isAiSuggested).isFalse()

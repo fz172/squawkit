@@ -16,8 +16,8 @@ sealed interface ThingOverviewAction {
 
   data class AddTaskClick(val thingId: String) : ThingOverviewAction
 
-  /** The template's starter pack, re-offered from an empty Tasks tab (PRD §4.9). */
-  data class AddStarterPackClick(val thingId: String) : ThingOverviewAction
+  /** The suggestions screen: the curated list from an empty Tasks tab, or a held answer (PRD §4.9). */
+  data class BrowseSuggestionsClick(val thingId: String) : ThingOverviewAction
 
   data class TaskCardClick(val card: MaintenanceTaskWithStatus) :
     ThingOverviewAction

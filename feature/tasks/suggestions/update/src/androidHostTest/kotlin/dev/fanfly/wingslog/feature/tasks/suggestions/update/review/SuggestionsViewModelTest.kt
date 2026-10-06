@@ -1,6 +1,5 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
-import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiEligibility
@@ -10,8 +9,11 @@ import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.attachmentsFromDocumentsArg
+import dev.fanfly.wingslog.feature.attachment.model.toDocumentsArg
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
@@ -23,10 +25,10 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
-import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.AttachmentId
-import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SuggestionId
+import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.InspectionRule
@@ -36,8 +38,6 @@ import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TimeRule
 import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.feature.attachment.model.attachmentsFromDocumentsArg
-import dev.fanfly.wingslog.feature.attachment.model.toDocumentsArg
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
@@ -66,7 +66,7 @@ import kotlin.time.Instant
  * when cards are on screen — and not for a Thing with nothing to offer.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class StarterPackViewModelTest {
+class SuggestionsViewModelTest {
 
   private val dispatcher = StandardTestDispatcher()
   private val analytics = RecordingAnalyticsManager()
@@ -85,7 +85,12 @@ class StarterPackViewModelTest {
     // The Thing has no tasks unless a test says so.
     every { taskDataManager.observeTasks(THING_ID) } returns flowOf(emptyList())
     // A model run can start, without documents, unless a test says otherwise.
-    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(true, null, false, null)
+    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(
+      true,
+      null,
+      false,
+      null
+    )
     coEvery { suggestions.isOwner(THING_ID) } returns true
   }
 
@@ -102,7 +107,7 @@ class StarterPackViewModelTest {
   private fun viewModel(
     mode: SuggestionsMode? = null,
     picked: List<Attachment> = emptyList(),
-  ): StarterPackViewModel {
+  ): SuggestionsViewModel {
     val thing = Thing(
       id = THING_ID,
       template = ThingTemplate(
@@ -111,7 +116,7 @@ class StarterPackViewModelTest {
       ),
     )
     every { fleetManager.loadThing(THING_ID) } returns flowOf(thing)
-    return StarterPackViewModel(
+    return SuggestionsViewModel(
       fleetManager = fleetManager,
       taskDataManager = taskDataManager,
       templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
@@ -124,7 +129,10 @@ class StarterPackViewModelTest {
         buildMap {
           put(Screen.THING_ID, THING_ID)
           if (mode != null) put(Screen.SUGGESTIONS_MODE, mode.wire)
-          if (picked.isNotEmpty()) put(Screen.SUGGESTIONS_DOCUMENT, picked.toDocumentsArg())
+          if (picked.isNotEmpty()) put(
+            Screen.SUGGESTIONS_DOCUMENT,
+            picked.toDocumentsArg()
+          )
         },
       ),
     )
@@ -162,16 +170,23 @@ class StarterPackViewModelTest {
   private val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
 
   /**
-   * The starter mode on [curated], and its AI button: the model run is [JOB], and [runs] carries
+   * The curated mode on [curated], and its AI button: the model run is [JOB], and [runs] carries
    * what the test emits next.
    */
-  private fun TestScope.starterModelRun(
+  private fun TestScope.curatedModelRun(
     curated: SuggestTasksResult = curatedList,
     documentsAllowed: Boolean = false,
-  ): StarterPackViewModel {
+  ): SuggestionsViewModel {
     coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
       AiStartResult.Started(CURATED_JOB, joined = false)
-    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
+    coEvery {
+      suggestions.start(
+        THING_ID,
+        any(),
+        curatedOnly = false,
+        documents = any()
+      )
+    } returns
       AiStartResult.Started(JOB, joined = false)
     every { suggestions.observeRun(THING_ID) } returns runs
     coEvery { suggestions.eligibility(THING_ID, any()) } returns
@@ -186,7 +201,7 @@ class StarterPackViewModelTest {
   }
 
   @Test
-  fun theStarterModeAsksForTheCuratedListAndShowsItWithNothingChecked() =
+  fun theCuratedModeAsksForTheCuratedListAndShowsItWithNothingChecked() =
     runTest(dispatcher) {
       serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, curatedList))
 
@@ -196,7 +211,7 @@ class StarterPackViewModelTest {
       coVerify {
         suggestions.start(
           THING_ID,
-          SuggestionsMode.STARTER.wire,
+          SuggestionsMode.CURATED.wire,
           curatedOnly = true
         )
       }
@@ -225,62 +240,115 @@ class StarterPackViewModelTest {
   )
 
   @Test
-  fun theAddModeStartsTheModelRunAtOnceWithThePickedDocuments() = runTest(dispatcher) {
-    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
-      AiStartResult.Started(JOB, joined = false)
-    every { suggestions.observeRun(THING_ID) } returns runs
+  fun theAddModeStartsTheModelRunAtOnceWithThePickedDocuments() =
+    runTest(dispatcher) {
+      coEvery {
+        suggestions.start(
+          THING_ID,
+          any(),
+          curatedOnly = false,
+          documents = any()
+        )
+      } returns
+        AiStartResult.Started(JOB, joined = false)
+      every { suggestions.observeRun(THING_ID) } returns runs
 
-    val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
-    advanceUntilIdle()
-    runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
-    advanceUntilIdle()
+      val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
+      advanceUntilIdle()
+      runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+      advanceUntilIdle()
 
-    coVerify { suggestions.start(THING_ID, "add", curatedOnly = false, documents = manuals) }
-    coVerify(exactly = 0) { suggestions.start(THING_ID, any(), curatedOnly = true, any()) }
-    // The curated list the run starts with is up, and can be picked from while it works.
-    assertThat(vm.uiState.value.items).hasSize(3)
-    assertThat(vm.uiState.value.isSuggesting).isTrue()
-    assertThat(vm.uiState.value.canSuggest).isFalse()
-    // The run owns them now.
-    coVerify(exactly = 0) { attachments.release(any(), any()) }
-    assertThat(analytics.paramsFor("task_suggestions_requested").single())
-      .containsAtLeastEntriesIn(mapOf("source" to "add", "document_count" to "2"))
-  }
+      coVerify {
+        suggestions.start(
+          THING_ID,
+          "add",
+          curatedOnly = false,
+          documents = manuals
+        )
+      }
+      coVerify(exactly = 0) {
+        suggestions.start(
+          THING_ID,
+          any(),
+          curatedOnly = true,
+          any()
+        )
+      }
+      // The curated list the run starts with is up, and can be picked from while it works.
+      assertThat(vm.uiState.value.items).hasSize(3)
+      assertThat(vm.uiState.value.isSuggesting).isTrue()
+      assertThat(vm.uiState.value.canSuggest).isFalse()
+      // The run owns them now.
+      coVerify(exactly = 0) { attachments.release(any(), any()) }
+      assertThat(
+        analytics.paramsFor("task_suggestions_requested")
+          .single()
+      )
+        .containsAtLeastEntriesIn(
+          mapOf(
+            "source" to "add",
+            "document_count" to "2"
+          )
+        )
+    }
 
   @Test
-  fun anIntervalChangedInPlaceEditsTheDraftAndChecksTheRow() = runTest(dispatcher) {
-    val oil = curated("c1", "Oil change").copy(
-      rules = listOf(
-        InspectionRule(meter_rule = MeterRule(meter_key = "tach", interval = 50f)),
-        InspectionRule(time_rule = TimeRule(interval_years = 1)),
-      ),
-    )
-    serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, SuggestTasksResult(suggestions = listOf(oil))))
-    coEvery { suggestions.draftOf(THING_ID, oil, any()) } returns
-      MaintenanceTask(title = "Oil change", rules = oil.rules)
-    val vm = viewModel()
-    advanceUntilIdle()
+  fun anIntervalChangedInPlaceEditsTheDraftAndChecksTheRow() =
+    runTest(dispatcher) {
+      val oil = curated("c1", "Oil change").copy(
+        rules = listOf(
+          InspectionRule(
+            meter_rule = MeterRule(
+              meter_key = "tach",
+              interval = 50f
+            )
+          ),
+          InspectionRule(time_rule = TimeRule(interval_years = 1)),
+        ),
+      )
+      serving(
+        SuggestionRun.Idle,
+        SuggestionRun.Ready(
+          JOB,
+          SuggestTasksResult(suggestions = listOf(oil))
+        )
+      )
+      coEvery { suggestions.draftOf(THING_ID, oil, any()) } returns
+        MaintenanceTask(title = "Oil change", rules = oil.rules)
+      val vm = viewModel()
+      advanceUntilIdle()
 
-    vm.onMeterIntervalChange(0, 25f)
-    vm.onMonthsChange(0, 6)
-    advanceUntilIdle()
+      vm.onMeterIntervalChange(0, 25f)
+      vm.onMonthsChange(0, 6)
+      advanceUntilIdle()
 
-    val item = vm.uiState.value.items.single()
-    assertThat(item.selected).isTrue()
-    // Both edits landed, the second on top of the first.
-    assertThat(item.edited?.rules).containsExactly(
-      InspectionRule(meter_rule = MeterRule(meter_key = "tach", interval = 25f)),
-      InspectionRule(time_rule = TimeRule(interval_months = 6, interval_years = 0)),
-    ).inOrder()
-    coVerify(exactly = 1) { suggestions.draftOf(THING_ID, oil, any()) }
+      val item = vm.uiState.value.items.single()
+      assertThat(item.selected).isTrue()
+      // Both edits landed, the second on top of the first.
+      assertThat(item.edited?.rules).containsExactly(
+        InspectionRule(
+          meter_rule = MeterRule(
+            meter_key = "tach",
+            interval = 25f
+          )
+        ),
+        InspectionRule(
+          time_rule = TimeRule(
+            interval_months = 6,
+            interval_years = 0
+          )
+        ),
+      )
+        .inOrder()
+      coVerify(exactly = 1) { suggestions.draftOf(THING_ID, oil, any()) }
 
-    // Nothing to change on a rule it does not have, and no zero interval.
-    vm.onDaysChange(0, 30)
-    vm.onMeterIntervalChange(0, 0f)
-    advanceUntilIdle()
-    assertThat(vm.uiState.value.items.single().edited?.rules?.first()?.meter_rule?.interval)
-      .isEqualTo(25f)
-  }
+      // Nothing to change on a rule it does not have, and no zero interval.
+      vm.onDaysChange(0, 30)
+      vm.onMeterIntervalChange(0, 0f)
+      advanceUntilIdle()
+      assertThat(vm.uiState.value.items.single().edited?.rules?.first()?.meter_rule?.interval)
+        .isEqualTo(25f)
+    }
 
   @Test
   fun selectAllPicksTheWholeSectionThenClearEmptiesIt() = runTest(dispatcher) {
@@ -297,38 +365,56 @@ class StarterPackViewModelTest {
 
     vm.onToggleGroup(listOf(3, 4))
     assertThat(vm.uiState.value.items.map { it.selected })
-      .containsExactly(false, false, false, true, true).inOrder()
+      .containsExactly(false, false, false, true, true)
+      .inOrder()
 
     vm.onToggleGroup(listOf(3, 4))
     assertThat(vm.uiState.value.items.map { it.selected })
-      .containsExactly(false, false, false, false, false).inOrder()
+      .containsExactly(false, false, false, false, false)
+      .inOrder()
 
     // The Thing's own section is the empty slot.
     vm.onToggleGroup(listOf(0, 1, 2))
     assertThat(vm.uiState.value.items.map { it.selected })
-      .containsExactly(true, true, true, false, false).inOrder()
+      .containsExactly(true, true, true, false, false)
+      .inOrder()
   }
 
   @Test
-  fun theRowsStillToComeAreTheManualsWhenTheRunReadsThem() = runTest(dispatcher) {
-    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
-      AiStartResult.Started(JOB, joined = false)
-    every { suggestions.observeRun(THING_ID) } returns runs
+  fun theRowsStillToComeAreTheManualsWhenTheRunReadsThem() =
+    runTest(dispatcher) {
+      coEvery {
+        suggestions.start(
+          THING_ID,
+          any(),
+          curatedOnly = false,
+          documents = any()
+        )
+      } returns
+        AiStartResult.Started(JOB, joined = false)
+      every { suggestions.observeRun(THING_ID) } returns runs
 
-    val withManuals = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
-    advanceUntilIdle()
-    runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
-    advanceUntilIdle()
-    assertThat(withManuals.uiState.value.readsDocuments).isTrue()
+      val withManuals = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
+      advanceUntilIdle()
+      runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+      advanceUntilIdle()
+      assertThat(withManuals.uiState.value.readsDocuments).isTrue()
 
-    val without = viewModel(mode = SuggestionsMode.ADD)
-    advanceUntilIdle()
-    assertThat(without.uiState.value.readsDocuments).isFalse()
-  }
+      val without = viewModel(mode = SuggestionsMode.ADD)
+      advanceUntilIdle()
+      assertThat(without.uiState.value.readsDocuments).isFalse()
+    }
 
   @Test
   fun aRunOpenedAgainReadsDocumentsWhenAStageNamesOne() = runTest(dispatcher) {
-    serving(SuggestionRun.Working(AI_JOB, "reading_document", "MM.pdf", curatedList))
+    serving(
+      SuggestionRun.Working(
+        AI_JOB,
+        "reading_document",
+        "MM.pdf",
+        curatedList
+      )
+    )
 
     val vm = viewModel()
     advanceUntilIdle()
@@ -338,75 +424,113 @@ class StarterPackViewModelTest {
   }
 
   @Test
-  fun aRefusedAddRunLetsGoOfTheFilesAndFallsBackToTheCuratedList() = runTest(dispatcher) {
-    coEvery { suggestions.start(THING_ID, any(), curatedOnly = false, documents = any()) } returns
-      AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
-    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
-      AiStartResult.Started(CURATED_JOB, joined = false)
-    every { suggestions.observeRun(THING_ID) } returns runs
+  fun aRefusedAddRunLetsGoOfTheFilesAndFallsBackToTheCuratedList() =
+    runTest(dispatcher) {
+      coEvery {
+        suggestions.start(
+          THING_ID,
+          any(),
+          curatedOnly = false,
+          documents = any()
+        )
+      } returns
+        AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
+      coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+        AiStartResult.Started(CURATED_JOB, joined = false)
+      every { suggestions.observeRun(THING_ID) } returns runs
 
-    val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
-    advanceUntilIdle()
-    runs.emit(SuggestionRun.Ready(CURATED_JOB, curatedList))
-    advanceUntilIdle()
+      val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
+      advanceUntilIdle()
+      runs.emit(SuggestionRun.Ready(CURATED_JOB, curatedList))
+      advanceUntilIdle()
 
-    manuals.forEach { coVerify { attachments.release(it, null) } }
-    assertThat(vm.uiState.value.notice).isEqualTo(AiErrorCode.DOCUMENT_MISSING)
-    assertThat(vm.uiState.value.isSuggesting).isFalse()
-    assertThat(vm.uiState.value.items).hasSize(3)
-    // The AI button is back, to try again.
-    assertThat(vm.uiState.value.canSuggest).isTrue()
-  }
+      manuals.forEach { coVerify { attachments.release(it, null) } }
+      assertThat(vm.uiState.value.notice).isEqualTo(AiErrorCode.DOCUMENT_MISSING)
+      assertThat(vm.uiState.value.isSuggesting).isFalse()
+      assertThat(vm.uiState.value.items).hasSize(3)
+      // The AI button is back, to try again.
+      assertThat(vm.uiState.value.canSuggest).isTrue()
+    }
 
   @Test
-  fun anAnswerAlreadyHeldIsShownAndThePickedFilesAreLetGo() = runTest(dispatcher) {
-    serving(SuggestionRun.Working(AI_JOB, "tailoring", null, curatedList))
+  fun anAnswerAlreadyHeldIsShownAndThePickedFilesAreLetGo() =
+    runTest(dispatcher) {
+      serving(SuggestionRun.Working(AI_JOB, "tailoring", null, curatedList))
 
-    viewModel(mode = SuggestionsMode.ADD, picked = manuals)
-    advanceUntilIdle()
+      viewModel(mode = SuggestionsMode.ADD, picked = manuals)
+      advanceUntilIdle()
 
-    coVerify(exactly = 0) { suggestions.start(any(), any(), any(), any()) }
-    manuals.forEach { coVerify { attachments.release(it, null) } }
-  }
+      coVerify(exactly = 0) { suggestions.start(any(), any(), any(), any()) }
+      manuals.forEach { coVerify { attachments.release(it, null) } }
+    }
 
   @Test
   fun theAddRouteCarriesThePickedDocuments() {
     val arg = manuals.toDocumentsArg()
 
-    assertThat(Screen.StarterPack.createRoute(THING_ID, SuggestionsMode.ADD, arg))
-      .isEqualTo("starter_pack/$THING_ID?mode=add&document=$arg")
+    assertThat(
+      Screen.Suggestions.createRoute(
+        THING_ID,
+        SuggestionsMode.ADD,
+        arg
+      )
+    )
+      .isEqualTo("suggestions/$THING_ID?mode=add&document=$arg")
     assertThat(attachmentsFromDocumentsArg(arg)).isEqualTo(manuals)
     assertThat(attachmentsFromDocumentsArg("")).isEmpty()
-    // The starter mode carries no documents.
-    assertThat(Screen.StarterPack.createRoute(THING_ID, SuggestionsMode.STARTER, arg))
-      .isEqualTo("starter_pack/$THING_ID")
+    // The curated mode carries no documents.
+    assertThat(
+      Screen.Suggestions.createRoute(
+        THING_ID,
+        SuggestionsMode.CURATED,
+        arg
+      )
+    )
+      .isEqualTo("suggestions/$THING_ID")
   }
 
   @Test
   fun theReviewCarriesWhatTheRunMadeOfEachDocument() = runTest(dispatcher) {
-    val vm = starterModelRun()
+    val vm = curatedModelRun()
     val manual = IdentifiedDocument(
       blob_id = AttachmentId(value_ = "blob-1"),
       name = "915iS_MM.pdf",
       title = "Rotax 915 iS MM",
       matches_thing = true,
     )
-    val stray = IdentifiedDocument(name = "Airmaster_manual.pdf", matches_thing = false)
+    val stray =
+      IdentifiedDocument(name = "Airmaster_manual.pdf", matches_thing = false)
 
-    runs.emit(SuggestionRun.Ready(JOB, curatedList.copy(documents = listOf(manual, stray))))
+    runs.emit(
+      SuggestionRun.Ready(
+        JOB,
+        curatedList.copy(
+          documents = listOf(
+            manual,
+            stray
+          )
+        )
+      )
+    )
     advanceUntilIdle()
 
-    assertThat(vm.uiState.value.documents).containsExactly(manual, stray).inOrder()
+    assertThat(vm.uiState.value.documents).containsExactly(manual, stray)
+      .inOrder()
   }
 
   @Test
   fun aDocumentIsNamedByTheTitleItCarriesElseItsFileName() {
-    assertThat(IdentifiedDocument(name = "a.pdf", title = "Rotax MM").displayTitle()).isEqualTo("Rotax MM")
+    assertThat(
+      IdentifiedDocument(
+        name = "a.pdf",
+        title = "Rotax MM"
+      ).displayTitle()
+    ).isEqualTo("Rotax MM")
     assertThat(IdentifiedDocument(name = "a.pdf").displayTitle()).isEqualTo("a.pdf")
   }
 
   @Test
-  fun theStarterModeAlsoSaysWhenAiIsBack() = runTest(dispatcher) {
+  fun theCuratedModeAlsoSaysWhenAiIsBack() = runTest(dispatcher) {
     val back = Instant.fromEpochMilliseconds(9_000)
     coEvery { suggestions.eligibility(THING_ID, any()) } returns
       AiEligibility(false, AiErrorCode.DAILY_LIMIT, false, back)
@@ -483,7 +607,13 @@ class StarterPackViewModelTest {
       val ready = SuggestionRun.Ready(JOB, curatedList)
       serving(ready)
       val chosen = slot<List<AcceptedSuggestion>>()
-      coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns listOf("t1", "t2")
+      coEvery {
+        suggestions.accept(
+          THING_ID,
+          ready,
+          capture(chosen)
+        )
+      } returns listOf("t1", "t2")
       val vm = viewModel()
       advanceUntilIdle()
       vm.onToggle(0)
@@ -500,7 +630,15 @@ class StarterPackViewModelTest {
       coVerify(exactly = 0) { taskDataManager.addTask(any(), any()) }
       assertThat(vm.uiState.value.acceptedCount).isEqualTo(2)
       // The task tab says so, with *Undo*, and marks them NEW.
-      assertThat(recentlyAdded.batch.value).isEqualTo(AddedBatch(THING_ID, listOf("t1", "t2")))
+      assertThat(recentlyAdded.batch.value).isEqualTo(
+        AddedBatch(
+          THING_ID,
+          listOf(
+            "t1",
+            "t2"
+          )
+        )
+      )
       assertThat(
         analytics.paramsFor("starter_tasks_accepted")
           .single()
@@ -654,7 +792,7 @@ class StarterPackViewModelTest {
   @Test
   fun aFailedModelRunKeepsTheCuratedCardsAndOffersTryAgain() =
     runTest(dispatcher) {
-      val vm = starterModelRun()
+      val vm = curatedModelRun()
       runs.emit(
         SuggestionRun.Failed(
           JOB,
@@ -688,7 +826,7 @@ class StarterPackViewModelTest {
 
   @Test
   fun aFailedRunWithNothingToShowClosesAndSaysWhy() = runTest(dispatcher) {
-    val vm = starterModelRun(curated = SuggestTasksResult())
+    val vm = curatedModelRun(curated = SuggestTasksResult())
     runs.emit(SuggestionRun.Failed(JOB, AiErrorCode.STALE, result = null))
     advanceUntilIdle()
 
@@ -731,7 +869,7 @@ class StarterPackViewModelTest {
   fun aCuratedOnlyAnswerSaysWhyTheModelWasSkipped() = runTest(dispatcher) {
     val skipped =
       AiSkipped(AiErrorCode.DAILY_LIMIT, Instant.fromEpochMilliseconds(5_000))
-    val vm = starterModelRun()
+    val vm = curatedModelRun()
     runs.emit(SuggestionRun.Ready(JOB, curatedList, skipped))
     advanceUntilIdle()
 
@@ -742,7 +880,7 @@ class StarterPackViewModelTest {
   @Test
   fun anEmptyModelRunKeepsTheCuratedCardsAndOffersAddDetails() =
     runTest(dispatcher) {
-      val vm = starterModelRun()
+      val vm = curatedModelRun()
       runs.emit(SuggestionRun.Empty(JOB, curatedList))
       advanceUntilIdle()
 
@@ -758,7 +896,7 @@ class StarterPackViewModelTest {
   fun anEmptyModelRunWithNoCuratedListStaysToSayNotEnough() =
     runTest(dispatcher) {
       // The custom template: the message is the whole screen (R21a).
-      val vm = starterModelRun(curated = SuggestTasksResult())
+      val vm = curatedModelRun(curated = SuggestTasksResult())
       runs.emit(SuggestionRun.Empty(JOB, result = null))
       advanceUntilIdle()
 
@@ -825,7 +963,7 @@ class StarterPackViewModelTest {
   @Test
   fun aModelRunReportsRequestedThenShownOnceWithTheSplit() =
     runTest(dispatcher) {
-      starterModelRun()
+      curatedModelRun()
 
       val answer = SuggestTasksResult(
         suggestions = listOf(
@@ -913,7 +1051,7 @@ class StarterPackViewModelTest {
 
   @Test
   fun aFailedRunIsReportedOnce() = runTest(dispatcher) {
-    starterModelRun()
+    curatedModelRun()
 
     runs.emit(
       SuggestionRun.Failed(
@@ -950,7 +1088,10 @@ class StarterPackViewModelTest {
     )
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
-    coEvery { suggestions.accept(THING_ID, ready, any()) } returns listOf("t1", "t2")
+    coEvery { suggestions.accept(THING_ID, ready, any()) } returns listOf(
+      "t1",
+      "t2"
+    )
     val vm = viewModel()
     advanceUntilIdle()
     vm.onToggle(0)
@@ -1035,7 +1176,7 @@ class StarterPackViewModelTest {
       coVerify {
         suggestions.start(
           THING_ID,
-          SuggestionsMode.STARTER.wire,
+          SuggestionsMode.CURATED.wire,
           curatedOnly = true
         )
       }
@@ -1081,7 +1222,13 @@ class StarterPackViewModelTest {
     val mapped = MaintenanceTask(title = "Annual")
     coEvery { suggestions.draftOf(THING_ID, any(), any()) } returns mapped
     val chosen = slot<List<AcceptedSuggestion>>()
-    coEvery { suggestions.accept(THING_ID, ready, capture(chosen)) } returns listOf("t1")
+    coEvery {
+      suggestions.accept(
+        THING_ID,
+        ready,
+        capture(chosen)
+      )
+    } returns listOf("t1")
     val vm = viewModel()
     advanceUntilIdle()
     vm.draftFor(0)
@@ -1154,21 +1301,21 @@ class StarterPackViewModelTest {
   }
 
   @Test
-  fun theStarterRoutesAreUnchangedAndDefaultToStarterMode() {
+  fun theCuratedRouteIsTheBareRouteAndTheDefault() {
     // The empty list and a finished run's push build the same URL as before the mode existed.
-    assertThat(Screen.StarterPack.createRoute(THING_ID)).isEqualTo("starter_pack/$THING_ID")
-    assertThat(Screen.StarterPack.createRoute(THING_ID, SuggestionsMode.ADD))
-      .isEqualTo("starter_pack/$THING_ID?mode=add")
-    assertThat(viewModel().uiState.value.mode).isEqualTo(SuggestionsMode.STARTER)
+    assertThat(Screen.Suggestions.createRoute(THING_ID)).isEqualTo("suggestions/$THING_ID")
+    assertThat(Screen.Suggestions.createRoute(THING_ID, SuggestionsMode.ADD))
+      .isEqualTo("suggestions/$THING_ID?mode=add")
+    assertThat(viewModel().uiState.value.mode).isEqualTo(SuggestionsMode.CURATED)
   }
 
   @Test
-  fun theModeReadsTheRoutesWordAndAnythingElseIsTheStarterMode() {
+  fun theModeReadsTheRoutesWordAndAnythingElseIsTheCuratedMode() {
     assertThat(SuggestionsMode.fromWire("add")).isEqualTo(SuggestionsMode.ADD)
     // An old, removed or mistyped link still opens the list.
-    assertThat(SuggestionsMode.fromWire(null)).isEqualTo(SuggestionsMode.STARTER)
-    assertThat(SuggestionsMode.fromWire("suggest")).isEqualTo(SuggestionsMode.STARTER)
-    assertThat(SuggestionsMode.fromWire("document")).isEqualTo(SuggestionsMode.STARTER)
-    assertThat(SuggestionsMode.fromWire("Add")).isEqualTo(SuggestionsMode.STARTER)
+    assertThat(SuggestionsMode.fromWire(null)).isEqualTo(SuggestionsMode.CURATED)
+    assertThat(SuggestionsMode.fromWire("suggest")).isEqualTo(SuggestionsMode.CURATED)
+    assertThat(SuggestionsMode.fromWire("document")).isEqualTo(SuggestionsMode.CURATED)
+    assertThat(SuggestionsMode.fromWire("Add")).isEqualTo(SuggestionsMode.CURATED)
   }
 }

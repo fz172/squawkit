@@ -1,6 +1,5 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
-import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,14 +9,15 @@ import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
-import dev.fanfly.wingslog.core.analytics.StarterTasksAccepted
-import dev.fanfly.wingslog.core.analytics.StarterTasksOffered
+import dev.fanfly.wingslog.core.analytics.SuggestedTasksAccepted
+import dev.fanfly.wingslog.core.analytics.SuggestedTasksOffered
 import dev.fanfly.wingslog.core.analytics.TaskSuggestionsAccepted
 import dev.fanfly.wingslog.core.analytics.TaskSuggestionsFailed
 import dev.fanfly.wingslog.core.analytics.TaskSuggestionsRequested
 import dev.fanfly.wingslog.core.analytics.TaskSuggestionsShown
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.attachmentsFromDocumentsArg
@@ -25,13 +25,13 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
-import dev.fanfly.wingslog.feature.tasks.suggestions.model.StarterPackItem
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.SuggestionItem
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.thing.Attachment
@@ -54,16 +54,16 @@ import kotlin.time.Instant
  * The empty task list's recommended tasks, and the Add Tasks sheet's *Suggest* (PRD R1, R2). Not a
  * step after creating a Thing since 2026-10-03.
  *
- * Every card comes from the suggestion RPC (design §6.8, PRD R1); the app's own starter pack went
- * with the v1 flag (T25). The add mode starts the model run at once, with the documents picked on
- * the Add Tasks sheet. The starter mode asks for the curated suggestions alone first; the model run
+ * Every card comes from the suggestion RPC (design §6.8, PRD R1); the app's own list went with the
+ * v1 flag (T25). The add mode starts the model run at once, with the documents picked on
+ * the Add Tasks sheet. The curated mode asks for the curated suggestions alone first; the model run
  * starts from its AI button. Either way the model run's first result is the curated list.
  *
  * Both §13 events are emitted from here: `starter_tasks_offered` when cards are first
  * shown, the denominator that tells "declined" apart from "never offered", and
  * `starter_tasks_accepted` with how many survived.
  */
-class StarterPackViewModel(
+class SuggestionsViewModel(
   private val fleetManager: FleetManager,
   private val taskDataManager: TaskDataManager,
   private val templateRegistry: TemplateRegistry,
@@ -78,7 +78,8 @@ class StarterPackViewModel(
 
   val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
 
-  private val mode = SuggestionsMode.fromWire(savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE))
+  private val mode =
+    SuggestionsMode.fromWire(savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE))
 
   /**
    * The add mode's files, picked on the Add Tasks sheet and stored on this device, held by no
@@ -91,7 +92,7 @@ class StarterPackViewModel(
       ?.let(::attachmentsFromDocumentsArg)
       .orEmpty()
 
-  private val _uiState = MutableStateFlow(StarterPackUiState(mode = mode))
+  private val _uiState = MutableStateFlow(SuggestionsUiState(mode = mode))
   val uiState = _uiState.asStateFlow()
 
   /** The run the cards come from; null until the first one is in. */
@@ -167,7 +168,10 @@ class StarterPackViewModel(
   private suspend fun startAdded(): Boolean {
     modelRequested = true
     _uiState.update {
-      it.copy(isSuggesting = true, readsDocuments = pickedDocuments.isNotEmpty())
+      it.copy(
+        isSuggesting = true,
+        readsDocuments = pickedDocuments.isNotEmpty()
+      )
     }
     val started = suggestionManager.start(
       thingId,
@@ -189,7 +193,7 @@ class StarterPackViewModel(
     return false
   }
 
-  /** The starter mode opens on the curated list; the model is asked from the AI button. */
+  /** The curated mode opens on the curated list; the model is asked from the AI button. */
   private suspend fun showCurated(template: ThingTemplate?) {
     val started = suggestionManager.start(
       thingId,
@@ -330,7 +334,7 @@ class StarterPackViewModel(
    * by title), or a task with the same title, ignoring case and spacing, is on the Thing: the
    * second catches a task added since the run started, which the server could not see.
    */
-  private fun StarterPackItem.isShown(): Boolean =
+  private fun SuggestionItem.isShown(): Boolean =
     !isAlreadyTracked && normalizeTitle(suggestion.title) !in trackedTitles
 
   /** *Add details* after an empty run: the run is done with; the screen gives way to the Thing's edit form. */
@@ -338,7 +342,7 @@ class StarterPackViewModel(
     run?.jobIdOrNull?.let { viewModelScope.launch { suggestionManager.dismiss(it) } }
   }
 
-  private fun startModelRun(onRefused: (StarterPackUiState) -> StarterPackUiState) {
+  private fun startModelRun(onRefused: (SuggestionsUiState) -> SuggestionsUiState) {
     modelRequested = true
     _uiState.update {
       it.copy(
@@ -352,7 +356,7 @@ class StarterPackViewModel(
       val curatedRun = run
       val started = suggestionManager.start(
         thingId,
-        entryPoint = SuggestionsMode.STARTER.wire,
+        entryPoint = SuggestionsMode.CURATED.wire,
         curatedOnly = false,
       )
       if (started !is AiStartResult.Started) {
@@ -421,7 +425,8 @@ class StarterPackViewModel(
   fun onMeterIntervalChange(index: Int, interval: Float) {
     if (interval <= 0f) return
     editRules(index) { rule ->
-      rule.meter_rule?.let { rule.copy(meter_rule = it.copy(interval = interval)) } ?: rule
+      rule.meter_rule?.let { rule.copy(meter_rule = it.copy(interval = interval)) }
+        ?: rule
     }
   }
 
@@ -430,7 +435,14 @@ class StarterPackViewModel(
     if (months <= 0) return
     editRules(index) { rule ->
       rule.time_rule?.takeIf { it.interval_days == 0 }
-        ?.let { rule.copy(time_rule = it.copy(interval_months = months, interval_years = 0)) }
+        ?.let {
+          rule.copy(
+            time_rule = it.copy(
+              interval_months = months,
+              interval_years = 0
+            )
+          )
+        }
         ?: rule
     }
   }
@@ -450,12 +462,18 @@ class StarterPackViewModel(
    * earlier edit, or the suggestion as accepting would write it, with [change] applied to each
    * rule. A changed card is checked, as one edited in the form is.
    */
-  private fun editRules(index: Int, change: (InspectionRule) -> InspectionRule) {
-    val id = uiState.value.items.getOrNull(index)?.suggestion?.suggestion_id?.value_ ?: return
+  private fun editRules(
+    index: Int,
+    change: (InspectionRule) -> InspectionRule
+  ) {
+    val id =
+      uiState.value.items.getOrNull(index)?.suggestion?.suggestion_id?.value_
+        ?: return
     viewModelScope.launch {
       editing.withLock {
-        val item = uiState.value.items.firstOrNull { it.suggestion.suggestion_id?.value_ == id }
-          ?: return@withLock
+        val item =
+          uiState.value.items.firstOrNull { it.suggestion.suggestion_id?.value_ == id }
+            ?: return@withLock
         val base = item.edited ?: suggestionManager.draftOf(
           thingId,
           item.suggestion,
@@ -509,10 +527,11 @@ class StarterPackViewModel(
     viewModelScope.launch {
       _uiState.update { it.copy(isSaving = true) }
       val current = run
-      val written = current?.let { writeRun(it, chosen) }.orEmpty()
+      val written = current?.let { writeRun(it, chosen) }
+        .orEmpty()
       if (written.isNotEmpty()) {
         analytics.log(
-          StarterTasksAccepted(
+          SuggestedTasksAccepted(
             templateId = state.template?.id.orEmpty(),
             taskCount = written.size
           )
@@ -554,7 +573,7 @@ class StarterPackViewModel(
    */
   private suspend fun writeRun(
     current: SuggestionRun,
-    chosen: List<StarterPackItem>
+    chosen: List<SuggestionItem>
   ): List<String> {
     val jobId = current.jobIdOrNull ?: return emptyList()
     val result = current.resultOrNull ?: return emptyList()
@@ -634,7 +653,7 @@ class StarterPackViewModel(
 
   private fun offered(template: ThingTemplate?, count: Int) {
     analytics.log(
-      StarterTasksOffered(
+      SuggestedTasksOffered(
         templateId = template?.id.orEmpty(),
         taskCount = count
       )
@@ -642,7 +661,7 @@ class StarterPackViewModel(
   }
 
   private companion object {
-    val logger = Logger.withTag("StarterPackViewModel")
+    val logger = Logger.withTag("SuggestionsViewModel")
 
     /** How long opening the list waits to learn whether a model answer is held (R19). */
     val RESUME_WAIT = 2.seconds
@@ -657,13 +676,13 @@ class StarterPackViewModel(
      */
     fun itemsOf(
       result: SuggestTasksResult,
-      shown: List<StarterPackItem>
-    ): List<StarterPackItem> {
+      shown: List<SuggestionItem>
+    ): List<SuggestionItem> {
       val chosenIds = shown.filter { it.selected }
         .mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
       return result.suggestions.map { suggestion ->
         val id = suggestion.suggestion_id?.value_
-        StarterPackItem(
+        SuggestionItem(
           suggestion = suggestion,
           selected = id in chosenIds,
           // The user's edit stays with its card when the model's answer replaces the list (R28).

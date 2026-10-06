@@ -24,7 +24,10 @@ interface TaskSuggestionManager {
    * Whether an entry point can offer a run right now, and why not. Never throws. [withDocuments]
    * also asks whether the owner can add documents (Pro, PRD R14).
    */
-  suspend fun eligibility(thingId: String, withDocuments: Boolean = false): AiEligibility
+  suspend fun eligibility(
+    thingId: String,
+    withDocuments: Boolean = false
+  ): AiEligibility
 
   /**
    * Whether the signed-in user owns [thingId], rather than being a member of it: documents need the
@@ -67,7 +70,7 @@ interface TaskSuggestionManager {
   ): MaintenanceTask
 
   /**
-   * Writes [chosen] as tasks, one write each like the starter pack (a failure drops only its own
+   * Writes [chosen] as tasks, one write each (a failure drops only its own
    * card), then closes the run and lets go of its documents, keeping any a written task holds.
    * A suggestion that cites a document is written holding it, as the same blob (PRD R37).
    * Returns the ids of the tasks written, for the task tab's *Undo* and NEW badges.

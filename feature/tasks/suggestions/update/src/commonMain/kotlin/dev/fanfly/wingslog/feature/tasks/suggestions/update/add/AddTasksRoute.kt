@@ -70,10 +70,10 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.MAX_DOCUMENT_MB
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.SourcesState
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.message
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.text
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.MAX_DOCUMENT_MB
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.SourcesState
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.message
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.text
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.cancel
@@ -92,8 +92,8 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.add_tasks_u
 import wingslog.feature.tasks.suggestions.update.generated.resources.ai_error_sign_in_required
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_suggest
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_title
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_add_details
-import wingslog.feature.tasks.suggestions.update.generated.resources.starter_pack_checking
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_add_details
+import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_checking
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
@@ -118,7 +118,13 @@ fun AddTasksRoute(
       onPickError = viewModel::onPickFailed,
       onRemove = viewModel::onRemoveDocument,
       onUpgrade = { replaceWith(Screen.Subscription.route) },
-      onCreateManually = { replaceWith(Screen.AddMaintenanceTask.createRoute(viewModel.thingId)) },
+      onCreateManually = {
+        replaceWith(
+          Screen.AddMaintenanceTask.createRoute(
+            viewModel.thingId
+          )
+        )
+      },
       onSuggest = {
         when (state.entry) {
           // The link-account flow lives on the shell, which opens it once this closes.
@@ -133,7 +139,8 @@ fun AddTasksRoute(
           is SuggestEntry.MissingIdentity ->
             replaceWith(Screen.EditThing.createRoute(viewModel.thingId))
 
-          else -> viewModel.onSuggest()?.let(replaceWith)
+          else -> viewModel.onSuggest()
+            ?.let(replaceWith)
         }
       },
       onDismiss = { navController.popBackStack() },
@@ -156,7 +163,8 @@ internal fun AddTasksSheet(
   onSuggest: () -> Unit,
   onDismiss: () -> Unit,
 ) {
-  val pickFiles = rememberFilePicker(onResult = onAddDocuments, onReadError = onPickError)
+  val pickFiles =
+    rememberFilePicker(onResult = onAddDocuments, onReadError = onPickError)
   BoxWithConstraints(
     modifier = Modifier
       .fillMaxSize()
@@ -179,7 +187,10 @@ internal fun AddTasksSheet(
         modifier = panel
           .align(Alignment.BottomCenter)
           .fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = SheetCorner, topEnd = SheetCorner),
+        shape = RoundedCornerShape(
+          topStart = SheetCorner,
+          topEnd = SheetCorner
+        ),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
       ) {
         Column(
@@ -198,7 +209,10 @@ internal fun AddTasksSheet(
             modifier = Modifier
               .align(Alignment.CenterHorizontally)
               .size(width = 36.dp, height = 4.dp)
-              .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(2.dp)),
+              .background(
+                MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(2.dp)
+              ),
           )
           Title()
           Body(state, pickFiles, onRemove, onUpgrade)
@@ -232,7 +246,10 @@ internal fun AddTasksSheet(
           Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f)) { Title() }
             IconButton(onClick = onDismiss) {
-              Icon(Icons.Default.Close, contentDescription = stringResource(CoreRes.string.cancel))
+              Icon(
+                Icons.Default.Close,
+                contentDescription = stringResource(CoreRes.string.cancel)
+              )
             }
           }
           Body(state, pickFiles, onRemove, onUpgrade)
@@ -302,7 +319,10 @@ private fun SuggestCard(state: AddTasksUiState) {
         fontWeight = FontWeight.SemiBold,
       )
       Text(
-        text = stringResource(Res.string.add_tasks_basis, lexicon.thingNoun.singular),
+        text = stringResource(
+          Res.string.add_tasks_basis,
+          lexicon.thingNoun.singular
+        ),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -322,7 +342,12 @@ private fun SuggestCard(state: AddTasksUiState) {
           entry.fieldLabels.joinToString(", "),
         )
 
-        else -> state.sources.blocked?.let { AiSkipped(it, state.sources.availableAt).text() }
+        else -> state.sources.blocked?.let {
+          AiSkipped(
+            it,
+            state.sources.availableAt
+          ).text()
+        }
       }
       if (note != null) {
         Text(
@@ -342,9 +367,12 @@ private fun Checking() {
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    CircularProgressIndicator(modifier = Modifier.size(Spacing.large), strokeWidth = 2.dp)
+    CircularProgressIndicator(
+      modifier = Modifier.size(Spacing.large),
+      strokeWidth = 2.dp
+    )
     Text(
-      text = stringResource(Res.string.starter_pack_checking),
+      text = stringResource(Res.string.suggestions_checking),
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -418,7 +446,10 @@ private fun Manuals(
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
         if (sources.isAdding) {
-          CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+          CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 2.dp
+          )
         } else {
           Icon(
             Icons.Default.Add,
@@ -463,7 +494,10 @@ private fun ProPromo(onUpgrade: () -> Unit) {
     modifier = Modifier
       .fillMaxWidth()
       .border(
-        BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+        BorderStroke(
+          Spacing.hairline,
+          MaterialTheme.colorScheme.outlineVariant
+        ),
         RoundedCornerShape(Spacing.cardCornerRadius),
       )
       .padding(start = Spacing.medium, end = Spacing.extraSmall),
@@ -502,7 +536,11 @@ private fun RowScope.Actions(
     shape = shape,
     modifier = modifier.height(height),
   ) {
-    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp))
+    Icon(
+      Icons.Default.Edit,
+      contentDescription = null,
+      modifier = Modifier.size(20.dp)
+    )
     Spacer(Modifier.width(6.dp))
     Text(stringResource(Res.string.add_tasks_create_manually), maxLines = 1)
   }
@@ -514,7 +552,7 @@ private fun RowScope.Actions(
   ) {
     val label = when (state.entry) {
       SuggestEntry.SignInRequired -> stringResource(Res.string.add_tasks_sign_in)
-      is SuggestEntry.MissingIdentity -> stringResource(Res.string.starter_pack_add_details)
+      is SuggestEntry.MissingIdentity -> stringResource(Res.string.suggestions_add_details)
       SuggestEntry.Available, SuggestEntry.Hidden -> if (wide) {
         stringResource(
           Res.string.sources_title,
@@ -525,7 +563,11 @@ private fun RowScope.Actions(
       }
     }
     if (state.entry == SuggestEntry.Available) {
-      Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
+      Icon(
+        Icons.Default.AutoAwesome,
+        contentDescription = null,
+        modifier = Modifier.size(20.dp)
+      )
       Spacer(Modifier.width(6.dp))
     }
     Text(label, maxLines = 1)
@@ -539,7 +581,12 @@ private fun Modifier.dashedBorder(color: Color): Modifier = drawBehind {
     color = color,
     style = Stroke(
       width = stroke,
-      pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
+      pathEffect = PathEffect.dashPathEffect(
+        floatArrayOf(
+          4.dp.toPx(),
+          4.dp.toPx()
+        )
+      ),
     ),
     cornerRadius = CornerRadius(Spacing.cardCornerRadius.toPx()),
   )

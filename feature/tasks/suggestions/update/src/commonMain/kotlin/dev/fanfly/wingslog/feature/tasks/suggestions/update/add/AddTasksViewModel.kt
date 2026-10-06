@@ -18,8 +18,8 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.DocumentProblem
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.starter.SourcesState
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.DocumentProblem
+import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.SourcesState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,19 +70,21 @@ class AddTasksViewModel(
       _uiState.update {
         it.copy(
           lexicon = templateRegistry.lexiconFor(template),
-          details = thing.displaySubtitle(template).ifBlank { thing.displayLabel(template) },
+          details = thing.displaySubtitle(template)
+            .ifBlank { thing.displayLabel(template) },
         )
       }
     }
     viewModelScope.launch {
       var asked = false
-      suggestEntry.observe(thingId).collect { entry ->
-        _uiState.update { it.copy(entry = entry) }
-        if (entry == SuggestEntry.Available && !asked) {
-          asked = true
-          launch { askAccess() }
+      suggestEntry.observe(thingId)
+        .collect { entry ->
+          _uiState.update { it.copy(entry = entry) }
+          if (entry == SuggestEntry.Available && !asked) {
+            asked = true
+            launch { askAccess() }
+          }
         }
-      }
     }
   }
 
@@ -149,7 +151,9 @@ class AddTasksViewModel(
 
   /** ✕ on a manual: out of the run, and its copy let go of (no record holds it). */
   fun onRemoveDocument(attachmentId: String) {
-    val removed = uiState.value.sources.documents.firstOrNull { it.id == attachmentId } ?: return
+    val removed =
+      uiState.value.sources.documents.firstOrNull { it.id == attachmentId }
+        ?: return
     updateSources { it.copy(documents = it.documents - removed) }
     viewModelScope.launch { attachmentManager.release(removed, owner = null) }
   }
@@ -162,19 +166,29 @@ class AddTasksViewModel(
   fun onSuggest(): String? {
     val state = uiState.value
     if (state.entry != SuggestEntry.Available || !state.canSuggest) return null
-    if (state.sources.blocked != null) return Screen.StarterPack.createRoute(thingId)
+    if (state.sources.blocked != null) return Screen.Suggestions.createRoute(
+      thingId
+    )
     handedOver = true
-    return Screen.StarterPack.createRoute(
+    return Screen.Suggestions.createRoute(
       thingId,
       SuggestionsMode.ADD,
-      state.sources.documents.takeIf { it.isNotEmpty() }?.toDocumentsArg(),
+      state.sources.documents.takeIf { it.isNotEmpty() }
+        ?.toDocumentsArg(),
     )
   }
 
   override fun onCleared() {
     val documents = uiState.value.sources.documents
     if (!handedOver && documents.isNotEmpty()) {
-      cleanupScope.launch { documents.forEach { attachmentManager.release(it, owner = null) } }
+      cleanupScope.launch {
+        documents.forEach {
+          attachmentManager.release(
+            it,
+            owner = null
+          )
+        }
+      }
     }
     super.onCleared()
   }

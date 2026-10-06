@@ -53,8 +53,10 @@ sealed interface AnalyticsEvent {
 
     // --- Thing lifecycle: the PRD §13 success metrics ---
     THING_CREATED("thing_created"),
-    STARTER_TASKS_OFFERED("starter_tasks_offered"),
-    STARTER_TASKS_ACCEPTED("starter_tasks_accepted"),
+
+    // The wire names predate the server-side suggestions; kept, so the series stays one series.
+    SUGGESTED_TASKS_OFFERED("starter_tasks_offered"),
+    SUGGESTED_TASKS_ACCEPTED("starter_tasks_accepted"),
     TASK_COMPLETED("task_completed"),
     DEFECT_CREATED("defect_created"),
     LOG_CREATED("log_created"),
@@ -130,6 +132,7 @@ sealed interface AnalyticsEvent {
     DOCUMENT_COUNT("document_count"),
     CURATED_COUNT("curated_count"),
     AI_COUNT("ai_count"),
+
     // A bucket for the same reason as DURATION_BUCKET: one row per run is no dimension.
     LATENCY_BUCKET("latency_bucket"),
     FIELD_GROUP("field_group"),

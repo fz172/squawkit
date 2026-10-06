@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.starter
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import com.google.common.truth.Truth.assertThat
 import kotlinx.datetime.TimeZone
