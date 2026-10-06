@@ -22,7 +22,11 @@ message MaintenanceOverview {
 
   // Current accumulated times. Aviation-only by construction and superseded by `current` below.
   //
-  // The current reading for every meter this Thing's logs carry: the maximum per key (PRD §4.4).
+  // The current reading for every meter this Thing has one for (PRD §4.4): per key, the most recent
+  // of its logs' readings and the one set by hand, if any (#1368). It was the maximum over the logs.
+  //
+  // A cache, and only as current as the last client to rebuild it — one that predates manual
+  // readings rebuilds it without them. Read the current readings from the log manager instead.
   //
   // Replaced `current_airframe_time` (6), `current_engine_time` (7) and `current_propeller_time`
   // (8). A car's odometer had nowhere to go in three aviation doubles, which is why the dashboard

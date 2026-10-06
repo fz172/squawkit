@@ -1,36 +1,48 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.CurrentReading
+import dev.fanfly.wingslog.core.template.currentReadingStates
 import dev.fanfly.wingslog.core.template.currentReadings
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
+import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Squawk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlin.time.Clock
 
 class MaintenanceLogManagerImpl(
   private val scopeResolver: ThingScopeResolver,
   storeFactory: EntityStoreFactory,
+  private val clock: Clock = Clock.System,
 ) : MaintenanceLogManager {
 
   private val logStore: EntityStore<MaintenanceLog> =
     storeFactory.create(CollectionKind.MaintenanceLog)
   private val overviewStore: EntityStore<MaintenanceOverview> =
     storeFactory.create(CollectionKind.MaintenanceOverview)
+
+  // One row per meter, keyed by the meter’s key, so setting a reading overwrites the last one.
+  private val manualStore: EntityStore<ManualMeterReading> =
+    storeFactory.create(CollectionKind.ManualReading)
 
   // Squawks are read here only to reopen the ones a deleted log addressed; see [reopenAddressed].
   private val squawkStore: EntityStore<Squawk> =
@@ -85,6 +97,46 @@ class MaintenanceLogManagerImpl(
         }
       }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun observeManualReadings(thingId: String): Flow<List<ManualMeterReading>> =
+    scopeResolver.resolve(thingId)
+      .flatMapLatest { scope ->
+        if (scope == null) flowOf(emptyList())
+        else manualStore.observeAll(scope)
+          .map { rows -> rows.map { it.value } }
+          .catch { e ->
+            logger.w(e) { "Error observing manual readings for thing $thingId" }
+            emit(emptyList())
+          }
+      }
+
+  override fun observeCurrentReadings(thingId: String): Flow<List<CurrentReading>> =
+    combine(
+      observeLogs(thingId),
+      observeManualReadings(thingId),
+    ) { logs, manual -> currentReadingStates(logs, manual) }
+      .distinctUntilChanged()
+
+  override suspend fun setManualReading(
+    thingId: String,
+    meterKey: String,
+    value: Double,
+  ): Result<Boolean> =
+    runCatching {
+      val scope = scopeResolver.resolveNow(thingId)
+      manualStore.put(
+        meterKey,
+        ManualMeterReading(
+          reading = MeterReading(meter_key = meterKey, value_ = value),
+          set_at = clock.now()
+            .toWireInstant(),
+        ),
+        scope
+      )
+      refreshOverview(thingId, scope)
+      true
+    }.onFailure { logger.w(it) { "Error setting reading for $meterKey" } }
+
   override suspend fun addLog(
     thingId: String,
     log: MaintenanceLog
@@ -93,7 +145,7 @@ class MaintenanceLogManagerImpl(
       val scope = scopeResolver.resolveNow(thingId)
       val withId =
         if (log.id.isEmpty()) log.copy(id = generateRandomId()) else log
-      logStore.put(withId.id, withId, scope)
+      logStore.put(withId.id, withId.withReadingsSavedNow(), scope)
       refreshOverview(thingId, scope)
       true
     }.onFailure { logger.w(it) { "Error adding log" } }
@@ -104,10 +156,29 @@ class MaintenanceLogManagerImpl(
   ): Result<Boolean> =
     runCatching {
       val scope = scopeResolver.resolveNow(thingId)
-      logStore.put(log.id, log, scope)
+      val stored = logStore.observe(log.id, scope)
+        .first()?.value
+      // The stored stamp, not the incoming one: the form rebuilds the log from its fields and does
+      // not carry the stamp through an edit.
+      val stamped =
+        if (stored != null && stored.sameReadingsAs(log)) {
+          log.copy(readings_saved_at = stored.readings_saved_at)
+        } else log.withReadingsSavedNow()
+      logStore.put(log.id, stamped, scope)
       refreshOverview(thingId, scope)
       true
     }.onFailure { logger.w(it) { "Error updating log ${log.id}" } }
+
+  // A log that records no meter has nothing to order, so it carries no stamp.
+  private fun MaintenanceLog.withReadingsSavedNow(): MaintenanceLog =
+    copy(
+      readings_saved_at = if (readings.isEmpty()) null else clock.now()
+        .toWireInstant()
+    )
+
+  // Order is the form’s, not the user’s: the same values listed differently are the same readings.
+  private fun MaintenanceLog.sameReadingsAs(other: MaintenanceLog): Boolean =
+    readings.toSet() == other.readings.toSet()
 
   override suspend fun deleteLog(
     thingId: String,
@@ -142,15 +213,19 @@ class MaintenanceLogManagerImpl(
     val logs = logStore.observeAll(scope)
       .first()
       .map { it.value }
-    val current = currentReadings(logs)
+    val manual = manualStore.observeAll(scope)
+      .first()
+      .map { it.value }
+    val current = currentReadings(logs, manual)
     val overview = MaintenanceOverview(
       aircraft_id = thingId,
       total_log_count = logs.size,
       airframe_log_count = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME },
       engine_log_count = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE },
       propeller_log_count = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER },
-      // The maximum this Thing's logs record for each meter, whatever meters those are — which is
-      // what a car's odometer needed and a fixed set of aviation doubles could never hold (#730).
+      // The most recent reading of each meter, from a log or set by hand, whatever meters those
+      // are — which is what a car's odometer needed and a fixed set of aviation doubles could never
+      // hold (#730).
       current = current,
     )
     overviewStore.put(OVERVIEW_ID, overview, scope)
