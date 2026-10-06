@@ -1,7 +1,7 @@
 # Thing icons
 
 The Thing glyphs in the brand plane's style: car, bike, boat, home, toolbox (the "anything else"
-preset), and the open crate the login hero pours them into.
+preset). The login hero prints them on its sheets of paper.
 
 ```
 generate_icons.py      the shapes — edit this, run it
@@ -15,7 +15,7 @@ these shapes. Each glyph is authored in a 1024×1024 box like `ic_launcher_foreg
 script emits a tight square viewport per glyph so `Icon(glyph, Modifier.size(n))` fills `n` the way
 the cropped plane does.
 
-The brand mark the crate turns into is not generated here. It is the record stack: its master
+The brand mark is not generated here. It is the record stack: its master
 artwork is `docs/branding/app-icon-record-stack.svg`, and `core/ui/.../brand/BrandStackGeometry.kt`
 carries the same plates as numbers for Compose to draw.
 

@@ -54,16 +54,6 @@ class BrandStackGeometryTest {
   }
 
   @Test
-  fun `the silhouette is one closed contour around face and edge`() {
-    val silhouette = BrandStackGeometry.silhouette(0)
-    assertThat(silhouette).isEqualTo(
-      "M512.0,496.0L762.0,626.0L762.0,664.0L512.0,794.0L262.0,664.0L262.0,626.0Z"
-    )
-    // One contour: the morph samples only up to a second M.
-    assertThat(OutlineMorph.firstContour(silhouette)).isEqualTo(silhouette)
-  }
-
-  @Test
   fun `a sheet is a face with a sliver of edge, far thinner than a plate`() {
     assertThat(BrandStackGeometry.sheetEdge(1))
       .isEqualTo("M512.0,391.0L762.0,521.0L512.0,651.0L262.0,521.0Z")

@@ -110,18 +110,6 @@ object BrandStackGeometry {
     )
   }
 
-  /**
-   * The outline of the whole of [plate], face and edge together, as one closed contour. This is
-   * what the login hero morphs the crate into.
-   */
-  fun silhouette(plate: Int): String {
-    val y = faceY(plate)
-    val left = CENTRE_X - HALF_WIDTH
-    val right = CENTRE_X + HALF_WIDTH
-    return "M$CENTRE_X,${y - HALF_HEIGHT}L$right,${y}L$right,${y + THICKNESS}" +
-      "L$CENTRE_X,${y + THICKNESS + HALF_HEIGHT}L$left,${y + THICKNESS}L$left,${y}Z"
-  }
-
   private fun diamond(y: Float): String =
     "M$CENTRE_X,${y - HALF_HEIGHT}L${CENTRE_X + HALF_WIDTH},${y}" +
       "L$CENTRE_X,${y + HALF_HEIGHT}L${CENTRE_X - HALF_WIDTH},${y}Z"
