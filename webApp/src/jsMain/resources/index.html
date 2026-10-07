@@ -296,6 +296,36 @@
         <path d="M12 3.2v13.2"/>
         <path d="M12 5.4 18.2 13.4H12"/>
     </symbol>
+    <symbol id="ic-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="m9.5 6 6 6-6 6"/>
+    </symbol>
+    <symbol id="ic-user-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15.5 20v-1.8a3.5 3.5 0 0 0-3.5-3.5H6.5A3.5 3.5 0 0 0 3 18.2V20"/>
+        <circle cx="9.2" cy="7.5" r="3.5"/>
+        <path d="M18.5 8v6M15.5 11h6"/>
+    </symbol>
+    <symbol id="ic-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.5 18V6.5a1.5 1.5 0 0 1 1.5-1.5h4.2l2 2.5H19a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18Z"/>
+    </symbol>
+    <symbol id="ic-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13.5 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8.5Z"/>
+        <path d="M13.5 3.5v5h5"/>
+        <path d="M9 13h6M9 16.5h6"/>
+    </symbol>
+    <symbol id="ic-table" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/>
+        <path d="M3.5 9.5h17M9.5 9.5v10"/>
+    </symbol>
+    <symbol id="ic-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/>
+        <path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15M15 4.5v15"/>
+    </symbol>
 </svg>
 
 <header class="site-header">
@@ -444,52 +474,243 @@
     </section>
 
     <!-- ---------------------------------------------------------- features -->
-    <section class="section section-alt" id="features">
-        <div class="wrap">
-            <p class="eyebrow">WHAT IT DOES</p>
-            <h2>Everything that keeps your things in service</h2>
-            <p class="lede">Inspections, recurring tasks, and issues in one place — so nothing slips
-                between services.</p>
+    <!-- Six features, one preview at a time. Without JavaScript every description is open and the
+         first preview shows; promo.js turns the list into a stepper. The section is a fixed
+         height either way: the preview panel is a fixed box, and the open description always
+         takes the height of the tallest one (see --step-body-h in promo.css). -->
+    <section class="section" id="features">
+        <div class="wrap stepper" id="stepper">
+            <div>
+                <h2>Everything that keeps your things in service</h2>
 
-            <div class="grid-3">
-                <article class="feature">
-                    <div class="feature-icon"><svg><use href="#ic-box"></use></svg></div>
-                    <h3>Track anything you want</h3>
-                    <p><a href="/aircraft">Airplane</a>, <a href="/car">car</a>,
-                        <a href="/bike">bike</a>, <a href="/boat">boat</a>,
-                        <a href="/home">home</a> — or a custom type. Each brings its own fields,
-                        meters and a recommended starter schedule.</p>
-                </article>
-                <article class="feature">
-                    <div class="feature-icon"><svg><use href="#ic-repeat"></use></svg></div>
-                    <h3>Tasks that recur the right way</h3>
-                    <p>By calendar time, by meter — engine hours, odometer, ride distance — or on
-                        condition. Whichever comes first.</p>
-                </article>
-                <article class="feature">
-                    <div class="feature-icon"><svg><use href="#ic-warn"></use></svg></div>
-                    <h3>An issue log that fits the thing</h3>
-                    <p>Squawks on an airplane, issues on a car, attention items at home. Anything
-                        that grounds it surfaces first.</p>
-                </article>
-                <article class="feature">
-                    <div class="feature-icon"><svg><use href="#ic-bell"></use></svg></div>
-                    <h3>Due-soon and overdue reminders</h3>
-                    <p>Know before anything lapses. Safety-critical items always sit at the top of
-                        the list.</p>
-                </article>
-                <article class="feature">
-                    <div class="feature-icon"><svg><use href="#ic-group"></use></svg></div>
-                    <h3>Share with the people who help</h3>
-                    <p>Invite a mechanic, co-owner or family member. Everyone logs against the same
-                        record.</p>
-                </article>
-                <article class="feature">
-                    <div class="feature-icon"><svg><use href="#ic-download"></use></svg></div>
-                    <h3>Export your records</h3>
-                    <p>A ZIP of a thing’s full history — PDF, CSV and spreadsheet, with every
-                        attachment. Your data is yours.</p>
-                </article>
+                <ol class="steps">
+                    <li class="step">
+                        <span class="step-rail"></span>
+                        <div class="step-main">
+                            <button class="step-head" type="button" aria-controls="feature-panel">
+                                <svg aria-hidden="true"><use href="#ic-box"></use></svg>Track anything you want
+                            </button>
+                            <div class="step-body">
+                                <p><a href="/aircraft">Airplane</a>, <a href="/car">car</a>,
+                                    <a href="/bike">bike</a>, <a href="/boat">boat</a>,
+                                    <a href="/home">home</a> — or a custom type. Each brings its own
+                                    fields, meters and a recommended starter schedule.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <span class="step-rail"></span>
+                        <div class="step-main">
+                            <button class="step-head" type="button" aria-controls="feature-panel">
+                                <svg aria-hidden="true"><use href="#ic-repeat"></use></svg>Tasks that recur the right way
+                            </button>
+                            <div class="step-body">
+                                <p>AI suggests the tasks for each thing. Due by calendar or meter —
+                                    whichever comes first.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <span class="step-rail"></span>
+                        <div class="step-main">
+                            <button class="step-head" type="button" aria-controls="feature-panel">
+                                <svg aria-hidden="true"><use href="#ic-warn"></use></svg>An issue log that fits the thing
+                            </button>
+                            <div class="step-body">
+                                <p>Log anything that needs attention — a squawk, a warning light, a
+                                    leak — with a priority, photos and the part it affects.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <span class="step-rail"></span>
+                        <div class="step-main">
+                            <button class="step-head" type="button" aria-controls="feature-panel">
+                                <svg aria-hidden="true"><use href="#ic-bell"></use></svg>Due-soon and overdue reminders
+                            </button>
+                            <div class="step-body">
+                                <p>Know before anything lapses. Safety-critical items always sit at
+                                    the top of the list.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <span class="step-rail"></span>
+                        <div class="step-main">
+                            <button class="step-head" type="button" aria-controls="feature-panel">
+                                <svg aria-hidden="true"><use href="#ic-group"></use></svg>Share with the people who help
+                            </button>
+                            <div class="step-body">
+                                <p>Invite a mechanic, co-owner or family member. Everyone logs
+                                    against the same record.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <span class="step-rail"></span>
+                        <div class="step-main">
+                            <button class="step-head" type="button" aria-controls="feature-panel">
+                                <svg aria-hidden="true"><use href="#ic-download"></use></svg>Export your records
+                            </button>
+                            <div class="step-body">
+                                <p>A ZIP of a thing’s full history — PDF, CSV and spreadsheet, with
+                                    every attachment. Your data is yours.</p>
+                            </div>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- One preview per feature, stacked in the same box. The first carries real links to
+                 the vertical pages; the other five are decorative, and say nothing the list
+                 beside them does not. -->
+            <div class="panel" id="feature-panel">
+                <div class="pane-counter" aria-hidden="true">01 / 06</div>
+
+                <div class="pane pane-card is-active">
+                    <div class="pane-head"><b>Your things</b><span>5 items</span></div>
+                    <a class="row" href="/aircraft">
+                        <span class="row-icon"><svg aria-hidden="true"><use href="#ic-plane"></use></svg></span>
+                        <span class="row-body">
+                            <span class="row-title">N172SP</span>
+                            <span class="row-sub">Cessna 172S · Aircraft</span>
+                        </span>
+                        <svg class="chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+                    </a>
+                    <a class="row" href="/car">
+                        <span class="row-icon"><svg aria-hidden="true"><use href="#ic-car"></use></svg></span>
+                        <span class="row-body">
+                            <span class="row-title">4Runner</span>
+                            <span class="row-sub">Toyota 2019 · Car</span>
+                        </span>
+                        <svg class="chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+                    </a>
+                    <a class="row" href="/boat">
+                        <span class="row-icon"><svg aria-hidden="true"><use href="#ic-boat"></use></svg></span>
+                        <span class="row-body">
+                            <span class="row-title">Blue Heron</span>
+                            <span class="row-sub">Boston Whaler · Boat</span>
+                        </span>
+                        <svg class="chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+                    </a>
+                    <a class="row" href="/bike">
+                        <span class="row-icon"><svg aria-hidden="true"><use href="#ic-bike"></use></svg></span>
+                        <span class="row-body">
+                            <span class="row-title">Gravel bike</span>
+                            <span class="row-sub">Bike</span>
+                        </span>
+                        <svg class="chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+                    </a>
+                    <a class="row" href="/home">
+                        <span class="row-icon"><svg aria-hidden="true"><use href="#ic-home"></use></svg></span>
+                        <span class="row-body">
+                            <span class="row-title">Furnace</span>
+                            <span class="row-sub">Home system</span>
+                        </span>
+                        <svg class="chevron" aria-hidden="true"><use href="#ic-chevron"></use></svg>
+                    </a>
+                    <div class="pane-add" aria-hidden="true">
+                        <svg><use href="#ic-plus"></use></svg>Add a thing
+                    </div>
+                </div>
+
+                <div class="pane pane-card pane-task" aria-hidden="true">
+                    <div class="task-head">
+                        <div>
+                            <b>Oil &amp; filter</b>
+                            <span><span class="data">N172SP</span> · Engine</span>
+                        </div>
+                        <span class="pill pill-due">DUE SOON</span>
+                    </div>
+                    <div class="gauge">
+                        <div><span>Engine hours</span><span class="data">42.1 / 50.0</span></div>
+                        <div class="gauge-track"><i class="warn" style="width:84%"></i></div>
+                    </div>
+                    <div class="gauge">
+                        <div><span>Calendar</span><span>4 / 6 months</span></div>
+                        <div class="gauge-track"><i style="width:66%"></i></div>
+                    </div>
+                    <div class="task-foot"><span>Whichever comes first</span><b class="data">7.9 h left</b></div>
+                </div>
+
+                <div class="pane pane-card" aria-hidden="true">
+                    <div class="pane-head"><b>Squawks · N172SP</b></div>
+                    <div class="issue issue-aog">
+                        <span class="pill pill-over">AOG</span>
+                        <b>Mag drop on left magneto, 175 rpm</b>
+                        <span>Engine · 2 photos · grounds the aircraft</span>
+                    </div>
+                    <div class="issue">
+                        <span class="pill pill-open">OPEN</span>
+                        <b>Left nav light intermittent</b>
+                        <span>Airframe · logged 3 days ago</span>
+                    </div>
+                    <div class="issue">
+                        <span class="pill pill-muted">DEFERRED</span>
+                        <b>Cabin door seal worn at hinge</b>
+                    </div>
+                </div>
+
+                <div class="pane pane-alerts" aria-hidden="true">
+                    <div class="alert alert-over">
+                        <span class="alert-icon"><svg><use href="#ic-bell"></use></svg></span>
+                        <div>
+                            <div><b>Annual inspection · N172SP</b><span class="pill pill-over">OVERDUE</span></div>
+                            <span>3 days ago</span>
+                        </div>
+                    </div>
+                    <div class="alert alert-due">
+                        <span class="alert-icon"><svg><use href="#ic-bell"></use></svg></span>
+                        <div>
+                            <div><b>Oil change · 4Runner</b><span class="pill pill-due">DUE SOON</span></div>
+                            <span>In <span class="data">210 mi</span></span>
+                        </div>
+                    </div>
+                    <div class="alert alert-due">
+                        <span class="alert-icon"><svg><use href="#ic-bell"></use></svg></span>
+                        <div>
+                            <div><b>Furnace filter · Home</b><span class="pill pill-due">DUE SOON</span></div>
+                            <span>In 34 days</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pane pane-card" aria-hidden="true">
+                    <div class="pane-head">
+                        <b>Shared · N172SP</b>
+                        <span class="invite"><svg><use href="#ic-user-plus"></use></svg>Invite</span>
+                    </div>
+                    <div class="person">
+                        <span class="avatar avatar-a">DR</span>
+                        <div><b>Dana Ruiz</b><span>A&amp;P / IA</span></div>
+                        <span>Can log work</span>
+                    </div>
+                    <div class="person">
+                        <span class="avatar avatar-b">SK</span>
+                        <div><b>Sam Keller</b><span>Co-owner</span></div>
+                        <span>Full access</span>
+                    </div>
+                    <div class="person">
+                        <span class="avatar avatar-c">YO</span>
+                        <div><b>You</b><span>Owner</span></div>
+                        <span>Owner</span>
+                    </div>
+                    <div class="pane-note">Everyone logs against the same record.</div>
+                </div>
+
+                <div class="pane pane-card pane-export" aria-hidden="true">
+                    <div class="export-head">
+                        <span class="row-icon"><svg><use href="#ic-folder"></use></svg></span>
+                        <div><b>N172SP-records.zip</b><span>Full history · 48.2 MB</span></div>
+                    </div>
+                    <div class="files">
+                        <div><svg><use href="#ic-file"></use></svg><span>history.pdf</span><span>2.1 MB</span></div>
+                        <div><svg><use href="#ic-table"></use></svg><span>logs.csv</span><span>84 KB</span></div>
+                        <div><svg><use href="#ic-grid"></use></svg><span>records.xlsx</span><span>112 KB</span></div>
+                        <div><svg><use href="#ic-folder"></use></svg><span>attachments/</span><span>42 files</span></div>
+                    </div>
+                    <div class="export-btn"><svg><use href="#ic-download"></use></svg>Export records</div>
+                </div>
             </div>
         </div>
     </section>
@@ -501,19 +722,19 @@
             <h2>From sign-in to in service in three steps</h2>
 
             <div class="grid-3">
-                <article class="step">
-                    <div class="step-num">01</div>
+                <article class="how-step">
+                    <div class="how-num">01</div>
                     <h3>Sign in</h3>
                     <p>Google, Apple or email. No setup — your records are ready wherever you log
                         in.</p>
                 </article>
-                <article class="step">
-                    <div class="step-num">02</div>
+                <article class="how-step">
+                    <div class="how-num">02</div>
                     <h3>Pick what you maintain</h3>
                     <p>Add a thing, choose its type, and get a starter schedule you can edit.</p>
                 </article>
-                <article class="step">
-                    <div class="step-num">03</div>
+                <article class="how-step">
+                    <div class="how-num">03</div>
                     <h3>Log as you go — together</h3>
                     <p>Record work and issues from any device, invite the people who help, and get
                         reminders before anything lapses.</p>

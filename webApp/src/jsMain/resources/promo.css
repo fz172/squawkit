@@ -22,6 +22,10 @@
   --error-bg: #FFDAD6;
   --success: #276B39;
   --ok-bg: #E3F1E6;
+  --info-bg: #D6E4F5;
+  --info-text: #0E1C2B;
+  --rail: #E0E0E5;
+  --on-accent-container: #001849;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
   --card-shadow: 0 20px 44px rgba(0, 4, 24, 0.42);
 
@@ -52,6 +56,10 @@
     --error-bg: #93000A;
     --success: #81C784;
     --ok-bg: #1E3A26;
+    --info-bg: #3A4557;
+    --info-text: #D6E4F5;
+    --rail: #3A3A40;
+    --on-accent-container: #D5E3FF;
   }
 }
 
@@ -530,47 +538,349 @@ img, svg { display: block; max-width: 100%; }
 @media (max-width: 960px) { .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .grid-3 { grid-template-columns: 1fr; } }
 
-.feature {
+/* The "how it works" cards. */
+.how-step {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 24px;
 }
-.feature-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--accent-container);
-  color: var(--accent);
-  margin-bottom: 18px;
-}
-.feature-icon svg { width: 22px; height: 22px; }
-.feature h3 {
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  margin-bottom: 8px;
-}
-.feature p { font-size: 14px; color: var(--muted); }
-
-.step {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 24px;
-}
-.step-num {
+.how-num {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 13px;
   font-weight: 700;
   color: var(--accent);
   margin-bottom: 18px;
 }
-.step h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
-.step p { font-size: 14px; color: var(--muted); }
+.how-step h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.how-step p { font-size: 14px; color: var(--muted); }
+
+/* ---------------------------------------------------------------- feature stepper */
+/* A list of six features beside one preview panel. promo.js marks the root [data-enhanced] and
+   moves .is-active; until it has, every description is open and nothing is dimmed.
+
+   Switching steps must not move the page, so neither column changes height:
+     - the panel is a fixed box and its panes are stacked inside it;
+     - the open description is always --step-body-h tall — the tallest of the six, measured by
+       promo.js — and the one closing and the one opening share a duration and an easing, so
+       their heights sum to that same number on every frame in between. */
+
+.stepper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 40px 56px;
+  align-items: center;
+}
+
+.steps { margin: 32px 0 0; padding: 0; list-style: none; }
+
+.step { display: grid; grid-template-columns: 3px minmax(0, 1fr); column-gap: 20px; }
+
+.step-rail {
+  position: relative;
+  border-radius: 2px;
+  background: var(--rail);
+  overflow: hidden;
+}
+.step-rail::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0;
+  background: var(--accent);
+  transition: height 150ms linear;
+}
+.step.is-done .step-rail::after,
+.step.is-active .step-rail::after { height: 100%; }
+
+.step-main { padding-block: 14px; }
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  transition: color 300ms;
+}
+.step-head svg { width: 20px; height: 20px; flex: none; }
+
+.step-body { overflow: hidden; }
+.step-body p {
+  padding: 8px 0 0 30px;
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--nav-muted);
+}
+
+.stepper[data-enhanced] .step-head { cursor: pointer; }
+.stepper[data-enhanced] .step:not(.is-active) .step-head { color: var(--muted); }
+.stepper[data-enhanced] .step.is-active .step-head { color: var(--accent); }
+
+/* Hidden as well as collapsed, so the links in a closed description leave the tab order. */
+.stepper[data-enhanced] .step-body {
+  height: 0;
+  visibility: hidden;
+  transition: height 400ms ease, visibility 0s 400ms;
+}
+.stepper[data-enhanced] .step.is-active .step-body {
+  height: var(--step-body-h, auto);
+  visibility: visible;
+  transition: height 400ms ease;
+}
+
+.panel {
+  position: relative;
+  height: 460px;
+  border-radius: 12px;
+  background: var(--accent-container);
+  overflow: hidden;
+}
+
+.pane-counter {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--on-accent-container);
+}
+
+.pane {
+  position: absolute;
+  inset: 44px 28px 28px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px);
+  transition: opacity 450ms ease, transform 450ms ease, visibility 0s 450ms;
+}
+.pane.is-before { transform: translateY(-16px); }
+.pane.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 450ms ease, transform 450ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-rail::after, .step-head, .pane, .pane.is-active,
+  .stepper[data-enhanced] .step-body,
+  .stepper[data-enhanced] .step.is-active .step-body { transition: none; }
+}
+
+.pane-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+}
+.pane-head b {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+.pane-head span { font-size: 11px; font-weight: 500; color: var(--muted); }
+.pane-head .invite {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--accent);
+}
+.pane-head .invite svg { width: 18px; height: 18px; }
+
+.pane .row { padding: 9px 20px; color: inherit; }
+.pane a.row:hover { background: var(--surface-alt); text-decoration: none; }
+.pane .row-icon { width: 34px; height: 34px; }
+.pane .chevron { width: 20px; height: 20px; flex: none; color: var(--muted); opacity: 0.5; }
+
+.pane-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.pane-add svg { width: 20px; height: 20px; }
+
+.pane-note {
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.data { font-family: var(--mono); font-weight: 500; }
+b.data { font-weight: 700; }
+
+.pane-task { gap: 20px; padding: 20px; }
+.task-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.task-head b {
+  display: block;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+.task-head div > span { font-size: 12px; color: var(--muted); }
+
+.gauge { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.gauge > div:first-child { display: flex; justify-content: space-between; gap: 12px; }
+.gauge-track { height: 8px; border-radius: 4px; background: var(--surface-alt); overflow: hidden; }
+.gauge-track i { display: block; height: 100%; background: var(--accent); }
+.gauge-track i.warn { background: var(--warn-text); }
+
+.task-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  font-size: 13px;
+  color: var(--nav-muted);
+}
+.task-foot b { font-size: 16px; color: var(--text); }
+
+.issue {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 12px 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.issue-aog { border-color: var(--error-text); }
+.issue b { font-size: 14px; font-weight: 500; }
+.issue > span:last-child { font-size: 12px; color: var(--muted); }
+
+.pill-open { background: var(--info-bg); color: var(--info-text); }
+.pill-muted { background: var(--surface-alt); color: var(--muted); }
+
+.pane-alerts { display: flex; flex-direction: column; gap: 12px; }
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--warn-text);
+  border-radius: 12px;
+}
+.alert-over { border-color: var(--error-text); }
+.alert-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+.alert-over .alert-icon { background: var(--error-bg); color: var(--error-text); }
+.alert-icon svg { width: 20px; height: 20px; }
+.alert > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.alert > div > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.alert b { font-size: 14px; font-weight: 500; }
+.alert > div > span { font-size: 12px; color: var(--muted); }
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+}
+.person > div { flex: 1; min-width: 0; }
+.person b { display: block; font-size: 14px; font-weight: 500; }
+.person > div span { font-size: 12px; color: var(--muted); }
+.person > span:last-child { font-size: 12px; color: var(--nav-muted); white-space: nowrap; }
+/* Avatar tints are the app's three containers; light in both schemes, so the initials stay dark. */
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+.avatar-a { background: #D5E3FF; color: #001849; }
+.avatar-b { background: #D6E4F5; color: #0E1C2B; }
+.avatar-c { background: #FFDFA6; color: #271900; }
+
+.pane-export { gap: 14px; padding: 20px; }
+.export-head { display: flex; align-items: center; gap: 12px; }
+.export-head .row-icon { width: 40px; height: 40px; }
+.export-head b { display: block; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.export-head div span { font-size: 12px; color: var(--muted); }
+
+.files { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.files > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  font-size: 13px;
+}
+.files > div + div { border-top: 1px solid var(--line); }
+.files svg { width: 18px; height: 18px; flex: none; color: var(--nav-muted); }
+.files span:first-of-type { flex: 1; }
+.files span:last-child { font-size: 12px; color: var(--muted); }
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  margin-top: auto;
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+}
+.export-btn svg { width: 20px; height: 20px; }
+
+/* A phone gives the panes less width, so they give up their gutters rather than their content. */
+@media (max-width: 480px) {
+  .pane { inset: 44px 14px 14px; }
+  .pane-head, .pane .row, .pane-add, .pane-note, .person { padding-inline: 14px; }
+  .pane-task, .pane-export { padding: 16px; }
+  .issue { gap: 4px; margin: 0 10px 8px; padding: 10px 12px; }
+  .alert { gap: 10px; padding: 12px; }
+}
 
 /* ---------------------------------------------------------------- faq */
 
