@@ -343,6 +343,11 @@ content**: it is already written, it is the highest-value text on the site, and 
 the new page thinner than the one it replaces (~400 words against ~700). The mocks are the authority
 on how the FAQ *looks*; they are not a decision to remove it.
 
+> **Superseded, 2026-10-06.** The promo redesign (Claude Design canvas "Index") removes the FAQ and
+> the how-it-works section from `/` as an explicit decision, and the `FAQPage` JSON-LD goes with
+> them, so the markup and the page still agree. The five vertical pages keep their own FAQs and
+> `FAQPage` blocks. The content cost described above is accepted.
+
 ### 7.3 Content floor for `/`
 
 Whatever the final layout, the promo page must carry, as real DOM text:

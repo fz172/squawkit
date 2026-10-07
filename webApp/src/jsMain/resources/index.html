@@ -49,9 +49,9 @@
     <meta content="SquawkIt — maintenance records for everything you own" name="twitter:image:alt">
 
     <!-- ============ STRUCTURED DATA ============
-         Every claim below is rendered on this page as text. Keep the FAQ block and the FAQ section
-         in sync: marking up content a visitor cannot see is against Google's structured data
-         guidelines, and the whole point of this page is that the two now agree. -->
+         Every claim below is rendered on this page as text: marking up content a visitor cannot
+         see is against Google's structured data guidelines. There is no FAQPage block because
+         this page has no FAQ section — the five vertical pages carry their own. -->
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -99,62 +99,6 @@
             "sameAs": [
                 "https://apps.apple.com/us/app/squawkit/id6801955033",
                 "https://play.google.com/store/apps/details?id=dev.fanfly.wingslog"
-            ]
-        }
-    </script>
-    <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": [
-                {
-                    "@type": "Question",
-                    "name": "What can I track?",
-                    "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "Aircraft (airframe, engine, propeller), cars and motorcycles, bikes, boats, homes — or anything else you maintain, with a custom type. Each kind of thing comes with its own vocabulary, fields, meters and a recommended starter schedule. Tasks recur by calendar time, by meter — engine hours, odometer, ride distance — or on condition."
-                    }
-                },
-                {
-                    "@type": "Question",
-                    "name": "Can I share a thing with someone else?",
-                    "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "Yes. Invite a co-owner, mechanic or family member to a specific thing. They see its schedule and history and can log work against it; you stay the owner."
-                    }
-                },
-                {
-                    "@type": "Question",
-                    "name": "Does SquawkIt work offline?",
-                    "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "The iPhone and Android apps keep your records on the device and sync when you reconnect. The web app needs a connection."
-                    }
-                },
-                {
-                    "@type": "Question",
-                    "name": "How does exporting work?",
-                    "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "Any thing can be exported from the Overview screen as a ZIP holding its full history as a PDF, a CSV and a spreadsheet. Exports include every log entry, task and issue, and the attachments you added to them."
-                    }
-                },
-                {
-                    "@type": "Question",
-                    "name": "Is SquawkIt a certified maintenance record system?",
-                    "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "No. SquawkIt is a personal convenience tool. It does not replace official logbooks or records required by your aviation authority or any other regulator."
-                    }
-                },
-                {
-                    "@type": "Question",
-                    "name": "Which platforms is SquawkIt available on?",
-                    "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": "The web app works in any modern browser. The mobile app is on the App Store and Google Play."
-                    }
-                }
             ]
         }
     </script>
@@ -331,8 +275,6 @@
 
         <nav class="site-nav" id="site-nav" aria-label="Sections">
             <a href="#features">Features</a>
-            <a href="#how">How it works</a>
-            <a href="#faq">FAQ</a>
             <a href="#get-the-app">Get the app</a>
         </nav>
 
@@ -684,84 +626,6 @@
                     </div>
                     <div class="export-btn"><svg><use href="#ic-download"></use></svg>Export records</div>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ---------------------------------------------------------- how it works -->
-    <section class="section section-alt" id="how">
-        <div class="wrap">
-            <p class="eyebrow">HOW IT WORKS</p>
-            <h2>From sign-in to in service in three steps</h2>
-
-            <div class="grid-3">
-                <article class="how-step">
-                    <div class="how-num">01</div>
-                    <h3>Sign in</h3>
-                    <p>Google, Apple or email. No setup — your records are ready wherever you log
-                        in.</p>
-                </article>
-                <article class="how-step">
-                    <div class="how-num">02</div>
-                    <h3>Pick what you maintain</h3>
-                    <p>Add a thing, choose its type, and get a starter schedule you can edit.</p>
-                </article>
-                <article class="how-step">
-                    <div class="how-num">03</div>
-                    <h3>Log as you go — together</h3>
-                    <p>Record work and issues from any device, invite the people who help, and get
-                        reminders before anything lapses.</p>
-                </article>
-            </div>
-        </div>
-    </section>
-
-    <!-- ---------------------------------------------------------- faq -->
-    <section class="section" id="faq">
-        <div class="wrap faq-grid">
-            <div>
-                <p class="eyebrow">QUESTIONS</p>
-                <h2>Frequently asked questions</h2>
-                <p class="lede">Something else? <a href="/support.html" target="_blank" rel="noopener">Contact support</a>.</p>
-            </div>
-
-            <div class="faq">
-                <details open>
-                    <summary>What can I track?</summary>
-                    <p>Aircraft (airframe, engine, propeller), cars and motorcycles, bikes, boats,
-                        homes — or anything else you maintain, with a custom type. Each kind of
-                        thing comes with its own vocabulary, fields, meters and a recommended
-                        starter schedule. Tasks recur by calendar time, by meter — engine hours,
-                        odometer, ride distance — or on condition.</p>
-                </details>
-                <details>
-                    <summary>Can I share a thing with someone else?</summary>
-                    <p>Yes. Invite a co-owner, mechanic or family member to a specific thing. They
-                        see its schedule and history and can log work against it; you stay the
-                        owner.</p>
-                </details>
-                <details>
-                    <summary>Does SquawkIt work offline?</summary>
-                    <p>The iPhone and Android apps keep your records on the device and sync when you
-                        reconnect. The web app needs a connection.</p>
-                </details>
-                <details>
-                    <summary>How does exporting work?</summary>
-                    <p>Any thing can be exported from the Overview screen as a ZIP holding its
-                        full history as a PDF, a CSV and a spreadsheet. Exports include every log
-                        entry, task and issue, and the attachments you added to them.</p>
-                </details>
-                <details>
-                    <summary>Is SquawkIt a certified maintenance record system?</summary>
-                    <p>No. SquawkIt is a personal convenience tool. It does not replace official
-                        logbooks or records required by your aviation authority or any other
-                        regulator.</p>
-                </details>
-                <details>
-                    <summary>Which platforms is SquawkIt available on?</summary>
-                    <p>The web app works in any modern browser. The mobile app is on the App Store
-                        and Google Play.</p>
-                </details>
             </div>
         </div>
     </section>
