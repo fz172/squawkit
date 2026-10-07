@@ -529,32 +529,6 @@ img, svg { display: block; max-width: 100%; }
   color: var(--muted);
 }
 
-.grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 40px;
-}
-@media (max-width: 960px) { .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .grid-3 { grid-template-columns: 1fr; } }
-
-/* The "how it works" cards. */
-.how-step {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 24px;
-}
-.how-num {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--accent);
-  margin-bottom: 18px;
-}
-.how-step h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
-.how-step p { font-size: 14px; color: var(--muted); }
-
 /* ---------------------------------------------------------------- feature stepper */
 /* A list of six features beside one preview panel. promo.js marks the root [data-enhanced] and
    moves .is-active; until it has, every description is open and nothing is dimmed.
@@ -883,6 +857,7 @@ b.data { font-weight: 700; }
 }
 
 /* ---------------------------------------------------------------- faq */
+/* Used by the vertical pages; the promo page has no FAQ section. */
 
 .faq-grid {
   display: grid;
