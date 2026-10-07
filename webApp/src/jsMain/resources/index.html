@@ -333,41 +333,17 @@
                     Log what’s done.<br>
                     <span class="accent">For everything you own.</span>
                 </h1>
-                <p class="hero-sub">
-                    From the annual on your airplane to the oil change on your car and the filter in
-                    your furnace — one place for every schedule, every issue, and the people who
-                    help.
-                </p>
-                <ul class="chips">
-                    <li><svg aria-hidden="true"><use href="#ic-plane"></use></svg>Airplane</li>
-                    <li><svg aria-hidden="true"><use href="#ic-car"></use></svg>Car &amp; motorcycle</li>
-                    <li><svg aria-hidden="true"><use href="#ic-home"></use></svg>Home</li>
-                    <li><svg aria-hidden="true"><use href="#ic-more"></use></svg>And more</li>
-                </ul>
+                <div class="hero-cta">
+                    <a class="btn btn-light" href="/login">Start free in your browser</a>
+                    <a class="btn btn-outline-light" href="#get-the-app">Get the iPhone or Android app</a>
+                </div>
             </div>
 
             <!-- Decorative: every word in here is repeated as real copy elsewhere on the page. -->
-            <div class="stage-wrap" aria-hidden="true">
-                <div class="stage">
-                    <div class="card card-meters">
-                        <div class="meters">
-                            <div>
-                                <div class="meter-value">1243.5</div>
-                                <div class="meter-label">AIRFRAME</div>
-                            </div>
-                            <div>
-                                <div class="meter-value">987.2</div>
-                                <div class="meter-label">ENGINE</div>
-                            </div>
-                            <div>
-                                <div class="meter-value">412.0</div>
-                                <div class="meter-label">PROP</div>
-                            </div>
-                        </div>
-                    </div>
-
+            <div class="stage" aria-hidden="true">
+                <div class="stage-col">
                     <div class="card card-fleet">
-                        <div class="card-head"><b>Your things</b><span>34 LOGS</span></div>
+                        <div class="card-head"><b>Your things</b><span>34 logs</span></div>
                         <div class="row">
                             <span class="row-icon"><svg><use href="#ic-plane"></use></svg></span>
                             <span class="row-body">
@@ -390,51 +366,56 @@
                                 <span class="row-title">Furnace <small>—</small></span>
                                 <span class="row-sub">Filter · in 34 days</span>
                             </span>
-                            <span class="pill pill-ok"><svg width="19" height="19"><use href="#ic-check"></use></svg></span>
+                            <span class="pill pill-ok">OK</span>
                         </div>
-                    </div>
-
-                    <div class="card card-toast">
-                        <div class="mini">
-                            <svg class="pill-ok" style="color:var(--success)"><use href="#ic-check"></use></svg>
-                            <div>
-                                <div class="mini-title">Oil change logged</div>
-                                <div class="mini-sub">4RUNNER · 92,430 MI</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card card-next">
-                        <div class="next">
-                            <div class="next-head">
-                                NEXT 90 DAYS
-                                <svg width="16" height="16" style="color:var(--accent)"><use href="#ic-clock"></use></svg>
-                            </div>
-                            <div class="next-row"><span>ELT battery</span><b class="over">12 d</b></div>
-                            <div class="next-row"><span>Transponder check</span><b class="soon">2 mo</b></div>
-                            <div class="next-row"><span>Oil &amp; filter</span><b class="soon">210 mi</b></div>
-                        </div>
-                    </div>
-
-                    <div class="card card-shared">
-                        <div class="mini">
-                            <svg style="color:var(--accent)"><use href="#ic-group"></use></svg>
-                            <div>
-                                <div class="mini-title">Shared with 3 people</div>
-                                <div class="mini-sub">Mechanic, co-owner, partner</div>
-                            </div>
+                        <div class="card-foot">
+                            <svg><use href="#ic-group"></use></svg>
+                            Shared with 3 people
                         </div>
                     </div>
 
                     <div class="card card-log">
-                        <div class="logcard">
-                            <div class="logcard-head">N172SP <small>14 MAR</small></div>
-                            <p>50-hour oil change · signed off</p>
-                            <div class="logcard-meta">
-                                <svg><use href="#ic-photos"></use></svg>
-                                Work order · 2 photos
-                            </div>
+                        <div class="log-head">N172SP <small>14 Mar</small></div>
+                        <p>50-hour oil change · signed off</p>
+                        <div class="log-meta">
+                            <svg><use href="#ic-photos"></use></svg>
+                            Work order · 2 photos
                         </div>
+                    </div>
+                </div>
+
+                <div class="stage-col">
+                    <div class="card card-meters">
+                        <div>
+                            <div class="meter-value">1243.5</div>
+                            <div class="meter-label">AIRFRAME</div>
+                        </div>
+                        <div>
+                            <div class="meter-value">987.2</div>
+                            <div class="meter-label">ENGINE</div>
+                        </div>
+                        <div>
+                            <div class="meter-value">412.0</div>
+                            <div class="meter-label">PROP</div>
+                        </div>
+                    </div>
+
+                    <div class="card card-toast">
+                        <svg><use href="#ic-check"></use></svg>
+                        <div>
+                            <div class="toast-title">Oil change logged</div>
+                            <div class="toast-sub">4Runner · <span>92,430 mi</span></div>
+                        </div>
+                    </div>
+
+                    <div class="card card-next">
+                        <div class="next-head">
+                            Next 90 days
+                            <svg><use href="#ic-clock"></use></svg>
+                        </div>
+                        <div class="next-row"><span>ELT battery</span><b class="over">12 d</b></div>
+                        <div class="next-row"><span>Transponder check</span><b class="soon">2 mo</b></div>
+                        <div class="next-row"><span>Oil &amp; filter</span><b class="soon">210 mi</b></div>
                     </div>
                 </div>
             </div>
