@@ -954,53 +954,66 @@ b.data { font-weight: 700; }
 
 .requirements { margin-top: 16px; font-size: 12px; color: var(--muted); }
 
-.phone {
-  width: min(100%, 272px);
-  flex: none;
-  background: #0E1C2B;
-  border-radius: 36px;
-  padding: 10px;
+/* A laptop, a tablet and a phone, each showing the app icon. Drawn in CSS: three frames need no
+   image request, and they stay sharp at any size. Everything is a percentage of the box, so the
+   group scales as one when the band narrows. The frames and the icon's vellum ground are the
+   same in both schemes, like a photograph would be. */
+.devices {
+  position: relative;
+  width: 400px;
+  aspect-ratio: 400 / 262;
   justify-self: center;
 }
-.phone-screen {
-  background: var(--surface);
-  border-radius: 28px;
-  padding: 18px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* Beside the copy the group takes its own width; once the band stacks it can only take the
+   band's. */
+@media (max-width: 860px) {
+  .devices { width: min(100%, 400px); }
 }
-.phone-title {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  padding: 4px 4px 0;
-}
-.phone-row {
+
+.device { position: absolute; }
+
+.device-screen {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface-alt);
+  justify-content: center;
+  width: 100%;
+  background: linear-gradient(160deg, #FFFFFF, #D9E1EC);
+  border: solid #0E1C2B;
 }
-/* The app's status treatment: the border carries the status as well as the badge. */
-.phone-row-over { border-color: var(--error-text); }
-.phone-row-due { border-color: var(--warn-text); }
-/* Block, not the default inline: an inline wrapper round a block <b> never claims the row's free
-   width, so the sub-line wrapped even with room to spare. */
-.phone-row > span:first-child { display: block; flex: 1; min-width: 0; }
-.phone-row .pill { flex: none; }
-.phone-row b {
+.device-screen img { height: auto; }
+
+.device-laptop { left: 8%; top: 0; width: 84%; }
+.device-laptop .device-screen {
+  aspect-ratio: 16 / 10;
+  border-width: 8px 8px 10px;
+  border-radius: 12px 12px 0 0;
+}
+.device-laptop img { width: 30%; }
+/* The base: wider than the lid, with the thumb notch a laptop has at its front edge. */
+.device-laptop::after {
+  content: '';
   display: block;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 13px;
-  color: var(--text);
+  width: 108%;
+  height: 11px;
+  margin-left: -4%;
+  border-radius: 2px 2px 10px 10px;
+  background:
+    linear-gradient(#0E1C2B, #0E1C2B) top center / 16% 4px no-repeat,
+    #3A4557;
 }
-.phone-row span { font-size: 11px; line-height: 1.4; color: var(--muted); }
+
+.device-tablet { left: 0; bottom: 0; width: 31%; }
+.device-tablet .device-screen { aspect-ratio: 3 / 4; border-width: 7px; border-radius: 14px; }
+.device-tablet img { width: 52%; }
+
+.device-phone { right: 3%; bottom: 0; width: 17.5%; }
+.device-phone .device-screen { aspect-ratio: 9 / 19; border-width: 5px; border-radius: 15px; }
+.device-phone img { width: 64%; }
+
+/* The tablet and phone stand in front of the laptop; a hairline of the band's colour separates
+   the dark frames where they overlap. */
+.device-tablet .device-screen,
+.device-phone .device-screen { box-shadow: 0 0 0 3px var(--accent-container); }
 
 /* ---------------------------------------------------------------- cross links */
 /* Six pages linking to each other is most of the internal structure this subdomain has (§7.7).
