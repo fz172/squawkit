@@ -960,14 +960,14 @@ b.data { font-weight: 700; }
    same in both schemes, like a photograph would be. */
 .devices {
   position: relative;
-  width: 400px;
+  width: 280px;
   aspect-ratio: 400 / 262;
   justify-self: center;
 }
 /* Beside the copy the group takes its own width; once the band stacks it can only take the
    band's. */
 @media (max-width: 860px) {
-  .devices { width: min(100%, 400px); }
+  .devices { width: min(100%, 280px); }
 }
 
 .device { position: absolute; }
@@ -985,8 +985,8 @@ b.data { font-weight: 700; }
 .device-laptop { left: 8%; top: 0; width: 84%; }
 .device-laptop .device-screen {
   aspect-ratio: 16 / 10;
-  border-width: 8px 8px 10px;
-  border-radius: 12px 12px 0 0;
+  border-width: 6px 6px 7px;
+  border-radius: 8px 8px 0 0;
 }
 .device-laptop img { width: 30%; }
 /* The base: wider than the lid, with the thumb notch a laptop has at its front edge. */
@@ -994,26 +994,26 @@ b.data { font-weight: 700; }
   content: '';
   display: block;
   width: 108%;
-  height: 11px;
+  height: 8px;
   margin-left: -4%;
-  border-radius: 2px 2px 10px 10px;
+  border-radius: 2px 2px 7px 7px;
   background:
-    linear-gradient(#0E1C2B, #0E1C2B) top center / 16% 4px no-repeat,
+    linear-gradient(#0E1C2B, #0E1C2B) top center / 16% 3px no-repeat,
     #3A4557;
 }
 
 .device-tablet { left: 0; bottom: 0; width: 31%; }
-.device-tablet .device-screen { aspect-ratio: 3 / 4; border-width: 7px; border-radius: 14px; }
+.device-tablet .device-screen { aspect-ratio: 3 / 4; border-width: 5px; border-radius: 10px; }
 .device-tablet img { width: 52%; }
 
 .device-phone { right: 3%; bottom: 0; width: 17.5%; }
-.device-phone .device-screen { aspect-ratio: 9 / 19; border-width: 5px; border-radius: 15px; }
+.device-phone .device-screen { aspect-ratio: 9 / 19; border-width: 4px; border-radius: 10px; }
 .device-phone img { width: 64%; }
 
 /* The tablet and phone stand in front of the laptop; a hairline of the band's colour separates
    the dark frames where they overlap. */
 .device-tablet .device-screen,
-.device-phone .device-screen { box-shadow: 0 0 0 3px var(--accent-container); }
+.device-phone .device-screen { box-shadow: 0 0 0 2px var(--accent-container); }
 
 /* ---------------------------------------------------------------- cross links */
 /* Six pages linking to each other is most of the internal structure this subdomain has (§7.7).
