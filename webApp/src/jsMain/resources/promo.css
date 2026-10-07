@@ -931,7 +931,7 @@ b.data { font-weight: 700; }
 
 .app-band {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 48px;
   align-items: center;
   background: var(--accent-container);
@@ -939,7 +939,7 @@ b.data { font-weight: 700; }
   padding: 56px 48px;
 }
 @media (max-width: 860px) {
-  .app-band { grid-template-columns: 1fr; padding: 32px 24px; gap: 32px; }
+  .app-band { grid-template-columns: minmax(0, 1fr); padding: 32px 24px; gap: 32px; }
 }
 .app-band h2 { font-size: clamp(24px, 3vw, 34px); color: var(--text); }
 .app-band .lede { max-width: 460px; margin-top: 16px; font-size: 16px; color: var(--text); }
@@ -980,7 +980,7 @@ b.data { font-weight: 700; }
 .requirements { margin-top: 16px; font-size: 12px; color: var(--muted); }
 
 .phone {
-  width: 272px;
+  width: min(100%, 272px);
   flex: none;
   background: #0E1C2B;
   border-radius: 36px;
@@ -1008,9 +1008,13 @@ b.data { font-weight: 700; }
   justify-content: space-between;
   gap: 8px;
   padding: 12px;
+  border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface-alt);
 }
+/* The app's status treatment: the border carries the status as well as the badge. */
+.phone-row-over { border-color: var(--error-text); }
+.phone-row-due { border-color: var(--warn-text); }
 /* Block, not the default inline: an inline wrapper round a block <b> never claims the row's free
    width, so the sub-line wrapped even with room to spare. */
 .phone-row > span:first-child { display: block; flex: 1; min-width: 0; }
@@ -1025,6 +1029,7 @@ b.data { font-weight: 700; }
 
 /* ---------------------------------------------------------------- cross links */
 /* Six pages linking to each other is most of the internal structure this subdomain has (§7.7).
+   Used by the vertical pages; the promo page links the five from its features list instead.
    Five cards fit one row inside .wrap at the minimum below; the cards stretch to the tallest so a
    two-line anchor does not leave its neighbours short. */
 .verticals {
