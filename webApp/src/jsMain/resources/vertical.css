@@ -4,7 +4,7 @@
  * section rhythm all come from there, and the five pages are deliberately the same page with
  * different content. What lives here is only what the promo page has no use for — the breadcrumb,
  * the single-column hero, the story band and the starter-pack table. The cross-link grid is in
- * promo.css because the promo page links the five verticals with it too.
+ * promo.css with the rest of the shared pieces.
  *
  * One stylesheet for all five is the point of SEO.1: five hand-written pages are cheap, five
  * divergent stylesheets are not. */
