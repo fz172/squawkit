@@ -21,6 +21,8 @@
   --error-text: #BA1A1A;
   --error-bg: #FFDAD6;
   --success: #276B39;
+  --ok-bg: #E3F1E6;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
   --card-shadow: 0 20px 44px rgba(0, 4, 24, 0.42);
 
   /* Same in both schemes. */
@@ -49,6 +51,7 @@
     --error-text: #FFB4AB;
     --error-bg: #93000A;
     --success: #81C784;
+    --ok-bg: #1E3A26;
   }
 }
 
@@ -63,6 +66,12 @@
   font-weight: 700;
   font-display: swap;
   src: url('fonts/space_grotesk_bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/jetbrains_mono_medium.woff2') format('woff2');
 }
 @font-face {
   font-family: 'JetBrains Mono';
@@ -245,25 +254,24 @@ img, svg { display: block; max-width: 100%; }
 .hero {
   background: var(--navy);
   color: var(--on-navy);
-  padding-block: 76px 84px;
+  padding-block: 88px 96px;
   overflow: hidden;
 }
 @media (max-width: 860px) {
-  .hero { padding-block: 40px 44px; }
+  .hero { padding-block: 44px 52px; }
 }
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
   gap: 56px;
   align-items: center;
 }
-@media (max-width: 960px) {
-  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
-}
 
 .hero h1 {
-  font-size: clamp(32px, 4.1vw, 50px);
+  font-size: clamp(32px, 5vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
   color: var(--on-navy);
 }
 .hero h1 .accent { color: var(--on-navy-accent); }
@@ -276,6 +284,29 @@ img, svg { display: block; max-width: 100%; }
   color: var(--on-navy-body);
 }
 
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* The accent blue is a link colour on white; on navy it fails contrast. These two are the navy
+   heroes' own pair, on this page and on the vertical pages. */
+.btn-light { background: var(--on-navy); color: var(--navy); }
+.btn-light:hover { background: var(--on-navy-body); color: var(--navy); }
+
+.btn-outline-light {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.38);
+  color: var(--on-navy);
+}
+.btn-outline-light:hover { border-color: var(--on-navy); color: var(--on-navy); }
+
+/* The promo hero has no sub-line, so its two buttons are the whole call to action. */
+.hero .btn { height: 48px; padding-inline: 24px; font-size: 15px; }
+
+/* Used by the vertical pages' heroes; the promo hero leads with its buttons instead. */
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -298,94 +329,58 @@ img, svg { display: block; max-width: 100%; }
 }
 .chips svg { width: 16px; height: 16px; color: var(--on-navy-accent); }
 
-/* --- the floating preview stage ---------------------------------------
-   Six cards from the app, fanned out. Decorative: the real content is the
-   copy beside it, so the stage is aria-hidden and the cards carry no
-   headings. Sized in a fixed 560x470 box and scaled down as the column
-   narrows, so the composition never reflows into a pile. */
+/* Type in the previews follows the app (DESIGN.md §3): Space Grotesk for a thing's name, the
+   system face for labels and badges, and JetBrains Mono only for an identifier or a meter
+   reading — never for a label, a date or a badge. */
 
-.stage-wrap { display: flex; justify-content: center; }
+/* --- the preview stage --------------------------------------------------
+   Five cards from the app in two columns, each tilted a degree or two and
+   nudged over its neighbour. Decorative: the real content is the copy beside
+   it, so the stage is aria-hidden and the cards carry no headings. The cards
+   are in flow, so the columns narrow with the hero instead of being scaled. */
 
 .stage {
-  position: relative;
-  width: 560px;
-  height: 470px;
-  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
 }
+
+.stage-col { display: flex; flex-direction: column; gap: 14px; }
+.stage-col:first-child { padding-top: 36px; }
 
 .card {
-  position: absolute;
+  position: relative;
   background: var(--surface);
-  border-radius: 14px;
-  box-shadow: var(--card-shadow);
-  overflow: hidden;
-}
-
-.card-meters  { left: 306px; top: 0;    width: 254px; z-index: 2; transform: rotate(2.2deg); }
-.card-fleet   { left: 0;     top: 56px; width: 300px; z-index: 3; transform: rotate(-1.6deg); }
-.card-toast   { left: 300px; top: 80px; width: 260px; z-index: 5; transform: rotate(-1.4deg); }
-.card-next    { left: 298px; top: 190px; width: 262px; z-index: 4; transform: rotate(1.6deg); }
-.card-shared  { left: 2px;   top: 290px; width: 268px; z-index: 6; transform: rotate(1.8deg); }
-.card-log     { left: 104px; top: 352px; width: 292px; z-index: 7; transform: rotate(-2deg); }
-
-/* Once the hero stacks there is no wide column to fan six cards across, so the stage switches to
-   the mock's mobile composition: three cards in a 342x392 box (artboard 1b). The rest are dropped
-   rather than shrunk — they are decorative, and every word in them is real copy further down. */
-@media (max-width: 960px) {
-  .stage { width: 342px; height: 392px; margin-top: 28px; }
-  .card-next, .card-shared, .card-log { display: none; }
-  .card-fleet  { left: 0;    top: 0;    width: 300px; }
-  .card-meters { left: 42px; top: 238px; width: 300px; }
-  .card-toast  { left: 20px; top: 318px; width: 296px; }
-}
-
-/* Narrower than the composition itself: scale it down as a unit, and take the same factor off the
-   wrapper's height so the section below does not inherit a gap. */
-@media (max-width: 400px) {
-  .stage { transform: scale(0.88); transform-origin: top center; height: 345px; }
-}
-
-.meters { display: flex; gap: 12px; padding: 15px 16px; }
-.meters div { flex: 1; min-width: 0; }
-.meter-value {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 19px;
-  font-weight: 700;
   color: var(--text);
-  letter-spacing: -0.2px;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
 }
-.meter-label {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.6px;
-  color: var(--muted);
-  margin-top: 2px;
-}
+
+.card-fleet  { z-index: 2; transform: rotate(-2.5deg); overflow: hidden; }
+.card-log    { z-index: 3; transform: rotate(1.5deg) translate(28px, -6px); }
+.card-meters { z-index: 1; transform: rotate(2deg); }
+.card-toast  { z-index: 4; transform: rotate(-1deg) translateX(-24px); }
+.card-next   { z-index: 1; transform: rotate(1.5deg) translateY(4px); }
 
 .card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 13px 10px;
+  padding: 14px 16px;
 }
 .card-head b {
   font-family: 'Space Grotesk', system-ui, sans-serif;
   font-size: 14px;
-  line-height: 1.3;
-  color: var(--text);
+  font-weight: 600;
 }
-.card-head span {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--accent);
-}
+.card-head span { font-size: 11px; font-weight: 500; color: var(--accent); }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 13px;
+  gap: 12px;
+  padding: 12px 16px;
   border-top: 1px solid var(--line);
 }
 .row-icon {
@@ -395,7 +390,7 @@ img, svg { display: block; max-width: 100%; }
   width: 32px;
   height: 32px;
   flex: none;
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--accent-container);
   color: var(--accent);
 }
@@ -403,79 +398,109 @@ img, svg { display: block; max-width: 100%; }
 .row-body { flex: 1; min-width: 0; }
 .row-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 7px;
+  gap: 0 6px;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   font-size: 14px;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--text);
+  font-weight: 600;
+  line-height: 1.35;
 }
-.row-title small { font-family: inherit; font-size: 10px; font-weight: 500; color: var(--muted); }
-.row-sub { font-size: 12px; line-height: 1.35; color: var(--muted); }
+.row-title small { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--muted); }
+.row-sub { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); }
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+.card-foot svg { width: 18px; height: 18px; flex: none; color: var(--accent); }
 
 .pill {
-  padding: 3px 7px;
+  flex: none;
+  padding: 3px 6px;
   border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
+  line-height: 1.4;
   white-space: nowrap;
 }
 .pill-due { background: var(--warn-bg); color: var(--warn-text); }
-.pill-ok { color: var(--success); }
+.pill-ok { background: var(--ok-bg); color: var(--success); }
+.pill-over { background: var(--error-bg); color: var(--error-text); }
 
-.mini { display: flex; align-items: center; gap: 11px; padding: 13px 15px; }
-.mini-title { font-size: 13px; font-weight: 600; color: var(--text); }
-.mini-sub { font-size: 10px; letter-spacing: 0.4px; color: var(--muted); }
-.mini svg { width: 20px; height: 20px; flex: none; }
+.card-log { padding: 14px 16px; }
+.log-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+.log-head small { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 500; color: var(--muted); }
+.card-log p { margin-top: 4px; font-size: 13px; }
+.log-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.log-meta svg { width: 14px; height: 14px; flex: none; }
 
-.next { padding: 14px 16px; }
+.card-meters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 16px;
+}
+.meter-value { font-family: var(--mono); font-size: 16px; font-weight: 700; line-height: 1.3; }
+.meter-label { font-size: 10px; letter-spacing: 0.5px; color: var(--muted); }
+
+.card-toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+.card-toast > svg { width: 20px; height: 20px; flex: none; color: var(--success); }
+.toast-title { font-size: 13px; font-weight: 500; }
+.toast-sub { font-size: 11px; color: var(--muted); }
+.toast-sub span { font-family: var(--mono); font-weight: 500; }
+
+.card-next { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
 .next-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--muted);
-  margin-bottom: 4px;
 }
+.next-head svg { width: 18px; height: 18px; color: var(--accent); }
 .next-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 6px 0;
-  font-size: 12px;
-  color: var(--text);
+  font-size: 13px;
+  line-height: 1.3;
 }
-.next-row b { font-size: 11px; font-weight: 700; }
+.next-row b { font-weight: 700; white-space: nowrap; }
 .next-row .over { color: var(--error-text); }
 .next-row .soon { color: var(--warn-text); }
 
-.logcard { padding: 13px 15px; }
-.logcard-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
+/* Two columns of cards do not fit a phone: one column, and the two cards that only repeat the
+   others are dropped rather than shrunk — every word in them is real copy further down. */
+@media (max-width: 560px) {
+  .stage { grid-template-columns: 1fr; padding-inline: 8px; }
+  .stage-col:first-child { padding-top: 0; }
+  .card-log, .card-next { display: none; }
+  .card-fleet { transform: rotate(-1.5deg); }
+  .card-toast { transform: rotate(-1deg); }
 }
-.logcard-head small { font-family: inherit; font-size: 10px; font-weight: 500; color: var(--muted); }
-.logcard p { font-size: 12px; color: var(--text); margin-top: 4px; }
-.logcard-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--muted);
-}
-.logcard-meta svg { width: 15px; height: 15px; }
 
 /* ---------------------------------------------------------------- sections */
 
@@ -687,7 +712,6 @@ img, svg { display: block; max-width: 100%; }
   color: var(--text);
 }
 .phone-row span { font-size: 11px; line-height: 1.4; color: var(--muted); }
-.pill-over { background: var(--error-bg); color: var(--error-text); }
 
 /* ---------------------------------------------------------------- cross links */
 /* Six pages linking to each other is most of the internal structure this subdomain has (§7.7).

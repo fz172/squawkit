@@ -9,6 +9,7 @@ drift onto different cuts, and so the page has no third-party origin — see
 |------|------|--------|----------|
 | `space_grotesk_semibold.woff2` | Space Grotesk | SemiBold (600) | card and feature titles, buttons |
 | `space_grotesk_bold.woff2` | Space Grotesk | Bold (700) | headings, the wordmark |
+| `jetbrains_mono_medium.woff2` | JetBrains Mono | Medium (500) | meter readings and dates in the preview cards |
 | `jetbrains_mono_bold.woff2` | JetBrains Mono | Bold (700) | section eyebrows, meter labels |
 
 ## Source and licence
@@ -31,7 +32,8 @@ python - <<'EOF'
 from fontTools.ttLib import TTFont
 src = "core/ui/theme/src/commonMain/composeResources/font"
 dst = "webApp/src/jsMain/resources/fonts"
-for name in ("space_grotesk_semibold", "space_grotesk_bold", "jetbrains_mono_bold"):
+for name in ("space_grotesk_semibold", "space_grotesk_bold", "jetbrains_mono_medium",
+             "jetbrains_mono_bold"):
     f = TTFont(f"{src}/{name}.ttf")
     f.flavor = "woff2"
     f.save(f"{dst}/{name}.woff2")

@@ -53,26 +53,6 @@
 
 .hero-simple .hero-sub { max-width: 62ch; }
 
-.hero-cta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 30px;
-}
-
-/* The accent blue is a link colour on white; on navy it fails contrast. These two are the hero's
-   own pair and exist nowhere else. */
-.btn-light { background: var(--on-navy); color: var(--navy); }
-.btn-light:hover { background: var(--on-navy-body); color: var(--navy); }
-
-.btn-outline-light {
-  background: transparent;
-  border-color: rgba(255, 255, 255, 0.38);
-  color: var(--on-navy);
-}
-
-.btn-outline-light:hover { border-color: var(--on-navy); color: var(--on-navy); }
-
 /* ---------------------------------------------------------------- story */
 .story {
   max-width: 64ch;
