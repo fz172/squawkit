@@ -65,4 +65,56 @@
       if (event.matches) setOpen(false);
     });
   }
+
+  // --- feature stepper ----------------------------------------------------
+  // Six features share one preview panel. The markup works as a plain list with every description
+  // open; this collapses it to one open step at a time and swaps the pane to match.
+  const stepper = document.getElementById('stepper');
+
+  if (stepper) {
+    const steps = Array.from(stepper.querySelectorAll('.step'));
+    const panes = Array.from(stepper.querySelectorAll('.pane'));
+    const counter = stepper.querySelector('.pane-counter');
+
+    const pad = function (/** @type {number} */ n) {
+      return String(n).padStart(2, '0');
+    };
+
+    const show = function (/** @type {number} */ active) {
+      steps.forEach(function (step, i) {
+        step.classList.toggle('is-active', i === active);
+        step.classList.toggle('is-done', i < active);
+        const head = step.querySelector('.step-head');
+        if (!head) return;
+        if (i === active) head.setAttribute('aria-current', 'step');
+        else head.removeAttribute('aria-current');
+      });
+      panes.forEach(function (pane, i) {
+        pane.classList.toggle('is-active', i === active);
+        pane.classList.toggle('is-before', i < active);
+      });
+      if (counter) counter.textContent = pad(active + 1) + ' / ' + pad(steps.length);
+    };
+
+    // Switching steps must not change the section's height, so the open description always takes
+    // the height of the tallest one. Descriptions wrap differently at every width, hence measured
+    // rather than fixed, and measured again whenever the column is resized.
+    const reserve = function () {
+      let tallest = 0;
+      stepper.querySelectorAll('.step-body p').forEach(function (p) {
+        if (p instanceof HTMLElement) tallest = Math.max(tallest, p.offsetHeight);
+      });
+      stepper.style.setProperty('--step-body-h', tallest + 'px');
+    };
+
+    steps.forEach(function (step, i) {
+      const head = step.querySelector('.step-head');
+      if (head) head.addEventListener('click', function () { show(i); });
+    });
+
+    reserve();
+    window.addEventListener('resize', reserve);
+    stepper.setAttribute('data-enhanced', 'true');
+    show(0);
+  }
 })();
