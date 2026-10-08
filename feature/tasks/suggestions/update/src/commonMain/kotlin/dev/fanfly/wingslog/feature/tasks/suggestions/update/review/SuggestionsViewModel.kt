@@ -655,7 +655,10 @@ class SuggestionsViewModel(
 
     /** A title as the tracked check compares it: trimmed, single-spaced, lower case. */
     fun normalizeTitle(title: String): String = title.trim()
-      .replace(Regex("\\s+"), " ")
+      .replace(WHITESPACE, " ")
       .lowercase()
+
+    /** Compiled once: every card's title is normalized each time the run says something. */
+    val WHITESPACE = Regex("\\s+")
   }
 }

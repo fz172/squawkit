@@ -42,8 +42,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeoutOrNull
+import okio.ByteString
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -121,9 +122,20 @@ class TaskSuggestionManagerImpl(
     return result
   }
 
-  override fun observeRun(thingId: String): Flow<SuggestionRun> =
+  override fun observeRun(thingId: String): Flow<SuggestionRun> = flow {
+    // A working run says each stage in a snapshot that carries the same result, so the result is
+    // decoded when its bytes change, not once per snapshot.
+    var encoded: ByteString? = null
+    var decoded: SuggestTasksResult? = null
     client.observeLatest(KIND, ThingId(value_ = thingId))
-      .map { job -> job?.toRun(clock.now()) ?: SuggestionRun.Idle }
+      .collect { job ->
+        if (job?.result != encoded) {
+          encoded = job?.result
+          decoded = encoded?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
+        }
+        emit(job?.toRun(clock.now(), decoded) ?: SuggestionRun.Idle)
+      }
+  }
 
   override suspend fun draftOf(
     thingId: String,
@@ -246,9 +258,8 @@ class TaskSuggestionManagerImpl(
       )
     }
 
-    fun AiJob.toRun(now: Instant): SuggestionRun {
-      val decoded =
-        result?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
+    /** The job as a run; [decoded] is its result, or null when it has none or it did not decode. */
+    fun AiJob.toRun(now: Instant, decoded: SuggestTasksResult?): SuggestionRun {
       return when (status) {
         AiJobStatus.AI_JOB_STATUS_SUCCEEDED ->
           if (decoded != null) {
