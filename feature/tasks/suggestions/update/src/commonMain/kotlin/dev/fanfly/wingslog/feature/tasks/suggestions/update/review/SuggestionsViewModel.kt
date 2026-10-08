@@ -448,13 +448,13 @@ class SuggestionsViewModel(
   private var editingId: String? = null
 
   /**
-   * The draft argument for changing card [index] in the task form before adding it (PRD R28):
-   * the user's earlier edit, or the suggestion as accepting would write it. Null for a card with
-   * no id to come back to.
+   * The draft argument for changing card [id] in the task form before adding it (PRD R28):
+   * the user's earlier edit, or the suggestion as accepting would write it. Null when the card is
+   * gone, or has no id to come back to.
    */
-  suspend fun draftFor(index: Int): String? {
-    val item = uiState.value.items.getOrNull(index) ?: return null
-    editingId = item.suggestion.suggestion_id?.value_ ?: return null
+  suspend fun draftFor(id: String): String? {
+    val item = itemOf(id) ?: return null
+    editingId = id
     val draft = item.edited ?: suggestionManager.draftOf(
       thingId,
       item.suggestion,
@@ -471,7 +471,7 @@ class SuggestionsViewModel(
     _uiState.update { state ->
       state.copy(
         items = state.items.map { item ->
-          if (item.suggestion.suggestion_id?.value_ == id) item.copy(
+          if (item.id == id) item.copy(
             edited = edited,
             selected = true
           ) else item
@@ -484,18 +484,18 @@ class SuggestionsViewModel(
   private val editing = Mutex()
 
   /** The row's meter interval, changed in place (1d): "every 50 hrs" becomes [interval]. */
-  fun onMeterIntervalChange(index: Int, interval: Float) {
+  fun onMeterIntervalChange(id: String, interval: Float) {
     if (interval <= 0f) return
-    editRules(index) { rule ->
+    editRules(id) { rule ->
       rule.meter_rule?.let { rule.copy(meter_rule = it.copy(interval = interval)) }
         ?: rule
     }
   }
 
   /** The row's calendar interval, changed in place, in months; years fold into them. */
-  fun onMonthsChange(index: Int, months: Int) {
+  fun onMonthsChange(id: String, months: Int) {
     if (months <= 0) return
-    editRules(index) { rule ->
+    editRules(id) { rule ->
       rule.time_rule?.takeIf { it.interval_days == 0 }
         ?.let {
           rule.copy(
@@ -510,9 +510,9 @@ class SuggestionsViewModel(
   }
 
   /** The row's calendar interval, changed in place, for a rule kept in days. */
-  fun onDaysChange(index: Int, days: Int) {
+  fun onDaysChange(id: String, days: Int) {
     if (days <= 0) return
-    editRules(index) { rule ->
+    editRules(id) { rule ->
       rule.time_rule?.takeIf { it.interval_days > 0 }
         ?.let { rule.copy(time_rule = it.copy(interval_days = days)) }
         ?: rule
@@ -520,22 +520,17 @@ class SuggestionsViewModel(
   }
 
   /**
-   * Changes card [index]'s rules in place, as the task form's draft mode would (PRD R28): the user's
+   * Changes card [id]'s rules in place, as the task form's draft mode would (PRD R28): the user's
    * earlier edit, or the suggestion as accepting would write it, with [change] applied to each
    * rule. A changed card is checked, as one edited in the form is.
    */
   private fun editRules(
-    index: Int,
+    id: String,
     change: (InspectionRule) -> InspectionRule
   ) {
-    val id =
-      uiState.value.items.getOrNull(index)?.suggestion?.suggestion_id?.value_
-        ?: return
     viewModelScope.launch {
       editing.withLock {
-        val item =
-          uiState.value.items.firstOrNull { it.suggestion.suggestion_id?.value_ == id }
-            ?: return@withLock
+        val item = itemOf(id) ?: return@withLock
         val base = item.edited ?: suggestionManager.draftOf(
           thingId,
           item.suggestion,
@@ -545,7 +540,7 @@ class SuggestionsViewModel(
         _uiState.update { state ->
           state.copy(
             items = state.items.map {
-              if (it.suggestion.suggestion_id?.value_ == id) {
+              if (it.id == id) {
                 it.copy(edited = edited, selected = true)
               } else {
                 it
@@ -557,11 +552,12 @@ class SuggestionsViewModel(
     }
   }
 
-  fun onToggle(index: Int) {
+  fun onToggle(id: String) {
+    if (id.isEmpty()) return
     _uiState.update { state ->
       state.copy(
-        items = state.items.mapIndexed { i, item ->
-          if (i == index) item.copy(selected = !item.selected) else item
+        items = state.items.map { item ->
+          if (item.id == id) item.copy(selected = !item.selected) else item
         }
       )
     }
@@ -569,18 +565,23 @@ class SuggestionsViewModel(
 
   /**
    * *Select all* on a section: every row in it picked, or, once they all are, *Clear*: none.
-   * [indices] are the section's rows ([CardGroup.cards]).
+   * [ids] are the section's rows ([CardGroup.cards]).
    */
-  fun onToggleGroup(indices: List<Int>) {
+  fun onToggleGroup(ids: List<String>) {
+    val group = ids.filterTo(mutableSetOf()) { it.isNotEmpty() }
     _uiState.update { state ->
-      val select = indices.any { state.items.getOrNull(it)?.selected == false }
+      val select = state.items.any { it.id in group && !it.selected }
       state.copy(
-        items = state.items.mapIndexed { i, item ->
-          if (i in indices) item.copy(selected = select) else item
+        items = state.items.map { item ->
+          if (item.id in group) item.copy(selected = select) else item
         },
       )
     }
   }
+
+  /** The card on screen known by [id]; null when it is gone, or [id] is empty. */
+  private fun itemOf(id: String): SuggestionItem? =
+    id.takeIf { it.isNotEmpty() }?.let { uiState.value.items.firstOrNull { item -> item.id == it } }
 
   fun onAccept() {
     val state = uiState.value
@@ -748,15 +749,15 @@ class SuggestionsViewModel(
       result: SuggestTasksResult,
       shown: List<SuggestionItem>
     ): List<SuggestionItem> {
-      val chosenIds = shown.filter { it.selected }
-        .mapTo(mutableSetOf()) { it.suggestion.suggestion_id?.value_ }
+      val before = shown.filter { it.id.isNotEmpty() }
+        .associateBy { it.id }
       return result.suggestions.map { suggestion ->
-        val id = suggestion.suggestion_id?.value_
+        val was = before[suggestion.suggestion_id?.value_.orEmpty()]
         SuggestionItem(
           suggestion = suggestion,
-          selected = id in chosenIds,
+          selected = was?.selected == true,
           // The user's edit stays with its card when the model's answer replaces the list (R28).
-          edited = shown.firstOrNull { it.suggestion.suggestion_id?.value_ == id }?.edited,
+          edited = was?.edited,
         )
       }
     }
