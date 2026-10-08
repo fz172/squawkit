@@ -193,18 +193,23 @@ export function planAiStart(
   return decision.allowed ? { run: "ai", access: decision } : { run: "refused", decision };
 }
 
-/** `authorizeAiCall` for `startAiJob`: the same checks, planned by `planAiStart`. */
+/**
+ * `authorizeAiCall` for `startAiJob`: the same checks, planned by `planAiStart`. `decision` is
+ * what a model run was answered, whichever way the plan went: a curated-only start passes it on,
+ * so the client need not ask `getAiEligibility` as well.
+ */
 export async function authorizeAiStart(
   request: CallableRequest<unknown>,
   target: { hostUid: string; thingId: string; withDocuments: boolean; curatedOnly: boolean; offersCuratedOnly: boolean },
   now: Date = new Date(),
-): Promise<Exclude<AiStartPlan, { run: "refused" }> & { callerUid: string }> {
+): Promise<Exclude<AiStartPlan, { run: "refused" }> & { callerUid: string; decision: AiAccessDecision }> {
   const { uid } = requireSignedInApp(request);
   const access: AiAccessRequest = { callerUid: uid, hostUid: target.hostUid, thingId: target.thingId, withDocuments: target.withDocuments };
   const facts = await loadAiAccessFacts(access, now);
-  const plan = planAiStart(decideAiAccess(access, facts, now), facts.isMember, target);
+  const decision = decideAiAccess(access, facts, now);
+  const plan = planAiStart(decision, facts.isMember, target);
   if (plan.run === "refused") throw aiAccessError(plan.decision);
-  return { ...plan, callerUid: uid };
+  return { ...plan, callerUid: uid, decision };
 }
 
 /**

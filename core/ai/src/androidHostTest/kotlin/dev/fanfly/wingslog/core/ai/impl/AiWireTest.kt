@@ -35,7 +35,8 @@ class AiWireTest {
     )
     assertThat(serializer<StartResponse>().descriptor.elementNames.toList()).containsExactly(
       "jobId",
-      "joined"
+      "joined",
+      "ai"
     )
     assertThat(serializer<CloseRequest>().descriptor.elementNames.toList()).containsExactly(
       "jobId"

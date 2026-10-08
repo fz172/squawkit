@@ -149,7 +149,7 @@ describe("startAiJob", () => {
     const first = await start(t.host, t);
     const { dispatched, dispatch } = recorder();
 
-    expect(await start(t.host, t, dispatch)).toEqual({ jobId: first.jobId, joined: true });
+    expect(await start(t.host, t, dispatch)).toEqual({ jobId: first.jobId, joined: true, ai: null });
     expect(dispatched).toEqual([]);
   });
 
@@ -255,6 +255,43 @@ describe("startAiJob", () => {
     expect((await start(t.host, t)).joined).toBe(false);
   });
 
+  it("answers a curated-only request with whether a model run can start, as eligibility would", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    await makePro(t.host);
+
+    const started = await startRequest(t.member, encoded(t, 0, "airplane", true));
+
+    expect(started.ai).toEqual({ allowed: true, reason: null, documentsAllowed: true, nextAvailableAt: null });
+    expect(started.ai).toEqual(await eligibility(t.member, t));
+  });
+
+  it("answers a curated-only request with why the model cannot run, and when it can", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    await adminDb.doc(aiUsageDocPath(t.host, t.thing)).set({
+      lastSuccessAt: Timestamp.fromMillis(NOW.getTime() - 60 * MINUTE),
+      inFlightJob: null,
+    });
+
+    const { jobId, ai } = await startRequest(t.host, encoded(t, 0, "airplane", true));
+
+    expect(ai).toEqual({
+      allowed: false,
+      reason: "daily_limit",
+      documentsAllowed: false,
+      nextAvailableAt: new Date(NOW.getTime() + 23 * 60 * MINUTE).toISOString(),
+    });
+    // The curated list was asked for, not fallen back to, so the job itself says nothing skipped.
+    expect((await adminDb.doc(aiJobDocPath(t.host, jobId)).get()).get("aiSkipped")).toBeNull();
+  });
+
+  it("says nothing about eligibility on a model run", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    expect((await start(t.host, t)).ai).toBeNull();
+  });
+
   it("ends a curated-only request EMPTY for a template with no curated list", async () => {
     const t = ids();
     await seedSharedThing(t);
@@ -270,7 +307,7 @@ describe("startAiJob", () => {
     await seedSharedThing(t);
     const running = await start(t.host, t);
 
-    expect(await startRequest(t.host, encoded(t, 0, "airplane", true))).toEqual({ jobId: running.jobId, joined: true });
+    expect(await startRequest(t.host, encoded(t, 0, "airplane", true))).toMatchObject({ jobId: running.jobId, joined: true });
   });
 
   it("still refuses a curated-only request from outside the share", async () => {

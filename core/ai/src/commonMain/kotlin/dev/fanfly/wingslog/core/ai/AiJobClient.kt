@@ -95,8 +95,16 @@ data class AiEligibility(
 )
 
 sealed interface AiStartResult {
-  /** [joined] when this is the caller's own run already in flight. */
-  data class Started(val jobId: AiJobId, val joined: Boolean) : AiStartResult
+  /**
+   * [joined] when this is the caller's own run already in flight. [eligibility] comes with a
+   * curated-only start: whether a model run could start now, so the caller need not ask
+   * [AiJobClient.eligibility] as well. Null on a model run, and from a server that does not say.
+   */
+  data class Started(
+    val jobId: AiJobId,
+    val joined: Boolean,
+    val eligibility: AiEligibility? = null,
+  ) : AiStartResult
 
   /** The server said no, and why. */
   data class Refused(val reason: AiErrorCode, val nextAvailableAt: Instant?) :

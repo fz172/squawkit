@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiSkipped
@@ -197,7 +198,7 @@ class SuggestionsViewModel(
         .first() == SuggestEntry.Available
     ) {
       // Beside the cards, which arrive meanwhile: the sheet must not open before this is known.
-      viewModelScope.launch { checkAi() }
+      viewModelScope.launch { checkAi(started.eligibility) }
     }
     follow(template)
   }
@@ -290,13 +291,16 @@ class SuggestionsViewModel(
   }
 
   /**
-   * Asks, once the curated list is up, whether a model run can start, before offering the AI button.
+   * Whether a model run can start, once the curated list is up, before offering the AI button.
    * When it cannot (the daily limit, another member's run, …) the screen says why and when, and
-   * offers no button.
+   * offers no button. [known] is the answer the curated start came back with; an older server
+   * sends none, and is asked.
    */
-  private suspend fun checkAi() {
-    _uiState.update { it.copy(isCheckingAi = true) }
-    val eligibility = suggestionManager.eligibility(thingId)
+  private suspend fun checkAi(known: AiEligibility?) {
+    val eligibility = known ?: run {
+      _uiState.update { it.copy(isCheckingAi = true) }
+      suggestionManager.eligibility(thingId)
+    }
     _uiState.update {
       if (eligibility.allowed) {
         it.copy(isCheckingAi = false, canSuggest = true)
