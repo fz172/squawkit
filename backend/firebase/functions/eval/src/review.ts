@@ -114,14 +114,14 @@ function renderRun(run: string): string {
     if (suggestions.length > 0) {
       const matchOf = new Map(score.matches.map((m) => [m.suggestion, m]));
       lines.push(
-        "| # | Suggestion | Component | Schedule | First due | Source | Pre-selected | Matched expected |",
-        "|---|---|---|---|---|---|---|---|",
+        "| # | Suggestion | Component | Schedule | First due | Source | Matched expected |",
+        "|---|---|---|---|---|---|---|",
       );
       suggestions.forEach((s, i) => {
         const m = matchOf.get(s.title);
         const matched = m ? `${m.expected}${m.intervalOk ? "" : " (interval differs)"}${m.citationOk === false ? " (wrong page)" : ""}` : "—";
         lines.push(
-          `| ${i + 1} | ${cell(s.title)}${s.matchesExistingTaskId ? " *(already tracked)*" : ""} | ${cell(component(s))} | ${cell(schedule(s))} | ${cell(firstDue(s))} | ${cell(source(s))} | ${s.preselect ? "yes" : "no"} | ${cell(matched)} |`,
+          `| ${i + 1} | ${cell(s.title)}${s.matchesExistingTaskId ? " *(already tracked)*" : ""} | ${cell(component(s))} | ${cell(schedule(s))} | ${cell(firstDue(s))} | ${cell(source(s))} | ${cell(matched)} |`,
         );
       });
       lines.push("");

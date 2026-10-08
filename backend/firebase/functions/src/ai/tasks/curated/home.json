@@ -12,7 +12,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -30,7 +29,6 @@
           "dayOfMonth": 0
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -48,7 +46,6 @@
           "dayOfMonth": 0
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -63,7 +60,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -78,7 +74,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -93,7 +88,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -108,7 +102,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -125,7 +118,6 @@
           "dayOfMonth": 0
         }
       ],
-      "preselect": false,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -140,7 +132,6 @@
           "unit": "months"
         }
       ],
-      "preselect": false,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -155,7 +146,6 @@
           "unit": "months"
         }
       ],
-      "preselect": false,
       "sourceKind": "common_practice",
       "citation": ""
     }

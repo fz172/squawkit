@@ -27,19 +27,28 @@ export const schemaRule: Validator = (drafts, { context }) => {
 };
 
 /** 2. Meters (R23): only the Thing's meter keys; a task left with no rule goes on-condition. */
-export const meterRule: Validator = (drafts, { context }) => {
-  const meters = new Set(context.meters.map((m) => m.key));
-  return drafts.map((d) => {
-    const dropped = d.rules.filter((r) => r.kind === "meter" && !meters.has(r.meterKey));
-    if (dropped.length === 0) return d;
-    const kept = d.rules.filter((r) => !dropped.includes(r));
-    if (kept.length > 0) return { ...d, rules: kept };
-    const untracked = dropped
-      .map((r) => (r.kind === "meter" ? `every ${r.interval} ${r.meterKey.replace(/_/g, " ")}` : ""))
-      .join(" or ");
-    return { ...d, rules: [{ kind: "on_condition", description: capitalize(untracked) }] };
+export const meterRule: Validator = (drafts, { context }) =>
+  drafts.map((d) => {
+    const rules = fitMeterRules(d.rules, context);
+    return rules === d.rules ? d : { ...d, rules };
   });
-};
+
+/**
+ * [rules] without the meter rules on a meter the Thing lacks; when none is left, one on-condition
+ * rule that says what was untracked. The same array when nothing is dropped. Shared with the
+ * curated list, whose items are fitted by the same rule without being drafts.
+ */
+export function fitMeterRules(rules: SuggestedRule[], context: ValidationInput["context"]): SuggestedRule[] {
+  const meters = new Set(context.meters.map((m) => m.key));
+  const dropped = rules.filter((r) => r.kind === "meter" && !meters.has(r.meterKey));
+  if (dropped.length === 0) return rules;
+  const kept = rules.filter((r) => !dropped.includes(r));
+  if (kept.length > 0) return kept;
+  const untracked = dropped
+    .map((r) => (r.kind === "meter" ? `every ${r.interval} ${r.meterKey.replace(/_/g, " ")}` : ""))
+    .join(" or ");
+  return [{ kind: "on_condition", description: capitalize(untracked) }];
+}
 
 /**
  * Source-backed rules (R16): a document suggestion keeps only rules its document states. A time
@@ -150,22 +159,7 @@ export const firstDueRule: Validator = (drafts, { context, today }) =>
     return { ...d, firstDue: date || meter ? { date, meter } : null };
   });
 
-/** 6. Pre-selection (R27). */
-export const preselectRule: Validator = (drafts, { context, documents }) =>
-  drafts.map((d) => {
-    const doc = d.evidence.documentIndex === null ? undefined : documents[d.evidence.documentIndex];
-    let preselect: boolean;
-    if (d.matchesExistingTaskId) preselect = false;
-    // A one-time item the Thing has already passed (a first service at 600 mi on a bike at
-    // 1,200) is shown, since it may not have been done, but not ticked.
-    else if (alreadyPassed(d, context)) preselect = false;
-    else if (doc && !doc.matchesThing) preselect = false;
-    else if (d.sourceKind === "document" || d.sourceKind === "logs") preselect = true;
-    else preselect = context.templateId !== "airplane";
-    return { ...d, preselect };
-  });
-
-/** 7. Confidence (R21a): weak items are dropped, never shown as weak. */
+/** 6. Confidence (R21a): weak items are dropped, never shown as weak. */
 export const confidenceRule: Validator = (drafts) => drafts.filter((d) => d.confidence !== "low");
 
 export const VALIDATORS: Validator[] = [
@@ -177,7 +171,6 @@ export const VALIDATORS: Validator[] = [
   dedupIdsRule,
   lastDoneRule,
   firstDueRule,
-  preselectRule,
   confidenceRule,
 ];
 
@@ -241,13 +234,6 @@ function typeRule(r: FlatRule): SuggestedRule | null {
     case "on_condition":
       return { kind: "on_condition", description: r.description ?? "" };
   }
-}
-
-function alreadyPassed(d: Draft, context: ValidationInput["context"]): boolean {
-  const due = d.firstDue?.meter;
-  if (!due) return false;
-  const current = context.meters.find((m) => m.key === due.meterKey)?.current;
-  return current !== null && current !== undefined && current > due.value;
 }
 
 const DAYS: Record<string, number> = { days: 1, weeks: 7, months: 30.4375, years: 365.25 };

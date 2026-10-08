@@ -163,8 +163,10 @@ message TaskSuggestion {
     // The `static_pack` index a suggestion replaced. The server merges since 2026-10-02 (R25).
     reserved 19;
     reserved "merges_static_index";
-    // Whether the review ticks it by default. The server applies PRD R27.
-    bool preselect = 20;
+    // Whether the review ticked it by default. Nothing starts checked since 2026-10-03 (PRD R27),
+    // and the app stopped reading it then.
+    reserved 20;
+    reserved "preselect";
     // Set only on a one-time item that says when it falls due.
     FirstDue first_due = 21;
     // The document pages it cites, 1-based PDF page numbers, for opening the document there (R30).

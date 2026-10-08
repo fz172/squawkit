@@ -130,7 +130,6 @@ describe("resultToProto", () => {
     matchesExistingTaskId: "",
     intervalDifferenceNote: "",
     mergesStaticIndex: -1,
-    preselect: true,
     originKind: "ai_document",
   };
   const result: SuggestTasksResult = {
@@ -163,7 +162,6 @@ describe("resultToProto", () => {
       rules: [{ meterRule: { meterKey: "engine_hours", interval: 200 } }],
       lastDone: { logId: { value: "log-1" }, date: "2026-05-02", reading: { meterKey: "engine_hours", value: 380 } },
       matchesExistingTaskId: undefined,
-      preselect: true,
       originKind: TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT,
     });
     expect(second).toMatchObject({

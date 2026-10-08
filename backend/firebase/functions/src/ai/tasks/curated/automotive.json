@@ -17,7 +17,6 @@
           "interval": 5000
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -32,7 +31,6 @@
           "interval": 6000
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -47,7 +45,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -62,7 +59,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -77,7 +73,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -92,7 +87,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     },
@@ -107,7 +101,6 @@
           "unit": "months"
         }
       ],
-      "preselect": true,
       "sourceKind": "common_practice",
       "citation": ""
     }

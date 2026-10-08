@@ -19,7 +19,6 @@ export type CuratedItem = {
   /** Empty files the task at Thing level. */
   componentSlotKey: string;
   rules: SuggestedRule[];
-  preselect: boolean;
   sourceKind: TaskSourceKind;
   /** "14 CFR 91.413", or empty. */
   citation: string;
@@ -66,14 +65,12 @@ function parseItem(raw: unknown, where: string): CuratedItem {
   if (title.trim() === "") throw new Error(`curated ${where}: title is empty`);
   const sourceKind = text("sourceKind") as TaskSourceKind;
   if (!SOURCE_KINDS.includes(sourceKind)) throw new Error(`curated ${where}: unknown sourceKind ${sourceKind}`);
-  if (typeof item.preselect !== "boolean") throw new Error(`curated ${where}: preselect must be true or false`);
   if (!Array.isArray(item.rules) || item.rules.length === 0) throw new Error(`curated ${where}: needs a rule`);
   return {
     title,
     description: text("description"),
     componentSlotKey: text("componentSlotKey"),
     rules: item.rules.map((rule) => parseRule(rule, where)),
-    preselect: item.preselect,
     sourceKind,
     citation: text("citation"),
   };

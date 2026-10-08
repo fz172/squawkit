@@ -211,8 +211,6 @@ describe("task pipeline without documents", () => {
         type: "routine",
         rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }],
         lastDone: { logId: "log-1", date: "2026-05-02", reading: { meterKey: "engine_hours", value: 380 } },
-        // Common practice is never pre-selected on an airplane (R27).
-        preselect: false,
         originKind: "ai_thing",
       }),
     ]);
@@ -326,7 +324,6 @@ describe("task pipeline with documents", () => {
       citation: "Airworthiness Directive 2024-05-07",
       pageRef: "p. 2",
       sourceDocument: "blob-ad",
-      preselect: true,
       originKind: "ai_document",
     });
     expect(out.result.documents).toEqual([
@@ -371,7 +368,7 @@ describe("task pipeline with documents", () => {
     const out = await runTaskPipeline(request([ref("blob-ad")]), h.deps);
 
     expect(out.result.suggestions).toHaveLength(1);
-    expect(out.result.suggestions[0]).toMatchObject({ type: "routine", referenceNumber: "", preselect: false });
+    expect(out.result.suggestions[0]).toMatchObject({ type: "routine", referenceNumber: "" });
     expect(out.result.documents[0].matchesThing).toBe(false);
   });
 

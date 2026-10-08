@@ -20,7 +20,7 @@ describe("curatedSuggestions", () => {
   it("keeps the file's source, citation and tick", () => {
     const transponder = curatedSuggestions(airplaneContext({ existingTasks: [] })).find(byTitle("Transponder test"))!;
 
-    expect(transponder).toMatchObject({ sourceKind: "common_practice", citation: "14 CFR 91.413", preselect: true });
+    expect(transponder).toMatchObject({ sourceKind: "common_practice", citation: "14 CFR 91.413" });
     expect(transponder.rules).toEqual([{ kind: "time", every: 24, unit: "months" }]);
   });
 
@@ -45,7 +45,7 @@ describe("curatedSuggestions", () => {
     });
     const elt = curatedSuggestions(context).find(byTitle("ELT inspection"))!;
 
-    expect(elt).toMatchObject({ matchesExistingTaskId: "task-elt", preselect: false });
+    expect(elt).toMatchObject({ matchesExistingTaskId: "task-elt" });
   });
 
   it("has nothing for custom or an unknown template", () => {

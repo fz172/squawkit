@@ -38,7 +38,6 @@ export function buildDrafts(
       matchesExistingTaskId: s.matchesExistingTaskId ?? "",
       intervalDifferenceNote: s.intervalDifferenceNote ?? "",
       mergesStaticIndex: s.mergesStaticIndex ?? -1,
-      preselect: false,
       confidence: s.confidence,
     };
 

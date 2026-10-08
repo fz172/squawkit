@@ -14,7 +14,6 @@ Each item:
 | `description`      | Shown on the card and saved as the task's notes                                                                                                                                                                           |
 | `componentSlotKey` | A slot the template defines (`engine`), or `""` for the whole Thing                                                                                                                                                       |
 | `rules`            | One or more; two mean whichever comes first. `time` (`every`, `unit`: days/months/years), `meter` (`meterKey` the template defines, `interval`), `seasonal` (`months` 1–12, `dayOfMonth`), `on_condition` (`description`) |
-| `preselect`        | Unused by the app since 2026-10-03: nothing starts checked (PRD R27)                                                                                                                                                      |
 | `sourceKind`       | `common_practice` or `manufacturer_schedule` (`document` and `logs` are for AI results)                                                                                                                                   |
 | `citation`         | Shown as the source, such as `14 CFR 91.413`, or `""`. The task is still typed routine                                                                                                                                    |
 

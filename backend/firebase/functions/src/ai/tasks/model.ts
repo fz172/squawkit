@@ -142,7 +142,6 @@ export type TaskSuggestion = {
   intervalDifferenceNote: string;
   /** Index into `context.staticPack` this replaces, or -1 (R25). */
   mergesStaticIndex: number;
-  preselect: boolean;
   /** `pre_curated` for a curated item left as it was (design §6.8); the model's otherwise. */
   originKind: SuggestionOrigin;
 };
