@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.SuggestionItem
 import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
 import dev.fanfly.wingslog.thing.Lexicon
@@ -40,8 +41,8 @@ data class SuggestionsUiState(
    * from the files handed over, or for a run opened again, from a stage that works on one.
    */
   val readsDocuments: Boolean = false,
-  /** The working run's stage key and its argument (a document's name), for the progress line. */
-  val stage: String? = null,
+  /** The working run's stage and its argument (a document's name), for the progress line. */
+  val stage: SuggestionStage? = null,
   val stageArg: String? = null,
   /** The model run failed; the cards stay, with this and *Try again* above them (PRD R21). */
   val failure: AiErrorCode? = null,

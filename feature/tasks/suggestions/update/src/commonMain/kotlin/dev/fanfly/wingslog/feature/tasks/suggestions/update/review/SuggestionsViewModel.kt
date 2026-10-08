@@ -27,6 +27,7 @@ import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionEntryPoint
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
@@ -187,13 +188,13 @@ class SuggestionsViewModel(
     }
     val started = suggestionManager.start(
       thingId,
-      entryPoint = mode.wire,
+      entryPoint = SuggestionEntryPoint.ADD,
       curatedOnly = false,
       documents = pickedDocuments,
     )
     if (started is AiStartResult.Started) {
       followedJob = started.jobId
-      requested(mode.wire, pickedDocuments.size)
+      requested(SuggestionEntryPoint.ADD, pickedDocuments.size)
       return true
     }
     val reason = (started as AiStartResult.Refused).reason
@@ -209,7 +210,7 @@ class SuggestionsViewModel(
   private suspend fun showCurated(template: ThingTemplate?) {
     val started = suggestionManager.start(
       thingId,
-      entryPoint = mode.wire,
+      entryPoint = mode.entryPoint,
       curatedOnly = true
     )
     if (started !is AiStartResult.Started) {
@@ -277,7 +278,7 @@ class SuggestionsViewModel(
     _uiState.update {
       it.copy(
         isSuggesting = !finished,
-        readsDocuments = it.readsDocuments || working?.stage in DOCUMENT_STAGES,
+        readsDocuments = it.readsDocuments || working?.stage?.readsDocument == true,
         failure = failure,
         stage = working?.stage,
         stageArg = working?.stageArg,
@@ -417,7 +418,7 @@ class SuggestionsViewModel(
       val curatedRun = run
       val started = suggestionManager.start(
         thingId,
-        entryPoint = SuggestionsMode.CURATED.wire,
+        entryPoint = SuggestionEntryPoint.CURATED,
         curatedOnly = false,
       )
       if (started !is AiStartResult.Started) {
@@ -436,7 +437,7 @@ class SuggestionsViewModel(
       }
       followedJob = started.jobId
       followNow()
-      requested(SUGGEST_MORE, documentCount = 0)
+      requested(SuggestionEntryPoint.SUGGEST_MORE, documentCount = 0)
       // The run on screen (curated-only, or failed) is finished with; the new one carries the
       // same curated list.
       curatedRun?.jobId?.takeIf { it != started.jobId }
@@ -676,12 +677,12 @@ class SuggestionsViewModel(
   }
 
   /** R50: the model was asked; its answer or failure is reported once per job by [report]. */
-  private fun requested(entryPoint: String, documentCount: Int) {
+  private fun requested(entryPoint: SuggestionEntryPoint, documentCount: Int) {
     requestedAt = clock.now()
     analytics.log(
       TaskSuggestionsRequested(
         templateId = uiState.value.template?.id.orEmpty(),
-        entryPoint = entryPoint,
+        entryPoint = entryPoint.wire,
         documentCount = documentCount,
       ),
     )
@@ -733,11 +734,12 @@ class SuggestionsViewModel(
     /** How long opening the list waits to learn whether a model answer is held (R19). */
     val RESUME_WAIT = 2.seconds
 
-    /** The entry point a model run asked from the curated list reports (R50). */
-    const val SUGGEST_MORE = "suggest_more"
-
-    /** The pipeline stages that work on a document, whose argument names it (see `stageText`). */
-    val DOCUMENT_STAGES = setOf("reading_document", "finding_schedule", "extracting_schedule")
+    /** The entry point a screen opened in this mode asks from. */
+    val SuggestionsMode.entryPoint: SuggestionEntryPoint
+      get() = when (this) {
+        SuggestionsMode.CURATED -> SuggestionEntryPoint.CURATED
+        SuggestionsMode.ADD -> SuggestionEntryPoint.ADD
+      }
 
     /**
      * Cards for [result], none checked to start (PRD R27, revised 2026-10-03: the user checks what

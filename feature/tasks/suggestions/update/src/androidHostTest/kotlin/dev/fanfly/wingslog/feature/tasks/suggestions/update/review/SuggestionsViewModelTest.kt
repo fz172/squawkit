@@ -21,6 +21,8 @@ import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.AddedBatch
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionEntryPoint
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
@@ -219,7 +221,7 @@ class SuggestionsViewModelTest {
       coVerify {
         suggestions.start(
           THING_ID,
-          SuggestionsMode.CURATED.wire,
+          SuggestionEntryPoint.CURATED,
           curatedOnly = true
         )
       }
@@ -263,13 +265,13 @@ class SuggestionsViewModelTest {
 
       val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
-      runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+      runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
       advanceUntilIdle()
 
       coVerify {
         suggestions.start(
           THING_ID,
-          "add",
+          SuggestionEntryPoint.ADD,
           curatedOnly = false,
           documents = manuals
         )
@@ -404,7 +406,7 @@ class SuggestionsViewModelTest {
 
       val withManuals = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
-      runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+      runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
       advanceUntilIdle()
       assertThat(withManuals.uiState.value.readsDocuments).isTrue()
 
@@ -415,7 +417,7 @@ class SuggestionsViewModelTest {
 
   @Test
   fun aStageArgumentAloneDoesNotMeanTheRunReadsDocuments() = runTest(dispatcher) {
-    serving(SuggestionRun.Working(AI_JOB, "tailoring", "Rotax 915", curatedList))
+    serving(SuggestionRun.Working(AI_JOB, SuggestionStage.TAILORING, "Rotax 915", curatedList))
 
     val vm = viewModel()
     advanceUntilIdle()
@@ -429,7 +431,7 @@ class SuggestionsViewModelTest {
     serving(
       SuggestionRun.Working(
         AI_JOB,
-        "reading_document",
+        SuggestionStage.READING_DOCUMENT,
         "MM.pdf",
         curatedList
       )
@@ -474,7 +476,7 @@ class SuggestionsViewModelTest {
   @Test
   fun anAnswerAlreadyHeldIsShownAndThePickedFilesAreLetGo() =
     runTest(dispatcher) {
-      serving(SuggestionRun.Working(AI_JOB, "tailoring", null, curatedList))
+      serving(SuggestionRun.Working(AI_JOB, SuggestionStage.TAILORING, null, curatedList))
 
       viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
@@ -574,7 +576,7 @@ class SuggestionsViewModelTest {
       } returns AiStartResult.Started(JOB, joined = false)
       every { suggestions.observeRun(THING_ID) } returns runs
       val vm = viewModel()
-      runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+      runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
       advanceUntilIdle()
       vm.onToggle(vm.idAt(0)) // check the annual
 
@@ -699,7 +701,7 @@ class SuggestionsViewModelTest {
       advanceUntilIdle()
       coVerify(exactly = 1) { suggestions.dismiss(JOB) }
 
-      serving(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+      serving(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
       val working = viewModel()
       advanceUntilIdle()
       working.onSkip()
@@ -762,7 +764,7 @@ class SuggestionsViewModelTest {
       assertThat(vm.uiState.value.isSuggesting).isTrue()
       coVerify { suggestions.dismiss(JOB) }
 
-      runs.emit(SuggestionRun.Working(AI_JOB, "tailoring", null, curatedList))
+      runs.emit(SuggestionRun.Working(AI_JOB, SuggestionStage.TAILORING, null, curatedList))
       advanceUntilIdle()
       assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly(
         "Annual",
@@ -839,7 +841,7 @@ class SuggestionsViewModelTest {
       assertThat(vm.uiState.value.failure).isNull()
       assertThat(vm.uiState.value.isSuggesting).isTrue()
       coVerify { suggestions.dismiss(JOB) }
-      runs.emit(SuggestionRun.Working(AI_JOB, "tailoring", null, curatedList))
+      runs.emit(SuggestionRun.Working(AI_JOB, SuggestionStage.TAILORING, null, curatedList))
       advanceUntilIdle()
       assertThat(vm.uiState.value.failure).isNull()
     }
@@ -870,13 +872,13 @@ class SuggestionsViewModelTest {
     runs.emit(
       SuggestionRun.Working(
         JOB,
-        "reading_document",
+        SuggestionStage.READING_DOCUMENT,
         "Rotax MM.pdf",
         curatedList
       )
     )
     advanceUntilIdle()
-    assertThat(vm.uiState.value.stage).isEqualTo("reading_document")
+    assertThat(vm.uiState.value.stage).isEqualTo(SuggestionStage.READING_DOCUMENT)
     assertThat(vm.uiState.value.stageArg).isEqualTo("Rotax MM.pdf")
 
     runs.emit(SuggestionRun.Ready(JOB, curatedList))
@@ -1299,7 +1301,7 @@ class SuggestionsViewModelTest {
       coVerify {
         suggestions.start(
           THING_ID,
-          SuggestionsMode.CURATED.wire,
+          SuggestionEntryPoint.CURATED,
           curatedOnly = true
         )
       }
@@ -1391,7 +1393,7 @@ class SuggestionsViewModelTest {
         )
       } returns MaintenanceTask(title = "Annual")
       val vm = viewModel()
-      runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
+      runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
       advanceUntilIdle()
       vm.draftFor(vm.idAt(0))
       vm.onEdited(MaintenanceTask(title = "Annual, edited").toDraftArg())

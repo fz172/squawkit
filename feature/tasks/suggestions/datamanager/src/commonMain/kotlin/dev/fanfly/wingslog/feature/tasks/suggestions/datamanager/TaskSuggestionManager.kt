@@ -51,7 +51,7 @@ interface TaskSuggestionManager {
    */
   suspend fun start(
     thingId: String,
-    entryPoint: String,
+    entryPoint: SuggestionEntryPoint,
     curatedOnly: Boolean = false,
     documents: List<Attachment> = emptyList(),
   ): AiStartResult
@@ -111,12 +111,13 @@ sealed interface SuggestionRun {
   }
 
   /**
-   * [stage] is the pipeline's progress key ("recalling_schedule", …), null before it reports.
+   * [stage] is what the pipeline says it is doing, null before it reports; [stageArg] the
+   * document it names, for a stage that reads one.
    * [result] is the curated suggestions, shown while the model works.
    */
   data class Working(
     override val jobId: AiJobId,
-    val stage: String?,
+    val stage: SuggestionStage?,
     val stageArg: String?,
     override val result: SuggestTasksResult? = null,
   ) : SuggestionRun

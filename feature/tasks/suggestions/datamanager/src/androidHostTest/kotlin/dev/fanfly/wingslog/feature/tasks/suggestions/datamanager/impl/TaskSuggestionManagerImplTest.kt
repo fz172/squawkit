@@ -18,6 +18,8 @@ import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionEntryPoint
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMapper
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
@@ -196,13 +198,13 @@ class TaskSuggestionManagerImplTest {
   fun `waits for each document to upload, then sends its reference`() = runTest {
     val status = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.5f))
     every { attachments.observeStatus("blob-1") } returns status
-    coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
     val sent = slot<ByteString>()
     coEvery { client.start(any(), capture(sent)) } coAnswers {
       AiStartResult.Started(JOB, joined = false)
     }
 
-    val started = backgroundScope.async { manager.start(THING, "overview", documents = listOf(manual)) }
+    val started = backgroundScope.async { manager.start(THING, SuggestionEntryPoint.CURATED, documents = listOf(manual)) }
     testScheduler.runCurrent()
     assertThat(sent.isCaptured).isFalse()
 
@@ -225,7 +227,7 @@ class TaskSuggestionManagerImplTest {
     every { attachments.observeStatus("blob-1") } returns
       flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
 
-    assertThat(manager.start(THING, "overview", documents = listOf(manual)))
+    assertThat(manager.start(THING, SuggestionEntryPoint.CURATED, documents = listOf(manual)))
       .isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
     coVerify(exactly = 0) { client.start(any(), any()) }
   }
@@ -235,7 +237,7 @@ class TaskSuggestionManagerImplTest {
     every { attachments.observeStatus("blob-1") } returns
       MutableStateFlow(AttachmentStatus.Uploading(0.1f))
 
-    assertThat(manager.start(THING, "overview", documents = listOf(manual)))
+    assertThat(manager.start(THING, SuggestionEntryPoint.CURATED, documents = listOf(manual)))
       .isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
     coVerify(exactly = 0) { client.start(any(), any()) }
   }
@@ -247,7 +249,7 @@ class TaskSuggestionManagerImplTest {
     every { attachments.observeStatus("blob-2") } returns
       flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
 
-    val result = manager.start(THING, "overview", documents = listOf(manual, manual.copy(id = "blob-2")))
+    val result = manager.start(THING, SuggestionEntryPoint.CURATED, documents = listOf(manual, manual.copy(id = "blob-2")))
 
     assertThat(result).isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
     assertThat(testScheduler.currentTime).isEqualTo(0)
@@ -259,11 +261,11 @@ class TaskSuggestionManagerImplTest {
     val second = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
     every { attachments.observeStatus("blob-1") } returns first
     every { attachments.observeStatus("blob-2") } returns second
-    coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
     coEvery { client.start(any(), any()) } returns AiStartResult.Started(JOB, joined = false)
 
     val started = backgroundScope.async {
-      manager.start(THING, "overview", documents = listOf(manual, manual.copy(id = "blob-2")))
+      manager.start(THING, SuggestionEntryPoint.CURATED, documents = listOf(manual, manual.copy(id = "blob-2")))
     }
     testScheduler.advanceTimeBy(90_000)
     first.value = AttachmentStatus.Synced
@@ -282,7 +284,7 @@ class TaskSuggestionManagerImplTest {
     every { attachments.observeStatus("blob-2") } returns second
 
     val started = backgroundScope.async {
-      manager.start(THING, "overview", documents = listOf(manual, manual.copy(id = "blob-2")))
+      manager.start(THING, SuggestionEntryPoint.CURATED, documents = listOf(manual, manual.copy(id = "blob-2")))
     }
     testScheduler.advanceTimeBy(110_000)
     first.value = AttachmentStatus.Synced
@@ -296,11 +298,11 @@ class TaskSuggestionManagerImplTest {
 
   @Test
   fun `a curated-only run neither waits for nor sends documents`() = runTest {
-    coEvery { builder.build(THING, "created") } returns SuggestTasksRequest()
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
     val sent = slot<ByteString>()
     coEvery { client.start(any(), capture(sent)) } returns AiStartResult.Started(JOB, joined = false)
 
-    manager.start(THING, "created", curatedOnly = true, documents = listOf(manual))
+    manager.start(THING, SuggestionEntryPoint.CURATED, curatedOnly = true, documents = listOf(manual))
 
     assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured).documents).isEmpty()
     verify(exactly = 0) { attachments.observeStatus(any()) }
@@ -309,10 +311,10 @@ class TaskSuggestionManagerImplTest {
   @Test
   fun `takes a document already in Storage from another device as uploaded`() = runTest {
     every { attachments.observeStatus("blob-1") } returns flowOf(AttachmentStatus.RemoteOnly)
-    coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
     coEvery { client.start(any(), any()) } returns AiStartResult.Started(JOB, joined = false)
 
-    assertThat(manager.start(THING, "overview", documents = listOf(manual)))
+    assertThat(manager.start(THING, SuggestionEntryPoint.CURATED, documents = listOf(manual)))
       .isEqualTo(AiStartResult.Started(JOB, joined = false))
   }
 
@@ -321,9 +323,9 @@ class TaskSuggestionManagerImplTest {
     runTest {
       val request = SuggestTasksRequest(
         thing_id = ThingId(value_ = THING),
-        entry_point = "overview"
+        entry_point = "curated"
       )
-      coEvery { builder.build(THING, "overview") } returns request
+      coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns request
       val sent = slot<ByteString>()
       coEvery {
         client.start(
@@ -332,7 +334,7 @@ class TaskSuggestionManagerImplTest {
         )
       } returns AiStartResult.Started(JOB, joined = false)
 
-      val result = manager.start(THING, "overview")
+      val result = manager.start(THING, SuggestionEntryPoint.CURATED)
 
       assertThat(result).isEqualTo(AiStartResult.Started(JOB, joined = false))
       assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured)).isEqualTo(
@@ -345,7 +347,7 @@ class TaskSuggestionManagerImplTest {
           THING,
           any()
         )
-        builder.build(THING, "overview")
+        builder.build(THING, SuggestionEntryPoint.CURATED)
         client.start(AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, any())
       }
     }
@@ -359,7 +361,7 @@ class TaskSuggestionManagerImplTest {
         logs_truncated = true
       ),
     )
-    coEvery { builder.build(THING, "created") } returns request
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns request
     val sent = slot<ByteString>()
     coEvery {
       client.start(
@@ -368,7 +370,7 @@ class TaskSuggestionManagerImplTest {
       )
     } returns AiStartResult.Started(JOB, joined = false)
 
-    manager.start(THING, "created", curatedOnly = true)
+    manager.start(THING, SuggestionEntryPoint.CURATED, curatedOnly = true)
 
     val decoded = SuggestTasksRequest.ADAPTER.decode(sent.captured)
     assertThat(decoded.curated_only).isTrue()
@@ -380,7 +382,7 @@ class TaskSuggestionManagerImplTest {
   fun `still starts when the Thing is not confirmed synced, and lets the server decide`() =
     runTest {
       coEvery { sync.awaitSynced(any(), any(), any(), any()) } returns false
-      coEvery { builder.build(THING, "overview") } returns SuggestTasksRequest()
+      coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
       coEvery { client.start(any(), any()) } returns AiStartResult.Refused(
         AiErrorCode.NOT_MEMBER,
         null
@@ -389,7 +391,7 @@ class TaskSuggestionManagerImplTest {
       assertThat(
         manager.start(
           THING,
-          "overview"
+          SuggestionEntryPoint.CURATED
         )
       ).isEqualTo(AiStartResult.Refused(AiErrorCode.NOT_MEMBER, null))
     }
@@ -421,10 +423,10 @@ class TaskSuggestionManagerImplTest {
         .toList()
     ).containsExactly(
       SuggestionRun.Idle,
-      SuggestionRun.Working(JOB, "tailoring", null),
-      SuggestionRun.Working(JOB, "tailoring", null),
+      SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null),
+      SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null),
       // A status this build does not know still reads as working.
-      SuggestionRun.Working(JOB, "tailoring", null),
+      SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null),
       SuggestionRun.Ready(JOB, result),
       SuggestionRun.Empty(JOB),
       SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR),
@@ -466,7 +468,7 @@ class TaskSuggestionManagerImplTest {
         manager.observeRun(THING)
           .toList()
       ).containsExactly(
-        SuggestionRun.Working(JOB, "tailoring", null, curated),
+        SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curated),
         SuggestionRun.Empty(JOB, curated),
         SuggestionRun.Failed(JOB, AiErrorCode.PROVIDER_ERROR, curated),
         SuggestionRun.Ready(JOB, curated, skipped),
@@ -643,7 +645,7 @@ class TaskSuggestionManagerImplTest {
       manager.observeRun(THING)
         .toList()
     ).containsExactly(
-      SuggestionRun.Working(JOB, "tailoring", null),
+      SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null),
       SuggestionRun.Failed(JOB, AiErrorCode.STALE),
       SuggestionRun.Failed(JOB, AiErrorCode.STALE),
       SuggestionRun.Empty(JOB),
