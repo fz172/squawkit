@@ -298,4 +298,15 @@ class SuggestionContextBuilderTest {
     const val DAY = 86_400L
     val JUNE_1 = Instant.parse("2026-06-01T12:00:00Z").epochSeconds
   }
+
+  @Test
+  fun `leaves the log history out when asked, and changes nothing else`() = runTest {
+    val full = builder().build(THING, SuggestionEntryPoint.CURATED)
+    val bare = builder().build(THING, SuggestionEntryPoint.CURATED, withLogs = false)
+
+    assertThat(full.context!!.logs).isNotEmpty()
+    assertThat(bare.context!!.logs).isEmpty()
+    assertThat(bare.context!!.logs_truncated).isFalse()
+    assertThat(bare).isEqualTo(full.copy(context = full.context!!.copy(logs = emptyList())))
+  }
 }

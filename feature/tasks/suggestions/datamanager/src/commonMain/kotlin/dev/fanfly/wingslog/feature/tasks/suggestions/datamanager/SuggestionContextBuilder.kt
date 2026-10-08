@@ -50,8 +50,16 @@ class SuggestionContextBuilder(
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
 
-  /** The request for [thingId], and the uid of the tree it lives in. */
-  suspend fun build(thingId: String, entryPoint: SuggestionEntryPoint): SuggestTasksRequest {
+  /**
+   * The request for [thingId], and the uid of the tree it lives in. [withLogs] false leaves the
+   * log history out without reading it: a curated-only run is fitted to the Thing's slots, meters
+   * and tasks (§6.8), never its logs.
+   */
+  suspend fun build(
+    thingId: String,
+    entryPoint: SuggestionEntryPoint,
+    withLogs: Boolean = true,
+  ): SuggestTasksRequest {
     val thing = fleetManager.loadThing(thingId)
       .filterNotNull()
       .first()
@@ -59,8 +67,6 @@ class SuggestionContextBuilder(
     // A shared Thing lives in its host's tree: users/{hostUid}/thing/{thingId}.
     val hostUid = scopeResolver.resolveNow(thingId).hostUid.orEmpty()
     val tasks = taskDataManager.observeTasks(thingId)
-      .first()
-    val logs = logManager.observeLogs(thingId)
       .first()
     // What the dashboard shows, worked out from the records rather than read off the stored
     // overview, which a client that predates manual readings rebuilds without them (#1368).
@@ -103,11 +109,12 @@ class SuggestionContextBuilder(
       context = context,
       entry_point = entryPoint.wire,
     )
+    if (!withLogs) return base
     return withLogs(
       base,
-      logs.sortedByDescending {
-        it.timestamp?.getEpochSecond() ?: 0L
-      }
+      logManager.observeLogs(thingId)
+        .first()
+        .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
         .map(::logSummary)
     )
   }

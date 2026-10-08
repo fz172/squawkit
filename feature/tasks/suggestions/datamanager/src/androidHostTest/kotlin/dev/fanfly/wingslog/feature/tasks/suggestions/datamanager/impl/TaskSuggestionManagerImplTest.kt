@@ -198,7 +198,7 @@ class TaskSuggestionManagerImplTest {
   fun `waits for each document to upload, then sends its reference`() = runTest {
     val status = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.5f))
     every { attachments.observeStatus("blob-1") } returns status
-    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED, any()) } returns SuggestTasksRequest()
     val sent = slot<ByteString>()
     coEvery { client.start(any(), capture(sent)) } coAnswers {
       AiStartResult.Started(JOB, joined = false)
@@ -261,7 +261,7 @@ class TaskSuggestionManagerImplTest {
     val second = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
     every { attachments.observeStatus("blob-1") } returns first
     every { attachments.observeStatus("blob-2") } returns second
-    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED, any()) } returns SuggestTasksRequest()
     coEvery { client.start(any(), any()) } returns AiStartResult.Started(JOB, joined = false)
 
     val started = backgroundScope.async {
@@ -298,7 +298,7 @@ class TaskSuggestionManagerImplTest {
 
   @Test
   fun `a curated-only run neither waits for nor sends documents`() = runTest {
-    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED, any()) } returns SuggestTasksRequest()
     val sent = slot<ByteString>()
     coEvery { client.start(any(), capture(sent)) } returns AiStartResult.Started(JOB, joined = false)
 
@@ -311,7 +311,7 @@ class TaskSuggestionManagerImplTest {
   @Test
   fun `takes a document already in Storage from another device as uploaded`() = runTest {
     every { attachments.observeStatus("blob-1") } returns flowOf(AttachmentStatus.RemoteOnly)
-    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED, any()) } returns SuggestTasksRequest()
     coEvery { client.start(any(), any()) } returns AiStartResult.Started(JOB, joined = false)
 
     assertThat(manager.start(THING, SuggestionEntryPoint.CURATED, documents = listOf(manual)))
@@ -325,7 +325,7 @@ class TaskSuggestionManagerImplTest {
         thing_id = ThingId(value_ = THING),
         entry_point = "curated"
       )
-      coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns request
+      coEvery { builder.build(THING, SuggestionEntryPoint.CURATED, any()) } returns request
       val sent = slot<ByteString>()
       coEvery {
         client.start(
@@ -347,21 +347,15 @@ class TaskSuggestionManagerImplTest {
           THING,
           any()
         )
-        builder.build(THING, SuggestionEntryPoint.CURATED)
+        builder.build(THING, SuggestionEntryPoint.CURATED, any())
         client.start(AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS, any())
       }
     }
 
   @Test
-  fun `asks for the curated suggestions alone, without the logs`() = runTest {
-    val request = SuggestTasksRequest(
-      thing_id = ThingId(value_ = THING),
-      context = SuggestionContext(
-        logs = listOf(LogSummary(work_description = "Oil change")),
-        logs_truncated = true
-      ),
-    )
-    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns request
+  fun `asks for the curated suggestions alone, without reading the logs`() = runTest {
+    val request = SuggestTasksRequest(thing_id = ThingId(value_ = THING))
+    coEvery { builder.build(THING, SuggestionEntryPoint.CURATED, withLogs = false) } returns request
     val sent = slot<ByteString>()
     coEvery {
       client.start(
@@ -372,17 +366,15 @@ class TaskSuggestionManagerImplTest {
 
     manager.start(THING, SuggestionEntryPoint.CURATED, curatedOnly = true)
 
-    val decoded = SuggestTasksRequest.ADAPTER.decode(sent.captured)
-    assertThat(decoded.curated_only).isTrue()
-    assertThat(decoded.context?.logs).isEmpty()
-    assertThat(decoded.context?.logs_truncated).isFalse()
+    assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured).curated_only).isTrue()
+    coVerify(exactly = 0) { builder.build(any(), any(), withLogs = true) }
   }
 
   @Test
   fun `still starts when the Thing is not confirmed synced, and lets the server decide`() =
     runTest {
       coEvery { sync.awaitSynced(any(), any(), any(), any()) } returns false
-      coEvery { builder.build(THING, SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
+      coEvery { builder.build(THING, SuggestionEntryPoint.CURATED, any()) } returns SuggestTasksRequest()
       coEvery { client.start(any(), any()) } returns AiStartResult.Refused(
         AiErrorCode.NOT_MEMBER,
         null
