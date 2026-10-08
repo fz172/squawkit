@@ -29,6 +29,8 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTa
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionEntryPoint
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionSession
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.isFromModel
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
@@ -47,9 +49,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /**
@@ -97,24 +97,11 @@ class SuggestionsViewModel(
   private val _uiState = MutableStateFlow(SuggestionsUiState(mode = mode))
   val uiState = _uiState.asStateFlow()
 
-  /** The run the cards come from; null until the first one is in. */
-  private var run: SuggestionRun? = null
-
-  /** The job the cards follow: the one this screen started last. */
-  private var followedJob: AiJobId? = null
-
-  /**
-   * The newest run the listener has said, followed or not. The listener can hear of a job before
-   * the call that started it returns, and a job that is written already finished is never said
-   * twice, so [followNow] shows this one once [followedJob] names it.
-   */
-  private var latestRun: SuggestionRun? = null
+  /** Which of the Thing's runs the cards follow, and what becomes of it. */
+  private val session = SuggestionSession(suggestionManager, thingId)
 
   /** `starter_tasks_offered` has been reported for this screen. */
   private var offeredCounted = false
-
-  /** The user asked for the model, here or on the Add Tasks sheet, not the curated list alone. */
-  private var modelRequested = false
 
   /**
    * The titles of the tasks the Thing has, normalized, read once on opening: a suggestion for one
@@ -147,22 +134,13 @@ class SuggestionsViewModel(
   }
 
   private suspend fun showRun(template: ThingTemplate?) {
-    // R19: the model's answer is held for a day until the user acts on it. Opening the list again
-    // shows it rather than starting over: a new run would hide it behind a newer job, and a second
-    // model run the same day is refused anyway (R49).
-    // The listener answers at once, from cache if need be; a slow one is not worth waiting on.
-    val earlier = withTimeoutOrNull(RESUME_WAIT) {
-      suggestionManager.observeRun(thingId)
-        .firstOrNull()
-    }
-    if (earlier != null && earlier.holdsModelAnswer()) {
+    val earlier = session.resume()
+    if (earlier != null) {
       // The answer held is what this screen shows; a new run would be refused for the day (R49),
       // so the files picked for one are not read.
       releaseAll(pickedDocuments)
-      modelRequested = true
-      followedJob = earlier.jobId
       // Already reported when it first arrived.
-      if (earlier !is SuggestionRun.Working) reportedJob = followedJob
+      if (earlier !is SuggestionRun.Working) reportedJob = earlier.jobId
       follow(template)
       return
     }
@@ -179,21 +157,14 @@ class SuggestionsViewModel(
    * where a run can still start.
    */
   private suspend fun startAdded(): Boolean {
-    modelRequested = true
     _uiState.update {
       it.copy(
         isSuggesting = true,
         readsDocuments = pickedDocuments.isNotEmpty()
       )
     }
-    val started = suggestionManager.start(
-      thingId,
-      entryPoint = SuggestionEntryPoint.ADD,
-      curatedOnly = false,
-      documents = pickedDocuments,
-    )
+    val started = session.startModel(SuggestionEntryPoint.ADD, pickedDocuments)
     if (started is AiStartResult.Started) {
-      followedJob = started.jobId
       requested(SuggestionEntryPoint.ADD, pickedDocuments.size)
       return true
     }
@@ -201,18 +172,13 @@ class SuggestionsViewModel(
     logger.i { "The model run did not start: $started" }
     failed(reason)
     releaseAll(pickedDocuments)
-    modelRequested = false
     _uiState.update { it.copy(isSuggesting = false, notice = reason) }
     return false
   }
 
   /** The curated mode opens on the curated list; the model is asked from the AI button. */
   private suspend fun showCurated(template: ThingTemplate?) {
-    val started = suggestionManager.start(
-      thingId,
-      entryPoint = mode.entryPoint,
-      curatedOnly = true
-    )
+    val started = session.startCurated(mode.entryPoint)
     if (started !is AiStartResult.Started) {
       // Nothing to show: the screen closes, and the task tab says why (PRD R21, R51).
       logger.i { "No suggestions to show: $started" }
@@ -226,7 +192,6 @@ class SuggestionsViewModel(
       }
       return
     }
-    followedJob = started.jobId
     // The curated list came without the model; the user can ask for it here (PRD R1), where the
     // Thing is described well enough (R5).
     if (suggestEntry.observe(thingId)
@@ -238,30 +203,13 @@ class SuggestionsViewModel(
     follow(template)
   }
 
-  /** Follows [followedJob] for as long as the screen is open, into the cards and their states. */
+  /** Follows the session's run for as long as the screen is open, into the cards and their states. */
   private suspend fun follow(template: ThingTemplate?) {
-    suggestionManager.observeRun(thingId)
-      .collect { latest ->
-        latestRun = latest
-        // Until the listener catches up with the job just started, the newest it knows is older.
-        if (latest.jobId != followedJob) return@collect
-        show(latest, template)
-      }
-  }
-
-  /**
-   * [followedJob] has just changed: shows the run the listener already said, when it is that job.
-   * Without this a run that reached the listener before its start call returned would be skipped,
-   * and one that never changes again (the model refused, the curated list alone) never shown.
-   */
-  private fun followNow() {
-    val latest = latestRun ?: return
-    if (latest.jobId == followedJob) show(latest, uiState.value.template)
+    session.runs.collect { show(it, template) }
   }
 
   /** [latest], the followed job's run, into the cards and their states. */
   private fun show(latest: SuggestionRun, template: ThingTemplate?) {
-    run = latest
     val result = latest.result
     val finished = latest !is SuggestionRun.Working
     val failure = (latest as? SuggestionRun.Failed)?.reason
@@ -269,8 +217,8 @@ class SuggestionsViewModel(
     val working = latest as? SuggestionRun.Working
     // Only a model run can come back with nothing to say; a curated-only one that is empty is
     // a template with no list.
-    val notEnough = latest is SuggestionRun.Empty && modelRequested
-    if (finished && modelRequested) report(latest)
+    val notEnough = latest is SuggestionRun.Empty && session.modelRequested
+    if (finished && session.modelRequested) report(latest)
     if (notEnough && !askedAfterEmpty) {
       askedAfterEmpty = true
       viewModelScope.launch { checkManual() }
@@ -401,11 +349,10 @@ class SuggestionsViewModel(
 
   /** *Add details* after an empty run: the run is done with; the screen gives way to the Thing's edit form. */
   fun onAddDetails() {
-    run?.jobId?.let { viewModelScope.launch { suggestionManager.dismiss(it) } }
+    viewModelScope.launch { session.dismiss() }
   }
 
   private fun startModelRun(onRefused: (SuggestionsUiState) -> SuggestionsUiState) {
-    modelRequested = true
     _uiState.update {
       it.copy(
         canSuggest = false,
@@ -415,12 +362,7 @@ class SuggestionsViewModel(
       )
     }
     viewModelScope.launch {
-      val curatedRun = run
-      val started = suggestionManager.start(
-        thingId,
-        entryPoint = SuggestionEntryPoint.CURATED,
-        curatedOnly = false,
-      )
+      val started = session.startModel(SuggestionEntryPoint.CURATED)
       if (started !is AiStartResult.Started) {
         logger.i { "The model run did not start: $started" }
         val reason = (started as AiStartResult.Refused).reason
@@ -435,13 +377,7 @@ class SuggestionsViewModel(
         }
         return@launch
       }
-      followedJob = started.jobId
-      followNow()
       requested(SuggestionEntryPoint.SUGGEST_MORE, documentCount = 0)
-      // The run on screen (curated-only, or failed) is finished with; the new one carries the
-      // same curated list.
-      curatedRun?.jobId?.takeIf { it != started.jobId }
-        ?.let { suggestionManager.dismiss(it) }
     }
   }
 
@@ -456,11 +392,7 @@ class SuggestionsViewModel(
   suspend fun draftFor(id: String): String? {
     val item = itemOf(id) ?: return null
     editingId = id
-    val draft = item.edited ?: suggestionManager.draftOf(
-      thingId,
-      item.suggestion,
-      generationVersion = run?.result?.generation_version.orEmpty(),
-    )
+    val draft = item.edited ?: session.draftOf(item.suggestion)
     return draft.toDraftArg()
   }
 
@@ -532,11 +464,7 @@ class SuggestionsViewModel(
     viewModelScope.launch {
       editing.withLock {
         val item = itemOf(id) ?: return@withLock
-        val base = item.edited ?: suggestionManager.draftOf(
-          thingId,
-          item.suggestion,
-          generationVersion = run?.result?.generation_version.orEmpty(),
-        )
+        val base = item.edited ?: session.draftOf(item.suggestion)
         val edited = base.copy(rules = base.rules.map(change))
         _uiState.update { state ->
           state.copy(
@@ -590,9 +518,7 @@ class SuggestionsViewModel(
     if (chosen.isEmpty() || state.isSaving) return
     viewModelScope.launch {
       _uiState.update { it.copy(isSaving = true) }
-      val current = run
-      val written = current?.let { writeRun(it, chosen) }
-        .orEmpty()
+      val written = writeRun(chosen)
       if (written.isEmpty()) {
         // Nothing went in, and the run is still open: the cards stay, checked, to try again.
         _uiState.update { it.copy(isSaving = false, saveFailed = true) }
@@ -618,37 +544,17 @@ class SuggestionsViewModel(
 
   /** "Skip" is a first-class answer (PRD §8.1), and it leaves no trace but the offered event. */
   fun onSkip() {
-    // A curated-only or failed run is closed. The model's answer is kept for the day (R19), so
-    // leaving and coming back finds it; one still working carries on, and its push brings the
-    // user back (R20). Accepting is what closes an answer.
-    val current = run
-    if (current != null && !current.holdsModelAnswer()) {
-      viewModelScope.launch {
-        current.jobId?.let {
-          suggestionManager.dismiss(
-            it
-          )
-        }
-      }
-    }
+    // The session closes a run that holds nothing of the model's, and keeps one that does.
+    viewModelScope.launch { session.leave() }
     _uiState.update { it.copy(isDone = true) }
   }
 
   /**
-   * Through the manager, which maps each as the server describes it and closes the run. Accepting
+   * Through the session, which maps each as the server describes it and closes the run. Accepting
    * while the model still works takes the cards on screen and ends the run.
    */
-  private suspend fun writeRun(
-    current: SuggestionRun,
-    chosen: List<SuggestionItem>
-  ): List<WrittenSuggestion> {
-    val jobId = current.jobId ?: return emptyList()
-    val result = current.result ?: return emptyList()
-    val written = suggestionManager.accept(
-      thingId,
-      jobId,
-      result.generation_version,
-      chosen.map { AcceptedSuggestion(it.suggestion, it.edited) })
+  private suspend fun writeRun(chosen: List<SuggestionItem>): List<WrittenSuggestion> {
+    val written = session.accept(chosen.map { AcceptedSuggestion(it.suggestion, it.edited) })
     if (written.isNotEmpty()) {
       // What was written, not what was chosen: a card whose write failed is not counted.
       val accepted = written.map { it.accepted }
@@ -731,9 +637,6 @@ class SuggestionsViewModel(
   private companion object {
     val logger = Logger.withTag("SuggestionsViewModel")
 
-    /** How long opening the list waits to learn whether a model answer is held (R19). */
-    val RESUME_WAIT = 2.seconds
-
     /** The entry point a screen opened in this mode asks from. */
     val SuggestionsMode.entryPoint: SuggestionEntryPoint
       get() = when (this) {
@@ -762,16 +665,6 @@ class SuggestionsViewModel(
         )
       }
     }
-
-    /**
-     * A model run working, or one whose answer has the model's cards in it: what the user would
-     * lose by closing it or by starting another. A curated-only run, an empty or failed model run,
-     * and no run at all hold nothing of the kind.
-     */
-    fun SuggestionRun.holdsModelAnswer(): Boolean =
-      this is SuggestionRun.Working ||
-        result?.suggestions.orEmpty()
-          .any { it.isFromModel() }
 
     /** A title as the tracked check compares it: trimmed, single-spaced, lower case. */
     fun normalizeTitle(title: String): String = title.trim()

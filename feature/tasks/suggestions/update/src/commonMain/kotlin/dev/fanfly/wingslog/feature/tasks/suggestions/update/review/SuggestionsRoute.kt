@@ -64,6 +64,7 @@ import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.isFromModel
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
