@@ -101,20 +101,10 @@ class TaskSuggestionManagerImpl(
       logger.w { "A document did not reach Storage; not starting" }
       return AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
     }
-    val built = contextBuilder.build(thingId, entryPoint)
-      .copy(documents = sent.map { it.toRef() })
-    // The curated list is fitted to the Thing's slots, meters and tasks (§6.8), never its logs.
-    val request = if (curatedOnly) {
-      built.copy(
-        curated_only = true,
-        context = built.context?.copy(
-          logs = emptyList(),
-          logs_truncated = false
-        )
-      )
-    } else {
-      built
-    }
+    // The curated list is fitted to the Thing's slots, meters and tasks (§6.8), never its logs,
+    // so a curated-only run does not read them.
+    val request = contextBuilder.build(thingId, entryPoint, withLogs = !curatedOnly)
+      .copy(documents = sent.map { it.toRef() }, curated_only = curatedOnly)
     val result = client.start(KIND, request.encodeByteString())
     // Noted on a join too: the run in flight ignores this request, so its documents are let go
     // with that run.
