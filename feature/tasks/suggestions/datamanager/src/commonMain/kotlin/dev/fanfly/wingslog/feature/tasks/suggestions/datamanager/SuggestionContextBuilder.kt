@@ -51,7 +51,7 @@ class SuggestionContextBuilder(
 ) {
 
   /** The request for [thingId], and the uid of the tree it lives in. */
-  suspend fun build(thingId: String, entryPoint: String): SuggestTasksRequest {
+  suspend fun build(thingId: String, entryPoint: SuggestionEntryPoint): SuggestTasksRequest {
     val thing = fleetManager.loadThing(thingId)
       .filterNotNull()
       .first()
@@ -101,7 +101,7 @@ class SuggestionContextBuilder(
       thing_id = ThingId(value_ = thingId),
       host_uid = UserId(value_ = hostUid),
       context = context,
-      entry_point = entryPoint,
+      entry_point = entryPoint.wire,
     )
     return withLogs(
       base,

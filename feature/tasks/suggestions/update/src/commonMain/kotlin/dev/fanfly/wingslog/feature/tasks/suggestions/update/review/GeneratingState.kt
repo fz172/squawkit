@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_coming_documents
@@ -43,7 +44,7 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions
  * above the rows, which can be picked from meanwhile.
  */
 @Composable
-internal fun SuggestingNote(stage: String?, stageArg: String?) {
+internal fun SuggestingNote(stage: SuggestionStage?, stageArg: String?) {
   Text(
     text = stageText(
       stage,

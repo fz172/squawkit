@@ -20,8 +20,10 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionContextBuilder
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionEntryPoint
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMapper
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
@@ -75,7 +77,7 @@ class TaskSuggestionManagerImpl(
 
   override suspend fun start(
     thingId: String,
-    entryPoint: String,
+    entryPoint: SuggestionEntryPoint,
     curatedOnly: Boolean,
     documents: List<Attachment>,
   ): AiStartResult {
@@ -267,7 +269,7 @@ class TaskSuggestionManagerImpl(
         else -> if (updatedAt.toEpochMilliseconds() > 0 && now - updatedAt > STALE_AFTER) {
           SuggestionRun.Failed(id, AiErrorCode.STALE, decoded)
         } else {
-          SuggestionRun.Working(id, stage, stageArg, decoded)
+          SuggestionRun.Working(id, SuggestionStage.fromWire(stage), stageArg, decoded)
         }
       }
     }

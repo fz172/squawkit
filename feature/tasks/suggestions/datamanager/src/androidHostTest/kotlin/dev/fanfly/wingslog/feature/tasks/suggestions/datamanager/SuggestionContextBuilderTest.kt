@@ -162,11 +162,11 @@ class SuggestionContextBuilderTest {
   @Test
   fun `names the Thing and its host tree, and carries the template`() =
     runTest {
-      val request = builder(hostUid = "the-host").build(THING, "overview")
+      val request = builder(hostUid = "the-host").build(THING, SuggestionEntryPoint.CURATED)
 
       assertThat(request.thing_id?.value_).isEqualTo(THING)
       assertThat(request.host_uid?.value_).isEqualTo("the-host")
-      assertThat(request.entry_point).isEqualTo("overview")
+      assertThat(request.entry_point).isEqualTo("curated")
       assertThat(request.context?.template_id?.value_).isEqualTo("airplane")
       assertThat(request.context?.template_version).isEqualTo(13)
       assertThat(request.context?.lexicon_task_noun).isNotEmpty()
@@ -174,7 +174,7 @@ class SuggestionContextBuilderTest {
 
   @Test
   fun `sends no identifier, no invented field and no serial`() = runTest {
-    val context = builder().build(THING, "overview").context!!
+    val context = builder().build(THING, SuggestionEntryPoint.CURATED).context!!
 
     assertThat(context.specs.map { it.key }).containsExactly("make", "model")
     val engine = context.components.first { it.slot_key == "engine" }
@@ -199,7 +199,7 @@ class SuggestionContextBuilderTest {
     runTest {
       val meters = builder().build(
         THING,
-        "overview"
+        SuggestionEntryPoint.CURATED
       ).context!!.meters.associateBy { it.key }
 
       assertThat(meters.getValue("engine_hours").current).isEqualTo(410.0)
@@ -221,7 +221,7 @@ class SuggestionContextBuilderTest {
 
     val existing = builder(tasks = listOf(task)).build(
       THING,
-      "overview"
+      SuggestionEntryPoint.CURATED
     ).context!!.existing_tasks.single()
 
     assertThat(existing.id?.value_).isEqualTo("t1")
@@ -234,7 +234,7 @@ class SuggestionContextBuilderTest {
   fun `summarises logs newest first, with nothing personal`() = runTest {
     val logs = listOf(log("older", JUNE_1), log("newer", JUNE_1 + DAY))
 
-    val summaries = builder(logs = logs).build(THING, "overview").context!!.logs
+    val summaries = builder(logs = logs).build(THING, SuggestionEntryPoint.CURATED).context!!.logs
 
     assertThat(summaries.map { it.id?.value_ }).containsExactly(
       "newer",
@@ -256,7 +256,7 @@ class SuggestionContextBuilderTest {
   fun `keeps the newest 500 logs and says history was cut`() = runTest {
     val logs = (0 until 600).map { log("log-$it", JUNE_1 + it * DAY) }
 
-    val context = builder(logs = logs).build(THING, "overview").context!!
+    val context = builder(logs = logs).build(THING, SuggestionEntryPoint.CURATED).context!!
 
     assertThat(context.logs).hasSize(500)
     assertThat(context.logs.first().id?.value_).isEqualTo("log-599")
@@ -266,7 +266,7 @@ class SuggestionContextBuilderTest {
   @Test
   fun `drops the oldest logs until the request is under 400 KiB`() = runTest {
     val builder = builder(logs = emptyList())
-    val base = builder.build(THING, "overview")
+    val base = builder.build(THING, SuggestionEntryPoint.CURATED)
     val big = "x".repeat(4_000)
 
     val request = builder.withLogs(
@@ -288,7 +288,7 @@ class SuggestionContextBuilderTest {
     assertThat(
       builder().build(
         THING,
-        "overview"
+        SuggestionEntryPoint.CURATED
       ).context!!.logs_truncated
     ).isFalse()
   }

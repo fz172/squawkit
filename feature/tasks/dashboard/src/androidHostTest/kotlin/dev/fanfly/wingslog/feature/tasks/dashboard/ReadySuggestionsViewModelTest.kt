@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.tasks.dashboard
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.id.MaintenanceTaskId
@@ -72,7 +73,7 @@ class ReadySuggestionsViewModelTest {
     val vm = ReadySuggestionsViewModel(suggestions, THING)
     backgroundScope.launch { vm.ready.collect {} }
 
-    runs.value = SuggestionRun.Working(AiJobId("job"), "tailoring", null)
+    runs.value = SuggestionRun.Working(AiJobId("job"), SuggestionStage.TAILORING, null)
     advanceUntilIdle()
     assertThat(vm.ready.value).isNull()
 
