@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
+package dev.fanfly.wingslog.feature.tasks.suggestions.update.add
 
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.thing.Attachment
