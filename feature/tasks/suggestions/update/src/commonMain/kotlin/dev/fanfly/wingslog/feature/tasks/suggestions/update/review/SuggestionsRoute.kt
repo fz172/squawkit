@@ -322,7 +322,9 @@ fun SuggestionsRoute(
           // The Thing's own tasks, in its words: an airplane's are the airframe's.
           val thingSection =
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingSectionNoun)
-          groupsOf(uiState.items).forEach { group ->
+          // Regrouped only when the cards change, not for each progress line of a working run.
+          val groups = remember(uiState.items) { groupsOf(uiState.items) }
+          groups.forEach { group ->
             // The header sits on its card; the column's spacing separates the sections.
             Column {
               // Every section is headed: its count and *Select all* are worth having for one too.
