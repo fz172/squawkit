@@ -327,7 +327,7 @@ message TaskSuggestion {
   MaintenanceTaskId matches_existing_task_id = 17; // Already tracked (R24)
   string interval_difference_note = 18;
   reserved 19;                                // was merges_static_index; the server merges now
-  bool preselect = 20;                        // server applies R27
+  reserved 20;                                // was preselect; nothing starts checked (R27)
   TaskOriginKind origin_kind = 23;            // PRE_CURATED, AI_THING or AI_DOCUMENT (§6.8)
 }
 ```
@@ -726,12 +726,8 @@ Each rule is a pure function with its own tests (§14). In order:
    but never typed as anything but routine.
 5. **Dedup ids:** `matches_existing_task_id` must be an id in `context.existing_tasks`, else
    cleared; `mergesCuratedIndex` must be in range, else −1.
-6. **Pre-selection (R27):** *the app has not read `preselect` since 2026-10-03, when R27 became
-   "nothing pre-selected"; the server still sets it, for a later revision to drop.* DOCUMENT and
-   LOGS → true; others → true except on template `airplane`;
-   `matches_thing = false` documents → false; Already tracked → false; a one-time item whose
-   first-due reading the Thing has already passed → false (shown, since it may not have been done,
-   but not ticked).
+6. **Pre-selection (R27):** *removed.* Nothing starts checked since 2026-10-03, the app stopped
+   reading `preselect` then, and the server no longer sets it; the proto field is reserved.
 7. **Confidence (R21a):** the job is EMPTY when there are no documents and stage 3's identity
    confidence is low, or when nothing survives 1–6. Individual low-confidence items are dropped,
    never shown as such.
@@ -759,8 +755,8 @@ the server as **curated lists**, and every task run returns its template's list,
 
 - **Files.** One per template id, `functions/src/ai/tasks/curated/{templateId}.json`, generated once
   from the templates' `starter_tasks` and edited by hand from then on. Each item has the
-  suggestion's fields as the pipeline types name them (title, description, slot key, rules,
-  preselect) plus a source kind and citation the team writes per item. A 14 CFR 91.411 item cites
+  suggestion's fields as the pipeline types name them (title, description, slot key, rules)
+  plus a source kind and citation the team writes per item. A 14 CFR 91.411 item cites
   the regulation as text and is typed routine like every other curated item (R18). Deployed with the
   functions; changing one needs no app release. No list for
   `custom`, or for a template id the server does not know.

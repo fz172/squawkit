@@ -240,8 +240,6 @@ export interface TaskSuggestion {
   /** An existing task this duplicates; the review shows it as Already tracked (PRD R24). */
   matchesExistingTaskId: MaintenanceTaskId | undefined;
   intervalDifferenceNote: string;
-  /** Whether the review ticks it by default. The server applies PRD R27. */
-  preselect: boolean;
   /** Set only on a one-time item that says when it falls due. */
   firstDue:
     | FirstDue
@@ -1645,7 +1643,6 @@ function createBaseTaskSuggestion(): TaskSuggestion {
     lastDone: undefined,
     matchesExistingTaskId: undefined,
     intervalDifferenceNote: "",
-    preselect: false,
     firstDue: undefined,
     sourcePages: [],
     originKind: 0,
@@ -1707,9 +1704,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
     }
     if (message.intervalDifferenceNote !== "") {
       writer.uint32(146).string(message.intervalDifferenceNote);
-    }
-    if (message.preselect !== false) {
-      writer.uint32(160).bool(message.preselect);
     }
     if (message.firstDue !== undefined) {
       FirstDue.encode(message.firstDue, writer.uint32(170).fork()).join();
@@ -1876,14 +1870,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
           message.intervalDifferenceNote = reader.string();
           continue;
         }
-        case 20: {
-          if (tag !== 160) {
-            break;
-          }
-
-          message.preselect = reader.bool();
-          continue;
-        }
         case 21: {
           if (tag !== 170) {
             break;
@@ -1995,7 +1981,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
         : isSet(object.interval_difference_note)
         ? globalThis.String(object.interval_difference_note)
         : "",
-      preselect: isSet(object.preselect) ? globalThis.Boolean(object.preselect) : false,
       firstDue: isSet(object.firstDue)
         ? FirstDue.fromJSON(object.firstDue)
         : isSet(object.first_due)
@@ -2070,9 +2055,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
     if (message.intervalDifferenceNote !== "") {
       obj.intervalDifferenceNote = message.intervalDifferenceNote;
     }
-    if (message.preselect !== false) {
-      obj.preselect = message.preselect;
-    }
     if (message.firstDue !== undefined) {
       obj.firstDue = FirstDue.toJSON(message.firstDue);
     }
@@ -2117,7 +2099,6 @@ export const TaskSuggestion: MessageFns<TaskSuggestion> = {
         ? MaintenanceTaskId.fromPartial(object.matchesExistingTaskId)
         : undefined;
     message.intervalDifferenceNote = object.intervalDifferenceNote ?? "";
-    message.preselect = object.preselect ?? false;
     message.firstDue = (object.firstDue !== undefined && object.firstDue !== null)
       ? FirstDue.fromPartial(object.firstDue)
       : undefined;

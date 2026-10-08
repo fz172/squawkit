@@ -26,7 +26,6 @@ const item = {
   description: "",
   componentSlotKey: "",
   rules: [{ kind: "time", every: 6, unit: "months" }],
-  preselect: true,
   sourceKind: "common_practice",
   citation: "",
 };
@@ -74,7 +73,6 @@ describe("parseCuratedFile", () => {
     ["a zero interval", { templateId: "automotive", items: [{ ...item, rules: [{ kind: "meter", meterKey: "odometer", interval: 0 }] }] }],
     ["month 13", { templateId: "automotive", items: [{ ...item, rules: [{ kind: "seasonal", months: [13], dayOfMonth: 0 }] }] }],
     ["an unknown rule", { templateId: "automotive", items: [{ ...item, rules: [{ kind: "linked" }] }] }],
-    ["preselect as text", { templateId: "automotive", items: [{ ...item, preselect: "yes" }] }],
   ])("refuses %s", (_, file) => {
     expect(() => parseCuratedFile(file)).toThrow(/curated/);
   });

@@ -12,7 +12,6 @@ import {
   sourceRule,
   lastDoneRule,
   meterRule,
-  preselectRule,
   regulatoryRule,
   schemaRule,
   validate,
@@ -257,24 +256,7 @@ describe("first-due rule", () => {
   });
 });
 
-describe("6. pre-selection rule", () => {
-  const home = input({ context: airplaneContext({ templateId: "home" }) });
-  const recall = { sourceKind: "common_practice" as const, evidence: { documentIndex: null, pages: [], sourceFigures: [], sourceIntervals: [] } };
-  it.each([
-    ["document", draft(), input(), true],
-    ["logs", draft({ sourceKind: "logs", evidence: { documentIndex: null, pages: [], sourceFigures: [], sourceIntervals: [] } }), input(), true],
-    ["common practice on an airplane", draft(recall), input(), false],
-    ["common practice on a home", draft(recall), home, true],
-    ["a document for a different Thing", draft(), input({ documents: [doc({ matchesThing: false })] }), false],
-    ["already tracked", draft({ matchesExistingTaskId: "task-annual" }), input(), false],
-    ["a one-time item the Thing has passed", draft({ isOneTime: true, firstDue: { date: null, meter: { meterKey: "engine_hours", value: 25 } } }), input(), false],
-    ["a one-time item still ahead", draft({ isOneTime: true, firstDue: { date: null, meter: { meterKey: "engine_hours", value: 600 } } }), input(), true],
-  ] as const)("%s → %s", (_name, d, inp, expected) => {
-    expect(preselectRule([d], inp)[0].preselect).toBe(expected);
-  });
-});
-
-describe("7. confidence rule", () => {
+describe("6. confidence rule", () => {
   it("drops low-confidence items individually", () => {
     const out = confidenceRule([draft(), draft({ confidence: "low" }), draft({ confidence: "medium" })], input());
     expect(out.map((d) => d.confidence)).toEqual(["high", "medium"]);
@@ -293,7 +275,6 @@ describe("validate", () => {
     expect(out).toHaveLength(1);
     expect(out[0].rules).toEqual([{ kind: "meter", meterKey: "engine_hours", interval: 200 }]);
     expect(out[0].lastDone?.logId).toBe("log-1");
-    expect(out[0].preselect).toBe(true);
   });
 
   it("containsVerbatim ignores whitespace and case only", () => {

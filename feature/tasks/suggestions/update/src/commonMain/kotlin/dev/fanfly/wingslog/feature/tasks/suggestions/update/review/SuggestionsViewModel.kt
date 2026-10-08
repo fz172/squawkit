@@ -633,8 +633,8 @@ class SuggestionsViewModel(
 
     /**
      * Cards for [result], none checked to start (PRD R27, revised 2026-10-03: the user checks what
-     * they need, and the server's `preselect` is not read). A card already on screen keeps the
-     * user's check when the model's answer replaces the curated list.
+     * they need). A card already on screen keeps the user's check when the model's answer replaces
+     * the curated list.
      */
     fun itemsOf(
       result: SuggestTasksResult,

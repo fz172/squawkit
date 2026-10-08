@@ -155,11 +155,10 @@ class SuggestionsViewModelTest {
 
   // The server source (developer builds until T25): cards come from a suggestion run.
 
-  private fun curated(id: String, title: String, preselect: Boolean = true) =
+  private fun curated(id: String, title: String) =
     TaskSuggestion(
       suggestion_id = SuggestionId(value_ = id),
       title = title,
-      preselect = preselect,
       origin_kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED,
     )
 
@@ -167,7 +166,7 @@ class SuggestionsViewModelTest {
     suggestions = listOf(
       curated("c0", "Annual"),
       curated("c1", "Oil change"),
-      curated("c2", "ELT", preselect = false)
+      curated("c2", "ELT")
     ),
   )
 
@@ -244,7 +243,7 @@ class SuggestionsViewModelTest {
         "ELT"
       )
         .inOrder()
-      // The server's preselect is not read: the user checks what they need (PRD R27).
+      // Nothing starts checked: the user checks what they need (PRD R27).
       assertThat(vm.uiState.value.items.map { it.selected }).containsExactly(
         false,
         false,
@@ -597,10 +596,9 @@ class SuggestionsViewModelTest {
           TaskSuggestion(
             suggestion_id = SuggestionId(value_ = "s1"),
             title = "Oil and filter",
-            preselect = true
           ),
           curated("c0", "Annual"),
-          curated("c2", "ELT", preselect = false),
+          curated("c2", "ELT"),
         ),
       )
       runs.emit(SuggestionRun.Ready(JOB, merged))

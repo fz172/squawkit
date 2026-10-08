@@ -107,7 +107,6 @@ export function resultToProto(result: SuggestTasksResult): SuggestTasksResultPro
           : undefined,
         matchesExistingTaskId: s.matchesExistingTaskId ? { value: s.matchesExistingTaskId } : undefined,
         intervalDifferenceNote: s.intervalDifferenceNote,
-        preselect: s.preselect,
         originKind: ORIGIN_KINDS[s.originKind],
       }),
     ),
