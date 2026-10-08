@@ -48,7 +48,9 @@ class TaskSuggestionEntryTest {
     return TaskSuggestionEntry(
       auth = auth,
       fleetManager = fleet,
-      templateRegistry = mockk<TemplateRegistry>(),
+      templateRegistry = mockk<TemplateRegistry> {
+        every { forThingWithFallback(any()) } answers { firstArg<Thing>().template!! }
+      },
     )
   }
 

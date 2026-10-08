@@ -55,11 +55,9 @@ class SuggestionContextBuilder(
     val thing = fleetManager.loadThing(thingId)
       .filterNotNull()
       .first()
-    val template =
-      thing.template ?: templateRegistry.forThingWithFallback(thing)
+    val template = templateRegistry.forThingWithFallback(thing)
     // A shared Thing lives in its host's tree: users/{hostUid}/thing/{thingId}.
-    val hostUid = scopeResolver.resolveNow(thingId).segments.getOrNull(1)
-      .orEmpty()
+    val hostUid = scopeResolver.resolveNow(thingId).hostUid.orEmpty()
     val tasks = taskDataManager.observeTasks(thingId)
       .first()
     val logs = logManager.observeLogs(thingId)

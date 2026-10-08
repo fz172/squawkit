@@ -182,15 +182,14 @@ class TaskSuggestionManagerImpl(
   }
 
   private suspend fun hostUidOf(thingId: String): String =
-    scopeResolver.resolveNow(thingId).segments.getOrNull(1)
-      .orEmpty()
+    scopeResolver.resolveNow(thingId).hostUid.orEmpty()
 
-  private suspend fun templateOf(thingId: String): ThingTemplate? {
-    val thing = fleetManager.loadThing(thingId)
-      .filterNotNull()
-      .first()
-    return thing.template ?: templateRegistry.forThingWithFallback(thing)
-  }
+  private suspend fun templateOf(thingId: String): ThingTemplate =
+    templateRegistry.forThingWithFallback(
+      fleetManager.loadThing(thingId)
+        .filterNotNull()
+        .first()
+    )
 
   private companion object {
     val KIND = AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS

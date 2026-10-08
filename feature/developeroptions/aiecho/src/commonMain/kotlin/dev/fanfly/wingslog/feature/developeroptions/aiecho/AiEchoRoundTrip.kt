@@ -37,7 +37,7 @@ class AiEchoRoundTrip(
     val thingId = fleet.observeFleetDashboard().first().firstOrNull()?.thing?.id
       ?: return EchoOutcome.NoThing
     // A shared Thing lives in its host's tree: users/{hostUid}/thing/{thingId}.
-    val hostUid = scopes.resolveNow(thingId).segments.getOrNull(1) ?: return EchoOutcome.NoThing
+    val hostUid = scopes.resolveNow(thingId).hostUid ?: return EchoOutcome.NoThing
     val request = SuggestTasksRequest(
       thing_id = ThingId(value_ = thingId),
       host_uid = UserId(value_ = hostUid),

@@ -73,7 +73,9 @@ class TaskSuggestionManagerImplTest {
   private val taskData = mockk<TaskDataManager> {
     every { observeTasks(THING) } returns flowOf(emptyList())
   }
-  private val registry = mockk<TemplateRegistry>()
+  private val registry = mockk<TemplateRegistry> {
+    every { forThingWithFallback(any()) } answers { firstArg<Thing>().template!! }
+  }
   private val scopes = mockk<ThingScopeResolver> {
     coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe(
       "host",

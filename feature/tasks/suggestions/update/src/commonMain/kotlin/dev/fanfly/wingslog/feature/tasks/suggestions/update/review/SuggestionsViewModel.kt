@@ -127,10 +127,11 @@ class SuggestionsViewModel(
 
   init {
     viewModelScope.launch {
-      val template = fleetManager.loadThing(thingId)
-        .filterNotNull()
-        .first()
-        .template
+      val template = templateRegistry.forThingWithFallback(
+        fleetManager.loadThing(thingId)
+          .filterNotNull()
+          .first()
+      )
       _uiState.update {
         it.copy(
           template = template,

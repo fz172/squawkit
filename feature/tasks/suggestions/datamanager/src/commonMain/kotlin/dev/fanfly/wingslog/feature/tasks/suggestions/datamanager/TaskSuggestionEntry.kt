@@ -34,7 +34,7 @@ class TaskSuggestionEntry(
       fleetManager.loadThing(thingId),
     ) { isGuest, thing ->
       val missing = thing?.let { t ->
-        val template = t.template ?: templateRegistry.forThingWithFallback(t)
+        val template = templateRegistry.forThingWithFallback(t)
         val values = t.spec.associate { it.key to it.value_ }
         template.spec_fields
           .filter { it.required && values[it.key].isNullOrBlank() }

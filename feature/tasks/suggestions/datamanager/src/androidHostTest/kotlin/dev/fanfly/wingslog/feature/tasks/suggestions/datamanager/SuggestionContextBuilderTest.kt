@@ -139,7 +139,10 @@ class SuggestionContextBuilderTest {
       )
     }
     val registry =
-      mockk<TemplateRegistry> { every { lexiconFor(any()) } returns GenericLexicon.LEXICON }
+      mockk<TemplateRegistry> {
+        every { lexiconFor(any()) } returns GenericLexicon.LEXICON
+        every { forThingWithFallback(any()) } answers { firstArg<Thing>().template!! }
+      }
     val scopes = mockk<ThingScopeResolver> {
       coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe(
         hostUid,
