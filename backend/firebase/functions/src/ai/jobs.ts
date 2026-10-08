@@ -90,7 +90,8 @@ export async function handleGetAiEligibility(
   }
 
   const access = { callerUid: uid, hostUid: data.hostUid, thingId: data.thingId, withDocuments: data.withDocuments };
-  const decision = decideAiAccess(access, await loadAiAccessFacts(access, now), now);
+  const facts = await loadAiAccessFacts(access, now);
+  const decision = decideAiAccess(access, facts, now);
   // The owner's Pro opens documents only where this deploy runs them for the kind.
   const documentsAllowed = decision.documentsAllowed && data.spec.acceptsDocuments;
   if (!decision.allowed) {
@@ -102,8 +103,8 @@ export async function handleGetAiEligibility(
     };
   }
 
-  const usage = await adminDb.doc(aiUsageDocPath(data.hostUid, data.thingId)).get();
-  const inFlight = await readInFlight(usage.data() as AiUsageDoc | undefined, (ref) => ref.get(), now);
+  // The usage document the access facts already read: it holds the in-flight pointer too.
+  const inFlight = await readInFlight(facts.usage ?? undefined, (ref) => ref.get(), now);
   if (inFlight.state === "active" && inFlight.ref.callerUid !== uid) {
     return { ...refusal("run_in_progress"), documentsAllowed };
   }
