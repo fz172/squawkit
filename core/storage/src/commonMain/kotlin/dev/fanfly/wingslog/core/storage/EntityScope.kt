@@ -12,6 +12,13 @@ package dev.fanfly.wingslog.core.storage
  * `segments` are isolated even if they share a prefix.
  */
 data class EntityScope(val segments: List<String>) {
+  /**
+   * The uid whose tree this scope is in: the signed-in user's for their own data, the host's for a
+   * Thing shared with them. Null for a scope outside `/users/`.
+   */
+  val hostUid: String?
+    get() = segments.getOrNull(1)?.takeIf { segments.first() == "users" }
+
   fun toPath(): String =
     segments.joinToString(separator = "/", prefix = "/", postfix = "/")
 

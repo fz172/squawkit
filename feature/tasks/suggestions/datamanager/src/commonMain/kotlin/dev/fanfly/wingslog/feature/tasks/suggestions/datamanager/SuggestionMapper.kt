@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TaskOrigin
 import dev.fanfly.wingslog.task.TaskOriginKind
-import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -31,15 +30,14 @@ class SuggestionMapper(
 ) {
 
   /**
-   * [suggestion] as a task to add. [generationVersion] is the run's, for the origin. [documents]
-   * are the run's source documents; the one the suggestion cites is copied onto the task, the same
-   * blob (R37). The id is left for `TaskDataManager.addTask` to assign.
+   * [suggestion] as a task to add. [generationVersion] is the run's, for the origin. The document
+   * it cites is not attached here: accepting adds it, from the run's own documents (R37). The id
+   * is left for `TaskDataManager.addTask` to assign.
    */
   fun toTask(
     suggestion: TaskSuggestion,
     template: ThingTemplate?,
     generationVersion: String,
-    documents: List<Attachment> = emptyList(),
   ): MaintenanceTask {
     val now = clock.now()
       .toWireInstant()
@@ -70,7 +68,6 @@ class SuggestionMapper(
         ::startOfDay
       ),
       force_due_meter = suggestion.first_due?.takeIf { suggestion.is_one_time }?.meter,
-      attachments = documents.filter { sourceDocument.isNotEmpty() && it.id == sourceDocument },
       origin = TaskOrigin(
         // The server says where each suggestion came from (design §6.8): PRE_CURATED for a curated
         // one. A server from before origin_kind sent only the model's.

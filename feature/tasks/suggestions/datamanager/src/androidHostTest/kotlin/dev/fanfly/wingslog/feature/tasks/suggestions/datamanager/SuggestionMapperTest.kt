@@ -13,7 +13,6 @@ import dev.fanfly.wingslog.task.MeterRule
 import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.task.TaskSourceKind
 import dev.fanfly.wingslog.task.TimeRule
-import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MeterReading
@@ -114,22 +113,15 @@ class SuggestionMapperTest {
   }
 
   @Test
-  fun `a document suggestion carries its document, the same blob`() {
-    val manual =
-      Attachment(id = "blob-mm", name = "Rotax MM.pdf", sha256 = "abc")
+  fun `a document suggestion names its document, and leaves attaching it to accepting`() {
     val cited =
       suggestion.copy(source_document = AttachmentId(value_ = "blob-mm"))
 
-    val task = mapper.toTask(
-      cited,
-      airplane,
-      "tasks-4",
-      documents = listOf(manual, Attachment(id = "other"))
-    )
+    val task = mapper.toTask(cited, airplane, "tasks-4")
 
     assertThat(task.origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT)
     assertThat(task.origin?.source_attachment_id?.value_).isEqualTo("blob-mm")
-    assertThat(task.attachments).containsExactly(manual)
+    assertThat(task.attachments).isEmpty()
   }
 
   @Test

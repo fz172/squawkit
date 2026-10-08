@@ -68,7 +68,7 @@ class AddTasksViewModel(
       val thing = fleetManager.loadThing(thingId)
         .filterNotNull()
         .first()
-      val template = thing.template
+      val template = templateRegistry.forThingWithFallback(thing)
       _uiState.update {
         it.copy(
           lexicon = templateRegistry.lexiconFor(template),
