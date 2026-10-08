@@ -290,6 +290,15 @@ describe("task pipeline without documents", () => {
     // The failed tailor is still in the cost log, both attempts.
     expect(h.calls.at(-1)).toMatchObject({ stage: "tailor", usage: { costMicros: 100 } });
   });
+
+  it("asks whether the run is still open before the tailor, and does not tailor when it is not", async () => {
+    const h = harness({ recall: () => RECALLED, tailor: () => expect.fail("tailored a closed run") });
+    const closed = new Error("closed");
+    const e = await rejection(runTaskPipeline(request(), { ...h.deps, checkOpen: () => Promise.reject(closed) }));
+    expect(e).toBe(closed);
+    expect(h.stages.map(([s]) => s)).toEqual(["recalling_schedule"]);
+    expect(h.calls.map((c) => c.stage)).toEqual(["recall"]);
+  });
 });
 
 describe("task pipeline with documents", () => {

@@ -52,6 +52,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import okio.ByteString
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 class TaskSuggestionManagerImplTest {
@@ -498,7 +501,7 @@ class TaskSuggestionManagerImplTest {
       )
 
       // Each written task is named, and its id is what comes back, for *Undo*.
-      assertThat(ids).isEqualTo(written.map { it.id })
+      assertThat(ids.map { it.taskId }).isEqualTo(written.map { it.id })
       assertThat(written.map { it.id }.distinct()).hasSize(2)
       assertThat(written[0].id).isNotEmpty()
       assertThat(written[0].title).isEqualTo("Replace spark plugs")
@@ -600,6 +603,46 @@ class TaskSuggestionManagerImplTest {
 
     assertThat(ids).hasSize(1)
     coVerify(exactly = 1) { client.close(JOB) }
+  }
+
+  @Test
+  fun `when no write succeeds the run and its documents stay`() = runTest {
+    coEvery { taskData.addTask(THING, any()) } returns Result.failure(RuntimeException("disk"))
+    val run = SuggestionRun.Ready(JOB, SuggestTasksResult())
+
+    val written = manager.accept(THING, run, listOf(AcceptedSuggestion(suggestion)))
+
+    assertThat(written).isEmpty()
+    coVerify(exactly = 0) { client.close(any()) }
+    coVerify(exactly = 0) { jobDocuments.release(any()) }
+  }
+
+  @Test
+  fun `a run still working long after its worker is gone reads as stale`() = runTest {
+    val now = Clock.System.now()
+    every {
+      client.observeLatest(
+        AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
+        ThingId(value_ = THING)
+      )
+    } returns flowOf(
+      job(AiJobStatus.AI_JOB_STATUS_RUNNING).copy(updatedAt = now - 39.minutes),
+      job(AiJobStatus.AI_JOB_STATUS_RUNNING).copy(updatedAt = now - 41.minutes),
+      job(AiJobStatus.AI_JOB_STATUS_QUEUED).copy(updatedAt = now - 2.hours),
+      // A finished run is what it is, however old.
+      job(AiJobStatus.AI_JOB_STATUS_EMPTY).copy(updatedAt = now - 2.hours),
+    )
+
+    assertThat(
+      manager.observeRun(THING)
+        .toList()
+    ).containsExactly(
+      SuggestionRun.Working(JOB, "tailoring", null),
+      SuggestionRun.Failed(JOB, AiErrorCode.STALE),
+      SuggestionRun.Failed(JOB, AiErrorCode.STALE),
+      SuggestionRun.Empty(JOB),
+    )
+      .inOrder()
   }
 
   @Test

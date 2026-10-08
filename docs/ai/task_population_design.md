@@ -424,8 +424,10 @@ Implemented in `functions/src/ai/jobs.ts` (T08):
   `inFlightJob` if it still names the job, and throws `unavailable / provider_error`, so the Thing
   is not held for 35 minutes by a job no worker will run.
 - **Close does not clear `inFlightJob`.** A job closed while running is left to the worker, which
-  clears the pointer when it ends and must tolerate its job being gone (T09). Clearing it on close
-  would let a second run start beside the first.
+  asks whether its job still exists before the tailor call and stops there when it does not, then
+  clears the pointer. A run closed while running writes no outcome, sends no push and does not
+  set `lastSuccessAt`. Until the worker gets there the pointer names a deleted job, which counts
+  as none, so the caller can start again at once.
 - More documents than `maxDocumentsPerRun` is `invalid-argument`; the client caps at pick time.
 
 Curated suggestions (2026-10-02, §6.8) change `startAiJob` for the task kind:
@@ -461,8 +463,11 @@ registered pipeline (`registerPipeline(AI_JOB_KIND_TASK_SUGGESTIONS, taskSuggest
    outcome, SUCCEEDED, EMPTY or FAILED (phase C)
    (`enabledTokensFor(callerUid)` → `sendPush`, deep link to the suggestions route).
 
-A crashed worker leaves a job RUNNING. Eligibility and `startAiJob` treat a RUNNING job older than
-35 minutes (the worker timeout plus margin) as FAILED (`stale`) and clear it.
+A crashed worker leaves a job RUNNING. `startAiJob` treats a RUNNING job older than 35 minutes
+(the worker timeout plus margin) as FAILED (`stale`) and replaces it; eligibility reads it as no
+run in flight. Nothing writes that to the job until the next start, so the client reads a job
+still QUEUED or RUNNING 40 minutes after its last update as failed `stale` itself
+(`TaskSuggestionManagerImpl`), and offers to start again rather than waiting on it.
 
 Implemented in `functions/src/ai/worker.ts` (T09):
 

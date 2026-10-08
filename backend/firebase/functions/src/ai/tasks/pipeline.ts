@@ -76,6 +76,11 @@ export type PipelineDeps = {
   /** Each document's page text once read, so the eval checks against the same text. */
   onDocumentRead?(ref: SourceDocumentRef, pages: DocumentPage[]): void;
   locate?: LocateMethod;
+  /**
+   * Throws when the run has no one left to answer (the worker's job was closed). Asked before the
+   * tailor, the costliest call, which nothing after a close would read.
+   */
+  checkOpen?(): Promise<void>;
   /** Today, for first-due dates relative to now. Defaults to the clock. */
   now?: () => Date;
   /**
@@ -140,6 +145,7 @@ export async function runTaskPipeline(
     return { status: "empty", reason: "nothing_survived", result: result([], []), curatedNotApplicable: [] };
   }
 
+  await deps.checkOpen?.();
   deps.onStage?.("tailoring");
   const tailored = (await call(deps, "tailor", deps.strong, {
     system: TAILOR_SYSTEM,

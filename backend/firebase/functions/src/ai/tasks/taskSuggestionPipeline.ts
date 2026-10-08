@@ -53,6 +53,7 @@ export function createTaskSuggestionPipeline(
         ocr: productionOcr(),
         onStage: (stage, arg) => context.reportStage(stage, arg),
         onCall: (record) => context.recordCall(record),
+        checkOpen: () => context.throwIfClosed(),
         // The bake-off's settings (§12.5): keyword locating, table pages as PDF, recall on fast.
         locate: "keywords",
         attachPdf: true,

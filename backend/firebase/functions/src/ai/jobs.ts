@@ -311,8 +311,10 @@ export const startAiJob = onCall<unknown, Promise<StartAiJobResponse>>(
  * the caller's own: the path is built from their uid. A subcollection outlives its parent, so the
  * input is deleted explicitly.
  *
- * A job still running is left to the worker, which clears `inFlightJob` when it ends and finds
- * its job gone; clearing it here would let a second run start beside the first.
+ * A job still running is left to the worker: it stops before its next costly call once it finds
+ * its job gone, clears `inFlightJob`, uses up no day and sends no push. Until it does, the Thing
+ * reads as free (`readInFlight` takes a pointer to a gone job as none), so the caller can start
+ * again at once.
  */
 export async function handleCloseAiJob(request: CallableRequest<unknown>): Promise<{ closed: true }> {
   const { uid } = requireAuthenticatedApp(request);

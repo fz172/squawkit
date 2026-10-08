@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -73,13 +74,16 @@ interface TaskSuggestionManager {
    * Writes [chosen] as tasks, one write each (a failure drops only its own
    * card), then closes the run and lets go of its documents, keeping any a written task holds.
    * A suggestion that cites a document is written holding it, as the same blob (PRD R37).
-   * Returns the ids of the tasks written, for the task tab's *Undo*.
+   * Returns what was written, with each task's id for the task tab's *Undo*.
+   *
+   * When nothing could be written the run stays open, with its documents, so the cards are still
+   * there to try again.
    */
   suspend fun accept(
     thingId: String,
     run: SuggestionRun.Ready,
     chosen: List<AcceptedSuggestion>
-  ): List<String>
+  ): List<WrittenSuggestion>
 
   /** Closes the run without writing anything, and lets go of its documents. */
   suspend fun dismiss(jobId: AiJobId)
@@ -122,7 +126,10 @@ sealed interface SuggestionRun {
   data class Empty(val jobId: AiJobId, val result: SuggestTasksResult? = null) :
     SuggestionRun
 
-  /** [result] holds the curated suggestions the run started with, if any. */
+  /**
+   * [result] holds the curated suggestions the run started with, if any. A run still marked as
+   * working long after its worker must have ended is this, with [AiErrorCode.STALE].
+   */
   data class Failed(
     val jobId: AiJobId,
     val reason: AiErrorCode,

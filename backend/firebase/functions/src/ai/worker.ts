@@ -23,7 +23,7 @@ import {
   type AiUsageDoc,
 } from "./collections.js";
 import { echoPipeline } from "./echoPipeline.js";
-import { AiError, type AiErrorCode } from "./errors.js";
+import { AiError, AiJobClosedError, type AiErrorCode } from "./errors.js";
 import { FirestorePipelineCache } from "./firestoreCache.js";
 import { aiJobKindSpec, type AiJobKindSpec } from "./kinds.js";
 import type { PipelineCache } from "./tasks/cache.js";
@@ -51,6 +51,11 @@ export type AiPipelineContext = {
   reportStage(stage: string, arg?: string): void;
   /** One provider, OCR or cache-hit call, for the cost log and `ai_spend` (§5.6). */
   recordCall(record: PipelineCallRecord): void;
+  /**
+   * Throws AiJobClosedError when the job has been closed since it started. A pipeline asks before
+   * a costly call, so a run nobody is waiting for stops spending.
+   */
+  throwIfClosed(): Promise<void>;
 };
 
 export type AiPipelineOutcome = {
@@ -108,7 +113,8 @@ const defaultDeps = (): AiWorkerDeps => ({
  *   5. calls the pipeline's `onFinished`.
  *
  * A job closed while running is not an error: its outcome has nowhere to go, but the Thing is
- * still freed and the input still deleted.
+ * still freed and the input still deleted. It does not use up the day, and `onFinished` is not
+ * called: the caller never saw an answer, and a push would bring them back to nothing.
  */
 export async function handleAiJob(ref: AiJobRef, deps: AiWorkerDeps = defaultDeps()): Promise<void> {
   const jobRef = adminDb.doc(aiJobDocPath(ref.callerUid, ref.jobId));
@@ -153,6 +159,9 @@ export async function handleAiJob(ref: AiJobRef, deps: AiWorkerDeps = defaultDep
       recordCall(record) {
         pending.push(writeCost(record, job, ref, decision.ownerTier, deps.now()));
       },
+      async throwIfClosed() {
+        if (!(await jobRef.get()).exists) throw new AiJobClosedError();
+      },
     });
     finish = {
       status: outcome.status === "succeeded" ? AiJobStatus.AI_JOB_STATUS_SUCCEEDED : AiJobStatus.AI_JOB_STATUS_EMPTY,
@@ -160,9 +169,15 @@ export async function handleAiJob(ref: AiJobRef, deps: AiWorkerDeps = defaultDep
       error: null,
     };
   } catch (e) {
-    const code: AiErrorCode = e instanceof AiError ? e.code : "provider_error";
-    logger.warn("runAiJob: failed", { jobId: ref.jobId, kind: job.kind, code, detail: e instanceof Error ? e.message : String(e) });
-    finish = { status: AiJobStatus.AI_JOB_STATUS_FAILED, result: null, error: { code, detailKey: "" } };
+    if (e instanceof AiJobClosedError) {
+      // Written nowhere: the job is gone. Only the Thing and the input are left to clear below.
+      logger.info("runAiJob: closed while running", { jobId: ref.jobId, kind: job.kind });
+      finish = { status: AiJobStatus.AI_JOB_STATUS_FAILED, result: null, error: null };
+    } else {
+      const code: AiErrorCode = e instanceof AiError ? e.code : "provider_error";
+      logger.warn("runAiJob: failed", { jobId: ref.jobId, kind: job.kind, code, detail: e instanceof Error ? e.message : String(e) });
+      finish = { status: AiJobStatus.AI_JOB_STATUS_FAILED, result: null, error: { code, detailKey: "" } };
+    }
   }
 
   // Cost first: a record lost to a crash after this point is spend the ceiling never saw.
@@ -171,7 +186,7 @@ export async function handleAiJob(ref: AiJobRef, deps: AiWorkerDeps = defaultDep
 
   const counted = finish.status === AiJobStatus.AI_JOB_STATUS_SUCCEEDED && spec?.countsTowardDailyLimit === true;
   const at = Timestamp.fromDate(deps.now());
-  await adminDb.runTransaction(async (tx) => {
+  const stillOpen = await adminDb.runTransaction(async (tx) => {
     const [jobSnap, usageSnap] = await Promise.all([tx.get(jobRef), tx.get(usageRef)]);
     if (jobSnap.exists) {
       tx.update(jobRef, {
@@ -190,10 +205,13 @@ export async function handleAiJob(ref: AiJobRef, deps: AiWorkerDeps = defaultDep
     const held = (usageSnap.data() as AiUsageDoc | undefined)?.inFlightJob;
     const usage: Partial<AiUsageDoc> = {};
     if (held?.callerUid === ref.callerUid && held.jobId === ref.jobId) usage.inFlightJob = null;
-    if (counted) usage.lastSuccessAt = at;
+    // A job closed meanwhile showed its caller no answer, so it does not use up the day.
+    if (counted && jobSnap.exists) usage.lastSuccessAt = at;
     if (Object.keys(usage).length > 0) tx.set(usageRef, usage, { merge: true });
     tx.delete(inputRef);
+    return jobSnap.exists;
   });
+  if (!stillOpen) return;
 
   const pipeline = deps.pipelineFor(job.kind);
   if (pipeline?.onFinished) {
