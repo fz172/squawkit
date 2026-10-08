@@ -9,20 +9,15 @@ import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.toDocumentsArg
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -38,21 +33,17 @@ import kotlinx.coroutines.launch
  * be offered, so the slot between shows the right thing before the user reaches it. *Suggest*
  * hands the picked manuals to the suggestions screen's add mode, which starts the run at once.
  *
- * Picked files are stored and queued to upload as they are picked (design §8.1). No record holds
- * them, so the sheet lets them go when it closes without handing them over.
+ * Picked files are stored and queued to upload as they are picked (design §8.1), through
+ * [JobDocumentReleaser], which owns them from then on. No record holds them, so the sheet tells
+ * it to let them go when it closes without handing them over.
  */
 class AddTasksViewModel(
   fleetManager: FleetManager,
   templateRegistry: TemplateRegistry,
   private val suggestionManager: TaskSuggestionManager,
   suggestEntry: TaskSuggestionEntry,
-  private val attachmentManager: AttachmentManager,
+  private val documents: JobDocumentReleaser,
   savedStateHandle: SavedStateHandle,
-  /**
-   * Outlives the ViewModel: storing a file and letting one go both finish here, so closing the
-   * sheet part-way through neither strands a stored file nor drops its release.
-   */
-  private val cleanupScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : ViewModel() {
 
   val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
@@ -125,27 +116,9 @@ class AddTasksViewModel(
           problem = DocumentProblem.UNSUPPORTED
           continue
         }
-        // Stored on the scope that outlives the sheet: it runs to its end, so what it stored is
-        // always known, and can be let go of if the sheet has closed meanwhile.
-        val storing = cleanupScope.async {
-          runCatching {
-            attachmentManager.addPickedFile(
-              thingId,
-              file,
-              displayName = file.name,
-              maxBytes = QuotaChecker.MAX_AI_DOCUMENT_BYTES,
-            )
-          }
-        }
-        val stored = try {
-          storing.await()
-        } catch (e: CancellationException) {
-          // The sheet closed first: nothing will list this file, so nothing else lets it go.
-          cleanupScope.launch {
-            storing.await().getOrNull()?.let { attachmentManager.release(it, owner = null) }
-          }
-          throw e
-        }
+        // Stored on a scope that outlives the sheet, and let go of there if the sheet closes
+        // meanwhile.
+        val stored = documents.pick(thingId, file, QuotaChecker.MAX_AI_DOCUMENT_BYTES)
         stored.fold(
           onSuccess = { added -> updateSources { it.copy(documents = it.documents + added) } },
           onFailure = { e ->
@@ -173,8 +146,7 @@ class AddTasksViewModel(
       uiState.value.sources.documents.firstOrNull { it.id == attachmentId }
         ?: return
     updateSources { it.copy(documents = it.documents - removed) }
-    // Not on `viewModelScope`: closing the sheet right after must not cancel it.
-    cleanupScope.launch { attachmentManager.release(removed, owner = null) }
+    documents.letGo(listOf(removed))
   }
 
   /**
@@ -198,17 +170,7 @@ class AddTasksViewModel(
   }
 
   override fun onCleared() {
-    val documents = uiState.value.sources.documents
-    if (!handedOver && documents.isNotEmpty()) {
-      cleanupScope.launch {
-        documents.forEach {
-          attachmentManager.release(
-            it,
-            owner = null
-          )
-        }
-      }
-    }
+    if (!handedOver) documents.letGo(uiState.value.sources.documents)
     super.onCleared()
   }
 

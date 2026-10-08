@@ -3,9 +3,9 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.update.di
 import androidx.lifecycle.SavedStateHandle
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.TemplateRegistry
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
@@ -21,7 +21,7 @@ val tasksSuggestionsUpdateModule = module {
       templateRegistry = get<TemplateRegistry>(),
       suggestionManager = get<TaskSuggestionManager>(),
       suggestEntry = get<TaskSuggestionEntry>(),
-      attachmentManager = get<AttachmentManager>(),
+      documents = get<JobDocumentReleaser>(),
       savedStateHandle = get<SavedStateHandle>(),
     )
   }
@@ -33,7 +33,7 @@ val tasksSuggestionsUpdateModule = module {
       analytics = get<AnalyticsManager>(),
       suggestionManager = get<TaskSuggestionManager>(),
       suggestEntry = get<TaskSuggestionEntry>(),
-      attachmentManager = get<AttachmentManager>(),
+      documents = get<JobDocumentReleaser>(),
       recentlyAdded = get<RecentlyAddedTasks>(),
       savedStateHandle = get<SavedStateHandle>(),
     )

@@ -3,6 +3,9 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiEligibility
+import dev.fanfly.wingslog.core.ai.AiJobClient
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiSkipped
@@ -19,6 +22,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.AddedBatch
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
@@ -48,6 +52,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -126,7 +131,14 @@ class SuggestionsViewModelTest {
       analytics = analytics,
       suggestionManager = suggestions,
       suggestEntry = entry,
-      attachmentManager = attachments,
+      documents = JobDocumentReleaser(
+        store = mockk<AiJobDocumentStore>(relaxed = true),
+        currentUid = { "alice" },
+        client = { mockk<AiJobClient>() },
+        attachments = { attachments },
+        foreground = AppForegroundObserver(),
+        scope = CoroutineScope(dispatcher),
+      ),
       recentlyAdded = recentlyAdded,
       savedStateHandle = SavedStateHandle(
         buildMap {

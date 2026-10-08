@@ -909,13 +909,18 @@ documents need). R4 (existing attachment) skips the pick and reuses the `Attachm
 
 ### 8.2 Job-owned documents
 
-A picked document is referenced by no entity until accept. The suggestions VM records the picked
-`Attachment`s against the job in a small local table (`ai_job_document(job_id, attachment_id,
-thing_id)`, not synced). They are released:
+A picked document is referenced by no entity until accept. `JobDocumentReleaser` owns it from
+the moment it is picked: it stores the file, and records the `Attachment` in a small local table
+(`ai_job_document(job_id, attachment_id, thing_id)`, not synced), first under the job id `picked`
+and then, once a run starts with it, under that run's job. The screens only tell it what became of
+a file. They are released:
 
+- before a run takes them, when the user removes one, closes the Add Tasks sheet, or the run is
+  refused;
 - on accept, for documents no accepted suggestion cites;
 - on dismiss;
-- on app start, for jobs that are closed or expired (the job doc is gone).
+- on app start, for jobs that are closed or expired (the job doc is gone), and for `picked` rows
+  no screen in this process holds, which a process that died left behind.
 
 Release goes through §8.3, so it is safe even if the user later attaches the same document by hand.
 Remotely, an unreferenced upload is also reclaimed by the daily sweep after the 7-day grace, which
