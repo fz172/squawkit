@@ -126,14 +126,13 @@ describe("resultToProto", () => {
     pageRef: "p. 2",
     sourcePages: [2],
     sourceDocument: "blob-ad",
-    lastDone: { logId: "log-1", date: "2026-05-02", reading: { meterKey: "engine_hours", value: 380 } },
     matchesExistingTaskId: "",
     intervalDifferenceNote: "",
     mergesStaticIndex: -1,
     originKind: "ai_document",
   };
   const result: SuggestTasksResult = {
-    suggestions: [suggestion, { ...suggestion, suggestionId: "s2", sourceDocument: "", originKind: "ai_thing", lastDone: null, firstDue: { date: "2026-12-01", meter: null }, matchesExistingTaskId: "task-annual" }],
+    suggestions: [suggestion, { ...suggestion, suggestionId: "s2", sourceDocument: "", originKind: "ai_thing", firstDue: { date: "2026-12-01", meter: null }, matchesExistingTaskId: "task-annual" }],
     documents: [
       {
         blobId: "blob-ad",
@@ -160,14 +159,12 @@ describe("resultToProto", () => {
       sourceDocument: { value: "blob-ad" },
       sourcePages: [2],
       rules: [{ meterRule: { meterKey: "engine_hours", interval: 200 } }],
-      lastDone: { logId: { value: "log-1" }, date: "2026-05-02", reading: { meterKey: "engine_hours", value: 380 } },
       matchesExistingTaskId: undefined,
       originKind: TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT,
     });
     expect(second).toMatchObject({
       sourceDocument: undefined,
       originKind: TaskOriginKind.TASK_ORIGIN_KIND_AI_THING,
-      lastDone: undefined,
       firstDue: { date: "2026-12-01", meter: undefined },
       matchesExistingTaskId: { value: "task-annual" },
     });

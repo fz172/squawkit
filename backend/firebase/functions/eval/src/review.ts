@@ -186,7 +186,7 @@ function ruleText(r: SuggestedRule): string {
 }
 
 function firstDue(s: TaskSuggestion): string {
-  if (!s.firstDue) return s.lastDone ? `last done ${s.lastDone.date}` : "—";
+  if (!s.firstDue) return "—";
   const parts = [
     s.firstDue.meter ? `${s.firstDue.meter.value.toLocaleString("en-US")} ${s.firstDue.meter.meterKey.replace(/_/g, " ")}` : null,
     s.firstDue.date,

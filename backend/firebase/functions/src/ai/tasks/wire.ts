@@ -98,13 +98,6 @@ export function resultToProto(result: SuggestTasksResult): SuggestTasksResultPro
         pageRef: s.pageRef,
         sourcePages: s.sourcePages,
         sourceDocument: s.sourceDocument ? { value: s.sourceDocument } : undefined,
-        lastDone: s.lastDone
-          ? {
-              logId: { value: s.lastDone.logId },
-              date: s.lastDone.date,
-              reading: s.lastDone.reading ? readingToProto(s.lastDone.reading) : undefined,
-            }
-          : undefined,
         matchesExistingTaskId: s.matchesExistingTaskId ? { value: s.matchesExistingTaskId } : undefined,
         intervalDifferenceNote: s.intervalDifferenceNote,
         originKind: ORIGIN_KINDS[s.originKind],

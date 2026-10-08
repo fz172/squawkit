@@ -82,7 +82,6 @@ function tailored(over: Partial<TailoredSuggestion>): TailoredSuggestion {
     rules: [RULE],
     isOneTime: false,
     firstDue: [],
-    lastDoneLogId: null,
     matchesExistingTaskId: null,
     intervalDifferenceNote: null,
     mergesStaticIndex: null,
@@ -191,7 +190,7 @@ describe("task pipeline without documents", () => {
       recall: () => RECALLED,
       tailor: (): TailorOutput => ({
         suggestions: [
-          tailored({ lastDoneLogId: "log-1" }),
+          tailored({}),
           tailored({ candidateIds: ["x9"], title: "Invented" }),
           tailored({ candidateIds: ["r0"], title: "Doubtful", confidence: "low" }),
         ],
@@ -210,7 +209,6 @@ describe("task pipeline without documents", () => {
         sourceKind: "common_practice",
         type: "routine",
         rules: [{ kind: "meter", meterKey: "engine_hours", interval: 200 }],
-        lastDone: { logId: "log-1", date: "2026-05-02", reading: { meterKey: "engine_hours", value: 380 } },
         originKind: "ai_thing",
       }),
     ]);

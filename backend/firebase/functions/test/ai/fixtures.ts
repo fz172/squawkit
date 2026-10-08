@@ -78,8 +78,6 @@ export function draft(overrides: Partial<Draft> = {}): Draft {
     pageRef: "p. 5-12",
     sourcePages: [2],
     sourceDocument: "blob-mm",
-    lastDone: null,
-    lastDoneLogId: null,
     matchesExistingTaskId: "",
     intervalDifferenceNote: "",
     mergesStaticIndex: -1,

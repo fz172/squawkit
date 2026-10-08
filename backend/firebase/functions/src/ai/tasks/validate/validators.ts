@@ -124,16 +124,6 @@ export const dedupIdsRule: Validator = (drafts, { context }) => {
   });
 };
 
-/** Last-done evidence (R29): a log the context holds; its date and reading come from that log. */
-export const lastDoneRule: Validator = (drafts, { context }) =>
-  drafts.map((d) => {
-    const log = context.logs.find((l) => l.id === d.lastDoneLogId);
-    if (!log) return { ...d, lastDone: null };
-    const meterKeys = d.rules.flatMap((r) => (r.kind === "meter" ? [r.meterKey] : []));
-    const reading = log.readings.find((r) => meterKeys.includes(r.meterKey)) ?? null;
-    return { ...d, lastDone: { logId: log.id, date: log.date, reading } };
-  });
-
 /**
  * First due (R22): a one-time item's anchors made absolute from the Thing's current readings and
  * today, keeping the earliest date and the earliest reading. Recurring items carry none.
@@ -169,7 +159,6 @@ export const VALIDATORS: Validator[] = [
   regulatoryRule,
   citationRule,
   dedupIdsRule,
-  lastDoneRule,
   firstDueRule,
   confidenceRule,
 ];

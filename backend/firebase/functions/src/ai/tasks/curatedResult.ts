@@ -37,7 +37,6 @@ export function curatedSuggestions(context: SuggestionContext): TaskSuggestion[]
       pageRef: "",
       sourcePages: [],
       sourceDocument: "",
-      lastDone: null,
       matchesExistingTaskId,
       intervalDifferenceNote: "",
       mergesStaticIndex: -1,

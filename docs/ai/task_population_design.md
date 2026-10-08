@@ -614,9 +614,10 @@ the bake-off's (§12.5): keyword locating, table pages as PDF, recall on the fas
 - **Rules on the wire** are the app's `InspectionRule`. A suggested time rule leaves
   `creation_date` and `due_on_anniversary` for the client to stamp at accept (§7.4). An existing
   task's linked or immediate rule has no flat form and is left out of the model's context.
-- **No suggestion is tied to a log** (2026-10-02). `withoutLogLinks` clears every suggestion's
-  `lastDone` before the result is encoded, so no log id reaches the app. The tailor prompt still
-  asks for `lastDoneLogId` until its next revision (a `GENERATION_VERSION` bump and an eval run).
+- **No suggestion is tied to a log** (2026-10-02), and since tasks-6 the tailor is not shown the
+  logs at all: its prompt carries no log entries and asks for no `lastDoneLogId`. The log history
+  was up to 400 KiB of every run's strong-model input, read for a field that was then thrown away.
+  `last_done` is never set on a result.
 - **Documents (T21, 2026-10-03).** The task kind accepts documents, for a Pro owner. `startAiJob`
   refuses one the app sizes over `maxDocumentBytes` before any spend. The worker reads each from
   the Thing's own blob (`documentLoader.ts`), refusing it as `document_too_large` over the cap or
@@ -675,8 +676,8 @@ Input: the candidate items from 2 and 3, the `SuggestionContext`. The model:
 - lists the curated items that cannot apply to this Thing in `notApplicable`, each with a reason
   (an engine oil change or spark plugs on a battery-electric car), which the merge leaves out
   (tasks-5, 2026-10-03);
-- may cite a log as `last_done` evidence; since 2026-10-02 the server strips it from every result
-  (R29: no suggestion is tied to a log), so the logs only shape what is suggested;
+- does not see the Thing's logs (tasks-6): no suggestion is tied to a log (R29), so they are not
+  in its prompt;
 - sets `matches_thing` per document (R8a).
 
 Each suggestion lists the candidate ids it merges (`d<doc>.<item>`, `r<item>`). Source kind,
@@ -737,9 +738,8 @@ only when one of its document candidates states a matching interval (days, month
 miles and kilometres, converted, within 3%) or the curated item it merges has that rule. It removes
 calendar limits the tailor adds on its own ("100 h or 12 months" where the manual says 100 h).
 
-Three more checks run with them: rule 1 files a suggestion whose slot the Thing does not fill at
-Thing level (R22); `last_done` must name a log in `context.logs`, whose date and reading are copied
-from that log (R29; the worker then strips `last_done` from the result, see §6.0); and a one-time
+Two more checks run with them: rule 1 files a suggestion whose slot the Thing does not fill at
+Thing level (R22); and a one-time
 item's first due (R22) is made absolute. The tailor anchors it as a reading counted from new ("first
 service at 600 mi"), a meter distance from now ("within 25 h")
 or a time from today ("within 3 months"); the validator resolves each against
@@ -888,7 +888,7 @@ As built (T15), changes from the sketch:
   `toMaintenanceTask` does.
 - `last_done` is **not** read (owner's decision, 2026-10-02): no suggestion is tied to a log, so a
   new task gets no `force_complied_status` from one, and its schedule runs from acceptance. The
-  server strips `last_done` anyway (§6.0).
+  server never sets `last_done` (§6.0).
 - `source_document` → the document's `Attachment` proto copied into `attachments` (same id, path,
   sha: one blob, R37).
 - **First-due preview** (R29): the review card runs `TaskDueManager.computeNextDue(mapped, logs)`
