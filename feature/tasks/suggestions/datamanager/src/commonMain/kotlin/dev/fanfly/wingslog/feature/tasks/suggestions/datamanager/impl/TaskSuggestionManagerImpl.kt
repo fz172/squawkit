@@ -132,19 +132,16 @@ class TaskSuggestionManagerImpl(
 
   override suspend fun accept(
     thingId: String,
-    run: SuggestionRun.Ready,
+    jobId: AiJobId,
+    generationVersion: String,
     chosen: List<AcceptedSuggestion>,
   ): List<WrittenSuggestion> {
     val template = templateOf(thingId)
-    val documents = jobDocuments.documentsOf(run.jobId)
+    val documents = jobDocuments.documentsOf(jobId)
     val written = chosen.mapNotNull { accepted ->
       val task = (
         accepted.edited
-          ?: mapper.toTask(
-            accepted.suggestion,
-            template,
-            run.result.generation_version
-          )
+          ?: mapper.toTask(accepted.suggestion, template, generationVersion)
         ).withCitedDocument(accepted.suggestion, documents)
         // Named here, so *Undo* knows what to take back.
         .let { if (it.id.isEmpty()) it.copy(id = generateRandomId()) else it }
@@ -156,9 +153,9 @@ class TaskSuggestionManagerImpl(
     }
     // Nothing went in: the run and its documents stay, so the same cards can be tried again.
     if (written.isEmpty() && chosen.isNotEmpty()) return written
-    client.close(run.jobId)
+    client.close(jobId)
     // After the writes, so a document a written task now holds is kept by the reference check.
-    jobDocuments.release(run.jobId)
+    jobDocuments.release(jobId)
     return written
   }
 

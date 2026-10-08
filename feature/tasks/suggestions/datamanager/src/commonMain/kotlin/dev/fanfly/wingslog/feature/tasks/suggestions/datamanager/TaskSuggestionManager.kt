@@ -71,17 +71,20 @@ interface TaskSuggestionManager {
   ): MaintenanceTask
 
   /**
-   * Writes [chosen] as tasks, one write each (a failure drops only its own
+   * Writes [chosen] from the run [jobId] as tasks, one write each (a failure drops only its own
    * card), then closes the run and lets go of its documents, keeping any a written task holds.
    * A suggestion that cites a document is written holding it, as the same blob (PRD R37).
-   * Returns what was written, with each task's id for the task tab's *Undo*.
+   * Returns what was written, with each task's id for the task tab's *Undo*. A run in any state
+   * can be accepted from: one still working gives up its answer for the cards on screen.
+   * [generationVersion] is the run's result's, for each task's origin.
    *
    * When nothing could be written the run stays open, with its documents, so the cards are still
    * there to try again.
    */
   suspend fun accept(
     thingId: String,
-    run: SuggestionRun.Ready,
+    jobId: AiJobId,
+    generationVersion: String,
     chosen: List<AcceptedSuggestion>
   ): List<WrittenSuggestion>
 
@@ -96,17 +99,26 @@ interface TaskSuggestionManager {
  * custom template's.
  */
 sealed interface SuggestionRun {
-  data object Idle : SuggestionRun
+  /** The run's job; null when there is no run. */
+  val jobId: AiJobId?
+
+  /** The suggestions the run holds now: the curated list, or the merged answer (design §6.8). */
+  val result: SuggestTasksResult?
+
+  data object Idle : SuggestionRun {
+    override val jobId: AiJobId? get() = null
+    override val result: SuggestTasksResult? get() = null
+  }
 
   /**
    * [stage] is the pipeline's progress key ("recalling_schedule", …), null before it reports.
    * [result] is the curated suggestions, shown while the model works.
    */
   data class Working(
-    val jobId: AiJobId,
+    override val jobId: AiJobId,
     val stage: String?,
     val stageArg: String?,
-    val result: SuggestTasksResult? = null,
+    override val result: SuggestTasksResult? = null,
   ) : SuggestionRun
 
   /**
@@ -114,8 +126,8 @@ sealed interface SuggestionRun {
    * refused (the daily limit, a spending ceiling, the kill switch), and says when it is back.
    */
   data class Ready(
-    val jobId: AiJobId,
-    val result: SuggestTasksResult,
+    override val jobId: AiJobId,
+    override val result: SuggestTasksResult,
     val aiSkipped: AiSkipped? = null,
   ) : SuggestionRun
 
@@ -123,16 +135,18 @@ sealed interface SuggestionRun {
    * The model had nothing confident to say (PRD R21a). It does not use up the day. [result] holds
    * the curated suggestions, if the template has any.
    */
-  data class Empty(val jobId: AiJobId, val result: SuggestTasksResult? = null) :
-    SuggestionRun
+  data class Empty(
+    override val jobId: AiJobId,
+    override val result: SuggestTasksResult? = null,
+  ) : SuggestionRun
 
   /**
    * [result] holds the curated suggestions the run started with, if any. A run still marked as
    * working long after its worker must have ended is this, with [AiErrorCode.STALE].
    */
   data class Failed(
-    val jobId: AiJobId,
+    override val jobId: AiJobId,
     val reason: AiErrorCode,
-    val result: SuggestTasksResult? = null,
+    override val result: SuggestTasksResult? = null,
   ) : SuggestionRun
 }

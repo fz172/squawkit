@@ -159,7 +159,7 @@ class SuggestionsViewModel(
       // so the files picked for one are not read.
       releaseAll(pickedDocuments)
       modelRequested = true
-      followedJob = earlier.jobIdOrNull
+      followedJob = earlier.jobId
       // Already reported when it first arrived.
       if (earlier !is SuggestionRun.Working) reportedJob = followedJob
       follow(template)
@@ -243,7 +243,7 @@ class SuggestionsViewModel(
       .collect { latest ->
         latestRun = latest
         // Until the listener catches up with the job just started, the newest it knows is older.
-        if (latest.jobIdOrNull != followedJob) return@collect
+        if (latest.jobId != followedJob) return@collect
         show(latest, template)
       }
   }
@@ -255,13 +255,13 @@ class SuggestionsViewModel(
    */
   private fun followNow() {
     val latest = latestRun ?: return
-    if (latest.jobIdOrNull == followedJob) show(latest, uiState.value.template)
+    if (latest.jobId == followedJob) show(latest, uiState.value.template)
   }
 
   /** [latest], the followed job's run, into the cards and their states. */
   private fun show(latest: SuggestionRun, template: ThingTemplate?) {
     run = latest
-    val result = latest.resultOrNull
+    val result = latest.result
     val finished = latest !is SuggestionRun.Working
     val failure = (latest as? SuggestionRun.Failed)?.reason
     // A curated-only run is finished from the start, so only a model run reads as working.
@@ -400,7 +400,7 @@ class SuggestionsViewModel(
 
   /** *Add details* after an empty run: the run is done with; the screen gives way to the Thing's edit form. */
   fun onAddDetails() {
-    run?.jobIdOrNull?.let { viewModelScope.launch { suggestionManager.dismiss(it) } }
+    run?.jobId?.let { viewModelScope.launch { suggestionManager.dismiss(it) } }
   }
 
   private fun startModelRun(onRefused: (SuggestionsUiState) -> SuggestionsUiState) {
@@ -439,7 +439,7 @@ class SuggestionsViewModel(
       requested(SUGGEST_MORE, documentCount = 0)
       // The run on screen (curated-only, or failed) is finished with; the new one carries the
       // same curated list.
-      curatedRun?.jobIdOrNull?.takeIf { it != started.jobId }
+      curatedRun?.jobId?.takeIf { it != started.jobId }
         ?.let { suggestionManager.dismiss(it) }
     }
   }
@@ -458,7 +458,7 @@ class SuggestionsViewModel(
     val draft = item.edited ?: suggestionManager.draftOf(
       thingId,
       item.suggestion,
-      generationVersion = run?.resultOrNull?.generation_version.orEmpty(),
+      generationVersion = run?.result?.generation_version.orEmpty(),
     )
     return draft.toDraftArg()
   }
@@ -534,7 +534,7 @@ class SuggestionsViewModel(
         val base = item.edited ?: suggestionManager.draftOf(
           thingId,
           item.suggestion,
-          generationVersion = run?.resultOrNull?.generation_version.orEmpty(),
+          generationVersion = run?.result?.generation_version.orEmpty(),
         )
         val edited = base.copy(rules = base.rules.map(change))
         _uiState.update { state ->
@@ -623,7 +623,7 @@ class SuggestionsViewModel(
     val current = run
     if (current != null && !current.holdsModelAnswer()) {
       viewModelScope.launch {
-        current.jobIdOrNull?.let {
+        current.jobId?.let {
           suggestionManager.dismiss(
             it
           )
@@ -641,13 +641,12 @@ class SuggestionsViewModel(
     current: SuggestionRun,
     chosen: List<SuggestionItem>
   ): List<WrittenSuggestion> {
-    val jobId = current.jobIdOrNull ?: return emptyList()
-    val result = current.resultOrNull ?: return emptyList()
-    val ready =
-      current as? SuggestionRun.Ready ?: SuggestionRun.Ready(jobId, result)
+    val jobId = current.jobId ?: return emptyList()
+    val result = current.result ?: return emptyList()
     val written = suggestionManager.accept(
       thingId,
-      ready,
+      jobId,
+      result.generation_version,
       chosen.map { AcceptedSuggestion(it.suggestion, it.edited) })
     if (written.isNotEmpty()) {
       // What was written, not what was chosen: a card whose write failed is not counted.
@@ -689,13 +688,13 @@ class SuggestionsViewModel(
   }
 
   private fun report(finished: SuggestionRun) {
-    val jobId = finished.jobIdOrNull ?: return
+    val jobId = finished.jobId ?: return
     if (jobId == reportedJob) return
     reportedJob = jobId
     when (finished) {
       is SuggestionRun.Failed -> failed(finished.reason)
       else -> {
-        val cards = finished.resultOrNull?.suggestions.orEmpty()
+        val cards = finished.result?.suggestions.orEmpty()
         val latency =
           requestedAt?.let { (clock.now() - it).inWholeSeconds } ?: 0L
         analytics.log(
@@ -769,32 +768,12 @@ class SuggestionsViewModel(
      */
     fun SuggestionRun.holdsModelAnswer(): Boolean =
       this is SuggestionRun.Working ||
-        resultOrNull?.suggestions.orEmpty()
+        result?.suggestions.orEmpty()
           .any { it.isFromModel() }
 
     /** A title as the tracked check compares it: trimmed, single-spaced, lower case. */
     fun normalizeTitle(title: String): String = title.trim()
       .replace(Regex("\\s+"), " ")
       .lowercase()
-
-    /** The run's job, whatever its state; null when there is no run. */
-    val SuggestionRun.jobIdOrNull: AiJobId?
-      get() = when (this) {
-        SuggestionRun.Idle -> null
-        is SuggestionRun.Working -> jobId
-        is SuggestionRun.Ready -> jobId
-        is SuggestionRun.Empty -> jobId
-        is SuggestionRun.Failed -> jobId
-      }
-
-    /** The suggestions the run holds now: the curated list, or the merged answer (design §6.8). */
-    val SuggestionRun.resultOrNull: SuggestTasksResult?
-      get() = when (this) {
-        SuggestionRun.Idle -> null
-        is SuggestionRun.Working -> result
-        is SuggestionRun.Ready -> result
-        is SuggestionRun.Empty -> result
-        is SuggestionRun.Failed -> result
-      }
   }
 }

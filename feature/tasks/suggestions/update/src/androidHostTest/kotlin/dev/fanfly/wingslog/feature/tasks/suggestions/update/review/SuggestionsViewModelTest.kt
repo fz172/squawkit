@@ -629,7 +629,8 @@ class SuggestionsViewModelTest {
       coEvery {
         suggestions.accept(
           THING_ID,
-          ready,
+          JOB,
+          any(),
           capture(chosen)
         )
       } answers { written(chosen.captured) }
@@ -1134,7 +1135,7 @@ class SuggestionsViewModelTest {
     )
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
-    coEvery { suggestions.accept(THING_ID, ready, any()) } answers { written(thirdArg()) }
+    coEvery { suggestions.accept(THING_ID, JOB, any(), any()) } answers { written(arg(3)) }
     val vm = viewModel()
     advanceUntilIdle()
     vm.onToggle(vm.idAt(0))
@@ -1155,7 +1156,7 @@ class SuggestionsViewModelTest {
   fun whenNothingCouldBeWrittenTheCardsStayAndTheScreenSaysSo() = runTest(dispatcher) {
     val ready = SuggestionRun.Ready(JOB, curatedList)
     serving(ready)
-    coEvery { suggestions.accept(THING_ID, ready, any()) } returns emptyList()
+    coEvery { suggestions.accept(THING_ID, JOB, any(), any()) } returns emptyList()
     val vm = viewModel()
     advanceUntilIdle()
     vm.onToggle(vm.idAt(0))
@@ -1184,8 +1185,8 @@ class SuggestionsViewModelTest {
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
     // The model's card is the one that fails.
-    coEvery { suggestions.accept(THING_ID, ready, any()) } answers {
-      written(thirdArg<List<AcceptedSuggestion>>().drop(1))
+    coEvery { suggestions.accept(THING_ID, JOB, any(), any()) } answers {
+      written(arg<List<AcceptedSuggestion>>(3).drop(1))
     }
     val vm = viewModel()
     advanceUntilIdle()
@@ -1347,7 +1348,8 @@ class SuggestionsViewModelTest {
     coEvery {
       suggestions.accept(
         THING_ID,
-        ready,
+        JOB,
+        any(),
         capture(chosen)
       )
     } answers { written(chosen.captured) }

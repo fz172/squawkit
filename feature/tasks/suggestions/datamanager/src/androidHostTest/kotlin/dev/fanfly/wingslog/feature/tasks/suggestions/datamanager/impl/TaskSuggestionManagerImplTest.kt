@@ -492,7 +492,8 @@ class TaskSuggestionManagerImplTest {
 
       val ids = manager.accept(
         THING,
-        run,
+        run.jobId,
+        run.result.generation_version,
         listOf(
           AcceptedSuggestion(suggestion),
           AcceptedSuggestion(
@@ -532,7 +533,8 @@ class TaskSuggestionManagerImplTest {
 
     manager.accept(
       THING,
-      run,
+      run.jobId,
+      run.result.generation_version,
       listOf(
         AcceptedSuggestion(cites),
         // An edit already holding it: no second copy, and it gains the page it lacked.
@@ -569,7 +571,8 @@ class TaskSuggestionManagerImplTest {
 
     manager.accept(
       THING,
-      run,
+      run.jobId,
+      run.result.generation_version,
       listOf(
         AcceptedSuggestion(cites(212)),
         // A task with another document of its own: that one keeps its page.
@@ -599,7 +602,8 @@ class TaskSuggestionManagerImplTest {
 
     val ids = manager.accept(
       THING,
-      run,
+      run.jobId,
+      run.result.generation_version,
       listOf(AcceptedSuggestion(suggestion), AcceptedSuggestion(suggestion))
     )
 
@@ -612,7 +616,7 @@ class TaskSuggestionManagerImplTest {
     coEvery { taskData.addTask(THING, any()) } returns Result.failure(RuntimeException("disk"))
     val run = SuggestionRun.Ready(JOB, SuggestTasksResult())
 
-    val written = manager.accept(THING, run, listOf(AcceptedSuggestion(suggestion)))
+    val written = manager.accept(THING, run.jobId, run.result.generation_version, listOf(AcceptedSuggestion(suggestion)))
 
     assertThat(written).isEmpty()
     coVerify(exactly = 0) { client.close(any()) }
