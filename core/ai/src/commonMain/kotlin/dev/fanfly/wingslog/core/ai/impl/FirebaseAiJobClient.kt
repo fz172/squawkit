@@ -85,7 +85,7 @@ class FirebaseAiJobClient(
     val response = functions.httpsCallable(START)
       .invoke(StartRequest(kind.value, request.base64()))
       .data<StartResponse>()
-    AiStartResult.Started(AiJobId(response.jobId), response.joined)
+    AiStartResult.Started(AiJobId(response.jobId), response.joined, response.ai?.toEligibility())
   } catch (e: CancellationException) {
     throw e
   } catch (e: Exception) {

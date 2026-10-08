@@ -41,7 +41,9 @@ internal data class StartRequest(val kind: Int, val request: String)
 @Serializable
 internal data class StartResponse(
   val jobId: String = "",
-  val joined: Boolean = false
+  val joined: Boolean = false,
+  /** On a curated-only start, whether a model run could start now; absent from an older server. */
+  val ai: EligibilityResponse? = null,
 )
 
 @Serializable

@@ -7,7 +7,13 @@ import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { AiJobStatus } from "../generated/proto/rpc/ai_job/ai_job.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
-import { authorizeAiStart, decideAiAccess, loadAiAccessFacts, type AiSkipped } from "./authorize.js";
+import {
+  authorizeAiStart,
+  decideAiAccess,
+  loadAiAccessFacts,
+  type AiAccessDecision,
+  type AiSkipped,
+} from "./authorize.js";
 import {
   AI_JOB_INPUT_TTL_MS,
   AI_JOB_TTL_MS,
@@ -92,23 +98,31 @@ export async function handleGetAiEligibility(
   const access = { callerUid: uid, hostUid: data.hostUid, thingId: data.thingId, withDocuments: data.withDocuments };
   const facts = await loadAiAccessFacts(access, now);
   const decision = decideAiAccess(access, facts, now);
-  // The owner's Pro opens documents only where this deploy runs them for the kind.
-  const documentsAllowed = decision.documentsAllowed && data.spec.acceptsDocuments;
-  if (!decision.allowed) {
-    return {
-      allowed: false,
-      reason: decision.code,
-      documentsAllowed,
-      nextAvailableAt: decision.nextAvailableAt?.toISOString() ?? null,
-    };
-  }
+  const answer = eligibilityOf(decision, data.spec);
+  if (!answer.allowed) return answer;
 
   // The usage document the access facts already read: it holds the in-flight pointer too.
   const inFlight = await readInFlight(facts.usage ?? undefined, (ref) => ref.get(), now);
   if (inFlight.state === "active" && inFlight.ref.callerUid !== uid) {
-    return { ...refusal("run_in_progress"), documentsAllowed };
+    return { ...refusal("run_in_progress"), documentsAllowed: answer.documentsAllowed };
   }
-  return { allowed: true, reason: null, documentsAllowed, nextAvailableAt: null };
+  return answer;
+}
+
+/**
+ * The access decision as an entry point reads it, before the run in flight is looked at. Shared
+ * with `startAiJob`, which answers a curated-only start with it.
+ */
+function eligibilityOf(decision: AiAccessDecision, spec: AiJobKindSpec): AiEligibilityResponse {
+  // The owner's Pro opens documents only where this deploy runs them for the kind.
+  const documentsAllowed = decision.documentsAllowed && spec.acceptsDocuments;
+  if (decision.allowed) return { allowed: true, reason: null, documentsAllowed, nextAvailableAt: null };
+  return {
+    allowed: false,
+    reason: decision.code,
+    documentsAllowed,
+    nextAvailableAt: decision.nextAvailableAt?.toISOString() ?? null,
+  };
 }
 
 function refusal(reason: AiErrorCode): AiEligibilityResponse {
@@ -138,6 +152,12 @@ export type StartAiJobResponse = {
   jobId: string;
   /** True when this joined the caller's own run already in flight (§5.1). */
   joined: boolean;
+  /**
+   * On a curated-only request, whether a model run could start now, as `getAiEligibility` would
+   * answer: the curated list's screen offers the AI button from it, without a second call. Another
+   * member's run in flight is not in it, since that refuses the start itself. Null otherwise.
+   */
+  ai: AiEligibilityResponse | null;
 };
 
 /**
@@ -242,7 +262,11 @@ export async function handleStartAiJob(
       throw new HttpsError("unavailable", "provider_error", { code: "provider_error", nextAvailableAt: null });
     }
   }
-  return { jobId: outcome.jobId, joined: outcome.joined };
+  return {
+    jobId: outcome.jobId,
+    joined: outcome.joined,
+    ai: target.curatedOnly ? eligibilityOf(plan.decision, spec) : null,
+  };
 }
 
 /**

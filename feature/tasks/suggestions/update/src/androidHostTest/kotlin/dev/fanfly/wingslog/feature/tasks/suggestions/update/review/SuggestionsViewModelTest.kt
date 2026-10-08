@@ -1243,6 +1243,44 @@ class SuggestionsViewModelTest {
     assertThat(vm.uiState.value.aiSkipped).isEqualTo(skipped)
   }
 
+  @Test
+  fun theCuratedStartsOwnAnswerOffersTheAiButtonWithoutAskingAgain() = runTest(dispatcher) {
+    serving(
+      SuggestionRun.Ready(JOB, curatedList),
+      started = AiStartResult.Started(
+        JOB,
+        joined = false,
+        eligibility = AiEligibility(true, null, false, null),
+      ),
+    )
+
+    val vm = viewModel()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.canSuggest).isTrue()
+    coVerify(exactly = 0) { suggestions.eligibility(any(), any()) }
+  }
+
+  @Test
+  fun theCuratedStartsOwnAnswerSaysWhyTheModelCannotRun() = runTest(dispatcher) {
+    val back = Instant.parse("2026-10-08T09:00:00Z")
+    serving(
+      SuggestionRun.Ready(JOB, curatedList),
+      started = AiStartResult.Started(
+        JOB,
+        joined = false,
+        eligibility = AiEligibility(false, AiErrorCode.DAILY_LIMIT, false, back),
+      ),
+    )
+
+    val vm = viewModel()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.canSuggest).isFalse()
+    assertThat(vm.uiState.value.aiUnavailable).isEqualTo(AiSkipped(AiErrorCode.DAILY_LIMIT, back))
+    coVerify(exactly = 0) { suggestions.eligibility(any(), any()) }
+  }
+
   // Returning to a held answer (PRD R19): leaving does not lose the model's cards.
 
   @Test
