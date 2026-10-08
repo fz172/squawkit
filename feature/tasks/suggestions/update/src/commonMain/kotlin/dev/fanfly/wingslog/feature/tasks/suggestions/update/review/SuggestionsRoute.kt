@@ -334,45 +334,40 @@ fun SuggestionsRoute(
                     ifAbsent = group.slotKey
                   )
                 },
-                selected = group.cards.count { it.value.selected },
+                selected = group.cards.count { it.selected },
                 total = group.cards.size,
                 enabled = !uiState.isSaving,
-                onToggleAll = { viewModel.onToggleGroup(group.cards.map { it.index }) },
+                onToggleAll = { viewModel.onToggleGroup(group.cards.map { it.id }) },
               )
               GroupedRowGroup(
                 dividerStartInset = 52.dp,
-                rows = group.cards.map { (index, item) ->
+                rows = group.cards.map { item ->
                   {
                     SuggestionRow(
                       item = item,
                       template = uiState.template,
                       wide = wide,
                       enabled = !uiState.isSaving,
-                      // A suggestion with no id is never the open one: its null would equal
-                      // the null that means none is open.
-                      expanded = item.suggestion.suggestion_id?.value_
-                        ?.let { it == expandedId } == true,
-                      onToggle = { viewModel.onToggle(index) },
-                      onExpandedChange = { open ->
-                        expandedId =
-                          item.suggestion.suggestion_id?.value_.takeIf { open }
-                      },
+                      // A suggestion with no id is never the open one.
+                      expanded = item.id.isNotEmpty() && item.id == expandedId,
+                      onToggle = { viewModel.onToggle(item.id) },
+                      onExpandedChange = { open -> expandedId = item.id.takeIf { open } },
                       onSource = { sourceShown = item.suggestion },
                       onInterval = { edit ->
                         when (edit) {
                           is IntervalEdit.Meter ->
                             viewModel.onMeterIntervalChange(
-                              index,
+                              item.id,
                               edit.interval
                             )
 
                           is IntervalEdit.Months -> viewModel.onMonthsChange(
-                            index,
+                            item.id,
                             edit.months
                           )
 
                           is IntervalEdit.Days -> viewModel.onDaysChange(
-                            index,
+                            item.id,
                             edit.days
                           )
                         }
@@ -380,7 +375,7 @@ fun SuggestionsRoute(
                       // R28: everything else about it, in the task form.
                       onMoreOptions = {
                         scope.launch {
-                          val draft = viewModel.draftFor(index) ?: return@launch
+                          val draft = viewModel.draftFor(item.id) ?: return@launch
                           navController.navigate(
                             Screen.AddMaintenanceTask.createRoute(
                               viewModel.thingId,

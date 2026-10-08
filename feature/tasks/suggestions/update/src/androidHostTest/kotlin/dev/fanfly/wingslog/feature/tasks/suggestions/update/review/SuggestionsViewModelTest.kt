@@ -170,6 +170,9 @@ class SuggestionsViewModelTest {
 
   private val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
 
+  /** The id of the card at [index] on screen, as the rows hand it to the view model. */
+  private fun SuggestionsViewModel.idAt(index: Int): String = uiState.value.items[index].id
+
   /** Every one of [chosen] written, as tasks t1, t2, … */
   private fun written(chosen: List<AcceptedSuggestion>) =
     chosen.mapIndexed { i, accepted -> WrittenSuggestion(accepted, "t${i + 1}") }
@@ -323,8 +326,8 @@ class SuggestionsViewModelTest {
       val vm = viewModel()
       advanceUntilIdle()
 
-      vm.onMeterIntervalChange(0, 25f)
-      vm.onMonthsChange(0, 6)
+      vm.onMeterIntervalChange(vm.idAt(0), 25f)
+      vm.onMonthsChange(vm.idAt(0), 6)
       advanceUntilIdle()
 
       val item = vm.uiState.value.items.single()
@@ -348,8 +351,8 @@ class SuggestionsViewModelTest {
       coVerify(exactly = 1) { suggestions.draftOf(THING_ID, oil, any()) }
 
       // Nothing to change on a rule it does not have, and no zero interval.
-      vm.onDaysChange(0, 30)
-      vm.onMeterIntervalChange(0, 0f)
+      vm.onDaysChange(vm.idAt(0), 30)
+      vm.onMeterIntervalChange(vm.idAt(0), 0f)
       advanceUntilIdle()
       assertThat(vm.uiState.value.items.single().edited?.rules?.first()?.meter_rule?.interval)
         .isEqualTo(25f)
@@ -366,20 +369,20 @@ class SuggestionsViewModelTest {
     serving(SuggestionRun.Idle, SuggestionRun.Ready(JOB, engine))
     val vm = viewModel()
     advanceUntilIdle()
-    vm.onToggle(3)
+    vm.onToggle(vm.idAt(3))
 
-    vm.onToggleGroup(listOf(3, 4))
+    vm.onToggleGroup(listOf(vm.idAt(3), vm.idAt(4)))
     assertThat(vm.uiState.value.items.map { it.selected })
       .containsExactly(false, false, false, true, true)
       .inOrder()
 
-    vm.onToggleGroup(listOf(3, 4))
+    vm.onToggleGroup(listOf(vm.idAt(3), vm.idAt(4)))
     assertThat(vm.uiState.value.items.map { it.selected })
       .containsExactly(false, false, false, false, false)
       .inOrder()
 
     // The Thing's own section is the empty slot.
-    vm.onToggleGroup(listOf(0, 1, 2))
+    vm.onToggleGroup(listOf(vm.idAt(0), vm.idAt(1), vm.idAt(2)))
     assertThat(vm.uiState.value.items.map { it.selected })
       .containsExactly(true, true, true, false, false)
       .inOrder()
@@ -573,7 +576,7 @@ class SuggestionsViewModelTest {
       val vm = viewModel()
       runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
       advanceUntilIdle()
-      vm.onToggle(0) // check the annual
+      vm.onToggle(vm.idAt(0)) // check the annual
 
       val merged = SuggestTasksResult(
         suggestions = listOf(
@@ -632,8 +635,8 @@ class SuggestionsViewModelTest {
       } answers { written(chosen.captured) }
       val vm = viewModel()
       advanceUntilIdle()
-      vm.onToggle(0)
-      vm.onToggle(1)
+      vm.onToggle(vm.idAt(0))
+      vm.onToggle(vm.idAt(1))
 
       vm.onAccept()
       advanceUntilIdle()
@@ -1134,8 +1137,8 @@ class SuggestionsViewModelTest {
     coEvery { suggestions.accept(THING_ID, ready, any()) } answers { written(thirdArg()) }
     val vm = viewModel()
     advanceUntilIdle()
-    vm.onToggle(0)
-    vm.onToggle(1)
+    vm.onToggle(vm.idAt(0))
+    vm.onToggle(vm.idAt(1))
 
     vm.onAccept()
     advanceUntilIdle()
@@ -1155,7 +1158,7 @@ class SuggestionsViewModelTest {
     coEvery { suggestions.accept(THING_ID, ready, any()) } returns emptyList()
     val vm = viewModel()
     advanceUntilIdle()
-    vm.onToggle(0)
+    vm.onToggle(vm.idAt(0))
 
     vm.onAccept()
     advanceUntilIdle()
@@ -1186,8 +1189,8 @@ class SuggestionsViewModelTest {
     }
     val vm = viewModel()
     advanceUntilIdle()
-    vm.onToggle(0)
-    vm.onToggle(1)
+    vm.onToggle(vm.idAt(0))
+    vm.onToggle(vm.idAt(1))
 
     vm.onAccept()
     advanceUntilIdle()
@@ -1321,7 +1324,7 @@ class SuggestionsViewModelTest {
       val vm = viewModel()
       advanceUntilIdle()
 
-      val arg = vm.draftFor(0)!!
+      val arg = vm.draftFor(vm.idAt(0))!!
       assertThat(taskFromDraftArg(arg)).isEqualTo(mapped)
 
       val edited = mapped.copy(title = "Annual inspection (owner-assisted)")
@@ -1331,7 +1334,7 @@ class SuggestionsViewModelTest {
       assertThat(card.edited).isEqualTo(edited)
       assertThat(card.selected).isTrue()
       // Editing again starts from the edit, not from the suggestion.
-      assertThat(taskFromDraftArg(vm.draftFor(0)!!)).isEqualTo(edited)
+      assertThat(taskFromDraftArg(vm.draftFor(vm.idAt(0))!!)).isEqualTo(edited)
     }
 
   @Test
@@ -1350,7 +1353,7 @@ class SuggestionsViewModelTest {
     } answers { written(chosen.captured) }
     val vm = viewModel()
     advanceUntilIdle()
-    vm.draftFor(0)
+    vm.draftFor(vm.idAt(0))
     vm.onEdited(
       mapped.copy(title = "Annual, owner-assisted")
         .toDraftArg()
@@ -1388,7 +1391,7 @@ class SuggestionsViewModelTest {
       val vm = viewModel()
       runs.emit(SuggestionRun.Working(JOB, "tailoring", null, curatedList))
       advanceUntilIdle()
-      vm.draftFor(0)
+      vm.draftFor(vm.idAt(0))
       vm.onEdited(MaintenanceTask(title = "Annual, edited").toDraftArg())
 
       runs.emit(

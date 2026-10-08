@@ -14,6 +14,13 @@ data class SuggestionItem(
    */
   val edited: MaintenanceTask? = null,
 ) {
+  /**
+   * What the screen knows this card by, so a check or an edit reaches the same card when the
+   * model's answer replaces the list. The server gives every suggestion one; empty for one it
+   * did not, which cannot then be checked or edited.
+   */
+  val id: String get() = suggestion.suggestion_id?.value_.orEmpty()
+
   /** The Thing already has this task (PRD R24): shown, never checkable. */
   val isAlreadyTracked: Boolean get() = !suggestion.matches_existing_task_id?.value_.isNullOrEmpty()
 }
