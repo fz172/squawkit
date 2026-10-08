@@ -24,6 +24,17 @@ export type AiErrorCode =
  * A failure the job reports by code. `detail` is for logs only, never shown to the user. `usage` is
  * what was spent before failing, so the cost log still counts it.
  */
+/**
+ * The job was closed (accepted or dismissed) while it ran. Not a failure: there is no job left to
+ * write an outcome to and no one to tell, so the run only stops spending.
+ */
+export class AiJobClosedError extends Error {
+  constructor() {
+    super("the job was closed while it ran");
+    this.name = "AiJobClosedError";
+  }
+}
+
 export class AiError extends Error {
   readonly usage?: AiUsage;
 

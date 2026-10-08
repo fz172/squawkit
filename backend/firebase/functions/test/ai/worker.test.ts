@@ -221,6 +221,49 @@ describe("runAiJob", () => {
     expect(await inputExists(ref)).toBe(false);
   });
 
+  it("stops a run closed mid-run at its next check, without a push or using up the day", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    const ref = await queued(t.host, t);
+    let spentAfterClose = false;
+    let finished = false;
+    const closing: AiPipeline = {
+      async run(_request, context) {
+        await context.throwIfClosed();
+        await adminDb.doc(aiJobDocPath(ref.callerUid, ref.jobId)).delete();
+        await context.throwIfClosed();
+        spentAfterClose = true;
+        return { status: "succeeded", result: new Uint8Array([9]) };
+      },
+      onFinished: async () => void (finished = true),
+    };
+    await handleAiJob(ref, deps(closing));
+    expect(spentAfterClose).toBe(false);
+    expect(finished).toBe(false);
+    expect(await job(ref)).toBeUndefined();
+    expect((await usage(t))?.inFlightJob).toBeNull();
+    expect((await usage(t))?.lastSuccessAt).toBeNull();
+    expect(await inputExists(ref)).toBe(false);
+  });
+
+  it("neither pushes nor uses up the day for a run closed just as it succeeded", async () => {
+    const t = ids();
+    await seedSharedThing(t);
+    const ref = await queued(t.host, t);
+    let finished = false;
+    const closing: AiPipeline = {
+      async run() {
+        await adminDb.doc(aiJobDocPath(ref.callerUid, ref.jobId)).delete();
+        return { status: "succeeded", result: new Uint8Array([9]) };
+      },
+      onFinished: async () => void (finished = true),
+    };
+    await handleAiJob(ref, deps(closing));
+    expect(finished).toBe(false);
+    expect((await usage(t))?.lastSuccessAt).toBeNull();
+    expect((await usage(t))?.inFlightJob).toBeNull();
+  });
+
   it("calls onFinished for every outcome, after the outcome is written", async () => {
     const t = ids();
     await seedSharedThing(t);

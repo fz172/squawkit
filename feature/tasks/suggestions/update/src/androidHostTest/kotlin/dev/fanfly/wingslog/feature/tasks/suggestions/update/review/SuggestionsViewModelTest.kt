@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
 import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SuggestionId
@@ -168,6 +169,10 @@ class SuggestionsViewModelTest {
   }
 
   private val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
+
+  /** Every one of [chosen] written, as tasks t1, t2, … */
+  private fun written(chosen: List<AcceptedSuggestion>) =
+    chosen.mapIndexed { i, accepted -> WrittenSuggestion(accepted, "t${i + 1}") }
 
   /**
    * The curated mode on [curated], and its AI button: the model run is [JOB], and [runs] carries
@@ -624,7 +629,7 @@ class SuggestionsViewModelTest {
           ready,
           capture(chosen)
         )
-      } returns listOf("t1", "t2")
+      } answers { written(chosen.captured) }
       val vm = viewModel()
       advanceUntilIdle()
       vm.onToggle(0)
@@ -1126,10 +1131,7 @@ class SuggestionsViewModelTest {
     )
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
-    coEvery { suggestions.accept(THING_ID, ready, any()) } returns listOf(
-      "t1",
-      "t2"
-    )
+    coEvery { suggestions.accept(THING_ID, ready, any()) } answers { written(thirdArg()) }
     val vm = viewModel()
     advanceUntilIdle()
     vm.onToggle(0)
@@ -1144,6 +1146,85 @@ class SuggestionsViewModelTest {
     ).containsAtLeastEntriesIn(
       mapOf("curated_count" to "1", "ai_count" to "1"),
     )
+  }
+
+  @Test
+  fun whenNothingCouldBeWrittenTheCardsStayAndTheScreenSaysSo() = runTest(dispatcher) {
+    val ready = SuggestionRun.Ready(JOB, curatedList)
+    serving(ready)
+    coEvery { suggestions.accept(THING_ID, ready, any()) } returns emptyList()
+    val vm = viewModel()
+    advanceUntilIdle()
+    vm.onToggle(0)
+
+    vm.onAccept()
+    advanceUntilIdle()
+
+    val state = vm.uiState.value
+    assertThat(state.isDone).isFalse()
+    assertThat(state.isSaving).isFalse()
+    assertThat(state.saveFailed).isTrue()
+    assertThat(state.items.first().selected).isTrue()
+    assertThat(recentlyAdded.batch.value).isNull()
+    assertThat(analytics.countOf("starter_tasks_accepted")).isEqualTo(0)
+    assertThat(analytics.countOf("task_suggestions_accepted")).isEqualTo(0)
+
+    vm.onSaveFailedShown()
+    assertThat(vm.uiState.value.saveFailed).isFalse()
+  }
+
+  @Test
+  fun aCardWhoseWriteFailedIsNotCounted() = runTest(dispatcher) {
+    val answer = SuggestTasksResult(
+      suggestions = listOf(ai("s1", "Spark plugs")) + curatedList.suggestions
+    )
+    val ready = SuggestionRun.Ready(JOB, answer)
+    serving(ready)
+    // The model's card is the one that fails.
+    coEvery { suggestions.accept(THING_ID, ready, any()) } answers {
+      written(thirdArg<List<AcceptedSuggestion>>().drop(1))
+    }
+    val vm = viewModel()
+    advanceUntilIdle()
+    vm.onToggle(0)
+    vm.onToggle(1)
+
+    vm.onAccept()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.acceptedCount).isEqualTo(1)
+    assertThat(
+      analytics.paramsFor("task_suggestions_accepted")
+        .single()
+    ).containsAtLeastEntriesIn(
+      mapOf("curated_count" to "1", "ai_count" to "0"),
+    )
+  }
+
+  @Test
+  fun aRunTheListenerSaysBeforeItsStartReturnsIsStillShown() = runTest(dispatcher) {
+    // The model is refused for the day, so the job is written finished and never changes again;
+    // the listener hears of it while the start call is still on its way back.
+    val skipped = AiSkipped(AiErrorCode.DAILY_LIMIT, null)
+    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      AiStartResult.Started(CURATED_JOB, joined = false)
+    coEvery {
+      suggestions.start(THING_ID, any(), curatedOnly = false, documents = any())
+    } coAnswers {
+      runs.emit(SuggestionRun.Ready(JOB, curatedList, skipped))
+      advanceUntilIdle()
+      AiStartResult.Started(JOB, joined = false)
+    }
+    every { suggestions.observeRun(THING_ID) } returns runs
+    val vm = viewModel()
+    runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
+    advanceUntilIdle()
+
+    vm.onSuggest()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isSuggesting).isFalse()
+    assertThat(vm.uiState.value.aiSkipped).isEqualTo(skipped)
   }
 
   // Returning to a held answer (PRD R19): leaving does not lose the model's cards.
@@ -1266,7 +1347,7 @@ class SuggestionsViewModelTest {
         ready,
         capture(chosen)
       )
-    } returns listOf("t1")
+    } answers { written(chosen.captured) }
     val vm = viewModel()
     advanceUntilIdle()
     vm.draftFor(0)

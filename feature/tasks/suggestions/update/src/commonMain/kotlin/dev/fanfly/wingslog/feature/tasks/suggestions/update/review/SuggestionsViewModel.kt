@@ -32,6 +32,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionE
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.SuggestionItem
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.thing.Attachment
@@ -100,6 +101,16 @@ class SuggestionsViewModel(
 
   /** The job the cards follow: the one this screen started last. */
   private var followedJob: AiJobId? = null
+
+  /**
+   * The newest run the listener has said, followed or not. The listener can hear of a job before
+   * the call that started it returns, and a job that is written already finished is never said
+   * twice, so [followNow] shows this one once [followedJob] names it.
+   */
+  private var latestRun: SuggestionRun? = null
+
+  /** `starter_tasks_offered` has been reported for this screen. */
+  private var offeredCounted = false
 
   /** The user asked for the model, here or on the Add Tasks sheet, not the curated list alone. */
   private var modelRequested = false
@@ -227,66 +238,81 @@ class SuggestionsViewModel(
 
   /** Follows [followedJob] for as long as the screen is open, into the cards and their states. */
   private suspend fun follow(template: ThingTemplate?) {
-    var counted = false
     suggestionManager.observeRun(thingId)
       .collect { latest ->
+        latestRun = latest
         // Until the listener catches up with the job just started, the newest it knows is older.
         if (latest.jobIdOrNull != followedJob) return@collect
-        run = latest
-        val result = latest.resultOrNull
-        val finished = latest !is SuggestionRun.Working
-        val failure = (latest as? SuggestionRun.Failed)?.reason
-        // A curated-only run is finished from the start, so only a model run reads as working.
-        val working = latest as? SuggestionRun.Working
-        // Only a model run can come back with nothing to say; a curated-only one that is empty is
-        // a template with no list.
-        val notEnough = latest is SuggestionRun.Empty && modelRequested
-        if (finished && modelRequested) report(latest)
-        if (notEnough && !askedAfterEmpty) {
-          askedAfterEmpty = true
-          viewModelScope.launch { checkManual() }
-        }
-        _uiState.update {
-          it.copy(
-            isSuggesting = !finished,
-            readsDocuments = it.readsDocuments || working?.stage in DOCUMENT_STAGES,
-            failure = failure,
-            stage = working?.stage,
-            stageArg = working?.stageArg,
-            aiSkipped = (latest as? SuggestionRun.Ready)?.aiSkipped,
-            notEnough = notEnough,
-          )
-        }
-        if (result == null) {
-          // A template with no curated list, and no model answer (yet). A failure with no cards
-          // to fall back on closes the screen, and the task tab says why.
-          // An empty model run stays, to offer *Add details* (R21a; for the custom template that
-          // message is the whole screen).
-          if (finished) _uiState.update {
-            val close = it.items.isEmpty() && !notEnough
-            it.copy(
-              isLoading = false,
-              isDone = close,
-              closingError = failure.takeIf { _ -> close },
-            )
-          }
-          return@collect
-        }
-        _uiState.update { state ->
-          state.copy(
-            isLoading = false,
-            documents = result.documents,
-            items = itemsOf(
-              result,
-              state.items
-            ).filter { it.isShown() }
-          )
-        }
-        if (!counted) {
-          counted = true
-          offered(template, uiState.value.items.size)
-        }
+        show(latest, template)
       }
+  }
+
+  /**
+   * [followedJob] has just changed: shows the run the listener already said, when it is that job.
+   * Without this a run that reached the listener before its start call returned would be skipped,
+   * and one that never changes again (the model refused, the curated list alone) never shown.
+   */
+  private fun followNow() {
+    val latest = latestRun ?: return
+    if (latest.jobIdOrNull == followedJob) show(latest, uiState.value.template)
+  }
+
+  /** [latest], the followed job's run, into the cards and their states. */
+  private fun show(latest: SuggestionRun, template: ThingTemplate?) {
+    run = latest
+    val result = latest.resultOrNull
+    val finished = latest !is SuggestionRun.Working
+    val failure = (latest as? SuggestionRun.Failed)?.reason
+    // A curated-only run is finished from the start, so only a model run reads as working.
+    val working = latest as? SuggestionRun.Working
+    // Only a model run can come back with nothing to say; a curated-only one that is empty is
+    // a template with no list.
+    val notEnough = latest is SuggestionRun.Empty && modelRequested
+    if (finished && modelRequested) report(latest)
+    if (notEnough && !askedAfterEmpty) {
+      askedAfterEmpty = true
+      viewModelScope.launch { checkManual() }
+    }
+    _uiState.update {
+      it.copy(
+        isSuggesting = !finished,
+        readsDocuments = it.readsDocuments || working?.stage in DOCUMENT_STAGES,
+        failure = failure,
+        stage = working?.stage,
+        stageArg = working?.stageArg,
+        aiSkipped = (latest as? SuggestionRun.Ready)?.aiSkipped,
+        notEnough = notEnough,
+      )
+    }
+    if (result == null) {
+      // A template with no curated list, and no model answer (yet). A failure with no cards
+      // to fall back on closes the screen, and the task tab says why.
+      // An empty model run stays, to offer *Add details* (R21a; for the custom template that
+      // message is the whole screen).
+      if (finished) _uiState.update {
+        val close = it.items.isEmpty() && !notEnough
+        it.copy(
+          isLoading = false,
+          isDone = close,
+          closingError = failure.takeIf { _ -> close },
+        )
+      }
+      return
+    }
+    _uiState.update { state ->
+      state.copy(
+        isLoading = false,
+        documents = result.documents,
+        items = itemsOf(
+          result,
+          state.items
+        ).filter { it.isShown() }
+      )
+    }
+    if (!offeredCounted) {
+      offeredCounted = true
+      offered(template, uiState.value.items.size)
+    }
   }
 
   /** [checkManual] has been asked for this screen's empty run. */
@@ -358,6 +384,11 @@ class SuggestionsViewModel(
     _uiState.update { it.copy(notice = null) }
   }
 
+  /** That nothing was added, once shown. */
+  fun onSaveFailedShown() {
+    _uiState.update { it.copy(saveFailed = false) }
+  }
+
   /**
    * Shown unless the Thing already has it: the server says so (the model by meaning, a curated item
    * by title), or a task with the same title, ignoring case and spacing, is on the Thing: the
@@ -403,6 +434,7 @@ class SuggestionsViewModel(
         return@launch
       }
       followedJob = started.jobId
+      followNow()
       requested(SUGGEST_MORE, documentCount = 0)
       // The run on screen (curated-only, or failed) is finished with; the new one carries the
       // same curated list.
@@ -558,16 +590,19 @@ class SuggestionsViewModel(
       val current = run
       val written = current?.let { writeRun(it, chosen) }
         .orEmpty()
-      if (written.isNotEmpty()) {
-        analytics.log(
-          SuggestedTasksAccepted(
-            templateId = state.template?.id.orEmpty(),
-            taskCount = written.size
-          )
-        )
+      if (written.isEmpty()) {
+        // Nothing went in, and the run is still open: the cards stay, checked, to try again.
+        _uiState.update { it.copy(isSaving = false, saveFailed = true) }
+        return@launch
       }
+      analytics.log(
+        SuggestedTasksAccepted(
+          templateId = state.template?.id.orEmpty(),
+          taskCount = written.size
+        )
+      )
       // The task tab says how many, with *Undo* (1f).
-      recentlyAdded.record(thingId, written)
+      recentlyAdded.record(thingId, written.map { it.taskId })
       _uiState.update {
         it.copy(
           isSaving = false,
@@ -603,7 +638,7 @@ class SuggestionsViewModel(
   private suspend fun writeRun(
     current: SuggestionRun,
     chosen: List<SuggestionItem>
-  ): List<String> {
+  ): List<WrittenSuggestion> {
     val jobId = current.jobIdOrNull ?: return emptyList()
     val result = current.resultOrNull ?: return emptyList()
     val ready =
@@ -613,12 +648,14 @@ class SuggestionsViewModel(
       ready,
       chosen.map { AcceptedSuggestion(it.suggestion, it.edited) })
     if (written.isNotEmpty()) {
+      // What was written, not what was chosen: a card whose write failed is not counted.
+      val accepted = written.map { it.accepted }
       analytics.log(
         TaskSuggestionsAccepted(
           templateId = uiState.value.template?.id.orEmpty(),
-          curatedCount = chosen.count { !it.suggestion.isFromModel() },
-          aiCount = chosen.count { it.suggestion.isFromModel() },
-          editedCount = chosen.count { it.edited != null },
+          curatedCount = accepted.count { !it.suggestion.isFromModel() },
+          aiCount = accepted.count { it.suggestion.isFromModel() },
+          editedCount = accepted.count { it.edited != null },
         ),
       )
     }

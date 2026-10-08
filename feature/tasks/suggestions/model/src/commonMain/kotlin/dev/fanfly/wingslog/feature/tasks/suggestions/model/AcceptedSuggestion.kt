@@ -11,3 +11,9 @@ data class AcceptedSuggestion(
   val suggestion: TaskSuggestion,
   val edited: MaintenanceTask? = null,
 )
+
+/** One accepted suggestion that was written, and the id of the task it became. */
+data class WrittenSuggestion(
+  val accepted: AcceptedSuggestion,
+  val taskId: String,
+)

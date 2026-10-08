@@ -62,6 +62,8 @@ data class SuggestionsUiState(
   /** Why *Suggest more* or *Try again* did not start; shown once, as a snackbar. */
   val notice: AiErrorCode? = null,
   val isSaving: Boolean = false,
+  /** None of the checked cards could be written; shown once, as a snackbar. The cards stay. */
+  val saveFailed: Boolean = false,
   /** Set once the step is over, either way; how many were written says which way. */
   val isDone: Boolean = false,
   val acceptedCount: Int = 0,

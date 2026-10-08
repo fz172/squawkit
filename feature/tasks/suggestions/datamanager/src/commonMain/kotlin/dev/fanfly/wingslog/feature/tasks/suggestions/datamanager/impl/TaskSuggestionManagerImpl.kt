@@ -24,6 +24,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionMappe
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
 import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
@@ -41,8 +42,10 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 class TaskSuggestionManagerImpl(
   private val client: AiJobClient,
@@ -56,6 +59,7 @@ class TaskSuggestionManagerImpl(
   private val attachmentManager: AttachmentManager,
   private val jobDocuments: JobDocumentReleaser,
   private val currentUid: CurrentUidProvider,
+  private val clock: Clock = Clock.System,
 ) : TaskSuggestionManager {
 
   override suspend fun eligibility(thingId: String, withDocuments: Boolean): AiEligibility =
@@ -117,7 +121,7 @@ class TaskSuggestionManagerImpl(
 
   override fun observeRun(thingId: String): Flow<SuggestionRun> =
     client.observeLatest(KIND, ThingId(value_ = thingId))
-      .map { job -> job?.toRun() ?: SuggestionRun.Idle }
+      .map { job -> job?.toRun(clock.now()) ?: SuggestionRun.Idle }
 
   override suspend fun draftOf(
     thingId: String,
@@ -130,7 +134,7 @@ class TaskSuggestionManagerImpl(
     thingId: String,
     run: SuggestionRun.Ready,
     chosen: List<AcceptedSuggestion>,
-  ): List<String> {
+  ): List<WrittenSuggestion> {
     val template = templateOf(thingId)
     val documents = jobDocuments.documentsOf(run.jobId)
     val written = chosen.mapNotNull { accepted ->
@@ -144,12 +148,14 @@ class TaskSuggestionManagerImpl(
         ).withCitedDocument(accepted.suggestion, documents)
         // Named here, so *Undo* knows what to take back.
         .let { if (it.id.isEmpty()) it.copy(id = generateRandomId()) else it }
-      task.id.takeIf {
+      WrittenSuggestion(accepted, task.id).takeIf {
         taskDataManager.addTask(thingId, task)
           .onFailure { logger.w(it) { "A suggested task was not written" } }
           .isSuccess
       }
     }
+    // Nothing went in: the run and its documents stay, so the same cards can be tried again.
+    if (written.isEmpty() && chosen.isNotEmpty()) return written
     client.close(run.jobId)
     // After the writes, so a document a written task now holds is kept by the reference check.
     jobDocuments.release(run.jobId)
@@ -195,6 +201,14 @@ class TaskSuggestionManagerImpl(
     /** A 25 MB manual on a slow connection; the sheet shows the upload meanwhile. */
     val UPLOAD_WAIT = 2.minutes
 
+    /**
+     * A run not updated for this long has lost its worker, which is given 30 minutes: the server
+     * fails it as stale after 35 (`AI_JOB_STALE_MS`), but only when the next run starts. Longer
+     * than the server's, so a device whose clock runs fast does not call a run stale that the
+     * server would still join.
+     */
+    val STALE_AFTER = 40.minutes
+
     val logger = Logger.withTag("TaskSuggestionManager")
 
     fun AttachmentStatus.isSettled(): Boolean =
@@ -234,7 +248,7 @@ class TaskSuggestionManagerImpl(
       )
     }
 
-    fun AiJob.toRun(): SuggestionRun {
+    fun AiJob.toRun(now: Instant): SuggestionRun {
       val decoded =
         result?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
       return when (status) {
@@ -252,8 +266,13 @@ class TaskSuggestionManagerImpl(
           decoded
         )
         // QUEUED, RUNNING, and a status this build does not know: still working, as far as it can
-        // tell, with the curated suggestions it started with.
-        else -> SuggestionRun.Working(id, stage, stageArg, decoded)
+        // tell, with the curated suggestions it started with. One whose worker is long gone will
+        // never say otherwise, so it reads as failed, and starting again replaces it.
+        else -> if (updatedAt.toEpochMilliseconds() > 0 && now - updatedAt > STALE_AFTER) {
+          SuggestionRun.Failed(id, AiErrorCode.STALE, decoded)
+        } else {
+          SuggestionRun.Working(id, stage, stageArg, decoded)
+        }
       }
     }
   }

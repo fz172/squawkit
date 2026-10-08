@@ -69,6 +69,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.retry
+import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_ai_disclosure
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_checking
@@ -150,6 +151,12 @@ fun SuggestionsRoute(
       if (noticeMessage == null) return@LaunchedEffect
       snackbarHostState.showSnackbar(noticeMessage)
       viewModel.onNoticeShown()
+    }
+    val saveFailedMessage = stringResource(CoreRes.string.save_failed)
+    LaunchedEffect(uiState.saveFailed) {
+      if (!uiState.saveFailed) return@LaunchedEffect
+      snackbarHostState.showSnackbar(saveFailedMessage)
+      viewModel.onSaveFailedShown()
     }
     val wide = LocalLayoutTier.current != LayoutTier.COMPACT
     Scaffold(
