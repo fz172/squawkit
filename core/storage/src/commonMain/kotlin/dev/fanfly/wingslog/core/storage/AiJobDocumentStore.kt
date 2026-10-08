@@ -58,6 +58,16 @@ class AiJobDocumentStore(
     writeLock.withLock { db.schemaQueries.deleteAiJobDocumentsForJob(uid, jobId) }
   }
 
+  /** Drops [attachmentIds] from [jobId]'s rows, leaving its other documents. */
+  suspend fun forget(uid: String, jobId: String, attachmentIds: List<String>) {
+    if (attachmentIds.isEmpty()) return
+    writeLock.withLock {
+      db.schemaQueries.transaction {
+        attachmentIds.forEach { db.schemaQueries.deleteAiJobDocument(uid, jobId, it) }
+      }
+    }
+  }
+
   private fun Ai_job_document.decode(): AiJobDocument? =
     runCatching { Attachment.ADAPTER.decode(attachment) }
       .onFailure { logger.w(it) { "An AI job document did not decode" } }

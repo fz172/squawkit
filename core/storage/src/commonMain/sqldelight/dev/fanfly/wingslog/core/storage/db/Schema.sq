@@ -373,6 +373,9 @@ SELECT * FROM ai_job_document;
 deleteAiJobDocumentsForJob:
 DELETE FROM ai_job_document WHERE uid = :uid AND job_id = :jobId;
 
+deleteAiJobDocument:
+DELETE FROM ai_job_document WHERE uid = :uid AND job_id = :jobId AND attachment_id = :attachmentId;
+
 -- Wipe queries used by the integrity-check recovery flow (PRD §10).
 -- sync_config is intentionally excluded so user preferences survive the wipe.
 

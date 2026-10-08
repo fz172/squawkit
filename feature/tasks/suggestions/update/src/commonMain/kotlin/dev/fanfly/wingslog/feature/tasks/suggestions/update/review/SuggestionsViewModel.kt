@@ -19,12 +19,12 @@ import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.TemplateRegistry
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.attachmentsFromDocumentsArg
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionEntryPoint
@@ -71,7 +71,7 @@ class SuggestionsViewModel(
   private val analytics: AnalyticsManager,
   private val suggestionManager: TaskSuggestionManager,
   private val suggestEntry: TaskSuggestionEntry,
-  private val attachmentManager: AttachmentManager,
+  private val documents: JobDocumentReleaser,
   private val recentlyAdded: RecentlyAddedTasks,
   savedStateHandle: SavedStateHandle,
   private val clock: Clock = Clock.System,
@@ -84,8 +84,8 @@ class SuggestionsViewModel(
 
   /**
    * The add mode's files, picked on the Add Tasks sheet and stored on this device, held by no
-   * record.
-   * The run they go to lets them go when it ends; anything else that drops them lets them go here.
+   * record. The run they go to lets them go when it ends; when none takes them, this screen says
+   * so to [documents], which owns them.
    */
   private val pickedDocuments: List<Attachment> =
     savedStateHandle.get<String>(Screen.SUGGESTIONS_DOCUMENT)
@@ -137,7 +137,7 @@ class SuggestionsViewModel(
     if (earlier != null) {
       // The answer held is what this screen shows; a new run would be refused for the day (R49),
       // so the files picked for one are not read.
-      releaseAll(pickedDocuments)
+      documents.letGo(pickedDocuments)
       // Already reported when it first arrived.
       if (earlier !is SuggestionRun.Working) reportedJob = earlier.jobId
       follow(template)
@@ -170,7 +170,7 @@ class SuggestionsViewModel(
     val reason = (started as AiStartResult.Refused).reason
     logger.i { "The model run did not start: $started" }
     failed(reason)
-    releaseAll(pickedDocuments)
+    documents.letGo(pickedDocuments)
     _uiState.update { it.copy(isSuggesting = false, notice = reason) }
     return false
   }
@@ -567,18 +567,6 @@ class SuggestionsViewModel(
       )
     }
     return written
-  }
-
-  private fun releaseAll(documents: List<Attachment>) {
-    if (documents.isEmpty()) return
-    viewModelScope.launch {
-      documents.forEach {
-        attachmentManager.release(
-          it,
-          owner = null
-        )
-      }
-    }
   }
 
   /** R50: the model was asked; its answer or failure is reported once per job by [report]. */

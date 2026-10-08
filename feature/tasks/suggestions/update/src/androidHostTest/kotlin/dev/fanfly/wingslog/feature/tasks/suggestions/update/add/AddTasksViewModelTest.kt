@@ -4,6 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiEligibility
+import dev.fanfly.wingslog.core.ai.AiJobClient
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.SuggestionsMode
@@ -14,6 +17,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.toDocumentsArg
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
@@ -84,9 +88,16 @@ class AddTasksViewModelTest {
     templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
     suggestionManager = suggestions,
     suggestEntry = entry,
-    attachmentManager = attachments,
+    // Picking and letting go run on the test's scope, which outlives the sheet as the real one does.
+    documents = JobDocumentReleaser(
+      store = mockk<AiJobDocumentStore>(relaxed = true),
+      currentUid = { "alice" },
+      client = { mockk<AiJobClient>() },
+      attachments = { attachments },
+      foreground = AppForegroundObserver(),
+      scope = this,
+    ),
     savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to THING_ID)),
-    cleanupScope = this,
   ).also { store.put("add", it) }
 
   private fun picked(name: String, mime: String = "application/pdf") =

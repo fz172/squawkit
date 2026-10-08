@@ -69,6 +69,9 @@ dependencies {
   "androidHostTestImplementation"(libs.mockk)
   "androidHostTestImplementation"(libs.truth)
   "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
+  // The tests build a real JobDocumentReleaser over fakes.
+  "androidHostTestImplementation"(project(":core:storage"))
+  "androidHostTestImplementation"(project(":core:lifecycle"))
 }
 
 compose.resources {

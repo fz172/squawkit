@@ -58,6 +58,17 @@ class AiJobDocumentStoreTest {
   }
 
   @Test
+  fun `forgets the named documents of a job, and keeps its others`() = runTest {
+    store.record("alice", "picked", "thing-1", listOf(manual, bulletin))
+    store.record("alice", "job-2", "thing-1", listOf(manual))
+
+    store.forget("alice", "picked", listOf(manual.id))
+
+    assertThat(store.forJob("alice", "picked").map { it.attachment }).containsExactly(bulletin)
+    assertThat(store.forJob("alice", "job-2")).hasSize(1)
+  }
+
+  @Test
   fun `the migration from 8 adds the table`() = runTest {
     val old = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
     WingsLogDatabase.Schema.synchronous().create(old)
