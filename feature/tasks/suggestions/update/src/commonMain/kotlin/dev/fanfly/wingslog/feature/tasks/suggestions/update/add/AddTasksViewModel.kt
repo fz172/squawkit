@@ -18,8 +18,6 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.DocumentProblem
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.SourcesState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

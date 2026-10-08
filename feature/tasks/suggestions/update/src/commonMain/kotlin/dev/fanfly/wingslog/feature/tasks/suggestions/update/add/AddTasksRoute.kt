@@ -70,9 +70,6 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.MAX_DOCUMENT_MB
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.SourcesState
-import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.message
 import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.text
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
