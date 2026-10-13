@@ -820,10 +820,14 @@ out there is nothing to observe and both flows emit null.
 ### 7.2 `SuggestionContextBuilder`
 
 Reads through existing managers: `FleetManager.loadThing`, `TaskDataManager.observeTasks`,
-`MaintenanceLogManager.observeLogs` and `observeMaintenanceOverview` (current meters), and
-`TemplateRegistry`. It builds `SuggestionContext` and truncates logs newest-first until the encoded
-request is under 400 KiB or 500 entries, setting `logs_truncated`. `hostUid` comes from
-`ThingScopeResolver.resolveNow(thingId)`, never from the signed-in uid.
+`MaintenanceLogManager.observeCurrentReadings` (current meters), and `TemplateRegistry`, and builds
+`SuggestionContext`. `hostUid` comes from `ThingScopeResolver.resolveNow(thingId)`, never from the
+signed-in uid.
+
+**The log history is not sent** (with tasks-6). It used to be, newest first and cut to 500 entries
+and 400 KiB, but no suggestion is tied to a log and the tailor is no longer shown any (§6.0), so
+`logs` and `logs_truncated` stay empty. The fields remain in the proto so an older app's request
+decodes.
 
 Built in T15:
 
@@ -831,11 +835,6 @@ Built in T15:
   User-invented `custom_N` fields are left out, since nothing declares what they hold. Components
   (children included) carry make, model and their slot's non-identifying specs, never the serial. A
   meter's current value is the highest reading across components (a twin's two engines).
-- **A log has no title.** `MaintenanceLog` has none, so `LogSummary.title` is empty and the work
-  description carries what was done. The log's technician, serial, attachments and squawks are never
-  read into the summary.
-- **Truncation:** at most 500 logs, newest first. Then the oldest tenth is dropped at a time until
-  the encoded request is under 400 KiB.
 - **No starter pack (2026-10-02).** The builder no longer sends the template's starter tasks; the
   server has the curated list (§6.8). It sets `curated_only` for the run the empty task list starts
   on its own (§9.1), so AI runs only when the user asks for it.
@@ -1317,7 +1316,7 @@ Ordering rules the phases alone do not show:
 | Hallucinated regulation                                | §6.7 rule 3 is deterministic; eval hard gate; `TaskOrigin` finds affected tasks by `generation_version`                                                                                      |
 | Cost runaway                                           | Daily limit, per-tier and global spend ceilings, kill switch, cache. No per-caller burst limit (decided 2026-09-28): failed and empty runs are free, and the spend ceilings are the backstop |
 | Old clients delete a shared document                   | Storage-rule deny at phase D, one release cycle after B (§8.3)                                                                                                                               |
-| Context over 1 MiB                                     | 400 KiB client cap + 512 KiB server cap; truncation flagged                                                                                                                                  |
+| Context over 1 MiB                                     | The request carries no log history; 512 KiB server cap                                                                                                                                       |
 | Worker timeout or cost on huge manuals (no page limit) | Locate stage before extract; text-layer reading is cheap, and OCR of image-only manuals is the slow case the bake-off must time; spend ceilings; stale-job recovery                          |
 | Component instance not representable                   | `component_hint` in the description; a task component-instance field is a separate proposal                                                                                                  |
 | Job doc listener outside the sync engine               | Confined to `core/ai`; not an entity path                                                                                                                                                    |
