@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
-import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -9,31 +8,30 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.slotKeyFor
-import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.suggesttasks.ComponentSummary
 import dev.fanfly.wingslog.rpc.suggesttasks.ExistingTask
-import dev.fanfly.wingslog.rpc.suggesttasks.LogSummary
 import dev.fanfly.wingslog.rpc.suggesttasks.MeterSummary
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksRequest
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestionContext
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.TimeZone
 
 /**
  * The request an AI suggestion run sends about one Thing (docs/ai/task_population_design.md §7.2,
- * PRD R10–R13): the Thing's template, specs, components, meters, live tasks and log history, read
- * through the ordinary managers.
+ * PRD R10–R13): the Thing's template, specs, components, meters and live tasks, read through the
+ * ordinary managers.
+ *
+ * The log history is not sent. No suggestion is tied to a log (owner's decision, 2026-10-02), and
+ * since `tasks-6` the server shows the model none, so uploading up to 400 KiB of it bought nothing.
  *
  * **Nothing personal leaves the device, by construction.** The proto has no field for a technician,
  * cost, attachment, comment or serial, and this fills only what it has: a spec field the template
@@ -47,19 +45,10 @@ class SuggestionContextBuilder(
   private val logManager: MaintenanceLogManager,
   private val templateRegistry: TemplateRegistry,
   private val scopeResolver: ThingScopeResolver,
-  private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
 
-  /**
-   * The request for [thingId], and the uid of the tree it lives in. [withLogs] false leaves the
-   * log history out without reading it: a curated-only run is fitted to the Thing's slots, meters
-   * and tasks (§6.8), never its logs.
-   */
-  suspend fun build(
-    thingId: String,
-    entryPoint: SuggestionEntryPoint,
-    withLogs: Boolean = true,
-  ): SuggestTasksRequest {
+  /** The request for [thingId], and the uid of the tree it lives in. */
+  suspend fun build(thingId: String, entryPoint: SuggestionEntryPoint): SuggestTasksRequest {
     val thing = fleetManager.loadThing(thingId)
       .filterNotNull()
       .first()
@@ -103,55 +92,13 @@ class SuggestionContextBuilder(
       },
       lexicon_task_noun = templateRegistry.lexiconFor(template).taskNoun.singular,
     )
-    val base = SuggestTasksRequest(
+    return SuggestTasksRequest(
       thing_id = ThingId(value_ = thingId),
       host_uid = UserId(value_ = hostUid),
       context = context,
       entry_point = entryPoint.wire,
     )
-    if (!withLogs) return base
-    return withLogs(
-      base,
-      logManager.observeLogs(thingId)
-        .first()
-        .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
-        .map(::logSummary)
-    )
   }
-
-  /**
-   * Adds [newestFirst] logs to [base], dropping the oldest until the request is under
-   * [MAX_REQUEST_BYTES] and at most [MAX_LOGS] (design §7.2; the server's cap is 512 KiB).
-   */
-  internal fun withLogs(
-    base: SuggestTasksRequest,
-    newestFirst: List<LogSummary>
-  ): SuggestTasksRequest {
-    var kept = newestFirst.take(MAX_LOGS)
-    while (true) {
-      val request = base.copy(
-        context = base.context!!.copy(
-          logs = kept,
-          logs_truncated = kept.size < newestFirst.size
-        ),
-      )
-      if (kept.isEmpty() || request.encode().size <= MAX_REQUEST_BYTES) return request
-      // Drop the oldest tenth at a time: one at a time is quadratic on a long history.
-      kept = kept.take(kept.size - maxOf(1, kept.size / 10))
-    }
-  }
-
-  private fun logSummary(log: MaintenanceLog) = LogSummary(
-    id = MaintenanceLogId(value_ = log.id),
-    date = log.timestamp?.toLocalDate(timeZone)
-      ?.toString()
-      .orEmpty(),
-    readings = log.readings,
-    // A log has no title of its own; its work description says what was done.
-    title = "",
-    work_description = log.work_description,
-    component_slot_key = slotKeyFor(log.component_type),
-  )
 
   private fun componentSummaries(
     component: Component,
@@ -169,9 +116,6 @@ class SuggestionContextBuilder(
   }
 
   private companion object {
-    const val MAX_LOGS = 500
-    const val MAX_REQUEST_BYTES = 400 * 1024
-
     /** The specs the template declares and does not mark as identifying (R12). */
     fun sendable(specs: List<Spec>, declared: List<SpecField>): List<Spec> {
       val allowed = declared.filterNot { it.is_identifier }

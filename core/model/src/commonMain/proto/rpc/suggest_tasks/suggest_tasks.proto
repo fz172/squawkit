@@ -57,8 +57,8 @@ message SuggestionContext {
     repeated ComponentSummary components = 4;
     repeated MeterSummary meters = 5;
     repeated ExistingTask existing_tasks = 6;
-    // The builder drops the oldest to fit the request cap, and says so in `logs_truncated` (design
-    // §7.2).
+    // No longer sent: no suggestion is tied to a log, and since tasks-6 the model is shown none.
+    // Kept so a request from an app that still sends them decodes; the server reads neither.
     repeated LogSummary logs = 7;
     bool logs_truncated = 8;
     // The app's starter pack, for the server to merge against. The server has its own curated list

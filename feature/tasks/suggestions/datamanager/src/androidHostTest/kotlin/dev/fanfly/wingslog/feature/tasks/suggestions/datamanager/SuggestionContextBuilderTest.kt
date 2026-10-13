@@ -32,7 +32,6 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.TimeZone
 import org.junit.Test
 import kotlin.time.Instant
 
@@ -155,7 +154,6 @@ class SuggestionContextBuilderTest {
       logManager,
       registry,
       scopes,
-      TimeZone.UTC
     )
   }
 
@@ -231,82 +229,18 @@ class SuggestionContextBuilderTest {
   }
 
   @Test
-  fun `summarises logs newest first, with nothing personal`() = runTest {
+  fun `sends no log history`() = runTest {
     val logs = listOf(log("older", JUNE_1), log("newer", JUNE_1 + DAY))
-
-    val summaries = builder(logs = logs).build(THING, SuggestionEntryPoint.CURATED).context!!.logs
-
-    assertThat(summaries.map { it.id?.value_ }).containsExactly(
-      "newer",
-      "older"
-    )
-      .inOrder()
-    val newest = summaries.first()
-    assertThat(newest.date).isEqualTo("2026-06-02")
-    assertThat(newest.work_description).isEqualTo("Oil change")
-    assertThat(newest.component_slot_key).isEqualTo("engine")
-    assertThat(newest.readings.single().value_).isEqualTo(380.0)
-    assertThat(
-      newest.encode()
-        .decodeToString()
-    ).doesNotContain("Jane Mechanic")
-  }
-
-  @Test
-  fun `keeps the newest 500 logs and says history was cut`() = runTest {
-    val logs = (0 until 600).map { log("log-$it", JUNE_1 + it * DAY) }
 
     val context = builder(logs = logs).build(THING, SuggestionEntryPoint.CURATED).context!!
 
-    assertThat(context.logs).hasSize(500)
-    assertThat(context.logs.first().id?.value_).isEqualTo("log-599")
-    assertThat(context.logs_truncated).isTrue()
-  }
-
-  @Test
-  fun `drops the oldest logs until the request is under 400 KiB`() = runTest {
-    val builder = builder(logs = emptyList())
-    val base = builder.build(THING, SuggestionEntryPoint.CURATED)
-    val big = "x".repeat(4_000)
-
-    val request = builder.withLogs(
-      base,
-      (0 until 200).map {
-        LogSummary(
-          work_description = big,
-          date = "2026-06-01"
-        )
-      })
-
-    assertThat(request.encode().size).isAtMost(400 * 1024)
-    assertThat(request.context!!.logs.size).isLessThan(200)
-    assertThat(request.context!!.logs_truncated).isTrue()
-  }
-
-  @Test
-  fun `a short history is sent whole`() = runTest {
-    assertThat(
-      builder().build(
-        THING,
-        SuggestionEntryPoint.CURATED
-      ).context!!.logs_truncated
-    ).isFalse()
+    assertThat(context.logs).isEmpty()
+    assertThat(context.logs_truncated).isFalse()
   }
 
   private companion object {
     const val THING = "thing-1"
     const val DAY = 86_400L
     val JUNE_1 = Instant.parse("2026-06-01T12:00:00Z").epochSeconds
-  }
-
-  @Test
-  fun `leaves the log history out when asked, and changes nothing else`() = runTest {
-    val full = builder().build(THING, SuggestionEntryPoint.CURATED)
-    val bare = builder().build(THING, SuggestionEntryPoint.CURATED, withLogs = false)
-
-    assertThat(full.context!!.logs).isNotEmpty()
-    assertThat(bare.context!!.logs).isEmpty()
-    assertThat(bare.context!!.logs_truncated).isFalse()
-    assertThat(bare).isEqualTo(full.copy(context = full.context!!.copy(logs = emptyList())))
   }
 }
