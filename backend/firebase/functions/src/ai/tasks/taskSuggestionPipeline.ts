@@ -61,21 +61,10 @@ export function createTaskSuggestionPipeline(
       });
       return {
         status: outcome.status,
-        result: SuggestTasksResultProto.encode(resultToProto(withCurated(withoutLogLinks(outcome.result), curated, outcome.curatedNotApplicable))).finish(),
+        result: SuggestTasksResultProto.encode(resultToProto(withCurated(outcome.result, curated, outcome.curatedNotApplicable))).finish(),
       };
     },
   };
-}
-
-/**
- * The result with no suggestion tied to a log (owner's decision, 2026-10-02). Logs go to the model
- * as context and may shape what it suggests, but a suggestion never names one as when it was last
- * done, so a new task's schedule runs from when it is accepted. The tailor prompt still asks for
- * `lastDoneLogId` until its next revision (a GENERATION_VERSION bump and an eval run); this keeps
- * whatever it answers from leaving the server.
- */
-export function withoutLogLinks(result: SuggestTasksResult): SuggestTasksResult {
-  return { ...result, suggestions: result.suggestions.map((s) => ({ ...s, lastDone: null })) };
 }
 
 /**

@@ -33,8 +33,6 @@ export function buildDrafts(
       isOneTime: s.isOneTime,
       firstDue: null,
       rawFirstDue: s.firstDue,
-      lastDone: null,
-      lastDoneLogId: s.lastDoneLogId,
       matchesExistingTaskId: s.matchesExistingTaskId ?? "",
       intervalDifferenceNote: s.intervalDifferenceNote ?? "",
       mergesStaticIndex: s.mergesStaticIndex ?? -1,

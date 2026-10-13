@@ -107,7 +107,6 @@ export type TailoredSuggestion = {
   isOneTime: boolean;
   /** For a one-time item: where it first falls due. Empty otherwise. */
   firstDue: FlatFirstDue[];
-  lastDoneLogId: string | null;
   matchesExistingTaskId: string | null;
   intervalDifferenceNote: string | null;
   mergesStaticIndex: number | null;

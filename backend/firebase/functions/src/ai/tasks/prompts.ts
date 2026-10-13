@@ -66,7 +66,6 @@ Candidates come from the owner's documents (ids "d<doc>.<item>") and from genera
 - "mergesStaticIndex": the index of a starter-pack item this task covers, else null.
 - Starter-pack items are a generic list for the thing's kind and may not fit this one. List in "notApplicable" every starter-pack item that does not apply to this specific thing, with a one-line reason: an engine oil change or spark plugs on a battery-electric car, a chain on a belt-drive motorcycle, a gas furnace in an all-electric home. Do not list an item only because no candidate covers it, or because the owner may not need it often; list it only when the thing cannot have it.
 - One-time items ("isOneTime"): put where it first falls due in "firstDue" and leave "rules" empty unless it also recurs. Use "meter_reading" for a reading counted from new ("first service at 600 mi" is 600 on the odometer), "meter_from_now" for "within N" of a meter from today, "time_from_now" for "within N days, months or years". Several anchors mean whichever comes first. A due point counted from a date this thing does not record (delivery, purchase) is left out. Recurring items have an empty "firstDue".
-- "lastDoneLogId": the id of the most recent log entry that did this task, else null.
 - "rationale": one sentence of advice ("Rotax recommends…"), never an obligation, unless it quotes a supplied directive or bulletin.
 - "confidence": "low" for a task you doubt applies to this thing.
 - For each document, "matchesThing" is false when it is plainly for a different thing.
@@ -114,10 +113,6 @@ export function tailorText(context: SuggestionContext, candidates: TailorCandida
     section("The thing", thing),
     section("Existing tasks", context.existingTasks),
     section("Starter-pack items", staticPack),
-    section(
-      `Log entries${context.logsTruncated ? " (most recent only; older history was left out)" : ""}`,
-      context.logs,
-    ),
     section("Candidates from the owner's documents", documentCandidates),
     section("Candidates from general knowledge", recalled),
   ].join("\n\n");

@@ -111,8 +111,6 @@ export type IdentifiedDocument = {
  */
 export type FirstDue = { date: string | null; meter: MeterReadingValue | null };
 
-export type LastDoneEvidence = { logId: string; date: string; reading: MeterReadingValue | null };
-
 export type TaskSuggestion = {
   suggestionId: string;
   title: string;
@@ -136,7 +134,6 @@ export type TaskSuggestion = {
   sourcePages: number[];
   /** The document's blob id, for a document source. */
   sourceDocument: string;
-  lastDone: LastDoneEvidence | null;
   /** An existing task this duplicates: shown as Already tracked (R24). */
   matchesExistingTaskId: string;
   intervalDifferenceNote: string;

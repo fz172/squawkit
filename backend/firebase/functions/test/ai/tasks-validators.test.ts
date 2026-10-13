@@ -10,7 +10,6 @@ import {
   dedupIdsRule,
   firstDueRule,
   sourceRule,
-  lastDoneRule,
   meterRule,
   regulatoryRule,
   schemaRule,
@@ -211,21 +210,6 @@ describe("5. dedup ids rule", () => {
   });
 });
 
-describe("last-done rule", () => {
-  it("fills date and the matching reading from the log", () => {
-    const d = draft({ lastDoneLogId: "log-1", rules: [{ kind: "meter", meterKey: "engine_hours", interval: 50 }] });
-    expect(lastDoneRule([d], input())[0].lastDone).toEqual({
-      logId: "log-1",
-      date: "2026-05-02",
-      reading: { meterKey: "engine_hours", value: 380 },
-    });
-  });
-
-  it("drops a log id the context does not hold", () => {
-    expect(lastDoneRule([draft({ lastDoneLogId: "log-9" })], input())[0].lastDone).toBeNull();
-  });
-});
-
 describe("first-due rule", () => {
   const due = (anchor: "meter_reading" | "meter_from_now" | "time_from_now", value: number, meterKey: string | null = null, unit: "days" | "months" | "years" | null = null) => ({
     anchor,
@@ -267,14 +251,13 @@ describe("validate", () => {
   it("runs every rule in order", () => {
     const out = validate(
       [
-        draft({ lastDoneLogId: "log-1" }),
+        draft(),
         draft({ title: "Invented item", evidence: { documentIndex: 0, pages: [1], sourceFigures: [7], sourceIntervals: [] } }),
       ],
       input(),
     );
     expect(out).toHaveLength(1);
     expect(out[0].rules).toEqual([{ kind: "meter", meterKey: "engine_hours", interval: 200 }]);
-    expect(out[0].lastDone?.logId).toBe("log-1");
   });
 
   it("containsVerbatim ignores whitespace and case only", () => {

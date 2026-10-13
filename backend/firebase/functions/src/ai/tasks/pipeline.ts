@@ -192,7 +192,7 @@ export async function runTaskPipeline(
   ]);
 
   const suggestions: TaskSuggestion[] = drafts.map(
-    ({ rawRules: _raw, rawFirstDue: _due, lastDoneLogId: _log, confidence: _c, evidence: _e, ...s }, i) => ({
+    ({ rawRules: _raw, rawFirstDue: _due, confidence: _c, evidence: _e, ...s }, i) => ({
       suggestionId: `s${i + 1}`,
       ...s,
       originKind: s.sourceDocument ? "ai_document" : "ai_thing",

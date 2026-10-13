@@ -13,7 +13,7 @@ describe("curatedSuggestions", () => {
     expect(suggestions.map((s) => s.title)).toEqual(curatedListFor("airplane").map((c) => c.title));
     expect(suggestions.map((s) => s.suggestionId)).toEqual(suggestions.map((_, i) => `c${i}`));
     for (const s of suggestions) {
-      expect(s).toMatchObject({ originKind: "pre_curated", type: "routine", referenceNumber: "", sourceDocument: "", lastDone: null });
+      expect(s).toMatchObject({ originKind: "pre_curated", type: "routine", referenceNumber: "", sourceDocument: "" });
     }
   });
 

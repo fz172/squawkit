@@ -68,8 +68,6 @@ const TAILORED: TailorOutput = {
       ],
       isOneTime: false,
       firstDue: [],
-      // The model points at a log; the result must not (owner's decision, 2026-10-02).
-      lastDoneLogId: "log-1",
       matchesExistingTaskId: null,
       intervalDifferenceNote: null,
       mergesStaticIndex: null,
@@ -183,7 +181,7 @@ describe("the task-suggestion pipeline in the worker", () => {
         componentSlotKey: "engine",
         rules: [{ meterRule: { meterKey: "engine_hours", interval: 200 } }],
         sourceKind: TaskSourceKind.TASK_SOURCE_KIND_COMMON_PRACTICE,
-        // Logs shaped the run, but no suggestion is tied to one.
+        // No suggestion is tied to a log (owner's decision, 2026-10-02).
         lastDone: undefined,
       }),
     ]);
@@ -325,7 +323,7 @@ describe("a task-suggestion run with a document", () => {
     ],
   };
   const FROM_DOCUMENT: TailorOutput = {
-    suggestions: [{ ...TAILORED.suggestions[0], candidateIds: ["d0.0"], lastDoneLogId: null }],
+    suggestions: [{ ...TAILORED.suggestions[0], candidateIds: ["d0.0"] }],
     documents: [{ index: 0, matchesThing: true }],
     notApplicable: [],
   };

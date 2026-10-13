@@ -8,7 +8,6 @@ export type Draft = Omit<TaskSuggestion, "suggestionId" | "originKind"> & {
   rawRules: FlatRule[];
   /** The tailor's first-due anchors, made absolute by the first-due rule. */
   rawFirstDue: FlatFirstDue[];
-  lastDoneLogId: string | null;
   confidence: Confidence;
   evidence: {
     /** Index into ValidationInput.documents, for a document source. */

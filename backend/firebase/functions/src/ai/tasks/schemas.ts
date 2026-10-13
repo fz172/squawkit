@@ -131,7 +131,6 @@ export const TAILOR_SCHEMA = object({
       rules: array(FLAT_RULE),
       isOneTime: BOOLEAN,
       firstDue: array(FIRST_DUE),
-      lastDoneLogId: NULLABLE_STRING,
       matchesExistingTaskId: NULLABLE_STRING,
       intervalDifferenceNote: NULLABLE_STRING,
       mergesStaticIndex: nullable(INTEGER),

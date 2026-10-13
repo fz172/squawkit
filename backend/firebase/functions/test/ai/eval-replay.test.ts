@@ -56,7 +56,6 @@ const TAILOR: TailorOutput = {
       ],
       isOneTime: false,
       firstDue: [],
-      lastDoneLogId: null,
       matchesExistingTaskId: null,
       intervalDifferenceNote: null,
       mergesStaticIndex: null,

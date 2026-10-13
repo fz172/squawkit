@@ -26,7 +26,6 @@ function suggestion(over: Partial<TaskSuggestion>): TaskSuggestion {
     pageRef: "p. 2",
     sourcePages: [2],
     sourceDocument: "blob-mm",
-    lastDone: null,
     matchesExistingTaskId: "",
     intervalDifferenceNote: "",
     mergesStaticIndex: -1,
