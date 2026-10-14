@@ -133,26 +133,17 @@ class StringSnapshotTest {
     // feature/sharing/sharedassets (#656). Four of this module's domain strings are absent for the
     // same reason as the squawk module's: "Technician" (twice), "a technician" and "Work logs" are
     // whole lexicon values rather than frames, so they are #657's.
-    sharing("enter_code_instructions") { mapOf(1 to it.thingNoun.singular) },
-    sharing("enter_code_title") { mapOf(1 to it.thingNoun.singular) },
-    sharing("invite_code_hint") { mapOf(1 to it.thingNoun.singular) },
+    // The join side (enter-code, redeem) takes no lexicon word at all: the invitee does not know
+    // what kind of Thing they are joining, so those strings are fixed text again and pinned as such.
     sharing("invite_title") { mapOf(1 to it.thingNoun.singular) },
     sharing("leave_confirm_title") { mapOf(1 to it.thingNoun.singular) },
     sharing("manage_access_leave") { mapOf(1 to it.thingNoun.singular) },
     sharing("manage_access_help_footer") { mapOf(1 to it.thingNoun.singular) },
-    sharing("redeem_already_member_body") { mapOf(1 to it.thingNoun.singular) },
     sharing("revoke_confirm_body") { mapOf(1 to it.thingNoun.singular) },
     sharing("role_confirm_body") { mapOf(1 to it.thingNoun.singular) },
     sharing("leave_confirm_body") { mapOf(1 to LexiconFormatter.lowerFirst(it.collection_label)) },
     sharing("manage_access_perm_thing_details") {
       mapOf(1 to LexiconFormatter.sentenceCase(it.thingNoun))
-    },
-    sharing("redeem_confirm_title") {
-      mapOf(
-        1 to LexiconFormatter.sentenceCase(
-          it.thingNoun
-        )
-      )
     },
     sharing("sharing_sync_off_body") {
       mapOf(1 to LexiconFormatter.sentenceCasePlural(it.thingNoun))
@@ -179,28 +170,6 @@ class StringSnapshotTest {
         2 to it.taskNoun.plural,
         3 to it.logNoun.plural,
         4 to it.thingNoun.singular,
-      )
-    },
-    sharing("redeem_confirm_body") {
-      mapOf(
-        1 to LexiconFormatter.withArticle(it.thingNoun),
-        2 to LexiconFormatter.lowerFirst(it.collection_label),
-      )
-    },
-    // Position 1 is the inviter's name, supplied by the caller, so the lexicon starts at 4.
-    sharing("redeem_confirm_body_full") {
-      mapOf(4 to LexiconFormatter.lowerFirst(it.collection_label))
-    },
-    sharing("redeem_confirm_body_role") {
-      mapOf(
-        2 to LexiconFormatter.withArticle(it.thingNoun),
-        3 to LexiconFormatter.lowerFirst(it.collection_label),
-      )
-    },
-    sharing("redeem_success_body") {
-      mapOf(
-        2 to it.thingNoun.singular,
-        3 to LexiconFormatter.lowerFirst(it.collection_label),
       )
     },
 

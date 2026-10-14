@@ -26,8 +26,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
@@ -77,10 +75,7 @@ internal fun CodeView(state: ManageAccessUiState) {
           letterSpacing = 4.sp,
         )
         Text(
-          stringResource(
-            Res.string.invite_code_hint,
-            LocalThingLexicon.current.thingNoun.singular,
-          ),
+          stringResource(Res.string.invite_code_hint),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           textAlign = TextAlign.Center,

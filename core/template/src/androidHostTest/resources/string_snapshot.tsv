@@ -469,10 +469,10 @@ feature/settings	about_contact_support	Contact support
 feature/settings	about_contact_support_subtitle	Get help or send feedback
 feature/settings	about_rate	Rate SquawkIt
 feature/sharing/sharedassets	enter_code_field_label	Invite code
-feature/sharing/sharedassets	enter_code_instructions	Enter the invite code the aircraft owner gave you. It looks like EFA2-GGTH.
-feature/sharing/sharedassets	enter_code_title	Join a shared aircraft
+feature/sharing/sharedassets	enter_code_instructions	Enter the invite code the owner gave you. It looks like EFA2-GGTH.
+feature/sharing/sharedassets	enter_code_title	Join with an invite code
 feature/sharing/sharedassets	invite_cancel	Cancel this code
-feature/sharing/sharedassets	invite_code_hint	Read it out, or have them type it into Join aircraft.
+feature/sharing/sharedassets	invite_code_hint	Read it out, or have them choose Enter invite code and type it in.
 feature/sharing/sharedassets	invite_copy	Copy link
 feature/sharing/sharedassets	invite_link_unavailable	This code was created on another device. Codes are never stored, so it cannot be shown again — cancel it and create a new one.
 feature/sharing/sharedassets	invite_qr_desc	Invite QR code
@@ -518,18 +518,19 @@ feature/sharing/sharedassets	manage_access_toast_code_cancelled	Invite code canc
 feature/sharing/sharedassets	manage_access_toast_link_copied	Invite link copied
 feature/sharing/sharedassets	manage_access_toast_role_updated	Role updated
 feature/sharing/sharedassets	manage_access_unnamed_member	Unnamed member
-feature/sharing/sharedassets	redeem_already_member_body	You already have access to this aircraft.
+feature/sharing/sharedassets	redeem_already_member_body	You already have access to what this invite shares.
 feature/sharing/sharedassets	redeem_already_member_title	Already a member
-feature/sharing/sharedassets	redeem_confirm_body	You have been invited to share an aircraft. Accept to add it to your fleet.
-feature/sharing/sharedassets	redeem_confirm_body_full	%1$s is inviting you to %2$s as %3$s.\n\nAccept to add it to your fleet.
-feature/sharing/sharedassets	redeem_confirm_body_role	You have been invited to share an aircraft as %1$s. Accept to add it to your fleet.
-feature/sharing/sharedassets	redeem_confirm_title	Aircraft invitation
+feature/sharing/sharedassets	redeem_confirm_body	Someone has shared something with you. Accept to add it to your stuff.
+feature/sharing/sharedassets	redeem_confirm_body_full	%1$s is inviting you to %2$s as %3$s.\n\nAccept to add it to your stuff.
+feature/sharing/sharedassets	redeem_confirm_body_role	Someone has shared something with you as %1$s. Accept to add it to your stuff.
+feature/sharing/sharedassets	redeem_confirm_title	Invitation to share
 feature/sharing/sharedassets	redeem_failed_body	This invite is no longer valid. Ask the owner for a new one.
 feature/sharing/sharedassets	redeem_failed_title	Invite unavailable
 feature/sharing/sharedassets	redeem_needs_signin_body	Sign in with your account to accept this invitation.
 feature/sharing/sharedassets	redeem_needs_signin_title	Sign in required
+feature/sharing/sharedassets	redeem_role_contributor	a contributor
 feature/sharing/sharedassets	redeem_role_owner	a co-owner
-feature/sharing/sharedassets	redeem_success_body	You now have access as %1$s. The aircraft will appear in your fleet shortly.
+feature/sharing/sharedassets	redeem_success_body	You now have access as %1$s. It will appear in your stuff shortly.
 feature/sharing/sharedassets	redeem_success_title	You're in
 feature/sharing/sharedassets	revoke_confirm_action	Remove access
 feature/sharing/sharedassets	revoke_confirm_body	They lose access to this aircraft immediately, and their copy of its records is removed from their devices.If they made changes while offline that have not synced yet, those changes are lost.
