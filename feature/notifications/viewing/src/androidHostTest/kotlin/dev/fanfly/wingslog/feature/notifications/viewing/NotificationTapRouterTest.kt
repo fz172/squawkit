@@ -76,6 +76,27 @@ class NotificationTapRouterTest {
     assertThat(NotificationTapRouter.pending.value).isEqualTo(target)
   }
 
+  // Legacy `aircraft/` segment — what the iOS notification service extension wrote before #1303.
+
+  @Test
+  fun deliver_legacyAircraftUriWithTab_routesToThing() {
+    val delivered = NotificationTapRouter.deliver(
+      "wingslog://notification-tap/aircraft/ac-1?tab=tasks"
+    )
+
+    assertThat(delivered).isTrue()
+    assertThat(NotificationTapRouter.pending.value)
+      .isEqualTo(NotificationTapTarget.Thing(thingId = "ac-1", tab = "tasks"))
+  }
+
+  @Test
+  fun deliver_legacyAircraftUriWithoutTab_routesToThing() {
+    NotificationTapRouter.deliver("wingslog://notification-tap/aircraft/ac-1")
+
+    assertThat(NotificationTapRouter.pending.value)
+      .isEqualTo(NotificationTapTarget.Thing(thingId = "ac-1", tab = null))
+  }
+
   // deliver() dispatch contract — false, and no delivery, for a URI this router doesn't own.
 
   @Test

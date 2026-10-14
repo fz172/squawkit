@@ -17,7 +17,8 @@ enum NotificationTapEncoder {
     case .log(let aircraftId, let logId):
       return "wingslog://notification-tap/log/\(aircraftId)/\(logId)"
     case .aircraft(let aircraftId, let tab):
-      let base = "wingslog://notification-tap/aircraft/\(aircraftId)"
+      // `thing/`, not `aircraft/`: the router renamed the segment with the Thing rename (#638).
+      let base = "wingslog://notification-tap/thing/\(aircraftId)"
       return tab.map { "\(base)?tab=\($0)" } ?? base
     case .suggestions(let aircraftId):
       return "wingslog://notification-tap/suggestions/\(aircraftId)"
