@@ -38,8 +38,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.sharing.model.normalizeInviteCode
 import org.jetbrains.compose.resources.stringResource
@@ -111,19 +109,15 @@ fun EnterInviteCodeScreen(
         }
         Spacer(Modifier.height(Spacing.large))
         Text(
-          text = stringResource(
-            Res.string.enter_code_title,
-            LocalThingLexicon.current.thingNoun.singular,
-          ),
+          // No lexicon word: the invitee does not yet know what kind of Thing they are joining, and
+          // the selected Thing's word would name the wrong one.
+          text = stringResource(Res.string.enter_code_title),
           style = MaterialTheme.typography.headlineSmall,
           textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(Spacing.small))
         Text(
-          text = stringResource(
-            Res.string.enter_code_instructions,
-            LocalThingLexicon.current.thingNoun.singular,
-          ),
+          text = stringResource(Res.string.enter_code_instructions),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           textAlign = TextAlign.Center,

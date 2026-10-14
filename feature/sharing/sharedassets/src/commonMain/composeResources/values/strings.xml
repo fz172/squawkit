@@ -65,33 +65,37 @@ The owner can invite you again.</string>
   <string name="invite_title">Invite to <xliff:g example="aircraft">%1$s</xliff:g></string>
   <string name="invite_role_label">Role</string>
   <string name="invite_role_owner">Co-owner</string>
-  <string name="invite_code_hint">Read it out, or have them type it into Join <xliff:g example="aircraft">%1$s</xliff:g>.</string>
+  <string name="invite_code_hint">Read it out, or have them choose Enter invite code and type it in.</string>
   <string name="invite_scan_hint">Or have them scan this.</string>
   <string name="invite_share">Share link</string>
   <string name="invite_copy">Copy link</string>
   <string name="invite_cancel">Cancel this code</string>
   <string name="invite_qr_desc">Invite QR code</string>
   <string name="invite_link_unavailable">This code was created on another device. Codes are never stored, so it cannot be shown again — cancel it and create a new one.</string>
-  <!-- Redeem confirmation -->
-  <string name="redeem_confirm_title"><xliff:g example="aircraft">%1$s</xliff:g> invitation</string>
-  <string name="redeem_confirm_body">You have been invited to share <xliff:g example="aircraft">%1$s</xliff:g>. Accept to add it to your <xliff:g example="fleet">%2$s</xliff:g>.</string>
+  <!-- Redeem confirmation. The invitee is joining a Thing whose template this client does not know
+       (InvitePreview carries no template), so none of these take a lexicon word: the selected
+       Thing's words would name the wrong kind of Thing. -->
+  <string name="redeem_confirm_title">Invitation to share</string>
+  <string name="redeem_confirm_body">Someone has shared something with you. Accept to add it to your stuff.</string>
   <!-- #201: name the aircraft and the inviter. Accepting blind is exactly the moment a user should
        be able to check they are not being talked into a stranger's fleet. -->
-  <string name="redeem_confirm_body_full"><xliff:g example="Alex">%1$s</xliff:g> is inviting you to <xliff:g example="aircraft">%2$s</xliff:g> as <xliff:g example="technician">%3$s</xliff:g>.\n\nAccept to add it to your <xliff:g example="fleet">%4$s</xliff:g>.</string>
-  <string name="redeem_confirm_body_role">You have been invited to share <xliff:g example="aircraft">%2$s</xliff:g> as <xliff:g example="technician">%1$s</xliff:g>. Accept to add it to your <xliff:g example="fleet">%3$s</xliff:g>.</string>
+  <string name="redeem_confirm_body_full"><xliff:g example="Alex">%1$s</xliff:g> is inviting you to <xliff:g example="N123AA">%2$s</xliff:g> as <xliff:g example="a contributor">%3$s</xliff:g>.\n\nAccept to add it to your stuff.</string>
+  <string name="redeem_confirm_body_role">Someone has shared something with you as <xliff:g example="a contributor">%1$s</xliff:g>. Accept to add it to your stuff.</string>
   <string name="redeem_needs_signin_title">Sign in required</string>
   <string name="redeem_needs_signin_body">Sign in with your account to accept this invitation.</string>
   <string name="redeem_success_title">You're in</string>
-  <string name="redeem_success_body">You now have access as <xliff:g example="technician">%1$s</xliff:g>. The <xliff:g example="aircraft">%2$s</xliff:g> will appear in your <xliff:g example="fleet">%3$s</xliff:g> shortly.</string>
+  <string name="redeem_success_body">You now have access as <xliff:g example="a contributor">%1$s</xliff:g>. It will appear in your stuff shortly.</string>
   <string name="redeem_already_member_title">Already a member</string>
-  <string name="redeem_already_member_body">You already have access to this <xliff:g example="aircraft">%1$s</xliff:g>.</string>
+  <string name="redeem_already_member_body">You already have access to what this invite shares.</string>
   <string name="redeem_failed_title">Invite unavailable</string>
   <string name="redeem_failed_body">This invite is no longer valid. Ask the owner for a new one.</string>
   <string name="redeem_role_owner">a co-owner</string>
+  <!-- The technician role, named without a template's word for the same reason. -->
+  <string name="redeem_role_contributor">a contributor</string>
   <!-- #209: manual invite-code entry — the case the pairing code was invented for (owner reads it
        out, mechanic types it in) with no link to travel. -->
-  <string name="enter_code_title">Join a shared <xliff:g example="aircraft">%1$s</xliff:g></string>
-  <string name="enter_code_instructions">Enter the invite code the <xliff:g example="aircraft">%1$s</xliff:g> owner gave you. It looks like EFA2-GGTH.</string>
+  <string name="enter_code_title">Join with an invite code</string>
+  <string name="enter_code_instructions">Enter the invite code the owner gave you. It looks like EFA2-GGTH.</string>
   <string name="enter_code_field_label">Invite code</string>
   <!-- PRD E2: sharing is a cloud feature. With Cloud Sync off there is nothing to share into and
        nothing to receive from, so management is disabled and says why rather than failing on tap. -->
