@@ -111,7 +111,9 @@ object NotificationTapRouter {
       "data_log" -> segments.getOrNull(2)
         ?.let { NotificationTapTarget.DataLog(thingId, DataLogId(it)) }
 
-      "thing" -> NotificationTapTarget.Thing(thingId, tab)
+      // `aircraft` is the pre-#638 segment, which the iOS notification service extension kept
+      // writing (#1303); still accepted so notifications already delivered under it route.
+      "thing", "aircraft" -> NotificationTapTarget.Thing(thingId, tab)
       "suggestions" -> NotificationTapTarget.Suggestions(thingId)
       else -> null
     }
