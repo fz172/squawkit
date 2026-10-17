@@ -57,5 +57,6 @@ private fun Thing.firstIdentifier(template: ThingTemplate?): String =
     .firstNotNullOfOrNull { f -> specValue(f.key).takeIf { it.isNotBlank() } }
     .orEmpty()
 
-private fun Thing.makeAndModel(): String =
+/** "Tesla Model Y" — also what [ThingInflater] names a Thing by when no title candidate is filled. */
+internal fun Thing.makeAndModel(): String =
   listOf(specValue(SpecKeys.MAKE), specValue(SpecKeys.MODEL)).joinAsPhrase()

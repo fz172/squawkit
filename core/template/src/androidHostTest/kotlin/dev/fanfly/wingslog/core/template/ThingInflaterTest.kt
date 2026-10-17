@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
@@ -68,6 +69,31 @@ class ThingInflaterTest {
         airplane
       ).name
     ).isEqualTo("The Old Girl")
+  }
+
+  @Test
+  fun aMakeAndModelNameGivesWayToAPlateAddedLater() {
+    // Created before the plate field existed, so the inflater fell back to the make and model.
+    val car = thing(SpecKeys.MAKE to "Tesla", SpecKeys.MODEL to "Model Y")
+      .copy(name = "Tesla Model Y")
+    val withPlate = car.copy(spec = car.spec + Spec(key = "license_plate", value_ = "8XYZ123"))
+
+    assertThat(ThingInflater.inflate(car, CanonicalTemplates.AUTOMOTIVE).name)
+      .isEqualTo("Tesla Model Y")
+    assertThat(ThingInflater.inflate(withPlate, CanonicalTemplates.AUTOMOTIVE).name)
+      .isEqualTo("8XYZ123")
+  }
+
+  @Test
+  fun aNameTheUserChoseIsKeptWhenAPlateIsAdded() {
+    val car = thing(
+      SpecKeys.MAKE to "Tesla",
+      SpecKeys.MODEL to "Model Y",
+      "license_plate" to "8XYZ123",
+    ).copy(name = "Family Car")
+
+    assertThat(ThingInflater.inflate(car, CanonicalTemplates.AUTOMOTIVE).name)
+      .isEqualTo("Family Car")
   }
 
   @Test
