@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import dev.fanfly.wingslog.thing.Lexicon
+import dev.fanfly.wingslog.thing.Noun
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_actor_fallback
@@ -86,16 +87,18 @@ private suspend fun PushPayload.renderBody(lexicon: Lexicon): String =
         Res.string.notification_n1_body_record_created,
         tailNumber,
         actor(),
-        noun(lexicon),
+        recordNoun(lexicon).singular,
         recordTitle
       )
 
+    // The article travels with the noun, not the string: "updated an issue", "updated a squawk".
+    // "created a new …" keeps its own, since the article there agrees with "new", not the noun.
     "notification_n1_body_record_updated" ->
       getString(
         Res.string.notification_n1_body_record_updated,
         tailNumber,
         actor(),
-        noun(lexicon),
+        LexiconFormatter.withArticle(recordNoun(lexicon)),
         recordTitle
       )
 
@@ -104,7 +107,7 @@ private suspend fun PushPayload.renderBody(lexicon: Lexicon): String =
         Res.string.notification_n1_body_record_deleted,
         tailNumber,
         actor(),
-        noun(lexicon),
+        LexiconFormatter.withArticle(recordNoun(lexicon)),
         recordTitle
       )
     // The Thing record has no per-record title to name, so its body is two segments, not four.
@@ -165,10 +168,10 @@ private fun PushPayload.sectionTitle(lexicon: Lexicon): String =
     else -> LexiconFormatter.titleCase(lexicon.thingNoun)
   }
 
-/** The record's own singular noun for the body — "a squawk", "a maintenance task", "a work log". */
-private fun PushPayload.noun(lexicon: Lexicon): String = when (recordType) {
-  "squawk" -> lexicon.squawkNoun.singular
-  "task" -> lexicon.taskNoun.singular
-  "data_log" -> lexicon.dataLogNoun.singular
-  else -> lexicon.logNoun.singular
+/** The record's own noun for the body — "a squawk", "a maintenance task", "a work log". */
+private fun PushPayload.recordNoun(lexicon: Lexicon): Noun = when (recordType) {
+  "squawk" -> lexicon.squawkNoun
+  "task" -> lexicon.taskNoun
+  "data_log" -> lexicon.dataLogNoun
+  else -> lexicon.logNoun
 }

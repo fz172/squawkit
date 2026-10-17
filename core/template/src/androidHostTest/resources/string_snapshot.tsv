@@ -377,8 +377,8 @@ feature/notifications/sharedassets	notification_body_priority_raised_plural	%1$s
 feature/notifications/sharedassets	notification_body_priority_raised_single	%1$s: priority raised from %2$s to %3$s\n\n%4$s
 feature/notifications/sharedassets	notification_n1_actor_fallback	A collaborator
 feature/notifications/sharedassets	notification_n1_body_record_created	%1$s: %2$s created a new %3$s\n\n%4$s
-feature/notifications/sharedassets	notification_n1_body_record_deleted	%1$s: %2$s deleted a %3$s\n\n%4$s
-feature/notifications/sharedassets	notification_n1_body_record_updated	%1$s: %2$s updated a %3$s\n\n%4$s
+feature/notifications/sharedassets	notification_n1_body_record_deleted	%1$s: %2$s deleted %3$s\n\n%4$s
+feature/notifications/sharedassets	notification_n1_body_record_updated	%1$s: %2$s updated %3$s\n\n%4$s
 feature/notifications/sharedassets	notification_n1_body_single	%1$s made a change to %2$s
 feature/notifications/sharedassets	notification_n1_body_squawk_created	%1$s: %2$s created a new squawk\n\n%3$s
 feature/notifications/sharedassets	notification_n1_body_squawk_raised	%1$s: %2$s raised the priority of 1 squawk\n\n%3$s
