@@ -145,8 +145,8 @@ export interface SuggestionContext {
   meters: MeterSummary[];
   existingTasks: ExistingTask[];
   /**
-   * The builder drops the oldest to fit the request cap, and says so in `logs_truncated` (design
-   * §7.2).
+   * No longer sent: no suggestion is tied to a log, and since tasks-6 the model is shown none.
+   * Kept so a request from an app that still sends them decodes; the server reads neither.
    */
   logs: LogSummary[];
   logsTruncated: boolean;

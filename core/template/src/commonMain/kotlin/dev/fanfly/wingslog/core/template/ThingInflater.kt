@@ -17,7 +17,9 @@ object ThingInflater {
     template: ThingTemplate?
   ): Thing =
     thing.copy(
-      name = thing.name.ifEmpty { nameOf(thing, thing.template ?: template) },
+      name = thing.name
+        .takeUnless { it.isEmpty() || it == thing.makeAndModel() }
+        ?: nameOf(thing, thing.template ?: template),
       // A Thing migrated by the cutover has no DNA — the cutover predates field 12.
       //
       // The lexicon is stripped before storing. It is app UI, written against the screens of a
@@ -31,6 +33,12 @@ object ThingInflater {
   /**
    * The template's `title_candidate`, else `"$make $model"`, else empty — PRD §9.1's order.
    *
+   * Also re-run over a name that is exactly the make and model, the fallback below. That name was
+   * this function's, written when the title candidate was blank, so it gives way once one is filled
+   * in: a car created before it had a plate field is named by its plate when the owner adds one. A
+   * name that differs from the make and model is the user's and is kept. So is one written before
+   * the make or model was edited — it no longer matches, which is the cost of not storing a flag.
+   *
    * Was `tail_number` by key, which named the airplane's title candidate rather than the concept:
    * a preset marking some other field — `custom`'s own name — stored no name at all and rendered
    * from the display-name fallback, so every Thing on it read alike.
@@ -40,10 +48,7 @@ object ThingInflater {
       ?.let { thing.specValue(it.key) }
       .orEmpty()
     if (titled.isNotEmpty()) return titled
-    return listOf(
-      thing.specValue(SpecKeys.MAKE),
-      thing.specValue(SpecKeys.MODEL)
-    ).joinAsPhrase()
+    return thing.makeAndModel()
   }
 
   /** `"$thingId:$path"`. Must match `thingPayloads.ts` — these ids are a stored join key. */
