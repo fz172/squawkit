@@ -1,8 +1,11 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Lexicon
+import dev.fanfly.wingslog.thing.ThingTemplate
 
 /**
  * A decoded N1 push payload (design §7.6) — everything the server sent, resolved into the app's own
@@ -35,7 +38,22 @@ data class PushPayload(
    * P4.13. See [isAddressedTo] for why the two are not the same thing.
    */
   val recipientUid: String?,
+  /**
+   * The template of the Thing this push is about — `automotive`, `home` — or `null` from a server
+   * older than #1426. See [lexiconIn].
+   */
+  val templateId: String? = null,
 ) {
+
+  /**
+   * The words to render this push in: those of the Thing it is about, by [templateId].
+   *
+   * [onScreen] is the fallback for a server that does not send the id, and it is what every push
+   * used before it did — the Thing open in the app, which is the right one only when the push
+   * happens to be about it. A car's push arriving while the aeroplane was open said "squawk".
+   */
+  fun lexiconIn(registry: TemplateRegistry, onScreen: Lexicon): Lexicon =
+    templateId?.let { registry.lexiconFor(ThingTemplate(id = it)) } ?: onScreen
 
   /**
    * Whether this message should be shown on a device signed in as [signedInUid] (`null` when nobody
@@ -90,6 +108,7 @@ data class PushPayload(
         // Blank is treated as absent: an empty string addresses nobody, and dropping every message
         // over a server that sent `recipientUid=""` would be a silent outage.
         recipientUid = data["recipientUid"]?.takeIf { it.isNotBlank() },
+        templateId = data["templateId"]?.takeIf { it.isNotBlank() },
       )
     }
 
