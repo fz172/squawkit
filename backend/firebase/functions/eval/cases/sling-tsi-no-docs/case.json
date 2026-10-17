@@ -59,26 +59,6 @@
         }
       ],
       "existingTasks": [],
-      "logs": [
-        {
-          "id": "log-100h",
-          "date": "2026-06-10",
-          "readings": [
-            {
-              "meterKey": "airframe_hours",
-              "value": 300.1
-            },
-            {
-              "meterKey": "engine_hours",
-              "value": 300.1
-            }
-          ],
-          "title": "100-hour inspection",
-          "workDescription": "100-hour inspection per the Sling and Rotax schedules; oil and filter changed",
-          "componentSlotKey": "engine"
-        }
-      ],
-      "logsTruncated": false,
       "staticPack": [
         {
           "title": "Conditional inspection",

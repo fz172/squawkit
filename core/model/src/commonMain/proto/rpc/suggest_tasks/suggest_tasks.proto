@@ -57,10 +57,11 @@ message SuggestionContext {
     repeated ComponentSummary components = 4;
     repeated MeterSummary meters = 5;
     repeated ExistingTask existing_tasks = 6;
-    // No longer sent: no suggestion is tied to a log, and since tasks-6 the model is shown none.
-    // Kept so a request from an app that still sends them decodes; the server reads neither.
-    repeated LogSummary logs = 7;
-    bool logs_truncated = 8;
+    // The Thing's log history. No suggestion is tied to a log, and since tasks-6 the model is shown
+    // none, so the app stopped sending it. A request from an app that still does decodes: an unknown
+    // field is skipped (#1265).
+    reserved 7, 8;
+    reserved "logs", "logs_truncated";
     // The app's starter pack, for the server to merge against. The server has its own curated list
     // since 2026-10-02 (design §6.8).
     reserved 9;
@@ -96,15 +97,6 @@ message ExistingTask {
     repeated InspectionRule rules = 4;
     ComplianceType type = 5;
     string reference_number = 6;
-}
-
-message LogSummary {
-    MaintenanceLogId id = 1;
-    string date = 2;
-    repeated MeterReading readings = 3;
-    string title = 4;
-    string work_description = 5;
-    string component_slot_key = 6;
 }
 
 message SuggestTasksResult {

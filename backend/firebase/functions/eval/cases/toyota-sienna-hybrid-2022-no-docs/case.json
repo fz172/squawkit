@@ -39,22 +39,6 @@
         }
       ],
       "existingTasks": [],
-      "logs": [
-        {
-          "id": "log-oil",
-          "date": "2026-03-14",
-          "readings": [
-            {
-              "meterKey": "odometer",
-              "value": 25100
-            }
-          ],
-          "title": "Oil and filter change",
-          "workDescription": "0W-16 synthetic oil and filter; tire rotation",
-          "componentSlotKey": ""
-        }
-      ],
-      "logsTruncated": false,
       "staticPack": [
         {
           "title": "Engine oil & filter",

@@ -64,51 +64,6 @@
         }
       ],
       "existingTasks": [],
-      "logs": [
-        {
-          "id": "log-annual",
-          "date": "2025-11-18",
-          "readings": [
-            {
-              "meterKey": "airframe_hours",
-              "value": 3361.0
-            },
-            {
-              "meterKey": "engine_hours",
-              "value": 1236.7
-            }
-          ],
-          "title": "Annual inspection",
-          "workDescription": "Annual inspection completed; compression checks within limits",
-          "componentSlotKey": ""
-        },
-        {
-          "id": "log-oil",
-          "date": "2026-07-02",
-          "readings": [
-            {
-              "meterKey": "airframe_hours",
-              "value": 3398.2
-            },
-            {
-              "meterKey": "engine_hours",
-              "value": 1273.9
-            }
-          ],
-          "title": "Oil change",
-          "workDescription": "Oil and filter changed, filter cut open, no metal",
-          "componentSlotKey": "engine"
-        },
-        {
-          "id": "log-elt",
-          "date": "2025-11-18",
-          "readings": [],
-          "title": "ELT inspection",
-          "workDescription": "ELT inspected and battery date checked",
-          "componentSlotKey": ""
-        }
-      ],
-      "logsTruncated": false,
       "staticPack": [
         {
           "title": "Conditional inspection",

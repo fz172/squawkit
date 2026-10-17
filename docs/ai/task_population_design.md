@@ -302,8 +302,7 @@ message SuggestionContext {
   repeated ComponentSummary components = 4;   // slot_key, make, model, spec — no serials
   repeated MeterSummary meters = 5;           // key, unit_label, component_slot_key, current, has_current
   repeated ExistingTask existing_tasks = 6;   // id, title, component_slot_key, rules, type, reference_number
-  repeated LogSummary logs = 7;               // id, date, readings, title, work_description, component_slot_key
-  bool logs_truncated = 8;
+  reserved 7, 8;                              // were logs / logs_truncated; no log history is sent
   reserved 9;                                 // was static_pack; the server has the curated list
   string lexicon_task_noun = 10;              // + the few nouns the prompt needs
 }
@@ -334,15 +333,14 @@ message TaskSuggestion {
 
 - **Ids are boxed.** `ProtoIdLintTest` refuses a bare string id on a new message, so `ids.proto`
   also gains `MaintenanceTaskId`, `MaintenanceLogId`, `TemplateId` and `SuggestionId`.
-- **Dates are ISO `yyyy-mm-dd` strings** (`LogSummary.date`, `FirstDue.date`,
-  `LastDoneEvidence.date`): calendar dates the model reads and writes, with no time zone to agree
+- **Dates are ISO `yyyy-mm-dd` strings** (`FirstDue.date`, `LastDoneEvidence.date`): calendar dates the model reads and writes, with no time zone to agree
   on. The mapper converts to `Timestamp` when it writes the task.
 - **The pipeline's `model.ts` follows these field for field**, with ids unboxed and rules flattened
   so the eval's cases stay readable JSON. Where phase 0 refined the shape (source pages, the
   identified document's fields, a log's title, an existing task's slot key rather than its
   `ComponentType`), the protos took the pipeline's version.
-- **The context has no field for PII.** `LogSummary` has no technician, cost, attachment or comment
-  field, and `ComponentSummary` has no serial, so R12 cannot be violated by a builder bug.
+- **The context has no field for PII.** It carries no log history, and `ComponentSummary` has no
+  serial, so R12 cannot be violated by a builder bug.
 - **The server merges (2026-10-02).** The client used to send its starter pack as `static_pack`
   and get back each suggestion's `merges_static_index`. The server now has the curated list itself
   (§6.8) and returns one merged list, each suggestion saying its own `origin_kind`, so both fields
@@ -826,8 +824,8 @@ signed-in uid.
 
 **The log history is not sent** (with tasks-6). It used to be, newest first and cut to 500 entries
 and 400 KiB, but no suggestion is tied to a log and the tailor is no longer shown any (§6.0), so
-`logs` and `logs_truncated` stay empty. The fields remain in the proto so an older app's request
-decodes.
+the app stopped sending it. `logs` and `logs_truncated` are reserved (7, 8) and `LogSummary` is gone
+(#1265); an older app's request still decodes, since protobuf skips a field it does not know.
 
 Built in T15:
 
@@ -1135,7 +1133,7 @@ citation and rationale, and opens the document at the page for a document source
 
 New `Name` / `Param` entries (append-only) and `ThingScopedEvent`s in `core/analytics`, each with a
 row in `AnalyticsTaxonomyTest`: `TaskSuggestionsRequested(entryPoint, documentCount)`,
-`TaskSuggestionsShown(countBySource, cacheHit, latencyBucket, logsTruncated)`,
+`TaskSuggestionsShown(countBySource, cacheHit, latencyBucket)`,
 `TaskSuggestionsAccepted(acceptedBySource, editedBySource)`,
 `TaskSuggestionsFailed(reason)` (reason = §5.7 code), `TaskOriginEdited(fieldGroup)` from the task
 form when a task with an AI origin is saved changed. Shown and accepted counts are split by origin
