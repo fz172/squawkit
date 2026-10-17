@@ -26,7 +26,6 @@ struct PushPayload {
   let tailNumber: String
   let actorName: String
   let recordType: String
-  let changeCount: Int
   let recordTitle: String
   let tapTarget: NotificationTapTarget
   let recipientUid: String?
@@ -59,7 +58,6 @@ struct PushPayload {
       tailNumber: (userInfo["tailNumber"] as? String) ?? "",
       actorName: (userInfo["actorName"] as? String) ?? "",
       recordType: (userInfo["recordType"] as? String) ?? "",
-      changeCount: Int((userInfo["changeCount"] as? String) ?? "") ?? 1,
       recordTitle: (userInfo["recordTitle"] as? String) ?? "",
       tapTarget: tapTarget,
       recipientUid: recipientUid
