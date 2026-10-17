@@ -258,6 +258,7 @@ object FakeDataGenerator {
     SpecKeys.TAIL_NUMBER -> "N${(1000..9999).random()}${('A'..'Z').random()}"
     "license_plate" -> "${(1..9).random()}${('A'..'Z').random()}BC${(100..999).random()}"
     "vin" -> "1${('A'..'Z').random()}GBH41JXMN${(100000..999999).random()}"
+    "registration" -> "CF ${(1000..9999).random()} ${('A'..'Z').random()}${('A'..'Z').random()}"
     "hull_id" -> "${('A'..'Z').random()}BC${(10000..99999).random()}D616"
     "frame_number" -> "WTU${(100..999).random()}K${(1000..9999).random()}Z"
     "year", "year_built" -> (1960..2024).random()
