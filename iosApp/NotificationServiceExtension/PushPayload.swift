@@ -17,7 +17,8 @@ enum NotificationTapTarget {
 ///
 /// Duplicated here on purpose rather than linking the Kotlin module — see
 /// `NotificationService.swift`'s doc comment for why. Keep this in sync by hand if the server's wire
-/// format changes; `PushPayloadParsingTest.kt` names every case this file also needs to handle.
+/// format changes; `IosPushMirrorTest.kt` fails on a tap kind the server sends that this file has no
+/// case for.
 struct PushPayload {
   let notificationId: String
   let highPriority: Bool
