@@ -162,13 +162,17 @@ class IosPushMirrorTest {
       "thing" to lexicon.thingNoun.singular,
       "thingTitle" to LexiconFormatter.titleCase(lexicon.thingNoun),
       "squawk" to lexicon.squawkNoun.singular,
+      "aSquawk" to LexiconFormatter.withArticle(lexicon.squawkNoun),
       "squawksTitle" to LexiconFormatter.titleCasePlural(lexicon.squawkNoun),
       "task" to lexicon.taskNoun.singular,
+      "aTask" to LexiconFormatter.withArticle(lexicon.taskNoun),
       "tasks" to lexicon.taskNoun.plural,
       "tasksTitle" to LexiconFormatter.titleCasePlural(lexicon.taskNoun),
       "log" to lexicon.logNoun.singular,
+      "aLog" to LexiconFormatter.withArticle(lexicon.logNoun),
       "logsTitle" to LexiconFormatter.titleCasePlural(lexicon.logNoun),
       "dataLog" to lexicon.dataLogNoun.singular,
+      "aDataLog" to LexiconFormatter.withArticle(lexicon.dataLogNoun),
       "dataLogsTitle" to LexiconFormatter.titleCasePlural(lexicon.dataLogNoun),
     )
     return fields.joinToString(", ", prefix = "PushNouns(", postfix = ")") { (name, value) ->

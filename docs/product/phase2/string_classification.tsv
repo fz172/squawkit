@@ -328,8 +328,8 @@ NEUTRAL	feature/notifications/sharedassets	notification_body_overdue_single		no 
 NEUTRAL	feature/notifications/sharedassets	notification_body_priority_raised_single		no domain vocabulary	%1$s: priority raised from %2$s to %3$s\n\n%4$s
 NEUTRAL	feature/notifications/sharedassets	notification_n1_actor_fallback		no domain vocabulary	A collaborator
 NEUTRAL	feature/notifications/sharedassets	notification_n1_body_record_created		no domain vocabulary	%1$s: %2$s created a new %3$s\n\n%4$s
-NEUTRAL	feature/notifications/sharedassets	notification_n1_body_record_deleted		no domain vocabulary	%1$s: %2$s deleted a %3$s\n\n%4$s
-NEUTRAL	feature/notifications/sharedassets	notification_n1_body_record_updated		no domain vocabulary	%1$s: %2$s updated a %3$s\n\n%4$s
+NEUTRAL	feature/notifications/sharedassets	notification_n1_body_record_deleted		no domain vocabulary	%1$s: %2$s deleted %3$s\n\n%4$s
+NEUTRAL	feature/notifications/sharedassets	notification_n1_body_record_updated		no domain vocabulary	%1$s: %2$s updated %3$s\n\n%4$s
 NEUTRAL	feature/notifications/sharedassets	notification_n1_body_single		no domain vocabulary	%1$s made a change to %2$s
 NEUTRAL	feature/notifications/sharedassets	notification_n1_noun_task		no domain vocabulary	task
 NEUTRAL	feature/notifications/sharedassets	notification_n1_section_tasks		no domain vocabulary	Tasks

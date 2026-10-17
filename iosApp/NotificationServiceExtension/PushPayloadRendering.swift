@@ -41,9 +41,9 @@ extension PushPayload {
     case "notification_n1_body_record_created":
       return "\(tailNumber): \(actor()) created a new \(noun())\n\n\(recordTitle)"
     case "notification_n1_body_record_updated":
-      return "\(tailNumber): \(actor()) updated a \(noun())\n\n\(recordTitle)"
+      return "\(tailNumber): \(actor()) updated \(nounWithArticle())\n\n\(recordTitle)"
     case "notification_n1_body_record_deleted":
-      return "\(tailNumber): \(actor()) deleted a \(noun())\n\n\(recordTitle)"
+      return "\(tailNumber): \(actor()) deleted \(nounWithArticle())\n\n\(recordTitle)"
     // The Thing has no per-record title to name, so its body is two segments, not four.
     case "notification_n1_body_thing_updated":
       return "\(tailNumber): \(actor()) updated the \(nouns.thing)"
@@ -85,6 +85,16 @@ extension PushPayload {
     case "task": return nouns.task
     case "data_log": return nouns.dataLog
     default: return nouns.log
+    }
+  }
+
+  /// [noun] with the article its template declares — "an issue", "a squawk". Not a vowel check.
+  private func nounWithArticle() -> String {
+    switch recordType {
+    case "squawk": return nouns.aSquawk
+    case "task": return nouns.aTask
+    case "data_log": return nouns.aDataLog
+    default: return nouns.aLog
     }
   }
 }

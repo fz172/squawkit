@@ -43,8 +43,8 @@
        shape as the N2 and escalation bodies below. -->
   <string name="notification_n1_title"><xliff:g example="N123AA">%1$s</xliff:g> · <xliff:g example="Left brake dragging">%2$s</xliff:g></string>
   <string name="notification_n1_body_record_created"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> created a new <xliff:g example="work log">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
-  <string name="notification_n1_body_record_updated"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> updated a <xliff:g example="work log">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
-  <string name="notification_n1_body_record_deleted"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> deleted a <xliff:g example="work log">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
+  <string name="notification_n1_body_record_updated"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> updated <xliff:g example="a work log">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
+  <string name="notification_n1_body_record_deleted"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> deleted <xliff:g example="a work log">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
   <!-- The Aircraft record's own trigger (make/model/tail edits) has no per-record title to name —
        it is always "updated," never created or deleted through that path — so it gets its own
        two-segment body instead of the noun-and-title shape above. -->
