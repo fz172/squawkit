@@ -24,24 +24,38 @@ export const SCHEMA = {
   SQUAWK: "aircraft.Squawk",
 } as const;
 
-/**
- * The label a Thing envelope names itself by, or `null` if it will not decode or nothing names it.
- *
- * Mirrors `Thing.displayLabel` in `core/template` (PRD §9.1): the owner's name, then the template's
- * `title_candidate` field, then make and model, then its first filled `is_identifier` field, then
- * whatever the template does ask for, then the template's own display name. Reading only `tail_number` — which
- * this did until a home's notification opened with a bare ": task is due soon" — leaves every
- * non-airplane Thing nameless.
- *
- * The one addition to the client's order is the final `tail_number` read: a Thing with no DNA can
- * only be an airplane (template_system_design.md §5), and the client gets that fallback from its
- * baked-in registry, which the server does not carry.
- */
-export function thingLabelOf(doc: SyncDocWire | undefined): string | null {
+/** What a push says about the Thing it concerns: what to call it, and which words to call it in. */
+export type ThingIdentity = {
+  /**
+   * The label the Thing names itself by, or `""` when nothing names it.
+   *
+   * Mirrors `Thing.displayLabel` in `core/template` (PRD §9.1): the owner's name, then the
+   * template's `title_candidate` field, then make and model, then its first filled `is_identifier`
+   * field, then whatever the template does ask for, then the template's own display name. Reading
+   * only `tail_number` — which this did until a home's notification opened with a bare ": task is
+   * due soon" — leaves every non-airplane Thing nameless.
+   *
+   * The one addition to the client's order is the final `tail_number` read: a Thing with no DNA can
+   * only be an airplane (template_system_design.md §5), and the client gets that fallback from its
+   * baked-in registry, which the server does not carry.
+   */
+  label: string;
+  /**
+   * The template the Thing was created from, so a client renders the push in that template's words
+   * (#1426) — "issue" on a car, "squawk" on an aeroplane. Neither client can tell otherwise: the
+   * iOS notification service extension has no app state at all, and Android only knew the Thing
+   * open on screen. `airplane` for a Thing with no DNA, for the same reason as above.
+   */
+  templateId: string;
+};
+
+/** [ThingIdentity] for a Thing envelope, or `null` if it will not decode. */
+export function thingIdentityOf(doc: SyncDocWire | undefined): ThingIdentity | null {
   const bytes = payloadBytes(doc?.payload);
   if (bytes == null) return null;
   try {
-    return displayLabelOf(Thing.decode(bytes));
+    const thing = Thing.decode(bytes);
+    return { label: displayLabelOf(thing) ?? "", templateId: thing.template?.id || "airplane" };
   } catch (e) {
     logger.warn("Could not decode a Thing payload for a notification", { error: String(e) });
     return null;
@@ -82,7 +96,7 @@ function decodeSquawk(doc: SyncDocWire | undefined): Squawk | null {
 /**
  * The record's own title/description, resolved per [RecordType] — the specific thing a concrete
  * activity notification names. `null` for `aircraft` (there is no per-record title; the Thing's
- * own identity is its label, via [thingLabelOf]) and whenever the payload will not decode.
+ * own identity is its label, via [thingIdentityOf]) and whenever the payload will not decode.
  */
 export function recordTitleOf(recordType: RecordType, doc: SyncDocWire | undefined): string | null {
   const bytes = payloadBytes(doc?.payload);

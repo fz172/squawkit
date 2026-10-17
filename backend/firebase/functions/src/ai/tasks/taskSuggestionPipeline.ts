@@ -7,7 +7,7 @@ import { createDocumentAiOcr } from "../document/ocr/documentAiOcr.js";
 import type { OcrProvider } from "../document/ocr/types.js";
 import type { AiJobFinish, AiPipeline } from "../worker.js";
 import { ENTITY_SEGMENT_THING } from "../../config/entitySegment.js";
-import { readThingLabel } from "../../notifications/onRecordWritten.js";
+import { readThingIdentity } from "../../notifications/onRecordWritten.js";
 import { suggestionsPushData } from "../../notifications/pushMessages.js";
 import { enabledTokensFor, sendPush } from "../../notifications/pushSender.js";
 import { curatedSuggestions } from "./curatedResult.js";
@@ -94,10 +94,19 @@ export function withCurated(
 export async function pushFinished(finish: AiJobFinish): Promise<void> {
   const targets = await enabledTokensFor(finish.ref.callerUid);
   if (targets.length === 0) return;
-  const tailNumber = await readThingLabel(finish.job.hostUid, finish.job.thingId, ENTITY_SEGMENT_THING);
+  const thing = await readThingIdentity(
+    finish.job.hostUid,
+    finish.job.thingId,
+    ENTITY_SEGMENT_THING,
+  );
   await sendPush(
     targets,
-    suggestionsPushData({ thingId: finish.job.thingId, tailNumber, status: finish.status }),
+    suggestionsPushData({
+      thingId: finish.job.thingId,
+      tailNumber: thing.label,
+      templateId: thing.templateId,
+      status: finish.status,
+    }),
   );
 }
 
