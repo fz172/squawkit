@@ -14,7 +14,8 @@ import UserNotifications
 /// roughly 24MB of runtime memory — linking it here would make that ceiling the central risk of this
 /// feature. `PushPayload.swift` / `PushPayloadRendering.swift` / `NotificationTapEncoder.swift`
 /// duplicate the equivalent commonMain Kotlin files field-for-field instead; keep them in sync by
-/// hand if the server's wire format changes.
+/// hand if the server's wire format changes. `IosPushMirrorTest.kt` (feature/notifications/viewing)
+/// fails when they fall behind the server's keys and tap kinds or the router's paths.
 final class NotificationService: UNNotificationServiceExtension {
 
   private var contentHandler: ((UNNotificationContent) -> Void)?

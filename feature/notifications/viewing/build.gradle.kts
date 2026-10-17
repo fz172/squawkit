@@ -60,3 +60,21 @@ dependencies {
   "androidHostTestImplementation"(libs.truth)
   "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }
+
+/**
+ * IosPushMirrorTest reads the iOS extension's Swift and the server's push builder as text. Neither
+ * is on this module's classpath, so without these inputs the test is UP-TO-DATE on exactly the
+ * commits it exists to police — a Swift-only or server-only change.
+ */
+tasks.withType<Test>()
+  .configureEach {
+    inputs.files(
+      rootProject.fileTree(rootProject.projectDir) {
+        include("iosApp/NotificationServiceExtension/*.swift")
+        include("backend/firebase/functions/src/notifications/pushMessages.ts")
+        include("backend/firebase/functions/src/notifications/notificationModels.ts")
+      },
+    )
+      .withPropertyName("iosPushMirrorSources")
+      .withPathSensitivity(PathSensitivity.RELATIVE)
+  }
