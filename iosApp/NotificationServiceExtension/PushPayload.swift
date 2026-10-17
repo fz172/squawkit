@@ -6,6 +6,8 @@ enum NotificationTapTarget {
   case squawk(aircraftId: String, squawkId: String)
   case task(aircraftId: String, taskId: String)
   case log(aircraftId: String, logId: String)
+  /// An avionics data log uploaded to the Thing (#1304).
+  case dataLog(aircraftId: String, dataLogId: String)
   /// A suggestion run ended (task population PRD R20): the Thing's suggestions screen.
   case suggestions(aircraftId: String)
 }
@@ -85,6 +87,9 @@ struct PushPayload {
     case "log":
       return recordId.map { NotificationTapTarget.log(aircraftId: aircraftId, logId: $0) }
         ?? .aircraft(aircraftId: aircraftId, tab: "logs")
+    case "data_log":
+      return recordId.map { NotificationTapTarget.dataLog(aircraftId: aircraftId, dataLogId: $0) }
+        ?? .aircraft(aircraftId: aircraftId, tab: "datalogs")
     case "suggestions":
       return .suggestions(aircraftId: aircraftId)
     default:
