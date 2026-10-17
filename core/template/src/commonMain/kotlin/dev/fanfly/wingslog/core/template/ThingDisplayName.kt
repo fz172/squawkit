@@ -25,11 +25,7 @@ fun Thing.displayLabel(template: ThingTemplate?): String {
         .orEmpty()
     }
     .ifBlank { makeAndModel() }
-    .ifBlank {
-      fields.firstOrNull { it.is_identifier }
-        ?.let { specValue(it.key) }
-        .orEmpty()
-    }
+    .ifBlank { firstIdentifier(template) }
     .ifBlank {
       fields.firstNotNullOfOrNull { f -> specValue(f.key).takeIf { it.isNotBlank() } }
         .orEmpty()
@@ -47,13 +43,19 @@ fun Thing.displaySubtitle(template: ThingTemplate?): String {
   val label = displayLabel(template)
   val makeModel = makeAndModel()
   if (makeModel.isNotBlank() && makeModel != label) return makeModel
-  val identifier = template?.spec_fields.orEmpty()
-    .firstOrNull { it.is_identifier }
-    ?.let { specValue(it.key) }
-    .orEmpty()
-  return identifier.takeIf { it != label }
+  return firstIdentifier(template).takeIf { it != label }
     .orEmpty()
 }
+
+/**
+ * The first identifier the Thing has filled in, not the first the template declares. A car declares
+ * its plate before its VIN, and one with no plate would otherwise read as having no identifier.
+ */
+private fun Thing.firstIdentifier(template: ThingTemplate?): String =
+  template?.spec_fields.orEmpty()
+    .filter { it.is_identifier }
+    .firstNotNullOfOrNull { f -> specValue(f.key).takeIf { it.isNotBlank() } }
+    .orEmpty()
 
 private fun Thing.makeAndModel(): String =
   listOf(specValue(SpecKeys.MAKE), specValue(SpecKeys.MODEL)).joinAsPhrase()

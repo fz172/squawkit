@@ -1,6 +1,6 @@
 
 
-automotive"Á
+automotive"Á
 
 vehiclevehiclesa
 issueissuesan"Issues
@@ -13,7 +13,8 @@ automotive"Á
 4Tap + to report a fault, a noise, or a warning lightBTap + to add oil changes, brake service, and other scheduled work.3Log work against a service to see its history here."VLog your first entry â€” an oil change, a brake job, or any other work on the vehicle.*No records yet2:Add the first service record to start the vehicle history.:No upcoming serviceB Scheduled service is up to date.J2Nothing needs attention on this vehicle right now.R‡Log your current odometer reading to start tracking service intervals accurately. Mileage-based services count from this first reading.ŠService due’(Down issues must be fixed before driving* :BHXj2
 makeMake2
 modelModel2
-yearYear*2019H2
+yearYear*2019H2+
+license_plateLicense Plate *7ABC12382
 vinVIN *1HGBH41JXMN109186:
 engineEngine(P:…
 tireTire2make2modelHZM

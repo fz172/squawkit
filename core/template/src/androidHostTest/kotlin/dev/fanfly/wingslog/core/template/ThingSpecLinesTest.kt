@@ -105,9 +105,30 @@ class ThingSpecLinesTest {
     // Only the VIN is matched exactly, so only the VIN renders in mono.
     assertThat(spec.lines.filter { it.isIdentifier }
                  .map { it.label }).containsExactly("VIN")
-    // No title_candidate, so the hero shows the make and model alone rather than a 17-character
-    // VIN set in display type.
+    // No plate, so nothing fills the title candidate and the hero shows the make and model alone
+    // rather than a 17-character VIN set in display type.
     assertThat(spec.title).isEmpty()
+  }
+
+  @Test
+  fun aCarsPlateIsItsTitleAndLeadsItsIdentifiers() {
+    val spec = CanonicalTemplates.AUTOMOTIVE.specLines(
+      thing(
+        SpecKeys.MAKE to "Tesla",
+        SpecKeys.MODEL to "Model Y",
+        "vin" to "7SAYGDEE1NF000001",
+        "license_plate" to "8XYZ123",
+      ),
+    )
+
+    // The plate is what the car is called, the way a tail number is an aeroplane's.
+    assertThat(spec.title).isEqualTo("8XYZ123")
+    assertThat(spec.rendered()).containsExactly(
+      "Tesla Model Y",
+      "License Plate: 8XYZ123",
+      "VIN: 7SAYGDEE1NF000001",
+    )
+      .inOrder()
   }
 
   @Test

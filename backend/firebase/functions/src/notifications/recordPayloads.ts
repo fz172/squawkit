@@ -28,8 +28,8 @@ export const SCHEMA = {
  * The label a Thing envelope names itself by, or `null` if it will not decode or nothing names it.
  *
  * Mirrors `Thing.displayLabel` in `core/template` (PRD §9.1): the owner's name, then the template's
- * `title_candidate` field, then make and model, then its `is_identifier` field, then whatever the
- * template does ask for, then the template's own display name. Reading only `tail_number` — which
+ * `title_candidate` field, then make and model, then its first filled `is_identifier` field, then
+ * whatever the template does ask for, then the template's own display name. Reading only `tail_number` — which
  * this did until a home's notification opened with a bare ": task is due soon" — leaves every
  * non-airplane Thing nameless.
  *
@@ -56,7 +56,7 @@ function displayLabelOf(thing: Thing): string | null {
     () => thing.name,
     () => fields.filter(f => f.titleCandidate).map(f => spec(f.key))[0] ?? "",
     () => [spec("make"), spec("model")].filter(v => v.length > 0).join(" "),
-    () => fields.filter(f => f.isIdentifier).map(f => spec(f.key))[0] ?? "",
+    () => fields.filter(f => f.isIdentifier).map(f => spec(f.key)).find(v => v.length > 0) ?? "",
     () => fields.map(f => spec(f.key)).find(v => v.length > 0) ?? "",
     () => thing.template?.displayName ?? "",
     () => spec("tail_number"),
