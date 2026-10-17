@@ -10,7 +10,6 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.rpc.suggesttasks.LogSummary
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -228,19 +227,8 @@ class SuggestionContextBuilderTest {
     assertThat(existing.reference_number).isEqualTo("SB-1")
   }
 
-  @Test
-  fun `sends no log history`() = runTest {
-    val logs = listOf(log("older", JUNE_1), log("newer", JUNE_1 + DAY))
-
-    val context = builder(logs = logs).build(THING, SuggestionEntryPoint.CURATED).context!!
-
-    assertThat(context.logs).isEmpty()
-    assertThat(context.logs_truncated).isFalse()
-  }
-
   private companion object {
     const val THING = "thing-1"
-    const val DAY = 86_400L
     val JUNE_1 = Instant.parse("2026-06-01T12:00:00Z").epochSeconds
   }
 }

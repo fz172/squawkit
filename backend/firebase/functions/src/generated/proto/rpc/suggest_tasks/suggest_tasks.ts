@@ -144,12 +144,6 @@ export interface SuggestionContext {
   components: ComponentSummary[];
   meters: MeterSummary[];
   existingTasks: ExistingTask[];
-  /**
-   * No longer sent: no suggestion is tied to a log, and since tasks-6 the model is shown none.
-   * Kept so a request from an app that still sends them decodes; the server reads neither.
-   */
-  logs: LogSummary[];
-  logsTruncated: boolean;
   /** The template's word for a task, for the prompt. */
   lexiconTaskNoun: string;
 }
@@ -183,15 +177,6 @@ export interface ExistingTask {
   rules: InspectionRule[];
   type: ComplianceType;
   referenceNumber: string;
-}
-
-export interface LogSummary {
-  id: MaintenanceLogId | undefined;
-  date: string;
-  readings: MeterReading[];
-  title: string;
-  workDescription: string;
-  componentSlotKey: string;
 }
 
 export interface SuggestTasksResult {
@@ -593,8 +578,6 @@ function createBaseSuggestionContext(): SuggestionContext {
     components: [],
     meters: [],
     existingTasks: [],
-    logs: [],
-    logsTruncated: false,
     lexiconTaskNoun: "",
   };
 }
@@ -618,12 +601,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
     }
     for (const v of message.existingTasks) {
       ExistingTask.encode(v!, writer.uint32(50).fork()).join();
-    }
-    for (const v of message.logs) {
-      LogSummary.encode(v!, writer.uint32(58).fork()).join();
-    }
-    if (message.logsTruncated !== false) {
-      writer.uint32(64).bool(message.logsTruncated);
     }
     if (message.lexiconTaskNoun !== "") {
       writer.uint32(82).string(message.lexiconTaskNoun);
@@ -686,22 +663,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
           message.existingTasks.push(ExistingTask.decode(reader, reader.uint32()));
           continue;
         }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-
-          message.logs.push(LogSummary.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 8: {
-          if (tag !== 64) {
-            break;
-          }
-
-          message.logsTruncated = reader.bool();
-          continue;
-        }
         case 10: {
           if (tag !== 82) {
             break;
@@ -741,12 +702,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
         : globalThis.Array.isArray(object?.existing_tasks)
         ? object.existing_tasks.map((e: any) => ExistingTask.fromJSON(e))
         : [],
-      logs: globalThis.Array.isArray(object?.logs) ? object.logs.map((e: any) => LogSummary.fromJSON(e)) : [],
-      logsTruncated: isSet(object.logsTruncated)
-        ? globalThis.Boolean(object.logsTruncated)
-        : isSet(object.logs_truncated)
-        ? globalThis.Boolean(object.logs_truncated)
-        : false,
       lexiconTaskNoun: isSet(object.lexiconTaskNoun)
         ? globalThis.String(object.lexiconTaskNoun)
         : isSet(object.lexicon_task_noun)
@@ -775,12 +730,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
     if (message.existingTasks?.length) {
       obj.existingTasks = message.existingTasks.map((e) => ExistingTask.toJSON(e));
     }
-    if (message.logs?.length) {
-      obj.logs = message.logs.map((e) => LogSummary.toJSON(e));
-    }
-    if (message.logsTruncated !== false) {
-      obj.logsTruncated = message.logsTruncated;
-    }
     if (message.lexiconTaskNoun !== "") {
       obj.lexiconTaskNoun = message.lexiconTaskNoun;
     }
@@ -800,8 +749,6 @@ export const SuggestionContext: MessageFns<SuggestionContext> = {
     message.components = object.components?.map((e) => ComponentSummary.fromPartial(e)) || [];
     message.meters = object.meters?.map((e) => MeterSummary.fromPartial(e)) || [];
     message.existingTasks = object.existingTasks?.map((e) => ExistingTask.fromPartial(e)) || [];
-    message.logs = object.logs?.map((e) => LogSummary.fromPartial(e)) || [];
-    message.logsTruncated = object.logsTruncated ?? false;
     message.lexiconTaskNoun = object.lexiconTaskNoun ?? "";
     return message;
   },
@@ -1199,156 +1146,6 @@ export const ExistingTask: MessageFns<ExistingTask> = {
     message.rules = object.rules?.map((e) => InspectionRule.fromPartial(e)) || [];
     message.type = object.type ?? 0;
     message.referenceNumber = object.referenceNumber ?? "";
-    return message;
-  },
-};
-
-function createBaseLogSummary(): LogSummary {
-  return { id: undefined, date: "", readings: [], title: "", workDescription: "", componentSlotKey: "" };
-}
-
-export const LogSummary: MessageFns<LogSummary> = {
-  encode(message: LogSummary, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== undefined) {
-      MaintenanceLogId.encode(message.id, writer.uint32(10).fork()).join();
-    }
-    if (message.date !== "") {
-      writer.uint32(18).string(message.date);
-    }
-    for (const v of message.readings) {
-      MeterReading.encode(v!, writer.uint32(26).fork()).join();
-    }
-    if (message.title !== "") {
-      writer.uint32(34).string(message.title);
-    }
-    if (message.workDescription !== "") {
-      writer.uint32(42).string(message.workDescription);
-    }
-    if (message.componentSlotKey !== "") {
-      writer.uint32(50).string(message.componentSlotKey);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): LogSummary {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseLogSummary();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = MaintenanceLogId.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.date = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.readings.push(MeterReading.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.title = reader.string();
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-
-          message.workDescription = reader.string();
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-
-          message.componentSlotKey = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): LogSummary {
-    return {
-      id: isSet(object.id) ? MaintenanceLogId.fromJSON(object.id) : undefined,
-      date: isSet(object.date) ? globalThis.String(object.date) : "",
-      readings: globalThis.Array.isArray(object?.readings)
-        ? object.readings.map((e: any) => MeterReading.fromJSON(e))
-        : [],
-      title: isSet(object.title) ? globalThis.String(object.title) : "",
-      workDescription: isSet(object.workDescription)
-        ? globalThis.String(object.workDescription)
-        : isSet(object.work_description)
-        ? globalThis.String(object.work_description)
-        : "",
-      componentSlotKey: isSet(object.componentSlotKey)
-        ? globalThis.String(object.componentSlotKey)
-        : isSet(object.component_slot_key)
-        ? globalThis.String(object.component_slot_key)
-        : "",
-    };
-  },
-
-  toJSON(message: LogSummary): unknown {
-    const obj: any = {};
-    if (message.id !== undefined) {
-      obj.id = MaintenanceLogId.toJSON(message.id);
-    }
-    if (message.date !== "") {
-      obj.date = message.date;
-    }
-    if (message.readings?.length) {
-      obj.readings = message.readings.map((e) => MeterReading.toJSON(e));
-    }
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    if (message.workDescription !== "") {
-      obj.workDescription = message.workDescription;
-    }
-    if (message.componentSlotKey !== "") {
-      obj.componentSlotKey = message.componentSlotKey;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<LogSummary>, I>>(base?: I): LogSummary {
-    return LogSummary.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<LogSummary>, I>>(object: I): LogSummary {
-    const message = createBaseLogSummary();
-    message.id = (object.id !== undefined && object.id !== null) ? MaintenanceLogId.fromPartial(object.id) : undefined;
-    message.date = object.date ?? "";
-    message.readings = object.readings?.map((e) => MeterReading.fromPartial(e)) || [];
-    message.title = object.title ?? "";
-    message.workDescription = object.workDescription ?? "";
-    message.componentSlotKey = object.componentSlotKey ?? "";
     return message;
   },
 };

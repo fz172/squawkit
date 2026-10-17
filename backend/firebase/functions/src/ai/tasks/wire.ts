@@ -51,15 +51,6 @@ export function requestFromProto(proto: SuggestTasksRequestProto): SuggestTasksR
         type: complianceKindFromProto(t.type),
         referenceNumber: t.referenceNumber,
       })),
-      logs: (c?.logs ?? []).map((l) => ({
-        id: l.id?.value ?? "",
-        date: l.date,
-        readings: l.readings.map(readingFromProto),
-        title: l.title,
-        workDescription: l.workDescription,
-        componentSlotKey: l.componentSlotKey,
-      })),
-      logsTruncated: c?.logsTruncated ?? false,
       // The app no longer sends its starter pack; taskSuggestionPipeline fills this from the
       // curated list (design §6.8).
       staticPack: [],
@@ -161,10 +152,6 @@ export function ruleToProto(rule: SuggestedRule): InspectionRule {
     case "on_condition":
       return { onConditionRule: { description: rule.description } };
   }
-}
-
-function readingFromProto(r: MeterReading): MeterReadingValue {
-  return { meterKey: r.meterKey, value: r.value };
 }
 
 function readingToProto(r: MeterReadingValue): MeterReading {

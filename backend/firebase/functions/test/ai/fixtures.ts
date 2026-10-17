@@ -27,17 +27,6 @@ export function airplaneContext(overrides: Partial<SuggestionContext> = {}): Sug
         referenceNumber: "",
       },
     ],
-    logs: [
-      {
-        id: "log-1",
-        date: "2026-05-02",
-        readings: [{ meterKey: "engine_hours", value: 380 }],
-        title: "Oil change",
-        workDescription: "Changed oil and filter",
-        componentSlotKey: "engine",
-      },
-    ],
-    logsTruncated: false,
     staticPack: [
       { title: "Oil change", description: "", componentSlotKey: "engine", rules: [] },
       { title: "ELT inspection", description: "", componentSlotKey: "", rules: [] },

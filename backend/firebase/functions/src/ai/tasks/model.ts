@@ -41,16 +41,6 @@ export type ExistingTask = {
 export type MeterReadingValue = { meterKey: string; value: number };
 
 /** A log entry with no technician, cost, attachment or comment field (R12). */
-export type LogSummary = {
-  id: string;
-  /** ISO date, `YYYY-MM-DD`. */
-  date: string;
-  readings: MeterReadingValue[];
-  title: string;
-  workDescription: string;
-  componentSlotKey: string;
-};
-
 export type StaticPackItem = {
   title: string;
   description: string;
@@ -65,8 +55,6 @@ export type SuggestionContext = {
   components: ComponentSummary[];
   meters: MeterSummary[];
   existingTasks: ExistingTask[];
-  logs: LogSummary[];
-  logsTruncated: boolean;
   staticPack: StaticPackItem[];
   lexiconTaskNoun: string;
 };

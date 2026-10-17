@@ -1,9 +1,11 @@
+import { BinaryWriter } from "@bufbuild/protobuf/wire";
 import { describe, expect, it } from "vitest";
 
 import type { SuggestTasksResult, TaskSuggestion } from "../../src/ai/tasks/model.js";
 import { requestFromProto, resultToProto, ruleFromProto, ruleToProto } from "../../src/ai/tasks/wire.js";
 import {
   DocType,
+  SuggestionContext as SuggestionContextProto,
   SuggestTasksRequest as SuggestTasksRequestProto,
   SuggestTasksResult as SuggestTasksResultProto,
 } from "../../src/generated/proto/rpc/suggest_tasks/suggest_tasks.js";
@@ -40,17 +42,6 @@ function airplaneRequestProto(): SuggestTasksRequestProto {
           referenceNumber: "",
         },
       ],
-      logs: [
-        {
-          id: { value: "log-1" },
-          date: "2026-05-02",
-          readings: [{ meterKey: "engine_hours", value: 380 }],
-          title: "Oil change",
-          workDescription: "Changed oil and filter",
-          componentSlotKey: "engine",
-        },
-      ],
-      logsTruncated: false,
       lexiconTaskNoun: "inspection",
     },
   });
@@ -67,6 +58,22 @@ describe("requestFromProto", () => {
       context: { ...airplaneContext(), staticPack: [] },
       documents: [],
     });
+  });
+
+  it("still decodes a request from an app that sends the retired log history (#1265)", () => {
+    // Fields 7 (`logs`) and 8 (`logs_truncated`) are reserved now, so the generated code cannot
+    // write them; an older app's bytes are built by hand, inside the one `context` (field 3).
+    const proto = airplaneRequestProto();
+    const context = SuggestionContextProto.encode(proto.context!, new BinaryWriter());
+    const log = new BinaryWriter().uint32((4 << 3) | 2).string("Oil change").finish();
+    context.uint32((7 << 3) | 2).bytes(log);
+    context.uint32((8 << 3) | 0).bool(true);
+    const request = SuggestTasksRequestProto.encode({ ...proto, context: undefined });
+    request.uint32((3 << 3) | 2).bytes(context.finish());
+
+    expect(requestFromProto(SuggestTasksRequestProto.decode(request.finish()))).toEqual(
+      requestFromProto(proto),
+    );
   });
 
   it("reads an unlogged meter as null, not zero", () => {
