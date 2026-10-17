@@ -2,8 +2,19 @@ package dev.fanfly.wingslog.feature.notifications.viewing
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.core.template.dataLogNoun
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Lexicon
+import dev.fanfly.wingslog.thing.ThingTemplate
 import java.io.File
 import org.junit.Test
 
@@ -40,6 +51,7 @@ class IosPushMirrorTest {
   private val swiftParser = read("$EXTENSION/PushPayload.swift")
   private val swiftRenderer = read("$EXTENSION/PushPayloadRendering.swift")
   private val swiftEncoder = read("$EXTENSION/NotificationTapEncoder.swift")
+  private val swiftNouns = read("$EXTENSION/PushNouns.swift")
 
   private fun swiftCases(source: String): Set<String> =
     Regex("""case "([a-z0-9_]+)"""").findAll(source)
@@ -125,6 +137,43 @@ class IosPushMirrorTest {
       .toSet()
 
     assertThat(swift).isEqualTo(kotlin)
+  }
+
+  /**
+   * The extension's per-template words (#1426), against this build's lexicons: the Swift line each
+   * template should have, as `PushNouns.swift` writes it, so a failure prints the fix.
+   */
+  @Test
+  fun theSwiftNounTableSaysWhatEachTemplatesLexiconSays() {
+    val registry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE)
+    val expected = CanonicalTemplates.ALL.map { it.id }
+      .sorted()
+      .map { id -> "    \"$id\": ${nounsLine(registry.lexiconFor(ThingTemplate(id = id)))}," } +
+      "  static let generic = ${nounsLine(GenericLexicon.LEXICON)}"
+    val actual = swiftNouns.lines()
+      .filter { "PushNouns(thing:" in it }
+
+    assertThat(actual).containsExactlyElementsIn(expected).inOrder()
+  }
+
+  /** One `PushNouns(…)` initialiser, in `PushNouns.swift`'s field order. */
+  private fun nounsLine(lexicon: Lexicon): String {
+    val fields = listOf(
+      "thing" to lexicon.thingNoun.singular,
+      "thingTitle" to LexiconFormatter.titleCase(lexicon.thingNoun),
+      "squawk" to lexicon.squawkNoun.singular,
+      "squawksTitle" to LexiconFormatter.titleCasePlural(lexicon.squawkNoun),
+      "task" to lexicon.taskNoun.singular,
+      "tasks" to lexicon.taskNoun.plural,
+      "tasksTitle" to LexiconFormatter.titleCasePlural(lexicon.taskNoun),
+      "log" to lexicon.logNoun.singular,
+      "logsTitle" to LexiconFormatter.titleCasePlural(lexicon.logNoun),
+      "dataLog" to lexicon.dataLogNoun.singular,
+      "dataLogsTitle" to LexiconFormatter.titleCasePlural(lexicon.dataLogNoun),
+    )
+    return fields.joinToString(", ", prefix = "PushNouns(", postfix = ")") { (name, value) ->
+      "$name: \"$value\""
+    }
   }
 
   private companion object {

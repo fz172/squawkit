@@ -30,6 +30,8 @@ struct PushPayload {
   let recordTitle: String
   let tapTarget: NotificationTapTarget
   let recipientUid: String?
+  /// The template of the Thing this push is about, or `nil` from a server older than #1426.
+  let templateId: String?
 
   /// Same three-way logic as `PushPayload.kt:60-64`: no `recipientUid` (a server older than P4.13)
   /// means render; nobody signed in on this device means drop; addressed to a different account
@@ -61,7 +63,9 @@ struct PushPayload {
       recordType: (userInfo["recordType"] as? String) ?? "",
       recordTitle: (userInfo["recordTitle"] as? String) ?? "",
       tapTarget: tapTarget,
-      recipientUid: recipientUid
+      recipientUid: recipientUid,
+      templateId: ((userInfo["templateId"] as? String)?.isEmpty ?? true)
+        ? nil : userInfo["templateId"] as? String
     )
   }
 
