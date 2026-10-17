@@ -10,6 +10,7 @@ describe("suggestionsPushData", () => {
     const data = suggestionsPushData({
       thingId: "thing-1",
       tailNumber: "Model Y",
+      templateId: "automotive",
       status: AiJobStatus.AI_JOB_STATUS_SUCCEEDED,
     });
 
@@ -24,6 +25,7 @@ describe("suggestionsPushData", () => {
       titleKey: "notification_suggestions_title",
       bodyKey: "notification_suggestions_body_ready",
       tailNumber: "Model Y",
+      templateId: "automotive",
       actorName: "",
       recipientUid: "uid-1",
     });

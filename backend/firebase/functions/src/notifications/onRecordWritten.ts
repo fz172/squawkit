@@ -26,7 +26,13 @@ import {
   type PushData,
 } from "./pushMessages.js";
 import { enabledTokensFor, sendPush, type PushTarget } from "./pushSender.js";
-import { escalationOf, recordTitleOf, thingLabelOf, type Escalation } from "./recordPayloads.js";
+import {
+  escalationOf,
+  recordTitleOf,
+  thingIdentityOf,
+  type Escalation,
+  type ThingIdentity,
+} from "./recordPayloads.js";
 
 /**
  * N1 collaboration fan-out (docs/notifications/notifications_design.md §7.2).
@@ -167,7 +173,7 @@ const handleThingWritten =
       recipients,
       segment,
       // The write in hand IS the Thing, so its label needs no second read.
-      thingLabel: thingLabelOf(change.after) ?? undefined,
+      thing: thingIdentityOf(change.after) ?? undefined,
     });
   };
 
@@ -250,7 +256,7 @@ type ActivityFanOut = {
   actorUid: string;
   nowMs: number;
   recipients: string[];
-  thingLabel?: string;
+  thing?: PushThing;
   /** The entity segment the triggering write landed on — see config/entitySegment.ts. */
   segment: EntitySegment;
 };
@@ -260,7 +266,7 @@ async function fanOutActivity(input: ActivityFanOut): Promise<void> {
   const { hostUid, thingId, recordType, recordId, recordTitle, kind, actorUid, nowMs, recipients } =
     input;
 
-  const label = input.thingLabel ?? (await readThingLabel(hostUid, thingId, input.segment));
+  const thing = input.thing ?? (await readThingIdentity(hostUid, thingId, input.segment));
   const actorName = await readActorDisplayName(hostUid, thingId, actorUid);
 
   const sent = await fanOut(
@@ -274,7 +280,8 @@ async function fanOutActivity(input: ActivityFanOut): Promise<void> {
       kind,
       actorUid,
       actorName,
-      tailNumber: label,
+      tailNumber: thing.label,
+      templateId: thing.templateId,
       atMs: nowMs,
     }),
   );
@@ -303,8 +310,8 @@ async function fanOutEscalation(
   escalation: Escalation,
   segment: EntitySegment,
 ): Promise<void> {
-  const [tailNumber, actorName] = await Promise.all([
-    readThingLabel(hostUid, thingId, segment),
+  const [thing, actorName] = await Promise.all([
+    readThingIdentity(hostUid, thingId, segment),
     readActorDisplayName(hostUid, thingId, actorUid),
   ]);
 
@@ -316,7 +323,8 @@ async function fanOutEscalation(
       squawkId,
       title: escalation.title,
       kind: escalation.kind,
-      tailNumber,
+      tailNumber: thing.label,
+      templateId: thing.templateId,
       actorName,
     }),
   );
@@ -366,26 +374,31 @@ async function fanOut(
 }
 
 /**
- * The Thing's display label (see `thingLabelOf`), or `""` when it will not resolve.
+ * The Thing's label and template (see `thingIdentityOf`). The label is `""` and the template absent
+ * when the Thing will not resolve.
  *
  * Empty is passed through rather than substituted with the id: the title is "%1$s · Squawks", and a
- * raw UUID there is worse than a title that simply reads "Squawks".
+ * raw UUID there is worse than a title that simply reads "Squawks". An absent template leaves the
+ * client to its own fallback rather than guessing one here.
  */
-export async function readThingLabel(
+/** [ThingIdentity], with the template absent when the Thing would not resolve. */
+type PushThing = { label: string; templateId?: string };
+
+export async function readThingIdentity(
   hostUid: string,
   thingId: string,
   segment: EntitySegment,
-): Promise<string> {
+): Promise<PushThing> {
   try {
     const snap = await adminDb.doc(entityDocPath(hostUid, thingId, segment)).get();
-    if (!snap.exists) return "";
-    return thingLabelOf(snap.data() as SyncDocWire) ?? "";
+    if (!snap.exists) return { label: "" };
+    return thingIdentityOf(snap.data() as SyncDocWire) ?? { label: "" };
   } catch (e) {
     logger.warn("Could not read a Thing label for a notification", {
       hostUid,
       thingId,
       error: String(e),
     });
-    return "";
+    return { label: "" };
   }
 }

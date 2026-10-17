@@ -723,6 +723,24 @@ describe("§7.4 audience and preferences, re-derived on every send", () => {
     expect(sentMessages[0].data.recordType).toBe("task");
   });
 
+  it("says which template the Thing is, so the client renders in its words (#1426)", async () => {
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await taskEdit(AC_A, 1);
+
+    // The fixture airplane carries no DNA, which can only be an airplane.
+    expect(sentMessages[0].data.templateId).toBe("airplane");
+  });
+
+  it("sends a home's own template id", async () => {
+    await adminDb.doc(`users/${HOST}/thing/${AC_A}`).set(homeEnvelope(AC_A, "Lake House"));
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await taskEdit(AC_A, 1);
+
+    expect(sentMessages[0].data.templateId).toBe("home");
+  });
+
   it("names a Thing with no tail number by its name — a home is not an airplane", async () => {
     await adminDb.doc(`users/${HOST}/thing/${AC_A}`).set(homeEnvelope(AC_A, "Lake House"));
     await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });

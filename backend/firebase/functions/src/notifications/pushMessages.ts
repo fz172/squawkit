@@ -25,6 +25,7 @@ import {
  * | key | meaning |
  * |:--|:--|
  * | `titleKey` / `bodyKey` | `strings.xml` resource names in `feature/notifications/sharedassets` |
+ * | `templateId` | the Thing's template (`airplane`, `automotive`, …), so the client renders in its words; absent when the Thing would not resolve (#1426) |
  * | `tailNumber` | `%1$s` of every title and body here — the Thing's display label (a tail number for an airplane, a name for a home); the key predates Things and is kept for older clients |
  * | `actorName` | the collaborator's display name; **empty** means fall back to `notification_n1_actor_fallback` |
  * | `recordType` | `squawk` \| `task` \| `log` \| `aircraft`; the client maps it to the section labels |
@@ -61,6 +62,7 @@ export type PushData = {
   actorName: string;
   recordId?: string;
   recordTitle?: string;
+  templateId?: string;
 };
 
 /**
@@ -80,6 +82,7 @@ export type ActivityMessageInput = {
   actorUid: string;
   actorName: string;
   tailNumber: string;
+  templateId?: string;
   atMs: number;
 };
 
@@ -118,6 +121,7 @@ export function activityPushData(input: ActivityMessageInput): PushData {
     titleKey: "notification_n1_title",
     bodyKey,
     tailNumber: input.tailNumber,
+    templateId: input.templateId,
     actorName: input.actorName,
     recordId: input.recordId,
     recordTitle: input.recordTitle,
@@ -130,6 +134,7 @@ export type EscalationMessageInput = {
   title: string;
   kind: "created" | "raised";
   tailNumber: string;
+  templateId?: string;
   actorName: string;
 };
 
@@ -162,6 +167,7 @@ export function escalationPushData(input: EscalationMessageInput): PushData {
       ? "notification_n1_body_squawk_created"
       : "notification_n1_body_squawk_raised",
     tailNumber: input.tailNumber,
+    templateId: input.templateId,
     actorName: input.actorName,
     recordId: input.squawkId,
     recordTitle: input.title,
@@ -187,6 +193,7 @@ export type SuggestionsMessageInput = {
   thingId: string;
   /** The Thing's display label; `""` when it will not resolve. */
   tailNumber: string;
+  templateId?: string;
   /** How the run ended. */
   status: AiJobStatus;
 };
@@ -211,6 +218,7 @@ export function suggestionsPushData(input: SuggestionsMessageInput): PushData {
     titleKey: "notification_suggestions_title",
     bodyKey: suggestionsBodyKey(input.status),
     tailNumber: input.tailNumber,
+    templateId: input.templateId,
     actorName: "",
   };
 }
