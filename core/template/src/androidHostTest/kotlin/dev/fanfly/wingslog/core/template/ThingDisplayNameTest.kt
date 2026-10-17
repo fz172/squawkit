@@ -49,6 +49,31 @@ class ThingDisplayNameTest {
   }
 
   @Test
+  fun aBoatReadsLikeAnAirplaneRegistrationAboveMakeAndModel() {
+    val boatTemplate = CanonicalTemplates.BOAT
+    val boat = written(
+      boatTemplate,
+      SpecKeys.MAKE to "Beneteau",
+      SpecKeys.MODEL to "Oceanis 38",
+      "hull_id" to "BEYA1234D616",
+      "registration" to "CF 1234 AB",
+    )
+    val unregistered = written(
+      boatTemplate,
+      SpecKeys.MAKE to "Beneteau",
+      SpecKeys.MODEL to "Oceanis 38",
+      "hull_id" to "BEYA1234D616",
+    )
+
+    assertThat(boat.rows(boatTemplate)).containsExactly("CF 1234 AB", "Beneteau Oceanis 38")
+      .inOrder()
+    // No registration, so the Hull ID is the identifier left to show.
+    assertThat(unregistered.rows(boatTemplate))
+      .containsExactly("Beneteau Oceanis 38", "BEYA1234D616")
+      .inOrder()
+  }
+
+  @Test
   fun aCarWithNoPlateFallsBackToMakeAndModelOverItsVin() {
     val automotive = CanonicalTemplates.AUTOMOTIVE
     val car = written(
