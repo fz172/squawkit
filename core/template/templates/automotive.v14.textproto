@@ -6,7 +6,7 @@
 # intersection rather than either domain's: `vehicle`, and a component set that reads correctly for
 # both. The PRD table still lists them as two rows and is stale on this point.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v13
+# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v14
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -41,7 +41,12 @@
 id: "automotive"
 # v13 drops `starter_tasks`: suggested tasks come from the server's curated list since AI
 # suggestions shipped (task population T25, #1220); the field is reserved in template.proto.
-version: 13
+#
+# v14 adds `license_plate` and marks it `title_candidate`. The plate is what an owner calls a car
+# by, the way a pilot calls an aeroplane by its tail number, so the switcher leads with it and puts
+# the make and model underneath — as it already does for an aeroplane. Without a title candidate a
+# car was named by its make and model, and the VIN, the only identifier, took the second line.
+version: 14
 min_app_version: 0
 
 display_name: "Automotive"
@@ -138,6 +143,14 @@ capabilities {
 spec_fields { key: "make" label: "Make" }
 spec_fields { key: "model" label: "Model" }
 spec_fields { key: "year" label: "Year" placeholder: "2019" numeric: true }
+spec_fields {
+  key: "license_plate"
+  label: "License Plate"
+  is_identifier: true
+  placeholder: "7ABC123"
+  # What an owner calls the vehicle by, so it names the thing when nothing else has.
+  title_candidate: true
+}
 spec_fields { key: "vin" label: "VIN" is_identifier: true placeholder: "1HGBH41JXMN109186" }
 
 # TWO SLOTS, and that is the whole vehicle: an engine and a set of tyres.

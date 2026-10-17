@@ -176,9 +176,9 @@ object FakeDataGenerator {
     }
     return Thing(
       id = thingId,
-      // Set explicitly: ThingInflater derives a name from tail_number or make/model, none of which
-      // a home declares — so without this a fake house would arrive nameless.
-      name = sampleName(template.id, spec),
+      // Set explicitly: ThingInflater derives a name from the title candidate or make/model, none
+      // of which a home declares — so without this a fake house would arrive nameless.
+      name = sampleName(template, spec),
       spec = spec,
       components = template.component_slots.flatMap { buildSlot(it) },
       template = template,
@@ -256,7 +256,9 @@ object FakeDataGenerator {
     SpecKeys.MODEL -> "${('A'..'Z').random()}${(100..999).random()}"
     SpecKeys.SERIAL -> "S${(10000..99999).random()}"
     SpecKeys.TAIL_NUMBER -> "N${(1000..9999).random()}${('A'..'Z').random()}"
+    "license_plate" -> "${(1..9).random()}${('A'..'Z').random()}BC${(100..999).random()}"
     "vin" -> "1${('A'..'Z').random()}GBH41JXMN${(100000..999999).random()}"
+    "registration" -> "CF ${(1000..9999).random()} ${('A'..'Z').random()}${('A'..'Z').random()}"
     "hull_id" -> "${('A'..'Z').random()}BC${(10000..99999).random()}D616"
     "frame_number" -> "WTU${(100..999).random()}K${(1000..9999).random()}Z"
     "year", "year_built" -> (1960..2024).random()
@@ -267,12 +269,15 @@ object FakeDataGenerator {
     else -> "Sample $label"
   }
 
-  private fun sampleName(templateId: String, spec: List<Spec>): String {
+  private fun sampleName(template: ThingTemplate, spec: List<Spec>): String {
     val byKey = spec.associate { it.key to it.value_ }
-    return byKey["address"]
+    val titled = template.spec_fields.firstOrNull { it.title_candidate }
+      ?.let { byKey[it.key] }
+    return titled
+      ?: byKey["address"]
       ?: listOfNotNull(byKey[SpecKeys.MAKE], byKey[SpecKeys.MODEL])
         .joinToString(" ")
-        .ifBlank { "Sample ${templateId.replaceFirstChar { it.uppercase() }}" }
+        .ifBlank { "Sample ${template.id.replaceFirstChar { it.uppercase() }}" }
   }
 
   private fun buildTechnicians(count: Int): List<Technician> {
