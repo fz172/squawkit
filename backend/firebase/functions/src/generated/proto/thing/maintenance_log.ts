@@ -43,6 +43,19 @@ export interface MaintenanceLog {
    * to go, which is what made "every 5,000 miles" unexpressible.
    */
   readings: MeterReading[];
+  /**
+   * When `readings` was last written: stamped on the save that created the log, and again on any
+   * edit that changes a reading (#1368).
+   *
+   * `timestamp` is the day the work was done, at midnight, so it cannot order two readings taken on
+   * one day — a log against another log, or against a reading set on the dashboard. The current
+   * reading is the most recent one, and this breaks that tie. Unset on a log saved before the field
+   * existed, which sorts it before anything that has one.
+   *
+   * Not the row's `updated_at`: that is rewritten by every save, so correcting a typo in the
+   * description would make an old reading the newest again.
+   */
+  readingsSavedAt: Date | undefined;
 }
 
 function createBaseMaintenanceLog(): MaintenanceLog {
@@ -58,6 +71,7 @@ function createBaseMaintenanceLog(): MaintenanceLog {
     technician: undefined,
     squawkIds: [],
     readings: [],
+    readingsSavedAt: undefined,
   };
 }
 
@@ -95,6 +109,9 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
     }
     for (const v of message.readings) {
       MeterReading.encode(v!, writer.uint32(122).fork()).join();
+    }
+    if (message.readingsSavedAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.readingsSavedAt), writer.uint32(130).fork()).join();
     }
     return writer;
   },
@@ -194,6 +211,14 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
           message.readings.push(MeterReading.decode(reader, reader.uint32()));
           continue;
         }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.readingsSavedAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -244,6 +269,11 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
       readings: globalThis.Array.isArray(object?.readings)
         ? object.readings.map((e: any) => MeterReading.fromJSON(e))
         : [],
+      readingsSavedAt: isSet(object.readingsSavedAt)
+        ? fromJsonTimestamp(object.readingsSavedAt)
+        : isSet(object.readings_saved_at)
+        ? fromJsonTimestamp(object.readings_saved_at)
+        : undefined,
     };
   },
 
@@ -282,6 +312,9 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
     if (message.readings?.length) {
       obj.readings = message.readings.map((e) => MeterReading.toJSON(e));
     }
+    if (message.readingsSavedAt !== undefined) {
+      obj.readingsSavedAt = message.readingsSavedAt.toISOString();
+    }
     return obj;
   },
 
@@ -303,6 +336,7 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
       : undefined;
     message.squawkIds = object.squawkIds?.map((e) => e) || [];
     message.readings = object.readings?.map((e) => MeterReading.fromPartial(e)) || [];
+    message.readingsSavedAt = object.readingsSavedAt ?? undefined;
     return message;
   },
 };
