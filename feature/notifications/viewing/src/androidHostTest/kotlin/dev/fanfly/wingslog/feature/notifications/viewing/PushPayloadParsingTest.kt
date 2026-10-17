@@ -1,9 +1,12 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
 /**
@@ -247,5 +250,36 @@ class PushPayloadParsingTest {
         tab = "datalogs"
       )
     )
+  }
+
+  // #1426: a push is rendered in the words of the Thing it is about, not the Thing on screen.
+
+  /** Every baked-in template is readable: no build is too old for them. */
+  private val registry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE)
+  private val airplaneOnScreen =
+    registry.lexiconFor(ThingTemplate(id = "airplane"))
+
+  @Test
+  fun `a push names its template, and renders in that template's words`() {
+    val parsed = PushPayload.parse(activityData("templateId" to "automotive"))!!
+
+    assertThat(parsed.templateId).isEqualTo("automotive")
+    // The aeroplane is open, but the push is about the car.
+    assertThat(parsed.lexiconIn(registry, onScreen = airplaneOnScreen).squawkNoun.singular)
+      .isEqualTo("issue")
+  }
+
+  @Test
+  fun `a push from a server older than the template id falls back to the Thing on screen`() {
+    val parsed = PushPayload.parse(activityData())!!
+
+    assertThat(parsed.templateId).isNull()
+    assertThat(parsed.lexiconIn(registry, onScreen = airplaneOnScreen))
+      .isSameInstanceAs(airplaneOnScreen)
+  }
+
+  @Test
+  fun `a blank template id is treated as absent`() {
+    assertThat(PushPayload.parse(activityData("templateId" to ""))!!.templateId).isNull()
   }
 }

@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
 import dev.fanfly.wingslog.feature.notifications.model.SignedInUid
@@ -81,8 +82,11 @@ class WingsLogFirebaseMessagingService : FirebaseMessagingService(),
       runCatching {
         // Service-located rather than injected: this is a framework-instantiated Service, so it
         // has no constructor to inject through. Same reason ShellNavGraph reaches for KoinPlatform.
-        val lexicon = KoinPlatform.getKoin()
-          .get<CurrentThingTemplate>().lexicon.value
+        val koin = KoinPlatform.getKoin()
+        val lexicon = parsed.lexiconIn(
+          registry = koin.get<TemplateRegistry>(),
+          onScreen = koin.get<CurrentThingTemplate>().lexicon.value,
+        )
         notifier.post(parsed.toPendingNotification(lexicon))
       }
         .onFailure { log.w(it) { "Could not post an N1 push (id=${parsed.notificationId})" } }
