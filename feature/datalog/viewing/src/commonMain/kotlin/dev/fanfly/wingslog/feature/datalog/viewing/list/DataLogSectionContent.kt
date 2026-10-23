@@ -9,8 +9,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -125,7 +125,7 @@ fun DataLogSectionContent(
               ),
               description = lexicon.empty_states?.data_log_hint.orEmpty() + "\n" +
                 stringResource(Res.string.data_log_supported_formats),
-              icon = Icons.Filled.ShowChart,
+              icon = Icons.AutoMirrored.Filled.ShowChart,
             )
           }
         }

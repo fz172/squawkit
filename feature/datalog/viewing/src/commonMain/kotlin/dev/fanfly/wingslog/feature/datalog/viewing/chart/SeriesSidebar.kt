@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.datalog.viewing.chart
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,8 +17,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -82,7 +83,7 @@ fun SeriesSidebar(
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier.fillMaxSize()) {
-    TabRow(selectedTabIndex = tab.ordinal) {
+    SecondaryTabRow(selectedTabIndex = tab.ordinal) {
       Tab(
         selected = tab == SidebarTab.SERIES,
         onClick = { onTab(SidebarTab.SERIES) },
@@ -223,7 +224,7 @@ private fun SeriesRow(
 private fun InfoTab(facts: List<InfoFact>, identityMismatch: Boolean) {
   LazyColumn(
     modifier = Modifier.fillMaxSize(),
-    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+    contentPadding = PaddingValues(
       vertical = Spacing.small
     )
   ) {

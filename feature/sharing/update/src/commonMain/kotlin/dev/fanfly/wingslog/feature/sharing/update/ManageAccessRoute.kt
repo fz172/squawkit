@@ -6,9 +6,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
@@ -16,6 +16,7 @@ import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessScreen
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.UpsellTrigger
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.sharing.sharedassets.generated.resources.Res
@@ -27,7 +28,8 @@ fun ManageAccessRoute(navController: NavController) {
   val viewModel = koinViewModel<ManageAccessViewModel>()
   val state by viewModel.uiState.collectAsState()
   val linkSharer = rememberLinkSharer()
-  val clipboard = LocalClipboardManager.current
+  val clipboard = LocalClipboard.current
+  val scope = rememberCoroutineScope()
   val chooserTitle = stringResource(
     Res.string.invite_title,
     LocalThingLexicon.current.thingNoun.singular,
@@ -66,8 +68,11 @@ fun ManageAccessRoute(navController: NavController) {
     onCancelInvite = viewModel::cancelInvite,
     onShareInvite = { url -> linkSharer.shareLink(url, chooserTitle) },
     onCopyInvite = { url ->
-      clipboard.setText(AnnotatedString(url))
-      viewModel.onInviteLinkCopied()
+      scope.launch {
+        // The browser can refuse a clipboard write; only confirm the copy when it landed.
+        runCatching { clipboard.setClipEntry(plainTextClipEntry(url)) }
+          .onSuccess { viewModel.onInviteLinkCopied() }
+      }
     },
     onOpenMember = viewModel::openMember,
     onChangeRole = viewModel::changeRole,

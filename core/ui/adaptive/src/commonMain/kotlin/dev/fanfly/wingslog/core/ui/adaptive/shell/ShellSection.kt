@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.core.ui.adaptive.shell
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -34,7 +34,7 @@ enum class ShellSection(val icon: ImageVector) {
   LOGS(Icons.Filled.Description),
 
   /** Flight data on the airplane preset; declared by the template and gated by the build. */
-  DATA_LOGS(Icons.Filled.ShowChart),
+  DATA_LOGS(Icons.AutoMirrored.Filled.ShowChart),
   SETTINGS(Icons.Filled.Settings),
 }
 

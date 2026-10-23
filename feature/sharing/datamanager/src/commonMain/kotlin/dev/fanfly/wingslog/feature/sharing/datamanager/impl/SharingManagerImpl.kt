@@ -341,7 +341,6 @@ class SharingManagerImpl(
         inviteCodeKey(codeId)
       )
     }
-    Unit
   }
 
   override suspend fun redeemInvite(code: String): Result<RedeemOutcome> =

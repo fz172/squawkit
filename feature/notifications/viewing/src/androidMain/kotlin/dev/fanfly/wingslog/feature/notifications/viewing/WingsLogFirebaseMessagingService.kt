@@ -72,7 +72,7 @@ class WingsLogFirebaseMessagingService : FirebaseMessagingService(),
       log.d { "Dropping a push addressed to another account (id=${parsed.notificationId})" }
       return
     }
-    if (parsed.tapTarget?.let(OnScreenTapTargets::isOnScreen) == true) {
+    if (parsed.tapTarget.let(OnScreenTapTargets::isOnScreen)) {
       // The user is already looking at what it is about: a suggestion run's push while its screen
       // is open (task population PRD R20).
       log.d { "Dropping a push about what is on screen (id=${parsed.notificationId})" }

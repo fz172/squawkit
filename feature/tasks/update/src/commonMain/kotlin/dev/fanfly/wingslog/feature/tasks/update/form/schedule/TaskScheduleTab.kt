@@ -190,7 +190,6 @@ fun TaskScheduleTab(
       val complete = when (state.mode) {
         ScheduleMode.TIME -> state.calValue.isNotBlank()
         ScheduleMode.HOURS -> state.hourValue.isNotBlank()
-        else -> false
       }
       ScheduleSection(
         labelRes = intervalLabel,
@@ -246,8 +245,6 @@ fun TaskScheduleTab(
               },
             )
           }
-
-          else -> Unit
         }
       }
     }
