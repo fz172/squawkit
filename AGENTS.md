@@ -89,10 +89,7 @@ console is read-only and these workflows are the only publisher.
 
 ## Module Structure
 
-The module tree is not duplicated here — **`graphify` is the source of truth** for what modules
-exist and what each one holds. Run `graphify query "<question>"` for a scoped answer, or read
-`graphify-out/wiki/index.md` for broad navigation. The rules below are what the graph cannot tell
-you: which layer a file belongs in, and what may depend on what.
+The rules below say which layer a file belongs in, and what may depend on what.
 
 Adding a module means editing `settings.gradle.kts` **and** either its feature's `di/` uber module
 or, for a single-module feature, `core/di/CommonAppModules.kt`.
@@ -679,19 +676,3 @@ generated
 **Reuse before adding.** Before creating a new string, search `core/sharedassets`, the feature's
 `sharedassets`, and the relevant module, and reuse what exists.
 
-## graphify
-
-This project can carry a knowledge graph at `graphify-out/` (git-ignored, so a fresh clone won't
-have one) with god nodes, community structure, and cross-file relationships.
-
-Rules:
-
-- For codebase questions, first run `graphify query "<question>"` when `graphify-out/graph.json`
-  exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for
-  focused concepts. These return a scoped subgraph, usually much smaller than `GRAPH_REPORT.md` or
-  raw grep output.
-- If `graphify-out/wiki/index.md` exists, use it for broad navigation instead of raw source
-  browsing.
-- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review, or when query/path/explain
-  do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

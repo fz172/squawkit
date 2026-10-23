@@ -29,9 +29,8 @@ See [§ Architecture](AGENTS.md#architecture).
 **Where things live:** `app/` (Android entry) · `composeApp/` (Android/iOS host + Koin init) ·
 `webApp/` (Kotlin/JS host) · `iosApp/` (Xcode project) · `core/*` · `feature/*` (one per feature;
 `feature/shell` holds the shared nav graph both hosts render) · `backend/firebase/` (TypeScript Cloud
-Functions and security rules — not a Gradle module). For the full tree, ask `graphify` — it is the
-source of truth, not a list in a doc. [§ Module Structure](AGENTS.md#module-structure) carries the
-layering and dependency rules.
+Functions and security rules — not a Gradle module). [§ Module Structure](AGENTS.md#module-structure)
+carries the layering and dependency rules.
 
 ## Common commands
 
@@ -87,16 +86,3 @@ These are enforced or load-bearing; the reasoning for each is in AGENTS.md.
 - Run the post-task cleanup pass over changed `.kt` files before the final commit.
   [§ Engineering Best Practices](AGENTS.md#engineering-best-practices).
 
-## graphify
-
-This project can carry a knowledge graph at `graphify-out/` (git-ignored, so a fresh clone won't have
-one).
-
-- For codebase questions, first run `graphify query "<question>"` when `graphify-out/graph.json`
-  exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for
-  focused concepts — these return a scoped subgraph, usually much smaller than `GRAPH_REPORT.md` or
-  raw grep output.
-- If `graphify-out/wiki/index.md` exists, use it for broad navigation instead of raw source browsing.
-- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review, or when
-  query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

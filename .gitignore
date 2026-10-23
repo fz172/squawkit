@@ -38,9 +38,6 @@ kotlin-js-store/*
 /.claude/settings.json
 /.firebase/hosting.*.cache
 
-# graphify knowledge graph — generated locally, not tracked
-/graphify-out/
-
 # impeccable design-skill critique snapshots — local tooling state, not project docs
 /.impeccable/
 
