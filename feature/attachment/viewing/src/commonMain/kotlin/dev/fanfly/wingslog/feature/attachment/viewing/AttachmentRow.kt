@@ -10,13 +10,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
-import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -157,7 +157,7 @@ private fun Attachment.typeIcon() = when (type) {
   AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
   AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
   AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
-  AttachmentType.ATTACHMENT_TYPE_DATA_LOG -> Icons.Outlined.ShowChart
+  AttachmentType.ATTACHMENT_TYPE_DATA_LOG -> Icons.AutoMirrored.Outlined.ShowChart
   else -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 

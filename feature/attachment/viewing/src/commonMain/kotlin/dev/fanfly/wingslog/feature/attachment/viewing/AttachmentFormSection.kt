@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
-import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -259,7 +259,7 @@ private fun PendingAttachmentRow(
 
 private fun PendingAttachment.typeIcon() = when (this) {
   is PendingAttachment.LocalLink -> Icons.Outlined.Link
-  is PendingAttachment.LocalDataLogRef -> Icons.Outlined.ShowChart
+  is PendingAttachment.LocalDataLogRef -> Icons.AutoMirrored.Outlined.ShowChart
   is PendingAttachment.Saved -> attachment.type.toIcon()
   is PendingAttachment.Local -> attachment.type.toIcon()
   is PendingAttachment.PendingDelete -> attachment.type.toIcon()
@@ -269,6 +269,6 @@ private fun AttachmentType.toIcon() = when (this) {
   AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
   AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
   AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
-  AttachmentType.ATTACHMENT_TYPE_DATA_LOG -> Icons.Outlined.ShowChart
+  AttachmentType.ATTACHMENT_TYPE_DATA_LOG -> Icons.AutoMirrored.Outlined.ShowChart
   else -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
