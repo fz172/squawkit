@@ -22,8 +22,8 @@ import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.dashboard.host.DashboardSkeleton
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
+import dev.fanfly.wingslog.feature.tasks.dashboard.TaskOverviewViewModel
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.feature.tasks.model.needsAttention
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -44,7 +44,13 @@ fun OverviewTab(
       parameters = { parametersOf(state.thing.id) },
     )
   val squawkOverview by squawkOverviewViewModel.uiState.collectAsStateWithLifecycle()
-  if (!squawkOverview.loaded) {
+  val taskOverviewViewModel: TaskOverviewViewModel =
+    koinViewModel(
+      key = "task-overview:${state.thing.id}",
+      parameters = { parametersOf(state.thing.id) },
+    )
+  val taskOverview by taskOverviewViewModel.uiState.collectAsStateWithLifecycle()
+  if (!squawkOverview.loaded || !taskOverview.loaded) {
     DashboardSkeleton()
     return
   }
@@ -54,6 +60,7 @@ fun OverviewTab(
     LargeOverviewTab(
       state = state,
       squawkOverview = squawkOverview,
+      taskOverview = taskOverview,
       onTaskClick = onTaskClick,
       onViewSquawksTab = onViewSquawksTab,
       onViewLogsTab = onViewLogsTab,
@@ -71,9 +78,6 @@ fun OverviewTab(
       .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
   ) {
-    val overdueTasks =
-      state.activeTasks.filter { it.needsAttention }
-
     OverviewHero(
       state,
       Modifier.padding(horizontal = Spacing.screenPadding)
@@ -83,7 +87,7 @@ fun OverviewTab(
     // Above the card, so what is due is the first thing read and the card has no reason to fold.
     NeedsAttentionSection(
       downSquawks = squawkOverview.aogSquawks,
-      tasks = overdueTasks,
+      tasks = taskOverview.overdueTasks,
       onSquawkClick = { onViewSquawksTab() },
       onTaskClick = onTaskClick,
       modifier = Modifier.padding(horizontal = Spacing.screenPadding),
