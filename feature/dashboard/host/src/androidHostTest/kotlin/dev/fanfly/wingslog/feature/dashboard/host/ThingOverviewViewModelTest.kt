@@ -3,25 +3,17 @@ package dev.fanfly.wingslog.feature.dashboard.host
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.ui.text.UiText
-import dev.fanfly.wingslog.datalog.DataLog
-import dev.fanfly.wingslog.datalog.DataLogSource
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
-import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewEvent
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
-import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -32,8 +24,6 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.id.DataLogId
-import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.Squawk
@@ -45,10 +35,8 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.datetime.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -56,6 +44,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -79,17 +68,11 @@ class ThingOverviewViewModelTest {
   private val logManager: MaintenanceLogManager = mockk()
   private val taskDataManager: TaskDataManager = mockk()
   private val taskStatusManager: TaskStatusManager = mockk()
-  private val attachmentOpener: AttachmentOpener = mockk()
-  private val attachmentManager: AttachmentManager = mockk()
-  private val dataLogManager: DataLogManager = mockk {
-    every { observe(ThingId(THING_ID)) } returns flowOf(emptyList())
-  }
   private val squawkManager: SquawkManager = mockk()
   private val commentManager: CommentManager = mockk(relaxed = true) {
     every { observeComments(any()) } returns flowOf(emptyList())
   }
   private val sharingManager: SharingManager = mockk()
-  private val thingScopeResolver: ThingScopeResolver = mockk()
   private val analytics = RecordingAnalyticsManager()
   private val auth: FirebaseAuth = mockk()
 
@@ -120,8 +103,6 @@ class ThingOverviewViewModelTest {
         squawk
       )
     )
-    every { thingScopeResolver.resolve(THING_ID) } returns flowOf(null)
-    every { attachmentOpener.downloadingIds } returns MutableStateFlow(emptySet())
     every { sharingManager.observeMyRole(THING_ID) } returns flowOf(ShareRole.OWNER)
     every { sharingManager.observeIsShared(THING_ID) } returns flowOf(false)
     every { auth.currentUser } returns null
@@ -135,13 +116,9 @@ class ThingOverviewViewModelTest {
     logManager,
     taskDataManager,
     taskStatusManager,
-    attachmentOpener,
-    attachmentManager,
-    dataLogManager,
     squawkManager,
     commentManager,
     sharingManager,
-    thingScopeResolver,
     BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
     analytics,
     auth,
@@ -150,40 +127,6 @@ class ThingOverviewViewModelTest {
 
   private val ThingOverviewViewModel.success: ThingOverviewUiState.Success
     get() = uiState.value as ThingOverviewUiState.Success
-
-  @Test
-  fun dataLogs_carryEachRecordsProductDurationAndBlobState() = runTest {
-    val typedThingId = ThingId(THING_ID)
-    every { dataLogManager.observe(typedThingId) } returns flowOf(
-      listOf(
-        DataLog(
-          id = DataLogId("dl-1"),
-          duration_seconds = 255,
-          source = DataLogSource(product = "GDU 460")
-        ),
-        DataLog(id = DataLogId("dl-2"), duration_seconds = 60),
-      )
-    )
-    every {
-      dataLogManager.observeBlobState(
-        typedThingId,
-        DataLogId("dl-1")
-      )
-    } returns flowOf(BlobSyncState.Synced)
-    every {
-      dataLogManager.observeBlobState(
-        typedThingId,
-        DataLogId("dl-2")
-      )
-    } returns flowOf(BlobSyncState.RemoteOnly)
-
-    val dataLogs = viewModel().success.dataLogs
-
-    assertThat(dataLogs).containsExactly(
-      DataLogId("dl-1"), DataLogRowInfo("GDU 460", 255, BlobSyncState.Synced),
-      DataLogId("dl-2"), DataLogRowInfo("", 60, BlobSyncState.RemoteOnly),
-    )
-  }
 
   @Test
   fun meters_showTheCurrentReadingsTheTemplateDeclares_asOfTheNewest() = runTest {
@@ -248,11 +191,6 @@ class ThingOverviewViewModelTest {
 
     assertThat(vm.events.first())
       .isEqualTo(ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed)))
-  }
-
-  @Test
-  fun dataLogs_isEmptyNotNullOnceTheThingHasNone() = runTest {
-    assertThat(viewModel().success.dataLogs).isEmpty()
   }
 
   @Test

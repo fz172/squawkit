@@ -36,6 +36,7 @@ kotlin {
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:attachment:model"))
+      implementation(project(":feature:datalog:datamanager"))
       implementation(project(":feature:datalog:model"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:logs:viewing"))

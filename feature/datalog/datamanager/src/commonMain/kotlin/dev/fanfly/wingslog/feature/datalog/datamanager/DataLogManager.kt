@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.datalog.datamanager
 
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
@@ -31,4 +32,7 @@ interface DataLogManager {
   /** Tombstones the record; the blob follows through the tombstone GC and the server. */
   suspend fun delete(thingId: ThingId, id: DataLogId): Result<Unit>
   fun observeBlobState(thingId: ThingId, id: DataLogId): Flow<BlobSyncState?>
+
+  /** Every data log with its raw file's blob state, keyed by id, for DATA_LOG attachment rows. */
+  fun observeRowInfos(thingId: ThingId): Flow<Map<DataLogId, DataLogRowInfo>>
 }

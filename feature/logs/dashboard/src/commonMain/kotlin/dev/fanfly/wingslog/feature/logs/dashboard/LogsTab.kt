@@ -12,15 +12,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.text.UiText
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
-import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
-import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListContent
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -29,8 +30,6 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun LogsTab(
   thingId: String,
-  syncStates: Map<String, BlobSyncState> = emptyMap(),
-  dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   onNavigateToAddLog: (() -> Unit)?,
   onNavigateToEditLog: ((logId: String) -> Unit)?,
   onOpenDataLog: (DataLogId) -> Unit,
@@ -51,7 +50,15 @@ fun LogsTab(
   // The ViewModel outlives the section: a log left open when the user switched away would still
   // be open on their return. Each entry to the section starts with the list alone.
   LaunchedEffect(viewModel) { viewModel.onDismissDetail() }
+  val attachmentManager: AttachmentManager = koinInject()
   val attachmentOpener: AttachmentOpener = koinInject()
+  val dataLogManager: DataLogManager = koinInject()
+  val syncStates by remember(thingId, attachmentManager, attachmentOpener) {
+    attachmentManager.observeThingSyncStates(thingId, attachmentOpener)
+  }.collectAsStateWithLifecycle(emptyMap())
+  val dataLogs by remember(thingId, dataLogManager) {
+    dataLogManager.observeRowInfos(ThingId(thingId))
+  }.collectAsStateWithLifecycle(null)
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
   // A quick action runs inside the shell entry, so the cross-screen back-stack channel is the

@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.ImageCompressor
@@ -24,16 +25,19 @@ import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.ExperimentalTime
 
 /**
  * Local-first [AttachmentManager]. See docs/storage/storage_r2_design.md §6.2 + §6.3.
@@ -41,7 +45,6 @@ import kotlin.time.ExperimentalTime
  * `addPickedFile` writes bytes to disk, inserts a `LOCAL_ONLY` blob_object row, and schedules
  * the upload via [uploadScheduler]. No network I/O on the calling coroutine.
  */
-@OptIn(ExperimentalTime::class)
 class LocalFirstAttachmentManagerImpl(
   private val blobs: LocalBlobStore,
   private val auth: AuthManager,
@@ -265,6 +268,30 @@ class LocalFirstAttachmentManagerImpl(
       .map { refs ->
         refs.associate { ref -> ref.id.value to ref.toBlobSyncState() }
       }
+
+  // Blob sync state must be observed at the scope that actually holds this thing's data: the
+  // caller's own tree for an owned plane, or the host's tree for a shared one. Deriving the path
+  // from the uid alone (the old `/users/$uid/thing/...`) missed a member's shared thing
+  // entirely, so sync state never resolved. Drive it off [ThingScopeResolver] instead, which
+  // re-emits when the thing flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun observeThingSyncStates(
+    thingId: String,
+    opener: AttachmentOpener,
+  ): Flow<Map<String, BlobSyncState>> = // allow-primitive-tuple: proto id
+    combine(
+      thingScopeResolver.resolve(thingId)
+        .flatMapLatest { scope ->
+          if (scope == null) flowOf(emptyMap())
+          else observeBlobStates(scope.toPath())
+        },
+      opener.downloadingIds,
+    ) { blobStates, downloadingIds ->
+      buildMap {
+        putAll(blobStates)
+        downloadingIds.forEach { put(it, BlobSyncState.Downloading) }
+      }
+    }.distinctUntilChanged()
 
   override suspend fun retryUpload(id: String) {
     blobs.resetUploadAttempts(BlobId(id))

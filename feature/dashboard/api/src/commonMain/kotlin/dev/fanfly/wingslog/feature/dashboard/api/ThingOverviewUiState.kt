@@ -1,12 +1,9 @@
 package dev.fanfly.wingslog.feature.dashboard.api
 
 import dev.fanfly.wingslog.core.template.DegradedReason
-import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
-import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Thing
@@ -39,9 +36,6 @@ sealed interface ThingOverviewUiState {
     /** Resolve bubble open for this task; its Skip confirmation is [skippingTaskId]. */
     val resolvingTaskId: String? = null,
     val skippingTaskId: String? = null,
-    val syncStates: Map<String, BlobSyncState> = emptyMap(),
-    /** The Thing's data logs, for DATA_LOG attachment rows; null until the first emission. */
-    val dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
     val squawks: List<SquawkWithStatus> = emptyList(),
     val aogSquawks: List<Squawk> = emptyList(),
     val selectedSquawk: SquawkWithStatus? = null,
