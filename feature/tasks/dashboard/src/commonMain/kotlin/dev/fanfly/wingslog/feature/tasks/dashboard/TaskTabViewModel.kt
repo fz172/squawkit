@@ -62,6 +62,8 @@ class TaskTabViewModel(
     trackSearch(applied.query, activeHits + compliedHits)
     TaskTabUiState(
       filter = typed,
+      allActiveTasks = active,
+      allCompletedTasks = complied,
       activeTasks = activeHits.map { it.item },
       completedTasks = compliedHits.map { it.item },
       matches = (activeHits + compliedHits).matchesById { it.card.id },

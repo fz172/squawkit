@@ -3,8 +3,6 @@ package dev.fanfly.wingslog.feature.tasks.dashboard
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.ui.swipe.SwipeAction
 import dev.fanfly.wingslog.core.ui.swipe.SwipeRevealController
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskQuickActionCallbacks
@@ -14,31 +12,35 @@ import dev.fanfly.wingslog.feature.tasks.viewing.quickActions
 @Composable
 internal fun taskQuickActionsFor(
   item: MaintenanceTaskWithStatus,
-  state: ThingOverviewUiState.Success,
+  resolvingTaskId: String?,
   revealController: SwipeRevealController,
-  onAction: (ThingOverviewAction) -> Unit,
+  onResolveClick: () -> Unit,
+  onDismissResolveMenu: () -> Unit,
+  onCreateWorkLog: () -> Unit,
+  onSkipThisCycle: () -> Unit,
+  onDeleteClick: () -> Unit,
 ): List<SwipeAction> =
   item.quickActions(
     TaskQuickActionCallbacks(
-      onResolve = { onAction(ThingOverviewAction.TaskResolveClick(item)) },
+      onResolve = onResolveClick,
       onDelete = {
         revealController.close()
-        onAction(ThingOverviewAction.DeleteTaskClick(item))
+        onDeleteClick()
       },
       resolveMenu = {
         ResolveTaskOptionsMenu(
-          expanded = state.resolvingTaskId == item.card.id,
+          expanded = resolvingTaskId == item.card.id,
           onDismissRequest = {
             revealController.close()
-            onAction(ThingOverviewAction.DismissTaskResolveMenu)
+            onDismissResolveMenu()
           },
           onCreateWorkLog = {
             revealController.close()
-            onAction(ThingOverviewAction.TaskCreateLogClick(item.card.id))
+            onCreateWorkLog()
           },
           onSkipThisCycle = {
             revealController.close()
-            onAction(ThingOverviewAction.TaskSkipClick(item))
+            onSkipThisCycle()
           },
         )
       },

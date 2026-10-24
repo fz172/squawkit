@@ -31,14 +31,11 @@ import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.getString
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import wingslog.feature.tasks.dashboard.generated.resources.Res
@@ -48,8 +45,9 @@ import kotlin.math.roundToInt
 
 @Composable
 fun MaintenanceTasksTab(
-  state: ThingOverviewUiState.Success,
-  onAction: (ThingOverviewAction) -> Unit,
+  thingId: String,
+  onNavigateToBrowseSuggestions: () -> Unit = {},
+  onNavigateToCreateLog: (cardId: String) -> Unit = {},
   /** Opens the account upgrade, for a guest's *Browse suggested tasks* (PRD R47). */
   onLinkAccount: () -> Unit = {},
   /** Jumped-to task (from a log's Affected Tasks): switch to its sub-view and scroll to it. */
@@ -64,30 +62,42 @@ fun MaintenanceTasksTab(
   val revealController = rememberSwipeRevealController()
   LaunchedEffect(showComplied) { revealController.close() }
   val analytics = LocalAnalytics.current
+  val templateId = LocalThingTemplate.current?.id.orEmpty()
   val tabViewModel: TaskTabViewModel =
     koinViewModel(
-      key = "tasks:${state.thing.id}",
+      key = "tasks:$thingId",
       parameters = {
         parametersOf(
-          state.thing.id,
-          state.thing.template?.id.orEmpty()
+          thingId,
+          templateId,
         )
       },
     )
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
+  val actionsViewModel: TaskActionsViewModel =
+    koinViewModel(
+      key = "task-actions:$thingId",
+      parameters = {
+        parametersOf(
+          thingId,
+          templateId,
+        )
+      },
+    )
+  val actionsState by actionsViewModel.uiState.collectAsStateWithLifecycle()
   val suggestViewModel: SuggestTasksEntryViewModel =
     koinViewModel(
-      key = "suggest:${state.thing.id}",
-      parameters = { parametersOf(state.thing.id) })
+      key = "suggest:$thingId",
+      parameters = { parametersOf(thingId) })
   val suggestEntry by suggestViewModel.entry.collectAsStateWithLifecycle()
   val addedViewModel: AddedTasksViewModel =
     koinViewModel(
-      key = "added:${state.thing.id}",
-      parameters = { parametersOf(state.thing.id) })
+      key = "added:$thingId",
+      parameters = { parametersOf(thingId) })
   val readyViewModel: ReadySuggestionsViewModel =
     koinViewModel(
-      key = "ready:${state.thing.id}",
-      parameters = { parametersOf(state.thing.id) })
+      key = "ready:$thingId",
+      parameters = { parametersOf(thingId) })
   val readySuggestions by readyViewModel.ready.collectAsStateWithLifecycle()
   AddedSnackbar(addedViewModel)
   val taskFilter by tabViewModel.filter.collectAsStateWithLifecycle()
@@ -112,8 +122,8 @@ fun MaintenanceTasksTab(
   }
   val taskInHistory: Boolean? = scrollToTaskId?.let { id ->
     when {
-      state.completedTasks.any { it.card.id == id } -> true
-      state.activeTasks.any { it.card.id == id } -> false
+      tabState.allCompletedTasks.any { it.card.id == id } -> true
+      tabState.allActiveTasks.any { it.card.id == id } -> false
       else -> null
     }
   }
@@ -152,10 +162,10 @@ fun MaintenanceTasksTab(
       ReadySuggestionsCard(
         ready = ready,
         // The default mode shows the held answer rather than starting a run (R19).
-        onReview = { onAction(ThingOverviewAction.BrowseSuggestionsClick(state.thing.id)) },
+        onReview = onNavigateToBrowseSuggestions,
       )
     }
-    val isEmpty = state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
+    val isEmpty = tabState.allActiveTasks.isEmpty() && tabState.allCompletedTasks.isEmpty()
     val hasCuratedList = hasCuratedList(LocalThingTemplate.current?.id)
     ComplianceSection(
       activeTasks = activeTasks,
@@ -165,13 +175,13 @@ fun MaintenanceTasksTab(
         showComplied = it
         analytics.logScreenView("shell/tasks/${if (it) "complied" else "active"}")
       },
-      onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+      onCardClick = actionsViewModel::showDetail,
       // "Can add it later from an empty Tasks tab" (PRD §4.9): only while the tab is empty in
       // both sub-views, and only for a template the server keeps a curated list for.
       onBrowseSuggestions = if (isEmpty && hasCuratedList) {
         browseSuggestedAction(
           entry = suggestEntry,
-          browse = { onAction(ThingOverviewAction.BrowseSuggestionsClick(state.thing.id)) },
+          browse = onNavigateToBrowseSuggestions,
           signIn = onLinkAccount,
         )
       } else null,
@@ -181,7 +191,8 @@ fun MaintenanceTasksTab(
       showHeader = showHeader,
       filterBar = {
         TaskFilterBar(
-          state = state,
+          allActiveTasks = tabState.allActiveTasks,
+          allCompletedTasks = tabState.allCompletedTasks,
           filter = taskFilter,
           onFilterChange = setFilter,
           showComplied = showComplied,
@@ -210,19 +221,23 @@ fun MaintenanceTasksTab(
       revealController = revealController,
       quickActionsFor = { item ->
         taskQuickActionsFor(
-          item,
-          state,
-          revealController,
-          onAction
+          item = item,
+          resolvingTaskId = actionsState.resolvingTaskId,
+          revealController = revealController,
+          onResolveClick = { actionsViewModel.onResolveClick(item) },
+          onDismissResolveMenu = actionsViewModel::dismissResolveMenu,
+          onCreateWorkLog = {
+            actionsViewModel.onCreateLogClick()
+            onNavigateToCreateLog(item.card.id)
+          },
+          onSkipThisCycle = { actionsViewModel.onSkipClick(item) },
+          onDeleteClick = { actionsViewModel.onDeleteClick(item) },
         )
       },
     )
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
   }
-
-  // ThingSectionContent renders the skip and delete confirmations, so neither is clipped by the
-  // swipe container.
 }
 
 /**

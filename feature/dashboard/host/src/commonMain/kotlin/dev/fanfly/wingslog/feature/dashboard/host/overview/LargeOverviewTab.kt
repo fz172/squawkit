@@ -16,13 +16,14 @@ import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.dashboard.LogOnboardingCard
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.needsAttention
 
 @Composable
 internal fun LargeOverviewTab(
   state: ThingOverviewUiState.Success,
   squawkOverview: SquawkOverviewUiState,
-  onAction: (ThingOverviewAction) -> Unit,
+  onTaskClick: (MaintenanceTaskWithStatus) -> Unit,
   onViewSquawksTab: () -> Unit,
   onViewLogsTab: () -> Unit,
   onMutationAction: ((ThingOverviewAction) -> Unit)?,
@@ -36,7 +37,7 @@ internal fun LargeOverviewTab(
       .verticalScroll(rememberScrollState())
       .padding(horizontal = Spacing.screenPadding)
       .padding(top = Spacing.medium),
-    verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
+      verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
     OverviewHero(state)
 
@@ -44,7 +45,7 @@ internal fun LargeOverviewTab(
       downSquawks = squawkOverview.aogSquawks,
       tasks = overdueTasks,
       onSquawkClick = { onViewSquawksTab() },
-      onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+      onTaskClick = onTaskClick,
     )
 
     ThingDataCard(
@@ -74,7 +75,7 @@ internal fun LargeOverviewTab(
     DashboardLowerGrid(
       state = state,
       openSquawksPreview = squawkOverview.openPreview,
-      onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+      onTaskClick = onTaskClick,
       onLogsClick = onViewLogsTab,
       onViewSquawksClick = onViewSquawksTab,
     )
