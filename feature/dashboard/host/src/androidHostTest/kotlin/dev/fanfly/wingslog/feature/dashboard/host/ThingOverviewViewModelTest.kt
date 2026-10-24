@@ -16,7 +16,6 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
@@ -24,7 +23,6 @@ import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.coEvery
@@ -60,7 +58,6 @@ class ThingOverviewViewModelTest {
   private val logManager: MaintenanceLogManager = mockk()
   private val taskDataManager: TaskDataManager = mockk()
   private val taskStatusManager: TaskStatusManager = mockk()
-  private val squawkManager: SquawkManager = mockk()
   private val commentManager: CommentManager = mockk(relaxed = true) {
     every { observeComments(any()) } returns flowOf(emptyList())
   }
@@ -69,7 +66,6 @@ class ThingOverviewViewModelTest {
   private val auth: FirebaseAuth = mockk()
 
   private val thing = Thing(id = THING_ID, template = AirplaneTemplate.TEMPLATE)
-  private val squawk = Squawk(id = "s1", title = "Transponder intermittent")
   private val oilChange = MaintenanceTask(
     id = "c1",
     title = "Oil change",
@@ -90,11 +86,6 @@ class ThingOverviewViewModelTest {
     )
     every { taskStatusManager.observeTasksWithStatus(THING_ID) } returns
       flowOf(listOf(dueOilChange))
-    every { squawkManager.observeSquawks(THING_ID) } returns flowOf(
-      listOf(
-        squawk
-      )
-    )
     every { sharingManager.observeMyRole(THING_ID) } returns flowOf(ShareRole.OWNER)
     every { sharingManager.observeIsShared(THING_ID) } returns flowOf(false)
     every { auth.currentUser } returns null
@@ -108,7 +99,6 @@ class ThingOverviewViewModelTest {
     logManager,
     taskDataManager,
     taskStatusManager,
-    squawkManager,
     commentManager,
     sharingManager,
     BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),

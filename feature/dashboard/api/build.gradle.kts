@@ -25,7 +25,6 @@ kotlin {
       implementation(project(":core:template"))
       implementation(project(":core:ui"))
       implementation(project(":feature:sharing:model"))
-      implementation(project(":feature:squawk:model"))
       implementation(project(":feature:tasks:model"))
       implementation(libs.kotlinx.datetime)
     }

@@ -9,7 +9,6 @@ import dev.fanfly.wingslog.feature.dashboard.host.ThingOverviewViewModel
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -28,7 +27,6 @@ val dashboardHostModule = module {
       get<MaintenanceLogManager>(),
       get<TaskDataManager>(),
       get<TaskStatusManager>(),
-      get<SquawkManager>(),
       get<CommentManager>(),
       get<SharingManager>(),
       get<TemplateRegistry>(),

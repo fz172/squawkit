@@ -2,10 +2,8 @@ package dev.fanfly.wingslog.feature.dashboard.api
 
 import dev.fanfly.wingslog.core.template.DegradedReason
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
-import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Thing
 
 sealed interface ThingOverviewUiState {
@@ -36,8 +34,6 @@ sealed interface ThingOverviewUiState {
     /** Resolve bubble open for this task; its Skip confirmation is [skippingTaskId]. */
     val resolvingTaskId: String? = null,
     val skippingTaskId: String? = null,
-    val squawks: List<SquawkWithStatus> = emptyList(),
-    val aogSquawks: List<Squawk> = emptyList(),
     /** Caller's role on this thing; drives owner-only gating. `null` while it resolves. */
     val myRole: ShareRole? = null,
     /**
