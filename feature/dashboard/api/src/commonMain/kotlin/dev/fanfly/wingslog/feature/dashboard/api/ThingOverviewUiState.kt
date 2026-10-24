@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.dashboard.api
 
 import dev.fanfly.wingslog.core.template.DegradedReason
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
-import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Thing
 
@@ -25,8 +24,6 @@ sealed interface ThingOverviewUiState {
   data class Success(
     val thing: Thing,
     val logStats: LogStats? = null,
-    val activeTasks: List<MaintenanceTaskWithStatus> = emptyList(),
-    val completedTasks: List<MaintenanceTaskWithStatus> = emptyList(),
     val recentLogs: List<MaintenanceLog> = emptyList(),
     /** Caller's role on this thing; drives owner-only gating. `null` while it resolves. */
     val myRole: ShareRole? = null,

@@ -27,7 +27,6 @@ import dev.fanfly.wingslog.feature.logs.dashboard.RecentLogRow
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkRailRow
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.feature.tasks.model.needsAttention
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.all
@@ -42,15 +41,13 @@ import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 @Composable
 internal fun DashboardLowerGrid(
   state: ThingOverviewUiState.Success,
+  nextDueTask: MaintenanceTaskWithStatus?,
   openSquawksPreview: List<SquawkWithStatus>,
   onTaskClick: (MaintenanceTaskWithStatus) -> Unit,
   onLogsClick: () -> Unit,
   onViewSquawksClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  // Overdue and due-soon tasks are already listed under Needs attention, above.
-  val nextTask = state.activeTasks.firstOrNull { !it.needsAttention }
-
   Row(
     modifier = modifier,
     horizontalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
@@ -85,11 +82,11 @@ internal fun DashboardLowerGrid(
       modifier = Modifier.width(320.dp),
       verticalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
-      if (nextTask != null) {
+      if (nextDueTask != null) {
         RailCard(title = stringResource(Res.string.overview_next_due)) {
           TaskCardItem(
-            cardWithStatus = nextTask,
-            onClick = { onTaskClick(nextTask) },
+            cardWithStatus = nextDueTask,
+            onClick = { onTaskClick(nextDueTask) },
           )
         }
       } else {

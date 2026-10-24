@@ -7,7 +7,6 @@ import dev.fanfly.wingslog.feature.dashboard.host.ThingOverviewViewModel
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -22,7 +21,6 @@ val dashboardHostModule = module {
     ThingOverviewViewModel(
       get<FleetManager>(),
       get<MaintenanceLogManager>(),
-      get<TaskStatusManager>(),
       get<SharingManager>(),
       get<TemplateRegistry>(),
       get<FirebaseAuth>(),
