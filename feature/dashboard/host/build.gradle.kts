@@ -31,7 +31,6 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":core:analytics"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:datetime"))
       implementation(project(":core:model"))
@@ -45,7 +44,6 @@ kotlin {
       implementation(project(":feature:datalog:viewing"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:logs:dashboard"))
-      implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:logs:viewing"))
       implementation(project(":feature:sharing:datamanager"))

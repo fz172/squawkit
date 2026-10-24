@@ -26,7 +26,7 @@ import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import dev.fanfly.wingslog.feature.dashboard.api.LogStats
+import dev.fanfly.wingslog.feature.logs.dashboard.LogStats
 import dev.fanfly.wingslog.thing.MeterDef
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.dashboard.host.generated.resources.meter_reading_update

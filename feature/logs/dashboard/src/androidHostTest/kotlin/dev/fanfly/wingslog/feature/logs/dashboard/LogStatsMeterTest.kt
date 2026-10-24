@@ -1,8 +1,7 @@
-package dev.fanfly.wingslog.feature.dashboard.host
+package dev.fanfly.wingslog.feature.logs.dashboard
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.MeterKeys
-import dev.fanfly.wingslog.feature.dashboard.api.LogStats
 import org.junit.Test
 
 /**

@@ -42,7 +42,7 @@ import dev.fanfly.wingslog.core.template.componentTree
 import dev.fanfly.wingslog.core.template.specLines
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.dashboard.api.LogStats
+import dev.fanfly.wingslog.feature.logs.dashboard.LogStats
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.edit
