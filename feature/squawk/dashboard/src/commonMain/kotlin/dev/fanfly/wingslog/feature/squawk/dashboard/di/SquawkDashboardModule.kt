@@ -7,12 +7,13 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkActionsViewModel
+import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewViewModel
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-/** The squawk section tab: its filter/search and actions ViewModels, keyed per thing. */
+/** The squawk section tab and overview slice: their ViewModels, keyed per thing. */
 val squawkDashboardModule = module {
   viewModel { params ->
     SquawkTabViewModel(
@@ -34,6 +35,12 @@ val squawkDashboardModule = module {
       get<AnalyticsManager>(),
       params.get<String>(0),
       params.get<String>(1),
+    )
+  }
+  viewModel { params ->
+    SquawkOverviewViewModel(
+      get<SquawkManager>(),
+      params.get<String>(),
     )
   }
 }

@@ -54,7 +54,6 @@ kotlin {
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:sharing:model"))
       implementation(project(":feature:squawk:dashboard"))
-      implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:squawk:model"))
       implementation(project(":feature:squawk:sharedassets"))
       implementation(project(":feature:tasks:dashboard"))

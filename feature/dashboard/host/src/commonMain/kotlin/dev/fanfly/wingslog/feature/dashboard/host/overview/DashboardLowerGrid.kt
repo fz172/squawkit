@@ -25,7 +25,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.dashboard.RecentLogRow
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkRailRow
-import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
+import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.needsAttention
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
@@ -42,6 +42,7 @@ import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 @Composable
 internal fun DashboardLowerGrid(
   state: ThingOverviewUiState.Success,
+  openSquawksPreview: List<SquawkWithStatus>,
   onTaskClick: (MaintenanceTaskWithStatus) -> Unit,
   onLogsClick: () -> Unit,
   onViewSquawksClick: () -> Unit,
@@ -49,8 +50,6 @@ internal fun DashboardLowerGrid(
 ) {
   // Overdue and due-soon tasks are already listed under Needs attention, above.
   val nextTask = state.activeTasks.firstOrNull { !it.needsAttention }
-  val openSquawks = state.squawks.filter { it.status == SquawkStatus.OPEN }
-    .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
   Row(
     modifier = modifier,
@@ -111,7 +110,7 @@ internal fun DashboardLowerGrid(
         actionLabel = stringResource(CoreRes.string.all),
         onActionClick = onViewSquawksClick
       ) {
-        if (openSquawks.isEmpty()) {
+        if (openSquawksPreview.isEmpty()) {
           EmptyRailState(
             icon = Icons.Default.CheckCircle,
             title = stringResource(
@@ -121,8 +120,7 @@ internal fun DashboardLowerGrid(
             body = LocalThingLexicon.current.overviewSquawkEmptyHint,
           )
         } else {
-          val previewSquawks = openSquawks.take(3)
-          previewSquawks.forEachIndexed { index, item ->
+          openSquawksPreview.forEachIndexed { index, item ->
             SquawkRailRow(
               title = item.squawk.title,
               subtitle = item.squawk.description.ifBlank {
@@ -132,7 +130,7 @@ internal fun DashboardLowerGrid(
               },
               onClick = onViewSquawksClick,
             )
-            if (index < previewSquawks.lastIndex) {
+            if (index < openSquawksPreview.lastIndex) {
               HorizontalDivider(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(
                   alpha = 0.55f

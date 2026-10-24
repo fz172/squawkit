@@ -10,15 +10,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.layout.LayoutTier
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
+import dev.fanfly.wingslog.feature.dashboard.host.DashboardSkeleton
+import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.tasks.model.needsAttention
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -30,10 +36,22 @@ fun OverviewTab(
   onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
   modifier: Modifier = Modifier,
 ) {
+  val squawkOverviewViewModel: SquawkOverviewViewModel =
+    koinViewModel(
+      key = "squawk-overview:${state.thing.id}",
+      parameters = { parametersOf(state.thing.id) },
+    )
+  val squawkOverview by squawkOverviewViewModel.uiState.collectAsStateWithLifecycle()
+  if (!squawkOverview.loaded) {
+    DashboardSkeleton()
+    return
+  }
+
   val tier = LocalLayoutTier.current
   if (tier == LayoutTier.LARGE) {
     LargeOverviewTab(
       state = state,
+      squawkOverview = squawkOverview,
       onAction = onAction,
       onViewSquawksTab = onViewSquawksTab,
       onViewLogsTab = onViewLogsTab,
@@ -62,7 +80,7 @@ fun OverviewTab(
 
     // Above the card, so what is due is the first thing read and the card has no reason to fold.
     NeedsAttentionSection(
-      downSquawks = state.aogSquawks,
+      downSquawks = squawkOverview.aogSquawks,
       tasks = overdueTasks,
       onSquawkClick = { onViewSquawksTab() },
       onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
