@@ -28,12 +28,6 @@ sealed interface ThingOverviewUiState {
     val activeTasks: List<MaintenanceTaskWithStatus> = emptyList(),
     val completedTasks: List<MaintenanceTaskWithStatus> = emptyList(),
     val recentLogs: List<MaintenanceLog> = emptyList(),
-    val selectedTask: MaintenanceTaskWithStatus? = null,
-    val logsForSelectedTask: List<MaintenanceLog> = emptyList(),
-    val deletingTaskId: String? = null,
-    /** Resolve bubble open for this task; its Skip confirmation is [skippingTaskId]. */
-    val resolvingTaskId: String? = null,
-    val skippingTaskId: String? = null,
     /** Caller's role on this thing; drives owner-only gating. `null` while it resolves. */
     val myRole: ShareRole? = null,
     /**

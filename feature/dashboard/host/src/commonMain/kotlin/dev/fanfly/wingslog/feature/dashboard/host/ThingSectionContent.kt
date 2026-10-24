@@ -30,9 +30,9 @@ import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogSectionContent
 import dev.fanfly.wingslog.feature.logs.dashboard.LogsTab
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkTab
 import dev.fanfly.wingslog.feature.tasks.dashboard.MaintenanceTasksTab
+import dev.fanfly.wingslog.feature.tasks.dashboard.TaskActionDialogs
+import dev.fanfly.wingslog.feature.tasks.dashboard.TaskActionsViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.taskDetailFor
-import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
-import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -69,7 +69,6 @@ fun ThingSectionContent(
   val viewModel: ThingOverviewViewModel =
     koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  val commentThread by viewModel.commentThread.collectAsStateWithLifecycle()
   // Due status depends on the wall clock, not just on stored data, so recompute it whenever the
   // dashboard comes back into view — otherwise an app resumed the next day still shows yesterday's
   // status. Common to all three hosts: UIKit foreground on iOS, document.visibilitychange on web.
@@ -127,13 +126,6 @@ fun ThingSectionContent(
   LaunchedEffect(section) {
     if (section != ShellSection.SQUAWKS) pendingSquawkScrollTarget = null
   }
-  // A record open in one section does not follow the user to the next: the task selection lives in
-  // the overview ViewModel and would otherwise still be there — as a pane beside the list, or a
-  // sheet over another section — when the user came back. The log and squawk selections are their
-  // tabs' own and are cleared where each tab starts.
-  LaunchedEffect(section) {
-    viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
-  }
 
   // A jump requested by the host (a tapped urgency notification) feeds the very same per-section
   // state as an in-app jump, so both reach the list — and the highlight — by one path. The host has
@@ -181,17 +173,41 @@ fun ThingSectionContent(
       }
 
     is ThingOverviewUiState.Success -> {
+      val taskActionsViewModel: TaskActionsViewModel =
+        koinViewModel(
+          key = "task-actions:$thingId",
+          parameters = {
+            parametersOf(
+              thingId,
+              state.thing.template?.id.orEmpty(),
+            )
+          },
+        )
+      // A record open in one section does not follow the user to the next: clear the task selection
+      // whenever the section switches so it does not stay open over another section.
+      LaunchedEffect(section) {
+        taskActionsViewModel.dismissDetail()
+      }
       val taskDetail = taskDetailFor(
-        state = state,
+        actionsViewModel = taskActionsViewModel,
         thingId = thingId,
-        onAction = onAction,
-        commentThread = commentThread,
+        isAnonymous = state.isAnonymous,
+        onNavigateToEditTask = { cardId ->
+          onAction(ThingOverviewAction.EditTaskClick(thingId, cardId))
+        },
+        onNavigateToCreateLog = { cardId ->
+          onAction(ThingOverviewAction.TaskCreateLogClick(cardId))
+        },
+        onOpenDataLog = { dataLogId ->
+          onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
+        },
       )
 
       when (section) {
         ShellSection.DASHBOARD -> OverviewTab(
           state = state,
           onAction = onAction,
+          onTaskClick = taskActionsViewModel::showDetail,
           onViewSquawksTab = { onNavigateToSection(ShellSection.SQUAWKS) },
           onViewLogsTab = { onNavigateToSection(ShellSection.LOGS) },
           onMutationAction = onAction,
@@ -199,8 +215,13 @@ fun ThingSectionContent(
 
         ShellSection.TASKS -> ListDetailSection(detail = taskDetail) {
           MaintenanceTasksTab(
-            state = state,
-            onAction = onAction,
+            thingId = thingId,
+            onNavigateToBrowseSuggestions = {
+              onAction(ThingOverviewAction.BrowseSuggestionsClick(thingId))
+            },
+            onNavigateToCreateLog = { cardId ->
+              onAction(ThingOverviewAction.TaskCreateLogClick(cardId))
+            },
             onLinkAccount = onLinkAccount,
             scrollToTaskId = pendingTaskScrollTarget,
             // The shell top bar already shows the section title; avoid duplicating it.
@@ -273,23 +294,10 @@ fun ThingSectionContent(
       // Over any section but Tasks, which hosts it itself.
       if (section != ShellSection.TASKS) taskDetail?.invoke()
 
-      // Here rather than in the Tasks tab: the sheet that raises it can be open over any section.
-      if (state.skippingTaskId != null) {
-        SkipTaskConfirmDialog(
-          onConfirm = { onAction(ThingOverviewAction.ConfirmSkipTask) },
-          onDismiss = { onAction(ThingOverviewAction.CancelSkipTask) },
-        )
-      }
-
-      state.deletingTaskId?.let { deletingId ->
-        val title = (state.activeTasks + state.completedTasks)
-          .find { it.card.id == deletingId }?.card?.title ?: ""
-        DeleteTaskConfirmDialog(
-          title = title,
-          onConfirm = { onAction(ThingOverviewAction.ConfirmDeleteTask) },
-          onDismiss = { onAction(ThingOverviewAction.CancelDeleteTask) },
-        )
-      }
+      TaskActionDialogs(
+        actionsViewModel = taskActionsViewModel,
+        thingId = thingId,
+      )
     }
   }
 }

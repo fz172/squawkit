@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.dashboard.host.DashboardSkeleton
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.needsAttention
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -31,6 +32,7 @@ import org.koin.core.parameter.parametersOf
 fun OverviewTab(
   state: ThingOverviewUiState.Success,
   onAction: (ThingOverviewAction) -> Unit,
+  onTaskClick: (MaintenanceTaskWithStatus) -> Unit = {},
   onViewSquawksTab: () -> Unit = {},
   onViewLogsTab: () -> Unit = {},
   onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
@@ -52,7 +54,7 @@ fun OverviewTab(
     LargeOverviewTab(
       state = state,
       squawkOverview = squawkOverview,
-      onAction = onAction,
+      onTaskClick = onTaskClick,
       onViewSquawksTab = onViewSquawksTab,
       onViewLogsTab = onViewLogsTab,
       onMutationAction = onMutationAction,
@@ -83,7 +85,7 @@ fun OverviewTab(
       downSquawks = squawkOverview.aogSquawks,
       tasks = overdueTasks,
       onSquawkClick = { onViewSquawksTab() },
-      onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+      onTaskClick = onTaskClick,
       modifier = Modifier.padding(horizontal = Spacing.screenPadding),
     )
 
