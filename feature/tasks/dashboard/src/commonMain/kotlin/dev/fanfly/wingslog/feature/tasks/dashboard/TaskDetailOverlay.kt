@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.comments.dashboard.RecordCommentComposer
@@ -13,8 +15,10 @@ import dev.fanfly.wingslog.feature.comments.dashboard.RecordCommentThread
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.tasks.viewing.detail.TaskDetailSheet
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -30,11 +34,19 @@ fun taskDetailFor(
   onAction: (ThingOverviewAction) -> Unit,
   commentThread: CommentThreadController?,
 ): (@Composable () -> Unit)? {
+  val attachmentManager: AttachmentManager = koinInject()
   val attachmentOpener: AttachmentOpener = koinInject()
+  val dataLogManager: DataLogManager = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var taskSheetOpenError by remember(thingId) { mutableStateOf<String?>(null) }
   return state.selectedTask?.let { selectedTask ->
     {
+      val syncStates by remember(thingId, attachmentManager, attachmentOpener) {
+        attachmentManager.observeThingSyncStates(thingId, attachmentOpener)
+      }.collectAsStateWithLifecycle(emptyMap())
+      val dataLogs by remember(thingId, dataLogManager) {
+        dataLogManager.observeRowInfos(ThingId(thingId))
+      }.collectAsStateWithLifecycle(null)
       TaskDetailSheet(
         cardWithStatus = selectedTask,
         logs = state.logsForSelectedTask,
@@ -71,8 +83,8 @@ fun taskDetailFor(
             }
           }
         },
-        syncStates = state.syncStates,
-        dataLogs = state.dataLogs,
+        syncStates = syncStates,
+        dataLogs = dataLogs,
         openError = taskSheetOpenError,
         onLogWorkClick = {
           onAction(ThingOverviewAction.DismissTaskDetail)

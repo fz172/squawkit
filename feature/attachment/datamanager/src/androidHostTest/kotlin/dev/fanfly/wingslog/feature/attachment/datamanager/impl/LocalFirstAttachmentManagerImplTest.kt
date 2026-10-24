@@ -12,11 +12,13 @@ import dev.fanfly.wingslog.core.storage.blob.BlobReferenceScanner
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.ImageCompressor
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.id.DataLogId
@@ -28,6 +30,9 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -35,9 +40,6 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-abc"
@@ -768,4 +770,38 @@ class LocalFirstAttachmentManagerImplTest {
 
       assertThat(states.last()).isInstanceOf(DownloadState.Failed::class.java)
     }
+
+  // ---- observeThingSyncStates ----
+
+  @Test
+  fun observeThingSyncStates_resolvesScopeAndOverlaysDownloadingIds() = runTest {
+    val scope = EntityScope.thingChildUnsafe("host-uid", TEST_THING_ID)
+    every { thingScopeResolver.resolve(TEST_THING_ID) } returns flowOf(scope)
+    every { blobs.observeForScope(scope.toPath()) } returns flowOf(
+      listOf(
+        buildBlobRef(remoteState = RemoteState.Synced).copy(id = BlobId("att-1")),
+        buildBlobRef(remoteState = RemoteState.RemoteOnly).copy(id = BlobId("att-2")),
+      )
+    )
+    val opener = mockk<AttachmentOpener> {
+      every { downloadingIds } returns MutableStateFlow(setOf("att-2"))
+    }
+
+    val states = manager.observeThingSyncStates(TEST_THING_ID, opener).first()
+
+    assertThat(states).containsExactly(
+      "att-1", BlobSyncState.Synced,
+      "att-2", BlobSyncState.Downloading,
+    )
+  }
+
+  @Test
+  fun observeThingSyncStates_unresolvedScope_emitsEmptyMap() = runTest {
+    every { thingScopeResolver.resolve(TEST_THING_ID) } returns flowOf(null)
+    val opener = mockk<AttachmentOpener> {
+      every { downloadingIds } returns MutableStateFlow(emptySet())
+    }
+
+    assertThat(manager.observeThingSyncStates(TEST_THING_ID, opener).first()).isEmpty()
+  }
 }
