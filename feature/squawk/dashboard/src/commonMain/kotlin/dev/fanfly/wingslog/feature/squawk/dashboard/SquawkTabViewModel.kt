@@ -85,6 +85,7 @@ class SquawkTabViewModel(
     SquawkTabUiState(
       loaded = true,
       filter = typed,
+      allSquawks = squawks,
       squawks = hits.map { it.item },
       matches = hits.matchesById { it.squawk.id },
     )

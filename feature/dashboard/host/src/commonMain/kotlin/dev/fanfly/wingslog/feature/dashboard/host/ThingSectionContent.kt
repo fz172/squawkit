@@ -127,13 +127,12 @@ fun ThingSectionContent(
   LaunchedEffect(section) {
     if (section != ShellSection.SQUAWKS) pendingSquawkScrollTarget = null
   }
-  // A record open in one section does not follow the user to the next: the task and squawk
-  // selections live in the overview ViewModel and would otherwise still be there — as a pane
-  // beside the list, or a sheet over another section — when the user came back. The log
-  // selection is the Logs tab's own and is cleared where that tab starts.
+  // A record open in one section does not follow the user to the next: the task selection lives in
+  // the overview ViewModel and would otherwise still be there — as a pane beside the list, or a
+  // sheet over another section — when the user came back. The log and squawk selections are their
+  // tabs' own and are cleared where each tab starts.
   LaunchedEffect(section) {
     viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
-    viewModel.onAction(ThingOverviewAction.DismissSquawkDetail)
   }
 
   // A jump requested by the host (a tapped urgency notification) feeds the very same per-section
@@ -210,18 +209,22 @@ fun ThingSectionContent(
         }
 
         ShellSection.SQUAWKS -> SquawkTab(
-          state = state,
-          onAction = onAction,
-          onMutationAction = onAction,
+          thingId = thingId,
+          isAnonymous = state.isAnonymous,
+          canMutate = true,
+          onNavigateToEditSquawk = { squawkId ->
+            onAction(ThingOverviewAction.EditSquawkClick(thingId, squawkId))
+          },
+          onNavigateToCreateLog = { squawkId ->
+            onAction(ThingOverviewAction.SquawkFixedClick(squawkId))
+          },
           onLogClick = { logId ->
-            onAction(ThingOverviewAction.DismissSquawkDetail)
             onJumpToRecord(RecordJump(ShellSection.LOGS, logId))
           },
           onOpenDataLog = { dataLogId ->
             onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
           },
           scrollToSquawkId = pendingSquawkScrollTarget,
-          commentThread = commentThread,
           // The shell top bar already shows the section title; avoid duplicating it.
           showHeader = false,
         )

@@ -28,17 +28,13 @@ internal fun rememberSectionActionHandler(
             )
           )
 
-        // Resolve → Fixed / Create work log: the ViewModel closes the bubble and logs the
-        // commit, then we open Create Log with the record pre-linked (design §5.1).
-        is ThingOverviewAction.SquawkFixedClick -> {
-          viewModel.onAction(action)
+        is ThingOverviewAction.SquawkFixedClick ->
           navController.navigate(
             Screen.AddMaintenanceLog.createRoute(
               thingId,
               squawkId = action.squawkId,
             )
           )
-        }
 
         is ThingOverviewAction.TaskCreateLogClick -> {
           viewModel.onAction(action)
@@ -77,15 +73,13 @@ internal fun rememberSectionActionHandler(
         is ThingOverviewAction.AddSquawkClick ->
           navController.navigate(Screen.AddSquawk.createRoute(thingId))
 
-        is ThingOverviewAction.EditSquawkClick -> {
-          viewModel.onAction(ThingOverviewAction.DismissSquawkDetail)
+        is ThingOverviewAction.EditSquawkClick ->
           navController.navigate(
             Screen.EditSquawk.createRoute(
               thingId,
               action.squawkId
             )
           )
-        }
 
         is ThingOverviewAction.OpenDataLogClick ->
           navController.navigate(

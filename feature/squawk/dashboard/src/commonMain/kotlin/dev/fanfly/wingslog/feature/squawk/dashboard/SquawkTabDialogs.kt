@@ -1,27 +1,29 @@
 package dev.fanfly.wingslog.feature.squawk.dashboard
 
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.squawk.viewing.DeleteSquawkConfirmDialog
 import dev.fanfly.wingslog.feature.squawk.viewing.DismissSquawkDialog
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 
 /** The dismiss and delete confirmations, at tab level so the swipe container cannot clip them. */
 @Composable
 internal fun SquawkTabDialogs(
-  state: ThingOverviewUiState.Success,
-  onAction: (ThingOverviewAction) -> Unit,
+  state: SquawkActionsUiState,
+  onConfirmDismiss: (SquawkDismissReason) -> Unit,
+  onCancelDismiss: () -> Unit,
+  onConfirmDelete: () -> Unit,
+  onCancelDelete: () -> Unit,
 ) {
   if (state.dismissingSquawkId != null) {
     DismissSquawkDialog(
-      onConfirm = { onAction(ThingOverviewAction.ConfirmDismissSquawk(it)) },
-      onDismiss = { onAction(ThingOverviewAction.CancelDismissSquawk) },
+      onConfirm = onConfirmDismiss,
+      onDismiss = onCancelDismiss,
     )
   }
   if (state.deletingSquawkId != null) {
     DeleteSquawkConfirmDialog(
-      onConfirm = { onAction(ThingOverviewAction.ConfirmDeleteSquawk) },
-      onDismiss = { onAction(ThingOverviewAction.CancelDeleteSquawk) },
+      onConfirm = onConfirmDelete,
+      onDismiss = onCancelDelete,
     )
   }
 }

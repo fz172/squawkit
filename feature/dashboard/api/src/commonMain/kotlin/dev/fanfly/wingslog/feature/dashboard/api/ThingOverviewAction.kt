@@ -1,9 +1,7 @@
 package dev.fanfly.wingslog.feature.dashboard.api
 
-import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.id.DataLogId
-import dev.fanfly.wingslog.thing.SquawkDismissReason
 
 sealed interface ThingOverviewAction {
   data object BackClick : ThingOverviewAction
@@ -41,37 +39,12 @@ sealed interface ThingOverviewAction {
   data object CancelDeleteTask : ThingOverviewAction
   data object ConfirmDeleteTask : ThingOverviewAction
   data class AddSquawkClick(val thingId: String) : ThingOverviewAction
-  data class ShowSquawkDetail(val squawk: SquawkWithStatus) :
-    ThingOverviewAction
-
-  data object DismissSquawkDetail : ThingOverviewAction
 
   data class EditSquawkClick(val thingId: String, val squawkId: String) :
     ThingOverviewAction
 
-  // ── Squawk quick actions (design §5.1) ─────────────────────────────────────
-
-  /** Opens the Resolve bubble anchored to the card's Resolve button. */
-  data class SquawkResolveClick(val squawk: SquawkWithStatus) :
-    ThingOverviewAction
-
-  data object DismissSquawkResolveMenu : ThingOverviewAction
-
   /** Navigates to Create Log with the squawk pre-linked; the section drives the navController. */
   data class SquawkFixedClick(val squawkId: String) : ThingOverviewAction
-  data class SquawkDismissClick(val squawkId: String) : ThingOverviewAction
-
-  /** Detail sheet only: a dismissed squawk goes back to open. */
-  data class SquawkReopenClick(val squawkId: String) : ThingOverviewAction
-  data class ConfirmDismissSquawk(val reason: SquawkDismissReason) :
-    ThingOverviewAction
-
-  data object CancelDismissSquawk : ThingOverviewAction
-  data class DeleteSquawkClick(val squawk: SquawkWithStatus) :
-    ThingOverviewAction
-
-  data object ConfirmDeleteSquawk : ThingOverviewAction
-  data object CancelDeleteSquawk : ThingOverviewAction
 
   // ── Task quick actions (design §5.1) ───────────────────────────────────────
 

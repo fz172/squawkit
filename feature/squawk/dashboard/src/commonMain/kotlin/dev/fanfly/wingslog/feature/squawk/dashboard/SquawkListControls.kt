@@ -13,7 +13,6 @@ import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.bar.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
@@ -44,7 +43,7 @@ import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 /** Search, filters, the Open/Closed toggle and the count row that head the squawk list. */
 @Composable
 internal fun SquawkListControls(
-  state: ThingOverviewUiState.Success,
+  allSquawks: List<SquawkWithStatus>,
   filter: RecordFilter,
   onFilterChange: (RecordFilter) -> Unit,
   onClearFilter: () -> Unit,
@@ -85,9 +84,9 @@ internal fun SquawkListControls(
         .toLocalDateTime(TimeZone.currentSystemDefault()).date
     }
     val subView = if (showClosed) {
-      state.squawks.filter { it.status != SquawkStatus.OPEN }
+      allSquawks.filter { it.status != SquawkStatus.OPEN }
     } else {
-      state.squawks.filter { it.status == SquawkStatus.OPEN }
+      allSquawks.filter { it.status == SquawkStatus.OPEN }
     }
     RecordFilterControls(
       expanded = showFilterSheet,
