@@ -2,13 +2,10 @@ package dev.fanfly.wingslog.feature.squawk.dashboard
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.list.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.swipe.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.swipe.SwipeRevealController
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.viewing.hiddenMatchNote
 import dev.fanfly.wingslog.feature.search.viewing.wordsIn
@@ -25,46 +22,52 @@ import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 @Composable
 internal fun SquawkRow(
   item: SquawkWithStatus,
-  state: ThingOverviewUiState.Success,
+  resolvingSquawkId: String?,
   matches: List<FieldMatch>,
   showPriority: Boolean,
   isJumpTarget: Boolean,
   revealController: SwipeRevealController,
-  onAction: (ThingOverviewAction) -> Unit,
-  onMutationAction: ((ThingOverviewAction) -> Unit)?,
+  onClick: () -> Unit,
+  canMutate: Boolean,
+  onResolveClick: () -> Unit,
+  onDismissResolveMenu: () -> Unit,
+  onDismissNoWorkPlanned: () -> Unit,
+  onFixedClick: () -> Unit,
+  onDeleteClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   // Whoever may open the edit form may swipe (PRD R20); a read-only caller gets an empty action
   // list, which disables the drag.
-  val quickActions = onMutationAction?.let { mutate ->
+  val quickActions = if (canMutate) {
     item.quickActions(
       SquawkQuickActionCallbacks(
-        onResolve = { mutate(ThingOverviewAction.SquawkResolveClick(item)) },
+        onResolve = onResolveClick,
         onDelete = {
           revealController.close()
-          mutate(ThingOverviewAction.DeleteSquawkClick(item))
+          onDeleteClick()
         },
         resolveMenu = {
           ResolveOptionsMenu(
-            expanded = state.resolvingSquawkId == item.squawk.id,
+            expanded = resolvingSquawkId == item.squawk.id,
             onDismissRequest = {
               revealController.close()
-              mutate(ThingOverviewAction.DismissSquawkResolveMenu)
+              onDismissResolveMenu()
             },
             onDismissNoWorkPlanned = {
               revealController.close()
-              mutate(ThingOverviewAction.SquawkDismissClick(item.squawk.id))
+              onDismissNoWorkPlanned()
             },
             onFixedClick = {
               revealController.close()
-              mutate(ThingOverviewAction.SquawkFixedClick(item.squawk.id))
+              onFixedClick()
             },
           )
         },
       )
     )
+  } else {
+    emptyList()
   }
-    .orEmpty()
   val shownFields =
     setOf(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION)
   SwipeActionCard(
@@ -75,7 +78,7 @@ internal fun SquawkRow(
   ) {
     SquawkCard(
       item = item,
-      onClick = { onAction(ThingOverviewAction.ShowSquawkDetail(item)) },
+      onClick = onClick,
       showPriority = showPriority,
       highlight = matches.wordsIn(
         SquawkAdapter.FIELD_TITLE,

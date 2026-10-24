@@ -28,6 +28,7 @@ kotlin {
       implementation(project(":core:analytics"))
       implementation(project(":core:datetime"))
       implementation(project(":core:model"))
+      implementation(project(":core:sharedassets"))
       implementation(project(":core:template"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
@@ -39,7 +40,8 @@ kotlin {
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:comments:dashboard"))
       implementation(project(":feature:comments:datamanager"))
-      implementation(project(":feature:dashboard:api"))
+      implementation(project(":feature:comments:model"))
+      implementation(project(":feature:comments:sharedassets"))
       implementation(project(":feature:datalog:datamanager"))
       implementation(project(":feature:datalog:model"))
       implementation(project(":feature:logs:datamanager"))
@@ -64,6 +66,7 @@ kotlin {
 }
 
 dependencies {
+  "androidHostTestImplementation"(project(":core:appinfo"))
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.truth)
   "androidHostTestImplementation"(libs.mockk)

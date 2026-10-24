@@ -9,8 +9,6 @@ import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewEvent
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
@@ -27,20 +25,17 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -48,11 +43,8 @@ import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.core.sharedassets.generated.resources.save_failed
-import wingslog.feature.squawk.sharedassets.generated.resources.squawk_deleted
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 
 private const val THING_ID = "thing-1"
 
@@ -194,155 +186,11 @@ class ThingOverviewViewModelTest {
   }
 
   @Test
-  fun confirmDeleteSquawk_deletesThroughTheManager_clearsTheIdsAndSaysSo() =
-    runTest {
-      coEvery {
-        squawkManager.deleteSquawk(
-          THING_ID,
-          "s1"
-        )
-      } returns Result.success(true)
-      val vm = viewModel()
-      vm.onAction(ThingOverviewAction.ShowSquawkDetail(vm.success.squawks.first()))
-      vm.onAction(ThingOverviewAction.DeleteSquawkClick(vm.success.squawks.first()))
-      assertThat(vm.success.deletingSquawkId).isEqualTo("s1")
-
-      vm.onAction(ThingOverviewAction.ConfirmDeleteSquawk)
-
-      coVerify(exactly = 1) { squawkManager.deleteSquawk(THING_ID, "s1") }
-      assertThat(vm.success.deletingSquawkId).isNull()
-      assertThat(vm.success.selectedSquawk).isNull()
-      assertThat(vm.events.first())
-        .isEqualTo(
-          ThingOverviewEvent.ShowMessage(
-            UiText.StringRes(SquawkRes.string.squawk_deleted, listOf("Squawk"))
-          )
-        )
-    }
-
-  @Test
-  fun deleteSquawkFailure_keepsTheCardAndReportsIt() = runTest {
-    coEvery { squawkManager.deleteSquawk(THING_ID, "s1") } returns
-      Result.failure(IllegalStateException("offline"))
-    val vm = viewModel()
-    vm.onAction(ThingOverviewAction.DeleteSquawkClick(vm.success.squawks.first()))
-
-    vm.onAction(ThingOverviewAction.ConfirmDeleteSquawk)
-
-    // The record is still there to try again on, so only the dialog closes.
-    assertThat(vm.success.squawks.map { it.squawk.id }).containsExactly("s1")
-    assertThat(vm.success.deletingSquawkId).isNull()
-    assertThat(vm.events.first())
-      .isEqualTo(ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.delete_failed)))
-  }
-
-  @Test
-  fun confirmDismissSquawk_passesTheChosenReason() = runTest {
-    coEvery {
-      squawkManager.dismissSquawk(
-        THING_ID,
-        "s1",
-        SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE
-      )
-    } returns Result.success(Unit)
-    val vm = viewModel()
-    vm.onAction(ThingOverviewAction.SquawkDismissClick("s1"))
-
-    vm.onAction(
-      ThingOverviewAction.ConfirmDismissSquawk(
-        SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE
-      )
-    )
-
-    coVerify(exactly = 1) {
-      squawkManager.dismissSquawk(
-        THING_ID,
-        "s1",
-        SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE
-      )
-    }
-    assertThat(vm.success.dismissingSquawkId).isNull()
-  }
-
-  @Test
-  fun openingASquawkSheet_opensThatSquawksThread_andClosingItClosesTheThread() =
-    runTest {
-      val vm = viewModel()
-      assertThat(vm.commentThread.value).isNull()
-
-      vm.onAction(ThingOverviewAction.ShowSquawkDetail(vm.success.squawks.first()))
-      advanceUntilIdle()
-
-      assertThat(vm.commentThread.value).isNotNull()
-      verify {
-        commentManager.observeComments(
-          CommentTarget(
-            THING_ID,
-            "s1",
-            CommentParentKind.SQUAWK
-          )
-        )
-      }
-
-      vm.onAction(ThingOverviewAction.DismissSquawkDetail)
-      advanceUntilIdle()
-
-      assertThat(vm.commentThread.value).isNull()
-    }
-
-  @Test
-  fun anUnpostedDraft_survivesClosingTheSheet() = runTest {
-    // A sheet closes on a stray tap outside it, and the words exist nowhere else.
-    val vm = viewModel()
-    val squawk = vm.success.squawks.first()
-    vm.onAction(ThingOverviewAction.ShowSquawkDetail(squawk))
-    advanceUntilIdle()
-    vm.commentThread.value!!.onDraftChange("Kit arrived")
-
-    vm.onAction(ThingOverviewAction.DismissSquawkDetail)
-    advanceUntilIdle()
-    vm.onAction(ThingOverviewAction.ShowSquawkDetail(squawk))
-    advanceUntilIdle()
-
-    assertThat(vm.commentThread.value!!.state.value.draft).isEqualTo("Kit arrived")
-  }
-
-  @Test
-  fun squawkReopenClick_reopensThroughTheManager() = runTest {
-    coEvery {
-      squawkManager.reopenSquawk(
-        THING_ID,
-        "s1"
-      )
-    } returns Result.success(Unit)
-    val vm = viewModel()
-
-    vm.onAction(ThingOverviewAction.SquawkReopenClick("s1"))
-
-    coVerify(exactly = 1) { squawkManager.reopenSquawk(THING_ID, "s1") }
-  }
-
-  @Test
-  fun squawkReopenClick_failing_saysSo() = runTest {
-    coEvery { squawkManager.reopenSquawk(THING_ID, "s1") } returns
-      Result.failure(IllegalStateException("offline"))
-    val vm = viewModel()
-
-    vm.onAction(ThingOverviewAction.SquawkReopenClick("s1"))
-
-    assertThat(vm.events.first())
-      .isEqualTo(ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed)))
-  }
-
-  @Test
   fun cancelledConfirmations_writeNothingAndLogNothing() = runTest {
     val vm = viewModel()
-    vm.onAction(ThingOverviewAction.DeleteSquawkClick(vm.success.squawks.first()))
-    vm.onAction(ThingOverviewAction.CancelDeleteSquawk)
     vm.onAction(ThingOverviewAction.TaskSkipClick(dueOilChange))
     vm.onAction(ThingOverviewAction.CancelSkipTask)
 
-    coVerify(exactly = 0) { squawkManager.deleteSquawk(any(), any()) }
     coVerify(exactly = 0) { taskDataManager.skipCycle(any(), any(), any()) }
     assertThat(analytics.countOf("record_quick_action")).isEqualTo(0)
   }
@@ -389,28 +237,5 @@ class ThingOverviewViewModelTest {
 
     coVerify(exactly = 1) { taskDataManager.deleteTask(THING_ID, "c1") }
     assertThat(vm.success.deletingTaskId).isNull()
-  }
-
-  @Test
-  fun choosingABubbleOption_logsTheCommitAndClosesTheBubble() = runTest {
-    val vm = viewModel()
-    vm.onAction(ThingOverviewAction.SquawkResolveClick(vm.success.squawks.first()))
-    assertThat(vm.success.resolvingSquawkId).isEqualTo("s1")
-
-    vm.onAction(ThingOverviewAction.SquawkFixedClick("s1"))
-
-    assertThat(vm.success.resolvingSquawkId).isNull()
-    assertThat(
-      analytics.paramsFor("record_quick_action")
-        .single()
-    )
-      .containsAtLeast(
-        "surface",
-        "squawks",
-        "action",
-        "resolve",
-        "source",
-        "swipe"
-      )
   }
 }

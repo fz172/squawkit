@@ -13,8 +13,6 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.comments.dashboard.RecordCommentComposer
 import dev.fanfly.wingslog.feature.comments.dashboard.RecordCommentThread
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
@@ -26,9 +24,15 @@ import org.koin.compose.koinInject
 /** The open squawk's detail: a pane beside the list on wide tiers, a sheet on a phone. Null while no squawk is selected. */
 @Composable
 internal fun squawkDetailFor(
-  state: ThingOverviewUiState.Success,
-  onAction: (ThingOverviewAction) -> Unit,
-  onMutationAction: ((ThingOverviewAction) -> Unit)?,
+  thingId: String,
+  isAnonymous: Boolean,
+  actionsState: SquawkActionsUiState,
+  onDismiss: () -> Unit,
+  canMutate: Boolean,
+  onFixedClick: (squawkId: String) -> Unit,
+  onDismissClick: (squawkId: String) -> Unit,
+  onReopenClick: (squawkId: String) -> Unit,
+  onEditClick: (squawkId: String) -> Unit,
   onLogClick: ((logId: String) -> Unit)?,
   onOpenDataLog: ((DataLogId) -> Unit)?,
   commentThread: CommentThreadController?,
@@ -38,34 +42,36 @@ internal fun squawkDetailFor(
   val dataLogManager: DataLogManager = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
-  return state.selectedSquawk?.let { selected ->
+  return actionsState.selectedSquawk?.let { selected ->
     {
       val syncStates by remember(
-        state.thing.id,
+        thingId,
         attachmentManager,
         attachmentOpener
       ) {
-        attachmentManager.observeThingSyncStates(
-          state.thing.id,
-          attachmentOpener
-        )
+        attachmentManager.observeThingSyncStates(thingId, attachmentOpener)
       }.collectAsStateWithLifecycle(emptyMap())
-      val dataLogs by remember(state.thing.id, dataLogManager) {
-        dataLogManager.observeRowInfos(ThingId(state.thing.id))
+      val dataLogs by remember(thingId, dataLogManager) {
+        dataLogManager.observeRowInfos(ThingId(thingId))
       }.collectAsStateWithLifecycle(null)
       SquawkDetailSheet(
         item = selected,
-        addressingLog = state.logForSelectedSquawk,
-        onLogClick = onLogClick,
+        addressingLog = actionsState.logForSelectedSquawk,
+        onLogClick = onLogClick?.let { navigateToLog ->
+          { logId ->
+            onDismiss()
+            navigateToLog(logId)
+          }
+        },
         onDismiss = {
           openError = null
-          onAction(ThingOverviewAction.DismissSquawkDetail)
+          onDismiss()
         },
         onAttachmentTap = { attachment ->
           openError = null
           attachment.dataLogIdOrNull()
             ?.let { dataLogId ->
-              onAction(ThingOverviewAction.DismissSquawkDetail)
+              onDismiss()
               onOpenDataLog?.invoke(dataLogId)
               return@SquawkDetailSheet
             }
@@ -80,39 +86,34 @@ internal fun squawkDetailFor(
         syncStates = syncStates,
         dataLogs = dataLogs,
         openError = openError,
-        onFixedClick = onMutationAction?.let { mutate ->
+        onFixedClick = if (canMutate) {
           {
-            onAction(ThingOverviewAction.DismissSquawkDetail)
-            mutate(ThingOverviewAction.SquawkFixedClick(selected.squawk.id))
+            onDismiss()
+            onFixedClick(selected.squawk.id)
           }
-        },
-        onDismissNoWorkPlanned = onMutationAction?.let { mutate ->
+        } else null,
+        onDismissNoWorkPlanned = if (canMutate) {
           {
-            onAction(ThingOverviewAction.DismissSquawkDetail)
-            mutate(ThingOverviewAction.SquawkDismissClick(selected.squawk.id))
+            onDismiss()
+            onDismissClick(selected.squawk.id)
           }
-        },
+        } else null,
         comments = commentThread?.let { thread -> { RecordCommentThread(thread) } },
         commentComposer = commentThread?.let { thread ->
-          { RecordCommentComposer(thread, state.isAnonymous) }
+          { RecordCommentComposer(thread, isAnonymous) }
         },
-        onReopenClick = onMutationAction?.let { mutate ->
+        onReopenClick = if (canMutate) {
           {
-            onAction(ThingOverviewAction.DismissSquawkDetail)
-            mutate(ThingOverviewAction.SquawkReopenClick(selected.squawk.id))
+            onDismiss()
+            onReopenClick(selected.squawk.id)
           }
-        },
-        onEditClick = onMutationAction?.let { mutate ->
+        } else null,
+        onEditClick = if (canMutate) {
           {
-            onAction(ThingOverviewAction.DismissSquawkDetail)
-            mutate(
-              ThingOverviewAction.EditSquawkClick(
-                state.thing.id,
-                selected.squawk.id
-              )
-            )
+            onDismiss()
+            onEditClick(selected.squawk.id)
           }
-        },
+        } else null,
       )
     }
   }
