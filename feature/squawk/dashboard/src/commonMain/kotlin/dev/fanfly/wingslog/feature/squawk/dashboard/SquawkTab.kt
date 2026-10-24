@@ -27,11 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.listdetail.ListDetailSection
+import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.list.ListRowDivider
@@ -39,13 +40,15 @@ import dev.fanfly.wingslog.core.ui.list.SectionHeader
 import dev.fanfly.wingslog.core.ui.list.animateScrollToCenter
 import dev.fanfly.wingslog.core.ui.perf.SwitchTrace
 import dev.fanfly.wingslog.core.ui.swipe.rememberSwipeRevealController
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
+import dev.fanfly.wingslog.feature.squawk.dashboard.detail.SquawkDetailUiState
+import dev.fanfly.wingslog.feature.squawk.dashboard.detail.SquawkDetailViewModel
+import dev.fanfly.wingslog.feature.squawk.dashboard.detail.SquawkTabDialogs
+import dev.fanfly.wingslog.feature.squawk.dashboard.detail.squawkDetailFor
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.statusTier
@@ -61,37 +64,61 @@ private val squawkOrder = compareByDescending<SquawkWithStatus> {
 
 @Composable
 fun SquawkTab(
-  state: ThingOverviewUiState.Success,
-  onAction: (ThingOverviewAction) -> Unit,
-  onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
+  thingId: String,
+  isAnonymous: Boolean = false,
+  canMutate: Boolean = true,
+  onNavigateToEditSquawk: (squawkId: String) -> Unit = {},
+  onNavigateToCreateLog: (squawkId: String) -> Unit = {},
   onLogClick: ((logId: String) -> Unit)? = null,
   onOpenDataLog: ((DataLogId) -> Unit)? = null,
   /** Jumped-to squawk (from a log's Resolved Squawks): switch to its sub-view and scroll to it. */
   scrollToSquawkId: String? = null,
-  /** The open squawk sheet's comment thread; null leaves the sheet without comments. */
-  commentThread: CommentThreadController? = null,
   showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   SwitchTrace.step("SquawkTab composing")
   var showClosed by rememberSaveable { mutableStateOf(false) }
-  val analytics = LocalAnalytics.current
   val adsManager: AdsManager = koinInject()
+  val templateId = LocalThingTemplate.current?.id.orEmpty()
   val tabViewModel: SquawkTabViewModel =
     koinViewModel(
-      key = "squawks:${state.thing.id}",
+      key = "squawks:$thingId",
       parameters = {
-        parametersOf(
-          state.thing.id,
-          state.thing.template?.id.orEmpty()
-        )
+        parametersOf(thingId, templateId)
+      },
+    )
+  val detailViewModel: SquawkDetailViewModel =
+    koinViewModel(
+      key = "squawk-detail:$thingId",
+      parameters = {
+        parametersOf(thingId, templateId)
       },
     )
   SwitchTrace.step("SquawkTab view model ready")
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
+  val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
+  val commentThread by detailViewModel.commentThread.collectAsStateWithLifecycle()
   val squawkFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange
   val squawkNoun = LocalThingLexicon.current.squawkNoun
+
+  // The ViewModel outlives the section: a squawk left open when the user switched away would still
+  // be open on their return. Each entry to the section starts with the list alone.
+  LaunchedEffect(detailViewModel) { detailViewModel.dismissDetail() }
+
+  val snackbarHostState = LocalSnackbarHostState.current
+  var pendingMessage by remember(thingId) { mutableStateOf<UiText?>(null) }
+  LaunchedEffect(detailViewModel) {
+    detailViewModel.events.collect { message ->
+      pendingMessage = message
+    }
+  }
+  val messageText = pendingMessage?.asString()
+  LaunchedEffect(messageText) {
+    val text = messageText ?: return@LaunchedEffect
+    pendingMessage = null
+    snackbarHostState?.showSnackbar(text)
+  }
 
   val openSquawks = tabState.squawks
     .filter { it.status == SquawkStatus.OPEN }
@@ -115,7 +142,7 @@ fun SquawkTab(
   // where the lines are built, rather than by the tier the pane provides to its list.
   val tier = LocalLayoutTier.current
   val columns =
-    if (tier.hasSideNav && state.selectedSquawk != null) 1 else tier.cardColumns
+    if (tier.hasSideNav && detailState.selectedSquawk != null) 1 else tier.cardColumns
   // Only the open list is in priority order, so only it is grouped; closed is newest first.
   val lines = remember(displayList, showClosed, columns, showAds) {
     squawkListLines(
@@ -162,9 +189,18 @@ fun SquawkTab(
   }
 
   val squawkDetail = squawkDetailFor(
-    state = state,
-    onAction = onAction,
-    onMutationAction = onMutationAction,
+    thingId = thingId,
+    isAnonymous = isAnonymous,
+    detailState = detailState,
+    onDismiss = detailViewModel::dismissDetail,
+    canMutate = canMutate,
+    onFixedClick = { squawkId ->
+      detailViewModel.onFixedClick()
+      onNavigateToCreateLog(squawkId)
+    },
+    onDismissClick = detailViewModel::onDismissClick,
+    onReopenClick = detailViewModel::reopenSquawk,
+    onEditClick = onNavigateToEditSquawk,
     onLogClick = onLogClick,
     onOpenDataLog = onOpenDataLog,
     commentThread = commentThread,
@@ -200,7 +236,7 @@ fun SquawkTab(
 
         item(key = "controls") {
           SquawkListControls(
-            state = state,
+            allSquawks = tabState.allSquawks,
             filter = squawkFilter,
             onFilterChange = setFilter,
             onClearFilter = { tabViewModel.clearFilter() },
@@ -257,13 +293,23 @@ fun SquawkTab(
                   line.items.forEach { item ->
                     SquawkRow(
                       item = item,
-                      state = state,
+                      resolvingSquawkId = detailState.resolvingSquawkId,
                       matches = tabState.matches[item.squawk.id].orEmpty(),
                       showPriority = showClosed,
                       isJumpTarget = item.squawk.id == landedSquawkId,
                       revealController = revealController,
-                      onAction = onAction,
-                      onMutationAction = onMutationAction,
+                      onClick = { detailViewModel.showDetail(item) },
+                      canMutate = canMutate,
+                      onResolveClick = { detailViewModel.onResolveClick(item) },
+                      onDismissResolveMenu = detailViewModel::dismissResolveMenu,
+                      onDismissNoWorkPlanned = {
+                        detailViewModel.onDismissClick(item.squawk.id)
+                      },
+                      onFixedClick = {
+                        detailViewModel.onFixedClick()
+                        onNavigateToCreateLog(item.squawk.id)
+                      },
+                      onDeleteClick = { detailViewModel.onDeleteClick(item) },
                       modifier = Modifier.weight(1f),
                     )
                   }
@@ -278,6 +324,11 @@ fun SquawkTab(
     }
   }
 
-  SquawkTabDialogs(state, onAction)
-
+  SquawkTabDialogs(
+    state = detailState,
+    onConfirmDismiss = detailViewModel::confirmDismiss,
+    onCancelDismiss = detailViewModel::cancelDismiss,
+    onConfirmDelete = detailViewModel::confirmDelete,
+    onCancelDelete = detailViewModel::cancelDelete,
+  )
 }
