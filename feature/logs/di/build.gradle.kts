@@ -24,6 +24,7 @@ kotlin {
   // logic of its own.
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":feature:logs:dashboard"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:viewing"))
       implementation(project(":feature:logs:update"))

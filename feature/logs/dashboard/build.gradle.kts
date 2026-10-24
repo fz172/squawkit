@@ -27,9 +27,9 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":feature:search:model"))
       implementation(project(":core:datetime"))
       implementation(project(":core:model"))
+      implementation(project(":core:sharedassets"))
       implementation(project(":core:template"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
@@ -38,22 +38,29 @@ kotlin {
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:datalog:datamanager"))
       implementation(project(":feature:datalog:model"))
+      implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:logs:viewing"))
+      implementation(project(":feature:search:model"))
       implementation(project(":feature:squawk:dashboard"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(libs.components.resources)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
+      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
       implementation(libs.koin.compose)
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.koin.core)
+      implementation(libs.kotlinx.datetime)
     }
   }
 }
 
 dependencies {
+  "androidHostTestImplementation"(project(":core:appinfo"))
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.mockk)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
   "androidHostTestImplementation"(platform(libs.androidx.compose.bom))
   "androidHostTestImplementation"(libs.androidx.compose.ui.test.junit4)
   "androidHostTestImplementation"(libs.androidx.compose.ui.test.manifest)

@@ -10,16 +10,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.layout.LayoutTier
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.dashboard.host.DashboardSkeleton
+import dev.fanfly.wingslog.feature.logs.dashboard.LogOverviewViewModel
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.tasks.dashboard.TaskOverviewViewModel
@@ -38,6 +45,12 @@ fun OverviewTab(
   onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
   modifier: Modifier = Modifier,
 ) {
+  val logOverviewViewModel: LogOverviewViewModel =
+    koinViewModel(
+      key = "log-overview:${state.thing.id}",
+      parameters = { parametersOf(state.thing) },
+    )
+  val logOverview by logOverviewViewModel.uiState.collectAsStateWithLifecycle()
   val squawkOverviewViewModel: SquawkOverviewViewModel =
     koinViewModel(
       key = "squawk-overview:${state.thing.id}",
@@ -50,17 +63,35 @@ fun OverviewTab(
       parameters = { parametersOf(state.thing.id) },
     )
   val taskOverview by taskOverviewViewModel.uiState.collectAsStateWithLifecycle()
-  if (!squawkOverview.loaded || !taskOverview.loaded) {
+
+  val snackbarHostState = LocalSnackbarHostState.current
+  var pendingMessage by remember(state.thing.id) { mutableStateOf<UiText?>(null) }
+  LaunchedEffect(logOverviewViewModel) {
+    logOverviewViewModel.events.collect { pendingMessage = it }
+  }
+  val messageText = pendingMessage?.asString()
+  LaunchedEffect(messageText) {
+    val text = messageText ?: return@LaunchedEffect
+    pendingMessage = null
+    snackbarHostState?.showSnackbar(text)
+  }
+
+  if (!logOverview.loaded || !squawkOverview.loaded || !taskOverview.loaded) {
     DashboardSkeleton()
     return
   }
+
+  val onSetReading: ((String, Double) -> Unit)? =
+    if (onMutationAction != null) logOverviewViewModel::setMeterReading else null
 
   val tier = LocalLayoutTier.current
   if (tier == LayoutTier.LARGE) {
     LargeOverviewTab(
       state = state,
+      logOverview = logOverview,
       squawkOverview = squawkOverview,
       taskOverview = taskOverview,
+      onSetReading = onSetReading,
       onTaskClick = onTaskClick,
       onViewSquawksTab = onViewSquawksTab,
       onViewLogsTab = onViewLogsTab,
@@ -96,14 +127,10 @@ fun OverviewTab(
     Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
       ThingDataCard(
         state.thing,
-        stats = state.logStats,
+        stats = logOverview.logStats,
         // Open to every member, technicians included: whoever can write a log can already move a
         // reading, so setting one directly is no new power (#1368).
-        onSetReading = onMutationAction?.let { act ->
-          { meterKey, value ->
-            act(ThingOverviewAction.SetMeterReading(meterKey, value))
-          }
-        },
+        onSetReading = onSetReading,
         // Edit + Manage Access are owner-only; technicians get a read-only thing card (§6.3).
         onEditClick = manageAction(state, onMutationAction) {
           ThingOverviewAction.EditClick(state.thing.id)
@@ -116,6 +143,7 @@ fun OverviewTab(
 
     WorkLogsSection(
       state = state,
+      logOverview = logOverview,
       onViewLogsTab = onViewLogsTab,
       onMutationAction = onMutationAction,
       modifier = Modifier.padding(horizontal = Spacing.screenPadding),

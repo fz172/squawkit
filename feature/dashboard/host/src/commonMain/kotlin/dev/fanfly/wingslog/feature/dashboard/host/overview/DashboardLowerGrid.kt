@@ -22,7 +22,7 @@ import dev.fanfly.wingslog.core.template.overviewTaskEmptyHint
 import dev.fanfly.wingslog.core.template.overviewTaskEmptyTitle
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
+import dev.fanfly.wingslog.feature.logs.dashboard.LogOverviewUiState
 import dev.fanfly.wingslog.feature.logs.dashboard.RecentLogRow
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkRailRow
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
@@ -40,7 +40,7 @@ import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 
 @Composable
 internal fun DashboardLowerGrid(
-  state: ThingOverviewUiState.Success,
+  logOverview: LogOverviewUiState,
   nextDueTask: MaintenanceTaskWithStatus?,
   openSquawksPreview: List<SquawkWithStatus>,
   onTaskClick: (MaintenanceTaskWithStatus) -> Unit,
@@ -53,21 +53,21 @@ internal fun DashboardLowerGrid(
     horizontalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
     RailCard(
-      title = workLogsTitle(state),
+      title = workLogsTitle(logOverview.logStats),
       actionLabel = stringResource(Res.string.overview_all_logs),
       onActionClick = onLogsClick,
       modifier = Modifier.weight(1f),
     ) {
-      if (state.recentLogs.isEmpty()) {
+      if (logOverview.recentLogs.isEmpty()) {
         EmptyRailState(
           icon = Icons.Default.Description,
           title = LocalThingLexicon.current.overviewLogEmptyTitle,
           body = LocalThingLexicon.current.overviewLogEmptyHint,
         )
       } else {
-        state.recentLogs.forEachIndexed { index, log ->
+        logOverview.recentLogs.forEachIndexed { index, log ->
           RecentLogRow(log = log, onClick = onLogsClick)
-          if (index < state.recentLogs.lastIndex) {
+          if (index < logOverview.recentLogs.lastIndex) {
             HorizontalDivider(
               color = MaterialTheme.colorScheme.outlineVariant.copy(
                 alpha = 0.55f
