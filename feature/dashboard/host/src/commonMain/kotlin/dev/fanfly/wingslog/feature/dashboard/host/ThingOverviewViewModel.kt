@@ -26,9 +26,6 @@ import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.fanfly.wingslog.feature.squawk.model.openAog
-import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
@@ -63,7 +60,6 @@ class ThingOverviewViewModel(
   private val logManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
   private val taskStatusManager: TaskStatusManager,
-  private val squawkManager: SquawkManager,
   private val commentManager: CommentManager,
   private val sharingManager: SharingManager,
   private val templateRegistry: TemplateRegistry,
@@ -141,19 +137,17 @@ class ThingOverviewViewModel(
         logManager.observeCurrentReadings(thingId)
           .distinctUntilChanged(),
         combine(
-          squawkManager.observeSquawks(thingId)
-            .distinctUntilChanged(),
           // The caller's role on this thing, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
           sharingManager.observeMyRole(thingId)
             .distinctUntilChanged(),
           sharingManager.observeIsShared(thingId)
             .distinctUntilChanged(),
-        ) { squawks, myRole, shared ->
-          ShareContext(squawks, myRole, shared)
+        ) { myRole, shared ->
+          ShareContext(myRole, shared)
         }
       ) { thing, logs, cardsWithStatus, currentReadings, shareContext ->
-        val (squawkList, myRole, isShared) = shareContext
+        val (myRole, isShared) = shareContext
         cachedLogs = logs
         val degraded = thing?.let {
           templateRegistry.resolve(it) as? TemplateResolution.Degraded
@@ -197,9 +191,6 @@ class ThingOverviewViewModel(
               .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           } ?: emptyList()
 
-          val squawksWithStatus = squawkList.map { it.toWithStatus() }
-          val aogSquawks = squawksWithStatus.openAog()
-
           ThingOverviewUiState.Success(
             thing = thing,
             logStats = stats,
@@ -214,8 +205,6 @@ class ThingOverviewViewModel(
             deletingTaskId = current?.deletingTaskId,
             resolvingTaskId = current?.resolvingTaskId,
             skippingTaskId = current?.skippingTaskId,
-            squawks = squawksWithStatus,
-            aogSquawks = aogSquawks,
             myRole = myRole,
             shared = isShared,
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
