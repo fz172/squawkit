@@ -12,7 +12,6 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
@@ -42,7 +41,8 @@ import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 /** The search bar and filter sheet over the task list, counting against the unfiltered sub-view. */
 @Composable
 internal fun TaskFilterBar(
-  state: ThingOverviewUiState.Success,
+  allActiveTasks: List<MaintenanceTaskWithStatus>,
+  allCompletedTasks: List<MaintenanceTaskWithStatus>,
   filter: RecordFilter,
   onFilterChange: (RecordFilter) -> Unit,
   showComplied: Boolean,
@@ -54,7 +54,7 @@ internal fun TaskFilterBar(
   val taskNoun = LocalThingLexicon.current.taskNoun
   var showFilterSheet by remember { mutableStateOf(false) }
   // Unfiltered, so a chip's count does not move every time another chip is tapped.
-  val subView = if (showComplied) state.completedTasks else state.activeTasks
+  val subView = if (showComplied) allCompletedTasks else allActiveTasks
   val countAdapter = remember { TaskAdapter() }
   val today = remember {
     Clock.System.now()

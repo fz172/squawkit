@@ -1,12 +1,16 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard.di
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.tasks.dashboard.AddedTasksViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.ReadySuggestionsViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.SuggestTasksEntryViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.TaskTabViewModel
+import dev.fanfly.wingslog.feature.tasks.dashboard.detail.TaskDetailViewModel
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
@@ -25,6 +29,18 @@ val tasksDashboardModule = module {
       get<TaskStatusManager>(),
       get<SearchEngine>(),
       get<SearchTuning>(),
+      get<AnalyticsManager>(),
+      params.get<String>(0),
+      params.get<String>(1),
+    )
+  }
+  viewModel { params ->
+    TaskDetailViewModel(
+      get<TaskDataManager>(),
+      get<TaskStatusManager>(),
+      get<MaintenanceLogManager>(),
+      get<CommentManager>(),
+      get<TemplateRegistry>(),
       get<AnalyticsManager>(),
       params.get<String>(0),
       params.get<String>(1),
