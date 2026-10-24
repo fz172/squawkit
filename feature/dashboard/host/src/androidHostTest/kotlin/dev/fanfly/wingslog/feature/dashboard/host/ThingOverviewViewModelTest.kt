@@ -14,7 +14,6 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.coEvery
@@ -43,7 +42,6 @@ class ThingOverviewViewModelTest {
 
   private val fleetManager: FleetManager = mockk()
   private val logManager: MaintenanceLogManager = mockk()
-  private val taskStatusManager: TaskStatusManager = mockk()
   private val sharingManager: SharingManager = mockk()
   private val auth: FirebaseAuth = mockk()
 
@@ -57,8 +55,6 @@ class ThingOverviewViewModelTest {
     every { logManager.observeCurrentReadings(THING_ID) } returns flowOf(
       emptyList()
     )
-    every { taskStatusManager.observeTasksWithStatus(THING_ID) } returns
-      flowOf(emptyList())
     every { sharingManager.observeMyRole(THING_ID) } returns flowOf(ShareRole.OWNER)
     every { sharingManager.observeIsShared(THING_ID) } returns flowOf(false)
     every { auth.currentUser } returns null
@@ -70,7 +66,6 @@ class ThingOverviewViewModelTest {
   private fun viewModel() = ThingOverviewViewModel(
     fleetManager,
     logManager,
-    taskStatusManager,
     sharingManager,
     BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
     auth,

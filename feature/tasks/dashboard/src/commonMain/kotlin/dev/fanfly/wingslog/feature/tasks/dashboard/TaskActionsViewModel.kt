@@ -78,6 +78,11 @@ class TaskActionsViewModel(
   private var cachedReadings: List<CurrentReading> = emptyList()
   private var pendingSkipCard: MaintenanceTask? = null
 
+  /** Due status depends on the clock, not only on stored data; re-evaluate when the screen returns. */
+  fun onResumed() {
+    taskStatusManager.refreshDueStatus()
+  }
+
   init {
     viewModelScope.launch {
       combine(
