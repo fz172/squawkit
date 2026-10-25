@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.core.storage
 
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -26,3 +28,9 @@ interface ThingScopeResolver {
   /** One-shot resolution for a mutation. Throws if no user is signed in. */
   suspend fun resolveNow(thingId: String): EntityScope
 }
+
+/** Resolves scope using strongly-typed [ThingId]. */
+fun ThingScopeResolver.resolve(thingId: ThingId): Flow<EntityScope?> = resolve(thingId.value)
+
+/** Resolves scope using strongly-typed [ThingId]. */
+suspend fun ThingScopeResolver.resolveNow(thingId: ThingId): EntityScope = resolveNow(thingId.value)

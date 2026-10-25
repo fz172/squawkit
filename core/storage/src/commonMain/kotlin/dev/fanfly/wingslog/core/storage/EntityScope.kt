@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.core.storage
 
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.id.UserId
+
 /**
  * Identifies a collection's location in the user's data tree.
  *
@@ -17,13 +21,15 @@ data class EntityScope(val segments: List<String>) {
    * Thing shared with them. Null for a scope outside `/users/`.
    */
   val hostUid: String?
-    get() = segments.getOrNull(1)?.takeIf { segments.first() == "users" }
+    get() = segments.getOrNull(1)
+      ?.takeIf { segments.first() == "users" }
 
   fun toPath(): String =
     segments.joinToString(separator = "/", prefix = "/", postfix = "/")
 
   companion object {
     fun userRoot(uid: String): EntityScope = EntityScope(listOf("users", uid))
+    fun userRoot(uid: UserId): EntityScope = userRoot(uid.value)
 
     /**
      * The scope of a thing's nested data (logs, tasks, squawks, blobs) at `[uid]`.
@@ -44,5 +50,8 @@ data class EntityScope(val segments: List<String>) {
      */
     fun thingChildUnsafe(uid: String, thingId: String): EntityScope =
       EntityScope(listOf("users", uid, "thing", thingId))
+
+    fun thingChildUnsafe(uid: UserId, thingId: ThingId): EntityScope =
+      thingChildUnsafe(uid.value, thingId.value)
   }
 }
