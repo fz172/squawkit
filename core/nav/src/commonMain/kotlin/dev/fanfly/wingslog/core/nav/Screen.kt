@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.core.nav
 
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.id.ThingId
 
 sealed class Screen(val route: String) {
@@ -100,8 +102,8 @@ sealed class Screen(val route: String) {
   }
 
   data object EditTechnician : Screen("edit_technician/{$TECHNICIAN_ID}") {
-    fun createRoute(technicianId: String?) =
-      "edit_technician/${technicianId ?: "new"}"
+    fun createRoute(technicianId: TechnicianId? = null): String =
+      if (technicianId != null) "edit_technician/${technicianId.value}" else "edit_technician/new"
   }
 
   data object EditThing : Screen("edit_thing/{$THING_ID}") {

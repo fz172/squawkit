@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.technician.datamanager.impl
 
+import kotlin.time.Instant
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
@@ -8,18 +12,15 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_TECHNICIAN_ID = "tech-789"
@@ -113,7 +114,7 @@ class TechnicianManagerImplTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.loadTechnician(TEST_TECHNICIAN_ID)
+    val result = manager.loadTechnician(TechnicianId(TEST_TECHNICIAN_ID))
       .first()
 
     assertThat(result).isNull()
@@ -135,7 +136,7 @@ class TechnicianManagerImplTest {
       )
     } returns flowOf(entity)
 
-    val result = manager.loadTechnician(TEST_TECHNICIAN_ID)
+    val result = manager.loadTechnician(TechnicianId(TEST_TECHNICIAN_ID))
       .first()
 
     assertThat(result).isEqualTo(technician)
@@ -185,7 +186,7 @@ class TechnicianManagerImplTest {
 
   @Test
   fun deleteTechnician_loggedIn_callsStoreDeleteAndReturnsSuccess() = runTest {
-    val result = manager.deleteTechnician(TEST_TECHNICIAN_ID)
+    val result = manager.deleteTechnician(TechnicianId(TEST_TECHNICIAN_ID))
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -200,7 +201,7 @@ class TechnicianManagerImplTest {
   fun deleteTechnician_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.deleteTechnician(TEST_TECHNICIAN_ID)
+    val result = manager.deleteTechnician(TechnicianId(TEST_TECHNICIAN_ID))
 
     assertThat(result.isFailure).isTrue()
   }

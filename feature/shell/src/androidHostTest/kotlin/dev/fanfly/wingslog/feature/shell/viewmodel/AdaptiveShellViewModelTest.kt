@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
@@ -66,15 +67,15 @@ class AdaptiveShellViewModelTest {
     override fun observeTechnicians(): Flow<List<Technician>> =
       MutableStateFlow(emptyList())
 
-    override fun loadTechnician(id: String): Flow<Technician?> =
+    override fun loadTechnician(id: TechnicianId): Flow<Technician?> =
       MutableStateFlow(null)
 
     override fun observeSelf(): Flow<Technician?> = self
-    override fun observeSelfId(): Flow<String?> = MutableStateFlow(null)
+    override fun observeSelfId(): Flow<TechnicianId?> = MutableStateFlow(null)
     override suspend fun updateTechnician(technician: Technician) =
       Result.success(true)
 
-    override suspend fun deleteTechnician(id: String) = Result.success(true)
+    override suspend fun deleteTechnician(id: TechnicianId) = Result.success(true)
     override suspend fun saveSelfName(name: String) = Result.success(Unit)
     override suspend fun ensureSelfProfile() =
       Result.success(Unit)

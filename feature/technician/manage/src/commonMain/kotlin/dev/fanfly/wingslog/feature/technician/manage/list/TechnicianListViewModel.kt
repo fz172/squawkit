@@ -1,8 +1,17 @@
 package dev.fanfly.wingslog.feature.technician.manage.list
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.knownCertifications
@@ -11,14 +20,8 @@ import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.findDuplicates
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.signature
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Technician
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 data class TechnicianListUiState(
   /** The user's own list: their self-record first, then mechanics they typed in by hand. */
@@ -28,7 +31,7 @@ data class TechnicianListUiState(
    * is maintained by the person it belongs to, not by this user (design §7.3).
    */
   val linkedTechnicians: List<Technician> = emptyList(),
-  val selfId: String? = null,
+  val selfId: TechnicianId? = null,
   /** The signed-in account's photo, drawn on the self row; null when the account has none. */
   val selfPhotoUrl: String? = null,
   /** Linked members' account photos by uid — see [SharingManager.observeLinkedTechnicianPhotos]. */
@@ -81,8 +84,8 @@ class TechnicianListViewModel(
     technicianManager.observeReviewedDuplicatesSignature(),
     localState,
   ) { technicians, selfId, (linked, linkedPhotos), reviewedSignature, local ->
-    val self = technicians.find { it.id == selfId }
-    val others = technicians.filter { it.id != selfId }
+    val self = technicians.find { it.id == selfId?.value }
+    val others = technicians.filter { it.id != selfId?.value }
       .sortedBy { it.name.lowercase() }
 
     // The self-record participates as a *keeper*, never as a duplicate: hand-typing yourself before

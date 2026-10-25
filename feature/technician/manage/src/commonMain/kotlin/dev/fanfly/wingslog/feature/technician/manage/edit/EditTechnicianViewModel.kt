@@ -1,10 +1,17 @@
 package dev.fanfly.wingslog.feature.technician.manage.edit
 
+import kotlin.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CUSTOM_CERTIFICATION_PREFIX
@@ -15,16 +22,11 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.sharedassets.certification.CertificationEntry
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Technician
-import kotlin.time.Instant
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 data class EditTechnicianUiState(
   val id: String = "",
@@ -55,9 +57,10 @@ class EditTechnicianViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val technicianId: String? =
+  private val technicianId: TechnicianId? =
     savedStateHandle.get<String>(Screen.TECHNICIAN_ID)
       ?.takeIf { it != "new" }
+      ?.let(::TechnicianId)
 
   /**
    * The record as it was loaded, so a save edits it rather than rebuilding it.
@@ -104,7 +107,7 @@ class EditTechnicianViewModel(
     }
   }
 
-  private fun observeSelfId(id: String) {
+  private fun observeSelfId(id: TechnicianId) {
     viewModelScope.launch {
       technicianManager.observeSelfId()
         .collect { selfId ->
@@ -113,7 +116,7 @@ class EditTechnicianViewModel(
     }
   }
 
-  private fun loadTechnician(id: String) {
+  private fun loadTechnician(id: TechnicianId) {
     viewModelScope.launch {
       val technician = technicianManager.loadTechnician(id)
         .firstOrNull()
@@ -252,7 +255,7 @@ class EditTechnicianViewModel(
     val id = _uiState.value.id
     if (id.isBlank()) return
     viewModelScope.launch {
-      val result = technicianManager.deleteTechnician(id)
+      val result = technicianManager.deleteTechnician(TechnicianId(id))
       if (result.isSuccess) {
         _uiState.update { it.copy(deleteSuccess = true) }
       } else {

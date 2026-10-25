@@ -24,7 +24,7 @@ if (uiState.showTechnicianPicker) {
     onSelect = { viewModel.onTechnicianSelect(it) },
     onAddClick = {
       viewModel.hideTechnicianPicker()
-      navController.navigate(Screen.EditTechnician.createRoute(null))
+      navController.navigate(Screen.EditTechnician.createRoute())
     },
     onDismiss = { viewModel.hideTechnicianPicker() },
   )

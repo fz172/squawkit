@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermissi
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -515,7 +516,7 @@ class SettingsViewModelTest {
     coEvery { technicianManager.ensureSelfProfile() } returns Result.success(
       Unit
     )
-    every { technicianManager.observeSelfId() } returns flowOf("self-1")
+    every { technicianManager.observeSelfId() } returns flowOf(TechnicianId("self-1"))
     viewModel = buildViewModel()
     val targets = mutableListOf<ProfileTarget>()
     val collector =
@@ -526,7 +527,7 @@ class SettingsViewModelTest {
     collector.cancel()
 
     coVerify { technicianManager.ensureSelfProfile() }
-    assertThat(targets).containsExactly(ProfileTarget.Self("self-1"))
+    assertThat(targets).containsExactly(ProfileTarget.Self(TechnicianId("self-1")))
   }
 
   @Test

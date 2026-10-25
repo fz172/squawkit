@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.visible
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.Squawk
@@ -50,7 +51,7 @@ data class MaintenanceLogFormUiState(
   /** Members of this thing's share who published a mirror — selectable, badged "Linked" (§7.3). */
   val linkedTechnicians: List<Technician> = emptyList(),
   /** The caller's own technician record, listed first in the picker. */
-  val selfTechnicianId: String? = null,
+  val selfTechnicianId: TechnicianId? = null,
   /** Every certification this build knows, so the picker's rows name credentials, not keys. */
   val knownCertifications: List<OfferedCertification> = emptyList(),
   val showTechnicianPicker: Boolean = false,

@@ -155,7 +155,7 @@ class SettingsViewModel(
       val selfId = technicianManager.observeSelfId()
         .first()
       _profileRequests.emit(
-        if (selfId.isNullOrBlank()) ProfileTarget.Roster else ProfileTarget.Self(
+        if (selfId == null) ProfileTarget.Roster else ProfileTarget.Self(
           selfId
         )
       )

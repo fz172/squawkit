@@ -1,22 +1,6 @@
 package dev.fanfly.wingslog.feature.technician.datamanager.impl
 
-import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
-import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.model.userinfo.UserInfo
-import dev.fanfly.wingslog.core.storage.CloudSyncSetting
-import dev.fanfly.wingslog.core.storage.CollectionKind
-import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
-import dev.fanfly.wingslog.core.storage.EntityScope
-import dev.fanfly.wingslog.core.storage.EntityStore
-import dev.fanfly.wingslog.core.storage.EntityStoreFactory
-import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
-import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
-import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolution
-import dev.fanfly.wingslog.feature.technician.datamanager.merge.mergedCertifications
-import dev.fanfly.wingslog.thing.Technician
-import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,7 +17,25 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Duration.Companion.seconds
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
+import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.core.model.userinfo.UserInfo
+import dev.fanfly.wingslog.core.storage.CloudSyncSetting
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
+import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStore
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolution
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.mergedCertifications
+import dev.fanfly.wingslog.id.TechnicianId
+import dev.fanfly.wingslog.thing.Technician
+import dev.gitlive.firebase.auth.FirebaseAuth
 
 class TechnicianManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -142,11 +144,11 @@ class TechnicianManagerImpl(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeSelfId(): Flow<String?> =
+  override fun observeSelfId(): Flow<TechnicianId?> =
     firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) flowOf(null)
       else userInfoStore.observe("main", EntityScope.userRoot(user.uid))
-        .map { it?.value?.self_technician_id?.takeIf { id -> id.isNotBlank() } }
+        .map { it?.value?.self_technician_id?.takeIf { id -> id.isNotBlank() }?.let(::TechnicianId) }
         .catch { e ->
           logger.w(e) { "Error observing UserInfo" }
           emit(null)
@@ -194,16 +196,16 @@ class TechnicianManagerImpl(
     }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun loadTechnician(id: String): Flow<Technician?> =
+  override fun loadTechnician(id: TechnicianId): Flow<Technician?> =
     firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
-        logger.d { "User logged out, stopping technician observation for $id" }
+        logger.d { "User logged out, stopping technician observation for ${id.value}" }
         flowOf(null)
       } else {
-        technicianStore.observe(id, EntityScope.userRoot(user.uid))
+        technicianStore.observe(id.value, EntityScope.userRoot(user.uid))
           .map { it?.value }
           .catch { e ->
-            logger.w(e) { "Error observing technician $id" }
+            logger.w(e) { "Error observing technician ${id.value}" }
             emit(null)
           }
       }
@@ -220,14 +222,14 @@ class TechnicianManagerImpl(
       true
     }.onFailure { logger.w(it) { "Error updating technician" } }
 
-  override suspend fun deleteTechnician(id: String): Result<Boolean> =
+  override suspend fun deleteTechnician(id: TechnicianId): Result<Boolean> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot delete technician when no user is signed in")
-      technicianStore.delete(id, EntityScope.userRoot(uid))
-      logger.d { "Technician $id tombstoned in local store" }
+      technicianStore.delete(id.value, EntityScope.userRoot(uid))
+      logger.d { "Technician ${id.value} tombstoned in local store" }
       true
-    }.onFailure { logger.w(it) { "Error deleting technician $id" } }
+    }.onFailure { logger.w(it) { "Error deleting technician ${id.value}" } }
 
   override suspend fun applyDuplicateMerges(
     groups: List<DuplicateGroup>,

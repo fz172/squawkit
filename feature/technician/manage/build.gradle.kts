@@ -30,6 +30,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:model"))
       implementation(project(":core:nav"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))

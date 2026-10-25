@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.hero.SettingsHero
 import dev.fanfly.wingslog.core.ui.layout.ConstrainedFloatingAction
@@ -39,6 +40,7 @@ import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.list.EmptyState
 import dev.fanfly.wingslog.core.ui.popup.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
@@ -60,7 +62,7 @@ import wingslog.feature.technician.sharedassets.generated.resources.Res as Techn
 fun TechnicianListScreen(
   viewModel: TechnicianListViewModel,
   onNavigateBack: () -> Unit,
-  onNavigateToEdit: (technicianId: String?) -> Unit,
+  onNavigateToEdit: (technicianId: TechnicianId?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val state by viewModel.uiState.collectAsState()
@@ -201,8 +203,8 @@ fun TechnicianListScreen(
                 technicians = state.technicians,
                 offered = state.knownCertifications,
                 selfId = state.selfId,
-                photoFor = { if (it.id == state.selfId) state.selfPhotoUrl else null },
-                onClick = { onNavigateToEdit(it.id) },
+                photoFor = { if (it.id == state.selfId?.value) state.selfPhotoUrl else null },
+                onClick = { onNavigateToEdit(TechnicianId(it.id)) },
               )
             }
           }
