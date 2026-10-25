@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.model.id
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.CommentId
+import dev.fanfly.wingslog.id.CommentParentId
 import dev.fanfly.wingslog.id.ComponentId
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ExportId
@@ -22,6 +23,8 @@ class IdValuesTest {
   fun allBoxedIdsUnboxValueCorrectly() {
     assertThat(AttachmentId("att-1").value).isEqualTo("att-1")
     assertThat(CommentId("com-1").value).isEqualTo("com-1")
+    assertThat(CommentParentId(squawk_id = SquawkId("sq-1")).value).isEqualTo("sq-1")
+    assertThat(CommentParentId(task_id = MaintenanceTaskId("task-1")).value).isEqualTo("task-1")
     assertThat(ComponentId("comp-1").value).isEqualTo("comp-1")
     assertThat(DataLogId("dl-1").value).isEqualTo("dl-1")
     assertThat(ExportId("exp-1").value).isEqualTo("exp-1")

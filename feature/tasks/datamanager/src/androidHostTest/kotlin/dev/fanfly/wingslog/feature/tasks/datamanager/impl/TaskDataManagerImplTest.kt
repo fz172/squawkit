@@ -10,10 +10,11 @@ import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -244,10 +245,9 @@ class TaskDataManagerImplTest {
 
     coVerify {
       commentManager.deleteThread(
-        CommentTarget(
-          TEST_THING_ID,
-          TEST_TASK_ID,
-          CommentParentKind.MAINTENANCE_TASK
+        CommentTarget.task(
+          ThingId(TEST_THING_ID),
+          MaintenanceTaskId(TEST_TASK_ID),
         )
       )
     }

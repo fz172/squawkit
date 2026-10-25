@@ -1,5 +1,12 @@
 package dev.fanfly.wingslog.feature.squawk.datamanager.impl
 
+import kotlin.time.Instant
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.test.runTest
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -8,7 +15,6 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.id.SquawkId
@@ -20,13 +26,8 @@ import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-456"
@@ -285,7 +286,7 @@ class SquawkManagerImplTest {
     coVerify {
       store.delete(TEST_SQUAWK_ID, testScope)
       commentManager.deleteThread(
-        CommentTarget(TEST_THING_ID, TEST_SQUAWK_ID, CommentParentKind.SQUAWK)
+        CommentTarget.squawk(TEST_THING, TEST_SQUAWK)
       )
     }
   }

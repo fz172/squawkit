@@ -28,6 +28,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:datetime"))
+      implementation(project(":core:model"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))

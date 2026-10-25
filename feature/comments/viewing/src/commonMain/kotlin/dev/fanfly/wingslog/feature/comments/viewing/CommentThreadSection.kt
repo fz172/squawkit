@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.comments.viewing
 
+import kotlin.time.Instant
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,7 +18,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.comments.model.CommentEntry
 import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
-import kotlin.time.Instant
+import dev.fanfly.wingslog.id.CommentId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.comments.sharedassets.generated.resources.Res
 import wingslog.feature.comments.sharedassets.generated.resources.comments_empty
@@ -32,11 +33,11 @@ import wingslog.feature.comments.sharedassets.generated.resources.comments_empty
 @Composable
 fun CommentThreadSection(
   state: CommentThreadState,
-  onToggleMenu: (String) -> Unit,
+  onToggleMenu: (CommentId) -> Unit,
   onDismissMenu: () -> Unit,
-  onEdit: (String) -> Unit,
-  onDelete: (String) -> Unit,
-  onEditDraftChange: (String) -> Unit,
+  onEdit: (CommentId) -> Unit,
+  onDelete: (CommentId) -> Unit,
+  onEditDraftChange: (newDraft: String) -> Unit,
   onCancelEdit: () -> Unit,
   onSaveEdit: () -> Unit,
   modifier: Modifier = Modifier,
@@ -44,7 +45,7 @@ fun CommentThreadSection(
   // Which comment the Delete item is asking about. Transient — the dialog is either on screen
   // or it is not — so a composable remember is the right home, as it is for the other confirm
   // dialogs in the app.
-  var pendingDeleteId by remember { mutableStateOf<String?>(null) }
+  var pendingDeleteId by remember { mutableStateOf<CommentId?>(null) }
   pendingDeleteId?.let { id ->
     DeleteCommentConfirmDialog(
       onConfirm = { pendingDeleteId = null; onDelete(id) },
@@ -90,7 +91,7 @@ private fun CommentThreadSectionPreview() {
       state = CommentThreadState(
         comments = listOf(
           CommentEntry(
-            id = "c1",
+            id = CommentId("c1"),
             authorName = "Maria Delgado",
             text = "Torque values for the fairing screws are in SB 2X-57-01, not the AMM — " +
               "double-check before install.",
@@ -100,7 +101,7 @@ private fun CommentThreadSectionPreview() {
             isMine = false,
           ),
           CommentEntry(
-            id = "c2",
+            id = CommentId("c2"),
             authorName = "Teo Varga",
             authorPhotoUrl = "https://example.invalid/teo.jpg",
             text = "Holding this until the 100-hr next week so we only pull the panel once.",
@@ -110,7 +111,7 @@ private fun CommentThreadSectionPreview() {
             isMine = true,
           ),
           CommentEntry(
-            id = "c3",
+            id = CommentId("c3"),
             authorName = "Tom Okafor",
             text = "",
             createdAt = Instant.fromEpochSeconds(1_787_200_000),

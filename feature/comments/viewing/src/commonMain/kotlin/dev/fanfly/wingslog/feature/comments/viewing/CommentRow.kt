@@ -51,7 +51,7 @@ internal fun CommentRow(
   onDismissMenu: () -> Unit,
   onEdit: () -> Unit,
   onDelete: () -> Unit,
-  onEditDraftChange: (String) -> Unit,
+  onEditDraftChange: (newDraft: String) -> Unit,
   onCancelEdit: () -> Unit,
   onSaveEdit: () -> Unit,
 ) {

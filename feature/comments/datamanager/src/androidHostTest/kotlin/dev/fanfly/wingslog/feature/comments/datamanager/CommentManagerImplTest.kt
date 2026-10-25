@@ -1,5 +1,12 @@
 package dev.fanfly.wingslog.feature.comments.datamanager
 
+import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -17,6 +24,9 @@ import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.CommentId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.CommentParentType
 import dev.fanfly.wingslog.thing.Technician
@@ -26,19 +36,14 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Instant
 
 private const val HOST_UID = "host-1"
 private const val THING_ID = "thing-1"
+private val THING = ThingId(THING_ID)
 private const val SQUAWK_ID = "squawk-1"
+private val SQUAWK = SquawkId(SQUAWK_ID)
 private const val ME = "me-uid"
 private const val THEM = "them-uid"
 
@@ -52,8 +57,7 @@ class CommentManagerImplTest {
   private lateinit var manager: CommentManagerImpl
 
   private val scope = EntityScope.thingChildUnsafe(HOST_UID, THING_ID)
-  private val target =
-    CommentTarget(THING_ID, SQUAWK_ID, CommentParentKind.SQUAWK)
+  private val target = CommentTarget.squawk(THING, SQUAWK)
 
   @Before
   fun setUp() {
@@ -107,7 +111,7 @@ class CommentManagerImplTest {
 
     // c2 belongs to a different squawk; c3 shares the id but is a task's thread — the pair is
     // what makes (parent_type, parent_id) the selector rather than parent_id alone.
-    assertThat(thread.map { it.id }).containsExactly("c1")
+    assertThat(thread.map { it.id }).containsExactly(CommentId("c1"))
   }
 
   @Test
@@ -127,7 +131,7 @@ class CommentManagerImplTest {
         .first()
         .map { it.id }
     )
-      .containsExactly("older", "middle", "newer")
+      .containsExactly(CommentId("older"), CommentId("middle"), CommentId("newer"))
       .inOrder()
   }
 
@@ -145,10 +149,10 @@ class CommentManagerImplTest {
       .first()
       .associateBy { it.id }
 
-    assertThat(byId.getValue("mine").isMine).isTrue()
-    assertThat(byId.getValue("theirs").isMine).isFalse()
+    assertThat(byId.getValue(CommentId("mine")).isMine).isTrue()
+    assertThat(byId.getValue(CommentId("theirs")).isMine).isFalse()
     // An empty author is "unknown", not "me" — the ⋮ menu must not appear on it.
-    assertThat(byId.getValue("unattributed").isMine).isFalse()
+    assertThat(byId.getValue(CommentId("unattributed")).isMine).isFalse()
   }
 
   @Test
@@ -190,9 +194,9 @@ class CommentManagerImplTest {
         .last()
         .associateBy { it.id }
 
-      assertThat(byId.getValue("theirs").authorPhotoUrl).isEqualTo("https://x/them.jpg")
-      assertThat(byId.getValue("mine").authorPhotoUrl).isEqualTo("https://x/me.jpg")
-      assertThat(byId.getValue("stranger").authorPhotoUrl).isNull()
+      assertThat(byId.getValue(CommentId("theirs")).authorPhotoUrl).isEqualTo("https://x/them.jpg")
+      assertThat(byId.getValue(CommentId("mine")).authorPhotoUrl).isEqualTo("https://x/me.jpg")
+      assertThat(byId.getValue(CommentId("stranger")).authorPhotoUrl).isNull()
     }
 
   @Test
@@ -207,7 +211,7 @@ class CommentManagerImplTest {
       .last()
 
     // An offline or denied roster must never take the thread down with it.
-    assertThat(thread.map { it.id }).containsExactly("c1")
+    assertThat(thread.map { it.id }).containsExactly(CommentId("c1"))
     assertThat(thread.single().authorPhotoUrl).isNull()
   }
 
@@ -266,7 +270,7 @@ class CommentManagerImplTest {
       flowOf(row(comment("c1", authorUid = ME, text = "before")))
     val written = slot<Comment>()
 
-    manager.updateComment(target, "c1", "after")
+    manager.updateComment(target, CommentId("c1"), "after")
 
     coVerify { store.put("c1", capture(written), scope) }
     assertThat(written.captured.text).isEqualTo("after")
@@ -280,7 +284,7 @@ class CommentManagerImplTest {
 
     // Opening the editor and saving without typing is not an edit, and must not brand the comment
     // with an "Edited" line that did not happen.
-    manager.updateComment(target, "c1", "same")
+    manager.updateComment(target, CommentId("c1"), "same")
 
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
   }
@@ -290,7 +294,7 @@ class CommentManagerImplTest {
     every { store.observe("c1", scope) } returns
       flowOf(row(comment("c1", authorUid = THEM)))
 
-    val result = manager.updateComment(target, "c1", "not yours")
+    val result = manager.updateComment(target, CommentId("c1"), "not yours")
 
     assertThat(result.isFailure).isTrue()
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
@@ -304,7 +308,7 @@ class CommentManagerImplTest {
       flowOf(row(comment("c1", authorUid = ME, text = "said too much")))
     val written = slot<Comment>()
 
-    assertThat(manager.deleteComment(target, "c1").isSuccess).isTrue()
+    assertThat(manager.deleteComment(target, CommentId("c1")).isSuccess).isTrue()
 
     // Never store.delete: an edit shows an "Edited …" line, so a hard delete would let an author
     // launder a rewrite by deleting and re-posting. The row stays, the content goes.
@@ -321,7 +325,7 @@ class CommentManagerImplTest {
 
     // Re-stamping would move the recorded deletion time, which is the one thing the tombstone is
     // there to pin down.
-    assertThat(manager.deleteComment(target, "c1").isSuccess).isTrue()
+    assertThat(manager.deleteComment(target, CommentId("c1")).isSuccess).isTrue()
 
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
   }
@@ -331,7 +335,7 @@ class CommentManagerImplTest {
     every { store.observe("c1", scope) } returns
       flowOf(row(comment("c1", authorUid = ME, deletedAtSeconds = 5)))
 
-    val result = manager.updateComment(target, "c1", "back from the dead")
+    val result = manager.updateComment(target, CommentId("c1"), "back from the dead")
 
     assertThat(result.isFailure).isTrue()
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
@@ -350,9 +354,9 @@ class CommentManagerImplTest {
       .first()
 
     assertThat(thread.map { it.id })
-      .containsExactly("live", "gone")
+      .containsExactly(CommentId("live"), CommentId("gone"))
       .inOrder()
-    assertThat(thread.first { it.id == "gone" }.isDeleted).isTrue()
+    assertThat(thread.first { it.id == CommentId("gone") }.isDeleted).isTrue()
   }
 
   @Test
@@ -362,7 +366,7 @@ class CommentManagerImplTest {
 
     // The ⋮ menu is only offered on your own comments, so this is a bug if it is ever reached —
     // but a thread other people can write into is exactly where "the UI checks" is not enough.
-    val result = manager.deleteComment(target, "c1")
+    val result = manager.deleteComment(target, CommentId("c1"))
 
     assertThat(result.isFailure).isTrue()
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
