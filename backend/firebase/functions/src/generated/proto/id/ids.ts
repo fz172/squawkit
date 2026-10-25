@@ -44,6 +44,27 @@ export interface SuggestionId {
   value: string;
 }
 
+export interface SquawkId {
+  value: string;
+}
+
+export interface TechnicianId {
+  value: string;
+}
+
+export interface CommentId {
+  value: string;
+}
+
+/** Stable UUID of a component slot — join key for logs/tasks/squawks. */
+export interface ComponentId {
+  value: string;
+}
+
+export interface ExportId {
+  value: string;
+}
+
 function createBaseThingId(): ThingId {
   return { value: "" };
 }
@@ -503,6 +524,296 @@ export const SuggestionId: MessageFns<SuggestionId> = {
   },
   fromPartial<I extends Exact<DeepPartial<SuggestionId>, I>>(object: I): SuggestionId {
     const message = createBaseSuggestionId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseSquawkId(): SquawkId {
+  return { value: "" };
+}
+
+export const SquawkId: MessageFns<SquawkId> = {
+  encode(message: SquawkId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SquawkId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSquawkId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SquawkId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: SquawkId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SquawkId>, I>>(base?: I): SquawkId {
+    return SquawkId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SquawkId>, I>>(object: I): SquawkId {
+    const message = createBaseSquawkId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseTechnicianId(): TechnicianId {
+  return { value: "" };
+}
+
+export const TechnicianId: MessageFns<TechnicianId> = {
+  encode(message: TechnicianId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TechnicianId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTechnicianId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TechnicianId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: TechnicianId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TechnicianId>, I>>(base?: I): TechnicianId {
+    return TechnicianId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TechnicianId>, I>>(object: I): TechnicianId {
+    const message = createBaseTechnicianId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseCommentId(): CommentId {
+  return { value: "" };
+}
+
+export const CommentId: MessageFns<CommentId> = {
+  encode(message: CommentId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CommentId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCommentId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CommentId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: CommentId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CommentId>, I>>(base?: I): CommentId {
+    return CommentId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CommentId>, I>>(object: I): CommentId {
+    const message = createBaseCommentId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseComponentId(): ComponentId {
+  return { value: "" };
+}
+
+export const ComponentId: MessageFns<ComponentId> = {
+  encode(message: ComponentId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ComponentId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseComponentId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ComponentId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: ComponentId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ComponentId>, I>>(base?: I): ComponentId {
+    return ComponentId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ComponentId>, I>>(object: I): ComponentId {
+    const message = createBaseComponentId();
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseExportId(): ExportId {
+  return { value: "" };
+}
+
+export const ExportId: MessageFns<ExportId> = {
+  encode(message: ExportId, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.value !== "") {
+      writer.uint32(10).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ExportId {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExportId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExportId {
+    return { value: isSet(object.value) ? globalThis.String(object.value) : "" };
+  },
+
+  toJSON(message: ExportId): unknown {
+    const obj: any = {};
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ExportId>, I>>(base?: I): ExportId {
+    return ExportId.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ExportId>, I>>(object: I): ExportId {
+    const message = createBaseExportId();
     message.value = object.value ?? "";
     return message;
   },

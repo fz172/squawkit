@@ -48,3 +48,25 @@ message TemplateId {
 message SuggestionId {
     string value = 1;
 }
+
+message SquawkId {
+    string value = 1;
+}
+
+message TechnicianId {
+    string value = 1;
+}
+
+message CommentId {
+    string value = 1;
+}
+
+// Stable UUID of a component slot — join key for logs/tasks/squawks.
+message ComponentId {
+    string value = 1;
+}
+
+message ExportId {
+    string value = 1;
+}
+
