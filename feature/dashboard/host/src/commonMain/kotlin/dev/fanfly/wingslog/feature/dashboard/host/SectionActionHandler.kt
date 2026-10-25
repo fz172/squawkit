@@ -36,15 +36,13 @@ internal fun rememberSectionActionHandler(
             )
           )
 
-        is ThingOverviewAction.TaskCreateLogClick -> {
-          viewModel.onAction(action)
+        is ThingOverviewAction.TaskCreateLogClick ->
           navController.navigate(
             Screen.AddMaintenanceLog.createRoute(
               thingId,
               cardId = action.cardId,
             )
           )
-        }
 
         is ThingOverviewAction.EditLogClick ->
           navController.navigate(
@@ -60,15 +58,13 @@ internal fun rememberSectionActionHandler(
         is ThingOverviewAction.BrowseSuggestionsClick ->
           navController.navigate(Screen.Suggestions.createRoute(thingId))
 
-        is ThingOverviewAction.EditTaskClick -> {
-          viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
+        is ThingOverviewAction.EditTaskClick ->
           navController.navigate(
             Screen.EditMaintenanceTask.createRoute(
               thingId,
               action.cardId
             )
           )
-        }
 
         is ThingOverviewAction.AddSquawkClick ->
           navController.navigate(Screen.AddSquawk.createRoute(thingId))

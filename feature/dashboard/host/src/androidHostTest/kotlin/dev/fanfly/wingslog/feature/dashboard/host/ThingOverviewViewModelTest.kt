@@ -1,14 +1,12 @@
 package dev.fanfly.wingslog.feature.dashboard.host
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.ui.text.UiText
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewEvent
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
@@ -16,13 +14,7 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
-import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.task.MaintenanceTask
-import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.coEvery
@@ -46,35 +38,16 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 private const val THING_ID = "thing-1"
 
-/**
- * The dashboard's quick actions (design §5.1), and the §8 guard that each one goes through the
- * manager — the manager's tombstone is what fans the collaborator notification out, so a delete
- * that reached the store directly would be silent for everyone else on a shared Thing.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ThingOverviewViewModelTest {
 
   private val fleetManager: FleetManager = mockk()
   private val logManager: MaintenanceLogManager = mockk()
-  private val taskDataManager: TaskDataManager = mockk()
   private val taskStatusManager: TaskStatusManager = mockk()
-  private val commentManager: CommentManager = mockk(relaxed = true) {
-    every { observeComments(any()) } returns flowOf(emptyList())
-  }
   private val sharingManager: SharingManager = mockk()
-  private val analytics = RecordingAnalyticsManager()
   private val auth: FirebaseAuth = mockk()
 
   private val thing = Thing(id = THING_ID, template = AirplaneTemplate.TEMPLATE)
-  private val oilChange = MaintenanceTask(
-    id = "c1",
-    title = "Oil change",
-    component = ComponentType.COMPONENT_ENGINE,
-  )
-  private val dueOilChange = MaintenanceTaskWithStatus(
-    card = oilChange,
-    dueStatus = DueMetadata(status = DueStatus.DUE_SOON),
-  )
 
   @Before
   fun setUp() {
@@ -85,7 +58,7 @@ class ThingOverviewViewModelTest {
       emptyList()
     )
     every { taskStatusManager.observeTasksWithStatus(THING_ID) } returns
-      flowOf(listOf(dueOilChange))
+      flowOf(emptyList())
     every { sharingManager.observeMyRole(THING_ID) } returns flowOf(ShareRole.OWNER)
     every { sharingManager.observeIsShared(THING_ID) } returns flowOf(false)
     every { auth.currentUser } returns null
@@ -97,12 +70,9 @@ class ThingOverviewViewModelTest {
   private fun viewModel() = ThingOverviewViewModel(
     fleetManager,
     logManager,
-    taskDataManager,
     taskStatusManager,
-    commentManager,
     sharingManager,
     BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
-    analytics,
     auth,
     THING_ID,
   )
@@ -173,59 +143,5 @@ class ThingOverviewViewModelTest {
 
     assertThat(vm.events.first())
       .isEqualTo(ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed)))
-  }
-
-  @Test
-  fun cancelledConfirmations_writeNothingAndLogNothing() = runTest {
-    val vm = viewModel()
-    vm.onAction(ThingOverviewAction.TaskSkipClick(dueOilChange))
-    vm.onAction(ThingOverviewAction.CancelSkipTask)
-
-    coVerify(exactly = 0) { taskDataManager.skipCycle(any(), any(), any()) }
-    assertThat(analytics.countOf("record_quick_action")).isEqualTo(0)
-  }
-
-  @Test
-  fun confirmSkipTask_skipsAgainstTheDashboardsCurrentReading() = runTest {
-    // The dashboard already holds the reading TaskViewModel derives; the write must be the same.
-    every { logManager.observeLogs(THING_ID) } returns flowOf(emptyList())
-    coEvery {
-      taskDataManager.skipCycle(
-        THING_ID,
-        oilChange,
-        any()
-      )
-    } returns Result.success(true)
-    val vm = viewModel()
-    vm.onAction(ThingOverviewAction.TaskSkipClick(dueOilChange))
-    assertThat(vm.success.skippingTaskId).isEqualTo("c1")
-
-    vm.onAction(ThingOverviewAction.ConfirmSkipTask)
-
-    coVerify(exactly = 1) { taskDataManager.skipCycle(THING_ID, oilChange, 0f) }
-    assertThat(vm.success.skippingTaskId).isNull()
-    assertThat(
-      analytics.paramsFor("record_quick_action")
-        .single()
-    )
-      .containsAtLeast("surface", "tasks", "action", "skip")
-  }
-
-  @Test
-  fun confirmDeleteTask_deletesThroughTheManager() = runTest {
-    coEvery {
-      taskDataManager.deleteTask(
-        THING_ID,
-        "c1"
-      )
-    } returns Result.success(true)
-    val vm = viewModel()
-    vm.onAction(ThingOverviewAction.DeleteTaskClick(dueOilChange))
-    assertThat(vm.success.deletingTaskId).isEqualTo("c1")
-
-    vm.onAction(ThingOverviewAction.ConfirmDeleteTask)
-
-    coVerify(exactly = 1) { taskDataManager.deleteTask(THING_ID, "c1") }
-    assertThat(vm.success.deletingTaskId).isNull()
   }
 }

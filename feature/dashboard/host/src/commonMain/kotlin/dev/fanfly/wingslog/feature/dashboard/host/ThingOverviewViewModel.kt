@@ -2,23 +2,9 @@ package dev.fanfly.wingslog.feature.dashboard.host
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.core.analytics.AnalyticsManager
-import dev.fanfly.wingslog.core.analytics.QuickActionKind
-import dev.fanfly.wingslog.core.analytics.QuickActionSource
-import dev.fanfly.wingslog.core.analytics.QuickActionSurface
-import dev.fanfly.wingslog.core.analytics.RecordQuickAction
-import dev.fanfly.wingslog.core.analytics.log
-import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
-import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.text.UiText
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
-import dev.fanfly.wingslog.feature.comments.datamanager.RecordCommentHost
-import dev.fanfly.wingslog.feature.comments.model.CommentAction
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.dashboard.api.LogStats
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewEvent
@@ -26,13 +12,9 @@ import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
-import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -41,29 +23,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.core.sharedassets.generated.resources.save_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
-import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 class ThingOverviewViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
-  private val taskDataManager: TaskDataManager,
   private val taskStatusManager: TaskStatusManager,
-  private val commentManager: CommentManager,
   private val sharingManager: SharingManager,
   private val templateRegistry: TemplateRegistry,
-  private val analytics: AnalyticsManager,
   private val auth: FirebaseAuth,
   private val thingId: String,
 ) : ViewModel() {
@@ -72,43 +44,16 @@ class ThingOverviewViewModel(
     MutableStateFlow<ThingOverviewUiState>(ThingOverviewUiState.Loading)
   val uiState: StateFlow<ThingOverviewUiState> = _uiState.asStateFlow()
 
-  private val commentHost = RecordCommentHost(commentManager, viewModelScope)
-
-  /** The open detail sheet's comment thread; null while no squawk or task sheet is showing. */
-  val commentThread: StateFlow<CommentThreadController?> = commentHost.thread
-
   // Buffered, not rendezvous: a quick action's snackbar can be emitted between the section being
   // torn down and the new one attaching its collector, and a rendezvous send would park there.
   private val _events = Channel<ThingOverviewEvent>(Channel.BUFFERED)
 
   /** Navigation and snackbar events; `ThingSectionContent` collects them (design §7). */
   val events: Flow<ThingOverviewEvent> = _events.receiveAsFlow()
-  private var cachedLogs: List<MaintenanceLog> = emptyList()
 
   /** Due status depends on the clock, not only on stored data; re-evaluate when the screen returns. */
   fun onResumed() {
     taskStatusManager.refreshDueStatus()
-  }
-
-  init {
-    // Derived from the state rather than hooked into each action: a sheet closes in several ways
-    // (dismiss, delete, a resolve that navigates away) and every one of them clears the selection.
-    viewModelScope.launch {
-      _uiState
-        .map { (it as? ThingOverviewUiState.Success)?.commentTarget() }
-        .distinctUntilChanged()
-        .collect(commentHost::show)
-    }
-    viewModelScope.launch {
-      commentHost.errors.collect { action ->
-        val message = when (action) {
-          CommentAction.POST -> CommentsRes.string.comment_post_failed
-          CommentAction.EDIT -> CommentsRes.string.comment_edit_failed
-          CommentAction.DELETE -> CommentsRes.string.comment_delete_failed
-        }
-        _events.send(ThingOverviewEvent.ShowMessage(UiText.StringRes(message)))
-      }
-    }
   }
 
   init {
@@ -148,7 +93,6 @@ class ThingOverviewViewModel(
         }
       ) { thing, logs, cardsWithStatus, currentReadings, shareContext ->
         val (myRole, isShared) = shareContext
-        cachedLogs = logs
         val degraded = thing?.let {
           templateRegistry.resolve(it) as? TemplateResolution.Degraded
         }
@@ -182,15 +126,6 @@ class ThingOverviewViewModel(
           val complied =
             cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 
-          val current = _uiState.value as? ThingOverviewUiState.Success
-          val refreshedSelected = current?.selectedTask?.let { sel ->
-            cardsWithStatus.find { it.card.id == sel.card.id }
-          }
-          val refreshedDetailLogs = refreshedSelected?.let { sel ->
-            logs.filter { sel.card.id in it.inspection_ids }
-              .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
-          } ?: emptyList()
-
           ThingOverviewUiState.Success(
             thing = thing,
             logStats = stats,
@@ -200,11 +135,6 @@ class ThingOverviewViewModel(
               it.timestamp?.getEpochSecond() ?: 0L
             }
               .take(4),
-            selectedTask = refreshedSelected,
-            logsForSelectedTask = refreshedDetailLogs,
-            deletingTaskId = current?.deletingTaskId,
-            resolvingTaskId = current?.resolvingTaskId,
-            skippingTaskId = current?.skippingTaskId,
             myRole = myRole,
             shared = isShared,
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
@@ -285,19 +215,10 @@ class ThingOverviewViewModel(
       // Navigation only — ThingSectionContent drives the navController and never forwards it.
       is ThingOverviewAction.BrowseSuggestionsClick -> Unit
 
-      is ThingOverviewAction.TaskCardClick -> {
-        showTaskDetails(action.card)
-      }
-
-      ThingOverviewAction.DismissTaskDetail -> {
-        hideTaskDetail()
-      }
-
       // Navigation only; ThingSectionContent routes it.
       is ThingOverviewAction.OpenDataLogClick -> Unit
 
       is ThingOverviewAction.EditTaskClick -> {
-        hideTaskDetail()
         viewModelScope.launch {
           _events.send(
             ThingOverviewEvent.NavigateToEditTask(
@@ -306,14 +227,6 @@ class ThingOverviewViewModel(
             )
           )
         }
-      }
-
-      ThingOverviewAction.CancelDeleteTask -> {
-        cancelDeleteTask()
-      }
-
-      ThingOverviewAction.ConfirmDeleteTask -> {
-        confirmDeleteTask()
       }
 
       is ThingOverviewAction.AddSquawkClick -> {
@@ -339,66 +252,9 @@ class ThingOverviewViewModel(
 
       // Navigation only — ThingSectionContent drives the navController and never forwards it.
       is ThingOverviewAction.SquawkFixedClick -> Unit
-
-      is ThingOverviewAction.TaskResolveClick ->
-        updateSuccess { it.copy(resolvingTaskId = action.card.card.id) }
-
-      ThingOverviewAction.DismissTaskResolveMenu ->
-        updateSuccess { it.copy(resolvingTaskId = null) }
-
-      is ThingOverviewAction.TaskCreateLogClick -> {
-        logQuickAction(QuickActionSurface.TASKS, QuickActionKind.RESOLVE)
-        updateSuccess { it.copy(resolvingTaskId = null) }
-      }
-
-      is ThingOverviewAction.TaskSkipClick ->
-        updateSuccess {
-          it.copy(resolvingTaskId = null, skippingTaskId = action.card.card.id)
-        }
-
-      ThingOverviewAction.ConfirmSkipTask -> confirmSkipTask()
-
-      ThingOverviewAction.CancelSkipTask ->
-        updateSuccess { it.copy(skippingTaskId = null) }
-
-      is ThingOverviewAction.DeleteTaskClick ->
-        updateSuccess {
-          it.copy(resolvingTaskId = null, deletingTaskId = action.card.card.id)
-        }
+      is ThingOverviewAction.TaskCreateLogClick -> Unit
     }
   }
-
-  /** Rewrites [ThingOverviewUiState.Success]; a no-op in any other state. */
-  private inline fun updateSuccess(
-    crossinline transform: (ThingOverviewUiState.Success) -> ThingOverviewUiState.Success,
-  ) {
-    _uiState.update { state ->
-      if (state is ThingOverviewUiState.Success) transform(state) else state
-    }
-  }
-
-  /**
-   * Fired at commit — after the confirmation for Delete and Skip, on selection for Fixed /
-   * Dismiss / Create work log — so a cancelled confirmation logs nothing (PRD R25).
-   */
-  private fun logQuickAction(
-    surface: QuickActionSurface,
-    action: QuickActionKind,
-  ) {
-    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
-    analytics.log(
-      RecordQuickAction(
-        templateId = state.thing.template?.id.orEmpty(),
-        surface = surface,
-        action = action,
-        source = QuickActionSource.SWIPE,
-      )
-    )
-  }
-
-  /** The words this build renders the thing in — what the snackbars name a record with (R24). */
-  private fun lexicon(state: ThingOverviewUiState.Success) =
-    templateRegistry.lexiconFor(templateRegistry.forThingWithFallback(state.thing))
 
   private fun setMeterReading(meterKey: String, value: Double) {
     val state = _uiState.value as? ThingOverviewUiState.Success ?: return
@@ -408,94 +264,6 @@ class ThingOverviewViewModel(
         .onFailure {
           _events.send(
             ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
-          )
-        }
-    }
-  }
-
-  private fun confirmSkipTask() {
-    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
-    val cardId = state.skippingTaskId ?: return
-    val card = (state.activeTasks + state.completedTasks)
-      .find { it.card.id == cardId }?.card ?: return
-    viewModelScope.launch {
-      // The dashboard already holds the reading the form derives, so the write is the same one
-      // TaskViewModel.skipThisCycle makes (design §5.1).
-      val reading = state.logStats?.valueFor(card.defaultMeterKey())
-        ?.toFloat() ?: 0f
-      taskDataManager.skipCycle(state.thing.id, card, reading)
-        .onSuccess {
-          logQuickAction(
-            QuickActionSurface.TASKS,
-            QuickActionKind.SKIP
-          )
-        }
-      updateSuccess { it.copy(skippingTaskId = null) }
-    }
-  }
-
-  private fun showTaskDetails(cardWithStatus: MaintenanceTaskWithStatus) {
-    val relevantLogs =
-      cachedLogs.filter { cardWithStatus.card.id in it.inspection_ids }
-        .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
-    _uiState.update { state ->
-      if (state is ThingOverviewUiState.Success) {
-        state.copy(
-          selectedTask = cardWithStatus,
-          logsForSelectedTask = relevantLogs,
-        )
-      } else state
-    }
-  }
-
-  fun hideTaskDetail() {
-    _uiState.update { state ->
-      if (state is ThingOverviewUiState.Success) {
-        state.copy(
-          selectedTask = null,
-          logsForSelectedTask = emptyList()
-        )
-      } else state
-    }
-  }
-
-  fun cancelDeleteTask() {
-    _uiState.update { state ->
-      if (state is ThingOverviewUiState.Success) {
-        state.copy(deletingTaskId = null)
-      } else state
-    }
-  }
-
-  fun confirmDeleteTask() {
-    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
-    val cardId = state.deletingTaskId ?: return
-    deleteTask(cardId)
-  }
-
-  fun deleteTask(cardId: String) {
-    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
-    viewModelScope.launch {
-      taskDataManager.deleteTask(
-        state.thing.id,
-        cardId
-      )
-        .onSuccess {
-          logQuickAction(QuickActionSurface.TASKS, QuickActionKind.DELETE)
-          updateSuccess { it.copy(deletingTaskId = null, selectedTask = null) }
-          _events.send(
-            ThingOverviewEvent.ShowMessage(
-              UiText.StringRes(
-                TasksRes.string.task_deleted,
-                listOf(LexiconFormatter.sentenceCase(lexicon(state).taskNoun)),
-              )
-            )
-          )
-        }
-        .onFailure {
-          updateSuccess { it.copy(deletingTaskId = null) }
-          _events.send(
-            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.delete_failed))
           )
         }
     }
@@ -518,12 +286,3 @@ class ThingOverviewViewModel(
     }
   }
 }
-
-private fun ThingOverviewUiState.Success.commentTarget(): CommentTarget? =
-  selectedTask?.let {
-    CommentTarget(
-      thing.id,
-      it.card.id,
-      CommentParentKind.MAINTENANCE_TASK
-    )
-  }
