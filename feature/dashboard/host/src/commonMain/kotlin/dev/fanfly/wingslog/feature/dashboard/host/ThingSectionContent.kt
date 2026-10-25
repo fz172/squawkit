@@ -69,13 +69,6 @@ fun ThingSectionContent(
   val viewModel: ThingOverviewViewModel =
     koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  // Due status depends on the wall clock, not just on stored data, so recompute it whenever the
-  // dashboard comes back into view — otherwise an app resumed the next day still shows yesterday's
-  // status. Common to all three hosts: UIKit foreground on iOS, document.visibilitychange on web.
-  LifecycleResumeEffect(thingId) {
-    viewModel.onResumed()
-    onPauseOrDispose { }
-  }
   // A quick action runs inside the shell entry, so the cross-screen back-stack channel is the
   // wrong shape for its snackbar; the shell provides its host here instead (design §7). Only the
   // message events land here — navigation is driven from the onAction wrapper below.
@@ -183,6 +176,14 @@ fun ThingSectionContent(
             )
           },
         )
+      // Due status depends on the wall clock, not just on stored data, so recompute it whenever the
+      // dashboard comes back into view — otherwise an app resumed the next day still shows
+      // yesterday's status. Common to all three hosts: UIKit foreground on iOS,
+      // document.visibilitychange on web.
+      LifecycleResumeEffect(thingId) {
+        taskDetailViewModel.onResumed()
+        onPauseOrDispose { }
+      }
       // A record open in one section does not follow the user to the next: clear the task selection
       // whenever the section switches so it does not stay open over another section.
       LaunchedEffect(section) {

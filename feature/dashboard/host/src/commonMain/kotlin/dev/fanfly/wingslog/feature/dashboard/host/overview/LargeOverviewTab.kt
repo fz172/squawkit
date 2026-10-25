@@ -16,21 +16,20 @@ import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.dashboard.LogOnboardingCard
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
+import dev.fanfly.wingslog.feature.tasks.dashboard.TaskOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.feature.tasks.model.needsAttention
 
 @Composable
 internal fun LargeOverviewTab(
   state: ThingOverviewUiState.Success,
   squawkOverview: SquawkOverviewUiState,
+  taskOverview: TaskOverviewUiState,
   onTaskClick: (MaintenanceTaskWithStatus) -> Unit,
   onViewSquawksTab: () -> Unit,
   onViewLogsTab: () -> Unit,
   onMutationAction: ((ThingOverviewAction) -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
-  val overdueTasks =
-    state.activeTasks.filter { it.needsAttention }
   Column(
     modifier = modifier
       .fillMaxSize()
@@ -43,7 +42,7 @@ internal fun LargeOverviewTab(
 
     NeedsAttentionSection(
       downSquawks = squawkOverview.aogSquawks,
-      tasks = overdueTasks,
+      tasks = taskOverview.overdueTasks,
       onSquawkClick = { onViewSquawksTab() },
       onTaskClick = onTaskClick,
     )
@@ -74,6 +73,7 @@ internal fun LargeOverviewTab(
 
     DashboardLowerGrid(
       state = state,
+      nextDueTask = taskOverview.nextDueTask,
       openSquawksPreview = squawkOverview.openPreview,
       onTaskClick = onTaskClick,
       onLogsClick = onViewLogsTab,

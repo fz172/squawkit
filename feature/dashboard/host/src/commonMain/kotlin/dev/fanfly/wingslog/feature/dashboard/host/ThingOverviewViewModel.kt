@@ -12,8 +12,6 @@ import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
@@ -33,7 +31,6 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 class ThingOverviewViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
-  private val taskStatusManager: TaskStatusManager,
   private val sharingManager: SharingManager,
   private val templateRegistry: TemplateRegistry,
   private val auth: FirebaseAuth,
@@ -51,11 +48,6 @@ class ThingOverviewViewModel(
   /** Navigation and snackbar events; `ThingSectionContent` collects them (design §7). */
   val events: Flow<ThingOverviewEvent> = _events.receiveAsFlow()
 
-  /** Due status depends on the clock, not only on stored data; re-evaluate when the screen returns. */
-  fun onResumed() {
-    taskStatusManager.refreshDueStatus()
-  }
-
   init {
     loadThingAndStats()
   }
@@ -63,43 +55,30 @@ class ThingOverviewViewModel(
   private fun loadThingAndStats() {
     viewModelScope.launch {
       _uiState.update { ThingOverviewUiState.Loading }
-      // Every collection shares one SQLDelight `entity` table, and SQLDelight notifies query
-      // listeners per *table*, so any write anywhere — adding a squawk, a sync writeback — re-runs
-      // and re-emits every observer here with identical content. Unfiltered, that re-ran
-      // computeNextDue for every task card several times per unrelated write. distinctUntilChanged
-      // drops the duplicates; the store still re-queries and re-decodes, which is a separate
-      // (larger) fix at the EntityStore level.
       combine(
         fleetManager.loadThing(thingId)
           .distinctUntilChanged(),
         logManager.observeLogs(thingId)
-          .distinctUntilChanged(),
-        taskStatusManager.observeTasksWithStatus(thingId)
           .distinctUntilChanged(),
         // The readings as the records give them, not the stored overview: that is only as current
         // as the last client to rebuild it, and one that predates readings set by hand rebuilds
         // it without them (#1368).
         logManager.observeCurrentReadings(thingId)
           .distinctUntilChanged(),
-        combine(
-          // The caller's role on this thing, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
-          // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
-          sharingManager.observeMyRole(thingId)
-            .distinctUntilChanged(),
-          sharingManager.observeIsShared(thingId)
-            .distinctUntilChanged(),
-        ) { myRole, shared ->
-          ShareContext(myRole, shared)
-        }
-      ) { thing, logs, cardsWithStatus, currentReadings, shareContext ->
-        val (myRole, isShared) = shareContext
+        // The caller's role on this thing, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
+        // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
+        sharingManager.observeMyRole(thingId)
+          .distinctUntilChanged(),
+        sharingManager.observeIsShared(thingId)
+          .distinctUntilChanged(),
+      ) { thing, logs, currentReadings, myRole, isShared ->
         val degraded = thing?.let {
           templateRegistry.resolve(it) as? TemplateResolution.Degraded
         }
         if (degraded != null) {
-          // Before anything else is computed: the stats and due-status work below reads the
-          // template's meters, and running it under DNA we cannot interpret is what produces the
-          // wrong numbers this state exists to avoid showing (design §6.2).
+          // Before anything else is computed: the stats work below reads the template's meters, and
+          // running it under DNA we cannot interpret is what produces the wrong numbers this state
+          // exists to avoid showing (design §6.2).
           ThingOverviewUiState.Degraded(thing, degraded.reason)
         } else if (thing != null) {
           val template = templateRegistry.forThingWithFallback(thing)
@@ -121,16 +100,9 @@ class ThingOverviewViewModel(
               .maxOrNull(),
           )
 
-          val active =
-            cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
-          val complied =
-            cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
-
           ThingOverviewUiState.Success(
             thing = thing,
             logStats = stats,
-            activeTasks = active,
-            completedTasks = complied,
             recentLogs = logs.sortedByDescending {
               it.timestamp?.getEpochSecond() ?: 0L
             }

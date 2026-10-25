@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.tasks.dashboard.AddedTasksViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.ReadySuggestionsViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.SuggestTasksEntryViewModel
+import dev.fanfly.wingslog.feature.tasks.dashboard.TaskOverviewViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.TaskTabViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.detail.TaskDetailViewModel
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -44,6 +45,12 @@ val tasksDashboardModule = module {
       get<AnalyticsManager>(),
       params.get<String>(0),
       params.get<String>(1),
+    )
+  }
+  viewModel { params ->
+    TaskOverviewViewModel(
+      get<TaskStatusManager>(),
+      params.get<String>(0),
     )
   }
   viewModel { params ->
