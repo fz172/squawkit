@@ -25,7 +25,6 @@ kotlin {
       implementation(project(":core:template"))
       implementation(project(":core:ui"))
       implementation(project(":feature:sharing:model"))
-      implementation(libs.kotlinx.datetime)
     }
   }
 }

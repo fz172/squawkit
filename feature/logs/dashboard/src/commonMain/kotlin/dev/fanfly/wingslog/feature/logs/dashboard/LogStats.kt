@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.dashboard.api
+package dev.fanfly.wingslog.feature.logs.dashboard
 
 import kotlinx.datetime.LocalDate
 
@@ -11,7 +11,7 @@ data class LogStats(
    * Current value per meter key: the most recent of the logs’ readings and the one set by hand on
    * this card, if any (#1368).
    */
-  val readings: Map<String, Double> = emptyMap(),
+  val readings: Map<String, Double> = emptyMap(), // allow-primitive-tuple: meter key
   /** The newest day any of [readings] was taken, by a log or by hand; null when there are none. */
   val readingsAsOf: LocalDate? = null,
 ) {

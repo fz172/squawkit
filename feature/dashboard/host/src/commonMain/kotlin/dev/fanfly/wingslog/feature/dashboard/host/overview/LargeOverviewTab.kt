@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.dashboard.LogOnboardingCard
+import dev.fanfly.wingslog.feature.logs.dashboard.LogOverviewUiState
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.tasks.dashboard.TaskOverviewUiState
@@ -22,8 +23,10 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 @Composable
 internal fun LargeOverviewTab(
   state: ThingOverviewUiState.Success,
+  logOverview: LogOverviewUiState,
   squawkOverview: SquawkOverviewUiState,
   taskOverview: TaskOverviewUiState,
+  onSetReading: ((meterKey: String, value: Double) -> Unit)?,
   onTaskClick: (MaintenanceTaskWithStatus) -> Unit,
   onViewSquawksTab: () -> Unit,
   onViewLogsTab: () -> Unit,
@@ -49,14 +52,10 @@ internal fun LargeOverviewTab(
 
     ThingDataCard(
       state.thing,
-      stats = state.logStats,
+      stats = logOverview.logStats,
       // Open to every member, technicians included: whoever can write a log can already move a
       // reading, so setting one directly is no new power (#1368).
-      onSetReading = onMutationAction?.let { act ->
-        { meterKey, value ->
-          act(ThingOverviewAction.SetMeterReading(meterKey, value))
-        }
-      },
+      onSetReading = onSetReading,
       onEditClick = manageAction(state, onMutationAction) {
         ThingOverviewAction.EditClick(state.thing.id)
       },
@@ -65,14 +64,14 @@ internal fun LargeOverviewTab(
       },
     )
 
-    if (state.logStats?.total == 0L && onMutationAction != null) {
+    if (logOverview.logStats?.total == 0L && onMutationAction != null) {
       LogOnboardingCard(
         onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(state.thing.id)) },
       )
     }
 
     DashboardLowerGrid(
-      state = state,
+      logOverview = logOverview,
       nextDueTask = taskOverview.nextDueTask,
       openSquawksPreview = squawkOverview.openPreview,
       onTaskClick = onTaskClick,

@@ -16,6 +16,8 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.dashboard.LogOnboardingCard
+import dev.fanfly.wingslog.feature.logs.dashboard.LogOverviewUiState
+import dev.fanfly.wingslog.feature.logs.dashboard.LogStats
 import dev.fanfly.wingslog.feature.logs.dashboard.RecentLogRow
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.dashboard.host.generated.resources.Res
@@ -25,10 +27,10 @@ import wingslog.feature.dashboard.host.generated.resources.overview_title_with_c
 
 /** The log noun and how many there are — "Work logs · 40". The count the stats strip used to hold. */
 @Composable
-internal fun workLogsTitle(state: ThingOverviewUiState.Success): String {
+internal fun workLogsTitle(logStats: LogStats?): String {
   val title =
     LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun)
-  val total = state.logStats?.total ?: return title
+  val total = logStats?.total ?: return title
   return stringResource(
     Res.string.overview_title_with_count,
     title,
@@ -40,11 +42,12 @@ internal fun workLogsTitle(state: ThingOverviewUiState.Success): String {
 @Composable
 internal fun WorkLogsSection(
   state: ThingOverviewUiState.Success,
+  logOverview: LogOverviewUiState,
   onViewLogsTab: () -> Unit,
   onMutationAction: ((ThingOverviewAction) -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
-  val total = state.logStats?.total ?: return
+  val total = logOverview.logStats?.total ?: return
   if (total == 0L) {
     if (onMutationAction != null) {
       LogOnboardingCard(
@@ -68,7 +71,7 @@ internal fun WorkLogsSection(
         )
       },
     )
-    state.recentLogs.forEachIndexed { index, log ->
+    logOverview.recentLogs.forEachIndexed { index, log ->
       if (index > 0) ListRowDivider()
       RecentLogRow(log = log, onClick = onViewLogsTab)
     }
