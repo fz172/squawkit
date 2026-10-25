@@ -2,6 +2,13 @@ package dev.fanfly.wingslog.feature.comments.model
 
 import kotlin.time.Instant
 
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.CommentId
+import dev.fanfly.wingslog.id.CommentParentId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
+
 /**
  * Which kind of record a thread hangs off.
  *
@@ -15,14 +22,31 @@ enum class CommentParentKind {
 
 /** The one record a thread belongs to: a squawk or a task under a given Thing. */
 data class CommentTarget(
-  val thingId: String,
-  val parentId: String,
-  val kind: CommentParentKind,
-)
+  val thingId: ThingId,
+  val parentId: CommentParentId,
+) {
+  val kind: CommentParentKind
+    get() = when {
+      parentId.squawk_id != null -> CommentParentKind.SQUAWK
+      parentId.task_id != null -> CommentParentKind.MAINTENANCE_TASK
+      else -> error("CommentParentId must have either squawk_id or task_id set")
+    }
+
+  val parentIdString: String
+    get() = parentId.value
+
+  companion object {
+    fun squawk(thingId: ThingId, squawkId: SquawkId): CommentTarget =
+      CommentTarget(thingId, CommentParentId(squawk_id = squawkId))
+
+    fun task(thingId: ThingId, taskId: MaintenanceTaskId): CommentTarget =
+      CommentTarget(thingId, CommentParentId(task_id = taskId))
+  }
+}
 
 /** One comment as the thread renders it. */
 data class CommentEntry(
-  val id: String,
+  val id: CommentId,
   /** Denormalized at post time — see comment.proto. Blank when the author never had a name. */
   val authorName: String,
   /**
@@ -59,10 +83,10 @@ data class CommentThreadState(
   val comments: List<CommentEntry> = emptyList(),
   val draft: String = "",
   /** The comment currently open in the inline editor, if any. */
-  val editingId: String? = null,
+  val editingId: CommentId? = null,
   val editDraft: String = "",
   /** The comment whose ⋮ menu is open, if any. */
-  val menuOpenId: String? = null,
+  val menuOpenId: CommentId? = null,
   /** A post is in flight — the send button is inert until it lands, so a double tap posts once. */
   val isPosting: Boolean = false,
 ) {

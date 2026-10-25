@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.core.model.id
 
 import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.CommentId
+import dev.fanfly.wingslog.id.CommentParentId
 import dev.fanfly.wingslog.id.ComponentId
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ExportId
@@ -20,6 +21,7 @@ import dev.fanfly.wingslog.id.UserId
  */
 val AttachmentId.value: String get() = value_
 val CommentId.value: String get() = value_
+val CommentParentId.value: String get() = squawk_id?.value ?: task_id?.value.orEmpty()
 val ComponentId.value: String get() = value_
 val DataLogId.value: String get() = value_
 val ExportId.value: String get() = value_

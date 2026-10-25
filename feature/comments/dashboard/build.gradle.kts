@@ -23,6 +23,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:model"))
       implementation(project(":feature:comments:model"))
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:comments:datamanager"))

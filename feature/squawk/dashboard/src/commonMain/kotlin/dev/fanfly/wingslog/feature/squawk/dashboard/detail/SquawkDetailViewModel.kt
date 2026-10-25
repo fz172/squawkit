@@ -29,7 +29,6 @@ import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
 import dev.fanfly.wingslog.feature.comments.datamanager.RecordCommentHost
 import dev.fanfly.wingslog.feature.comments.model.CommentAction
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -96,7 +95,7 @@ class SquawkDetailViewModel(
       _uiState
         .map { state ->
           state.selectedSquawk?.let {
-            CommentTarget(thingId.value, it.squawk.id, CommentParentKind.SQUAWK)
+            CommentTarget.squawk(thingId, it.id)
           }
         }
         .distinctUntilChanged()

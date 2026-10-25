@@ -1,5 +1,14 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
+import kotlin.time.Clock
+
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
@@ -8,21 +17,15 @@ import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.ForceCompliedStatus
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlin.time.Clock
 
 class TaskDataManagerImpl(
   private val scopeResolver: ThingScopeResolver,
@@ -101,7 +104,7 @@ class TaskDataManagerImpl(
       store.delete(cardId, scope)
       // The thread goes with its record; see CommentManager.deleteThread.
       commentManager.deleteThread(
-        CommentTarget(thingId, cardId, CommentParentKind.MAINTENANCE_TASK)
+        CommentTarget.task(ThingId(thingId), MaintenanceTaskId(cardId))
       )
       true
     }.onFailure { logger.w(it) { "Error deleting task $cardId" } }

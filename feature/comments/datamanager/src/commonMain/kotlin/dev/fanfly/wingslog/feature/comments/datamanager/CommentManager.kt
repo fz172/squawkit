@@ -1,8 +1,9 @@
 package dev.fanfly.wingslog.feature.comments.datamanager
 
+import kotlinx.coroutines.flow.Flow
 import dev.fanfly.wingslog.feature.comments.model.CommentEntry
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
-import kotlinx.coroutines.flow.Flow
+import dev.fanfly.wingslog.id.CommentId
 
 /**
  * Comments on one record — a squawk or a maintenance task — under a Thing.
@@ -31,7 +32,7 @@ interface CommentManager {
    */
   suspend fun updateComment(
     target: CommentTarget,
-    commentId: String,
+    commentId: CommentId,
     text: String,
   ): Result<Unit>
 
@@ -41,7 +42,7 @@ interface CommentManager {
    */
   suspend fun deleteComment(
     target: CommentTarget,
-    commentId: String,
+    commentId: CommentId,
   ): Result<Unit>
 
   /**

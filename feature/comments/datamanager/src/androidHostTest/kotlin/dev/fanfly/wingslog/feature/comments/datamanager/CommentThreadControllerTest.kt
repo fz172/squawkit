@@ -1,10 +1,6 @@
 package dev.fanfly.wingslog.feature.comments.datamanager
 
-import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.feature.comments.model.CommentAction
-import dev.fanfly.wingslog.feature.comments.model.CommentEntry
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -13,14 +9,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.feature.comments.model.CommentAction
+import dev.fanfly.wingslog.feature.comments.model.CommentEntry
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.id.CommentId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import org.junit.Test
-import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CommentThreadControllerTest {
 
-  private val target =
-    CommentTarget("thing-1", "squawk-1", CommentParentKind.SQUAWK)
+  private val target = CommentTarget.squawk(ThingId("thing-1"), SquawkId("squawk-1"))
 
   @Test
   fun post_clearsTheDraftOnlyWhenTheWriteLands() = runTest {
@@ -67,9 +70,9 @@ class CommentThreadControllerTest {
     manager.emit(listOf(entry("c1", "as written")))
     val controller = controllerOn(manager)
 
-    controller.startEdit("c1")
+    controller.startEdit(CommentId("c1"))
 
-    assertThat(controller.state.value.editingId).isEqualTo("c1")
+    assertThat(controller.state.value.editingId).isEqualTo(CommentId("c1"))
     assertThat(controller.state.value.editDraft).isEqualTo("as written")
   }
 
@@ -78,7 +81,7 @@ class CommentThreadControllerTest {
     val manager = FakeCommentManager()
     manager.emit(listOf(entry("c1", "as written")))
     val controller = controllerOn(manager)
-    controller.startEdit("c1")
+    controller.startEdit(CommentId("c1"))
 
     controller.onEditDraftChange("rewritten")
     controller.saveEdit()
@@ -95,14 +98,14 @@ class CommentThreadControllerTest {
       val controller = controllerOn(manager)
       val seen = mutableListOf<CommentAction>()
       backgroundScope.launch { controller.errors.collect { seen += it } }
-      controller.startEdit("c1")
+      controller.startEdit(CommentId("c1"))
       controller.onEditDraftChange("rewritten")
 
       controller.saveEdit()
 
       // Same rule as post(): the rewrite exists nowhere else, so a failed save must not snap the
       // card back to the old text and lose it.
-      assertThat(controller.state.value.editingId).isEqualTo("c1")
+      assertThat(controller.state.value.editingId).isEqualTo(CommentId("c1"))
       assertThat(controller.state.value.editDraft).isEqualTo("rewritten")
       assertThat(seen).containsExactly(CommentAction.EDIT)
     }
@@ -112,8 +115,8 @@ class CommentThreadControllerTest {
     val manager = FakeCommentManager()
     manager.emit(listOf(entry("c1", "as written")))
     val controller = controllerOn(manager)
-    controller.startEdit("c1")
-    controller.toggleMenu("c1")
+    controller.startEdit(CommentId("c1"))
+    controller.toggleMenu(CommentId("c1"))
 
     // The author deleted it on their other device and the tombstone synced down. The row is still
     // there — it is a tombstone, not a removal — but it can no longer be saved.
@@ -138,7 +141,7 @@ class CommentThreadControllerTest {
     text: String = "body",
     deleted: Boolean = false,
   ) = CommentEntry(
-    id = id,
+    id = CommentId(id),
     authorName = "Jordan Reyes",
     text = text,
     createdAt = Instant.fromEpochSeconds(1),
@@ -169,14 +172,14 @@ class CommentThreadControllerTest {
 
     override suspend fun updateComment(
       target: CommentTarget,
-      commentId: String,
+      commentId: CommentId,
       text: String,
-    ): Result<Unit> = outcome { updated += commentId to text }
+    ): Result<Unit> = outcome { updated += commentId.value to text }
 
     override suspend fun deleteComment(
       target: CommentTarget,
-      commentId: String,
-    ): Result<Unit> = outcome { deleted += commentId }
+      commentId: CommentId,
+    ): Result<Unit> = outcome { deleted += commentId.value }
 
     override suspend fun deleteThread(target: CommentTarget): Result<Unit> =
       Result.success(Unit)

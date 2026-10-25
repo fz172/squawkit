@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "id/ids.proto";
+
+option java_package = "dev.fanfly.wingslog.id";
+option java_multiple_files = true;
+
+// Identifier of a record that can own a comment thread (squawk or maintenance task).
+message CommentParentId {
+    oneof parent {
+        SquawkId squawk_id = 1;
+        MaintenanceTaskId task_id = 2;
+    }
+}

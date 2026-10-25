@@ -1,25 +1,7 @@
 package dev.fanfly.wingslog.feature.comments.datamanager.impl
 
-import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.core.datetime.toInstant
-import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.storage.CollectionKind
-import dev.fanfly.wingslog.core.storage.CurrentUidProvider
-import dev.fanfly.wingslog.core.storage.EntityScope
-import dev.fanfly.wingslog.core.storage.EntityStore
-import dev.fanfly.wingslog.core.storage.EntityStoreFactory
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.model.CommentEntry
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
-import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
-import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
-import dev.fanfly.wingslog.thing.Comment
-import dev.fanfly.wingslog.thing.CommentParentType
-import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -31,8 +13,31 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlin.time.Clock
-import kotlin.time.Instant
+import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.datetime.toInstant
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.CurrentUidProvider
+import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStore
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.storage.resolve
+import dev.fanfly.wingslog.core.storage.resolveNow
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.model.CommentEntry
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
+import dev.fanfly.wingslog.id.CommentId
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.Comment
+import dev.fanfly.wingslog.thing.CommentParentType
+import dev.gitlive.firebase.auth.FirebaseAuth
 
 class CommentManagerImpl(
   private val scopeResolver: ThingScopeResolver,
@@ -60,7 +65,7 @@ class CommentManagerImpl(
             val me = currentUid.currentUid()
             rows.asSequence()
               .map { it.value }
-              .filter { it.parent_id == target.parentId && it.parent_type == target.kind.wire }
+              .filter { it.parent_id == target.parentId.value && it.parent_type == target.kind.wire }
               // The store orders by local wall clock; a thread has to read in the order it was
               // written, which is what created_at records.
               .sortedBy { it.created_at?.toInstant() ?: Instant.DISTANT_PAST }
@@ -68,7 +73,7 @@ class CommentManagerImpl(
               .toList()
           }
             .catch { e ->
-              logger.w(e) { "Error observing comments for ${target.parentId}" }
+              logger.w(e) { "Error observing comments for ${target.parentId.value}" }
               emit(emptyList())
             }
         }
@@ -86,7 +91,7 @@ class CommentManagerImpl(
       id,
       Comment(
         id = id,
-        parent_id = target.parentId,
+        parent_id = target.parentId.value,
         parent_type = target.kind.wire,
         text = body,
         author_uid = currentUid.currentUid()
@@ -97,11 +102,11 @@ class CommentManagerImpl(
       ),
       scope,
     )
-  }.onFailure { logger.w(it) { "Error adding comment to ${target.parentId}" } }
+  }.onFailure { logger.w(it) { "Error adding comment to ${target.parentId.value}" } }
 
   override suspend fun updateComment(
     target: CommentTarget,
-    commentId: String,
+    commentId: CommentId,
     text: String,
   ): Result<Unit> = runCatching {
     val body = text.trim()
@@ -109,10 +114,10 @@ class CommentManagerImpl(
     val scope = scopeResolver.resolveNow(target.thingId)
     val existing = mine(scope, commentId)
     // A tombstone is final — reviving one would erase the record of the deletion.
-    check(existing.deleted_at == null) { "Comment $commentId is deleted" }
+    check(existing.deleted_at == null) { "Comment ${commentId.value} is deleted" }
     if (existing.text == body) return@runCatching
     store.put(
-      commentId,
+      commentId.value,
       existing.copy(
         text = body,
         edited_at = Clock.System.now()
@@ -120,7 +125,7 @@ class CommentManagerImpl(
       ),
       scope,
     )
-  }.onFailure { logger.w(it) { "Error updating comment $commentId" } }
+  }.onFailure { logger.w(it) { "Error updating comment ${commentId.value}" } }
 
   /**
    * Tombstones the comment: clears the text and stamps `deleted_at`, leaving the row in place.
@@ -130,13 +135,13 @@ class CommentManagerImpl(
    */
   override suspend fun deleteComment(
     target: CommentTarget,
-    commentId: String,
+    commentId: CommentId,
   ): Result<Unit> = runCatching {
     val scope = scopeResolver.resolveNow(target.thingId)
     val existing = mine(scope, commentId)
     if (existing.deleted_at != null) return@runCatching
     store.put(
-      commentId,
+      commentId.value,
       existing.copy(
         text = "",
         deleted_at = Clock.System.now()
@@ -144,7 +149,7 @@ class CommentManagerImpl(
       ),
       scope,
     )
-  }.onFailure { logger.w(it) { "Error deleting comment $commentId" } }
+  }.onFailure { logger.w(it) { "Error deleting comment ${commentId.value}" } }
 
   override suspend fun deleteThread(target: CommentTarget): Result<Unit> =
     runCatching {
@@ -153,9 +158,9 @@ class CommentManagerImpl(
         .first()
         .asSequence()
         .map { it.value }
-        .filter { it.parent_id == target.parentId && it.parent_type == target.kind.wire }
+        .filter { it.parent_id == target.parentId.value && it.parent_type == target.kind.wire }
         .forEach { store.delete(it.id, scope) }
-    }.onFailure { logger.w(it) { "Error deleting comment thread for ${target.parentId}" } }
+    }.onFailure { logger.w(it) { "Error deleting comment thread for ${target.parentId.value}" } }
 
   /**
    * The stored comment, or a failure if this account did not write it.
@@ -163,14 +168,14 @@ class CommentManagerImpl(
    * The UI only offers Edit and Delete on your own comments, so reaching here with someone else's
    * is a bug — but a shared thread is exactly where "only the UI checks" stops being enough.
    */
-  private suspend fun mine(scope: EntityScope, commentId: String): Comment {
-    val existing = store.observe(commentId, scope)
+  private suspend fun mine(scope: EntityScope, commentId: CommentId): Comment {
+    val existing = store.observe(commentId.value, scope)
       .firstOrNull()
       ?.value
-      ?: error("Comment $commentId not found")
+      ?: error("Comment ${commentId.value} not found")
     val me = currentUid.currentUid()
     check(me != null && existing.author_uid == me) {
-      "Comment $commentId was not written by this account"
+      "Comment ${commentId.value} was not written by this account"
     }
     return existing
   }
@@ -186,8 +191,8 @@ class CommentManagerImpl(
    * Author uid → photo URL from the share roster. Starts empty so the thread never waits on the
    * roster (Firestore-backed, online-only): comments render at once and photos fill in.
    */
-  private fun authorPhotos(thingId: String): Flow<Map<String, String>> =
-    sharingManager.observeShareState(thingId)
+  private fun authorPhotos(thingId: ThingId): Flow<Map<String, String>> =
+    sharingManager.observeShareState(thingId.value)
       .map { state ->
         state.members
           .mapNotNull { m ->
@@ -204,7 +209,7 @@ class CommentManagerImpl(
     me: String?,
     photos: Map<String, String>
   ): CommentEntry = CommentEntry(
-    id = id,
+    id = CommentId(id),
     authorName = author_name,
     // Your own rows use the account photo the shell shows, which is fresher than the roster copy
     // and present even on an unshared thing that has no roster at all.

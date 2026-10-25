@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.feature.comments.datamanager
 
-import dev.fanfly.wingslog.feature.comments.model.CommentAction
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
-import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +10,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.fanfly.wingslog.feature.comments.model.CommentAction
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
+import dev.fanfly.wingslog.id.CommentId
 
 /**
  * The comments tab's whole state machine, shared by the squawk and task edit forms the same way
@@ -89,13 +90,13 @@ class CommentThreadController(
 
   // ── The ⋮ menu, offered only on your own comments ─────────────────────────
 
-  fun toggleMenu(commentId: String) = _state.update {
+  fun toggleMenu(commentId: CommentId) = _state.update {
     it.copy(menuOpenId = if (it.menuOpenId == commentId) null else commentId)
   }
 
   fun dismissMenu() = _state.update { it.copy(menuOpenId = null) }
 
-  fun delete(commentId: String) {
+  fun delete(commentId: CommentId) {
     _state.update { it.copy(menuOpenId = null) }
     scope.launch {
       if (commentManager.deleteComment(target, commentId)
@@ -108,7 +109,7 @@ class CommentThreadController(
 
   // ── Inline editor ────────────────────────────────────────────────────────
 
-  fun startEdit(commentId: String) = _state.update { prev ->
+  fun startEdit(commentId: CommentId) = _state.update { prev ->
     val text = prev.comments.firstOrNull { it.id == commentId }?.text.orEmpty()
     prev.copy(menuOpenId = null, editingId = commentId, editDraft = text)
   }

@@ -7,7 +7,6 @@ import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -15,6 +14,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -173,11 +174,7 @@ class TaskDetailViewModelTest {
     assertThat(vm.commentThread.value).isNotNull()
     verify {
       commentManager.observeComments(
-        CommentTarget(
-          THING_ID,
-          "c1",
-          CommentParentKind.MAINTENANCE_TASK,
-        )
+        CommentTarget.task(ThingId(THING_ID), MaintenanceTaskId("c1"))
       )
     }
 
