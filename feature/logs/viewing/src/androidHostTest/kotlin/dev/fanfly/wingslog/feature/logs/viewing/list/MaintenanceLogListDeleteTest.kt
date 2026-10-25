@@ -1,5 +1,18 @@
 package dev.fanfly.wingslog.feature.logs.viewing.list
 
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.TimeZone
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
@@ -12,23 +25,13 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Clock
-import kotlin.time.Instant
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -38,6 +41,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 private const val THING_ID = "thing-1"
+private val THING = ThingId(THING_ID)
 
 /**
  * Deleting a log from its card's swipe panel. The §8 guard is the `deleteLog` verification: the
@@ -76,7 +80,7 @@ class MaintenanceLogListDeleteTest {
     )
     every { sharing.observeIsShared(THING_ID) } returns flowOf(false)
     every { technicians.observeSelf() } returns flowOf(null)
-    every { squawks.observeSquawks(THING_ID) } returns flowOf(emptyList())
+    every { squawks.observeSquawks(THING) } returns flowOf(emptyList())
     every { auth.currentUser } returns null
   }
 
@@ -94,7 +98,7 @@ class MaintenanceLogListDeleteTest {
     tuning = SearchTuning(queryDebounceMillis = 0, dispatcher = dispatcher),
     analytics = analytics,
     templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
-    thingId = THING_ID,
+    thingId = THING,
     templateId = "airplane",
     clock = fixedClock,
     timeZone = TimeZone.UTC,

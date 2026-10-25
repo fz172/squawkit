@@ -44,6 +44,9 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MeterDef
@@ -101,6 +104,7 @@ class MaintenanceLogFormViewModel(
   private val knownCertifications = templateRegistry.knownCertifications()
 
   val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
+  private val thing = ThingId(thingId)
   private val logId: String? = savedStateHandle[Screen.LOG_ID]
   val isEditMode: Boolean get() = logId != null
 
@@ -244,7 +248,7 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeSquawks() {
-    squawkManager.observeSquawks(thingId)
+    squawkManager.observeSquawks(thing)
       .onEach { squawks ->
         val filtered = squawks.filter { s ->
           s.addressed_by_log_id.isEmpty() || s.addressed_by_log_id == logId
@@ -747,10 +751,12 @@ class MaintenanceLogFormViewModel(
       result
         .onSuccess {
           if (state.selectedSquawkIds.isNotEmpty()) {
+            val squawkIds = state.selectedSquawkIds.map { SquawkId(it) }
+            val logId = MaintenanceLogId(resolvedLogId)
             squawkManager.markAddressed(
-              thingId,
-              state.selectedSquawkIds,
-              resolvedLogId
+              thing,
+              squawkIds,
+              logId,
             )
           }
           state.selectedInspectionIds.forEach { cardId ->

@@ -10,37 +10,44 @@ import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewViewModel
 import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.squawk.dashboard.detail.SquawkDetailViewModel
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.id.ThingId
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /** The squawk section tab and overview slice: their ViewModels, keyed per thing. */
 val squawkDashboardModule = module {
   viewModel { params ->
+    val raw = params.get<Any>(0)
+    val thingId = if (raw is ThingId) raw else ThingId(raw as String)
     SquawkTabViewModel(
       get<SquawkManager>(),
       get<MaintenanceLogManager>(),
       get<SearchEngine>(),
       get<SearchTuning>(),
       get<AnalyticsManager>(),
-      params.get<String>(0),
+      thingId,
       params.get<String>(1),
     )
   }
   viewModel { params ->
+    val raw = params.get<Any>(0)
+    val thingId = if (raw is ThingId) raw else ThingId(raw as String)
     SquawkDetailViewModel(
       get<SquawkManager>(),
       get<MaintenanceLogManager>(),
       get<CommentManager>(),
       get<TemplateRegistry>(),
       get<AnalyticsManager>(),
-      params.get<String>(0),
+      thingId,
       params.get<String>(1),
     )
   }
   viewModel { params ->
+    val raw = params.get<Any>(0)
+    val thingId = if (raw is ThingId) raw else ThingId(raw as String)
     SquawkOverviewViewModel(
       get<SquawkManager>(),
-      params.get<String>(0),
+      thingId,
     )
   }
 }

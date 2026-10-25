@@ -12,6 +12,8 @@ import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import io.mockk.coEvery
@@ -38,6 +40,8 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 
 private const val THING_ID = "thing-1"
+private val THING = ThingId(THING_ID)
+private val SQUAWK_ID = SquawkId("s1")
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SquawkDetailViewModelTest {
@@ -66,21 +70,21 @@ class SquawkDetailViewModelTest {
     commentManager = commentManager,
     templateRegistry = BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
     analytics = analytics,
-    thingId = THING_ID,
+    thingId = THING,
     templateId = AirplaneTemplate.TEMPLATE.id,
   )
 
   @Test
   fun confirmDeleteSquawk_deletesThroughTheManager_clearsTheIdsAndSaysSo() = runTest {
-    coEvery { squawkManager.deleteSquawk(THING_ID, "s1") } returns Result.success(true)
+    coEvery { squawkManager.deleteSquawk(THING, SQUAWK_ID) } returns Result.success(true)
     val vm = viewModel()
     vm.showDetail(squawk)
     vm.onDeleteClick(squawk)
-    assertThat(vm.uiState.value.deletingSquawkId).isEqualTo("s1")
+    assertThat(vm.uiState.value.deletingSquawkId).isEqualTo(SQUAWK_ID)
 
     vm.confirmDelete()
 
-    coVerify(exactly = 1) { squawkManager.deleteSquawk(THING_ID, "s1") }
+    coVerify(exactly = 1) { squawkManager.deleteSquawk(THING, SQUAWK_ID) }
     assertThat(vm.uiState.value.deletingSquawkId).isNull()
     assertThat(vm.uiState.value.selectedSquawk).isNull()
     assertThat(vm.events.first())
@@ -89,7 +93,7 @@ class SquawkDetailViewModelTest {
 
   @Test
   fun deleteSquawkFailure_closesDialogAndReportsIt() = runTest {
-    coEvery { squawkManager.deleteSquawk(THING_ID, "s1") } returns
+    coEvery { squawkManager.deleteSquawk(THING, SQUAWK_ID) } returns
       Result.failure(IllegalStateException("offline"))
     val vm = viewModel()
     vm.onDeleteClick(squawk)
@@ -105,20 +109,20 @@ class SquawkDetailViewModelTest {
   fun confirmDismissSquawk_passesTheChosenReason() = runTest {
     coEvery {
       squawkManager.dismissSquawk(
-        THING_ID,
-        "s1",
+        THING,
+        SQUAWK_ID,
         SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
       )
     } returns Result.success(Unit)
     val vm = viewModel()
-    vm.onDismissClick("s1")
+    vm.onDismissClick(SQUAWK_ID)
 
     vm.confirmDismiss(SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE)
 
     coVerify(exactly = 1) {
       squawkManager.dismissSquawk(
-        THING_ID,
-        "s1",
+        THING,
+        SQUAWK_ID,
         SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
       )
     }
@@ -167,21 +171,21 @@ class SquawkDetailViewModelTest {
 
   @Test
   fun squawkReopenClick_reopensThroughTheManager() = runTest {
-    coEvery { squawkManager.reopenSquawk(THING_ID, "s1") } returns Result.success(Unit)
+    coEvery { squawkManager.reopenSquawk(THING, SQUAWK_ID) } returns Result.success(Unit)
     val vm = viewModel()
 
-    vm.reopenSquawk("s1")
+    vm.reopenSquawk(SQUAWK_ID)
 
-    coVerify(exactly = 1) { squawkManager.reopenSquawk(THING_ID, "s1") }
+    coVerify(exactly = 1) { squawkManager.reopenSquawk(THING, SQUAWK_ID) }
   }
 
   @Test
   fun squawkReopenClick_failing_saysSo() = runTest {
-    coEvery { squawkManager.reopenSquawk(THING_ID, "s1") } returns
+    coEvery { squawkManager.reopenSquawk(THING, SQUAWK_ID) } returns
       Result.failure(IllegalStateException("offline"))
     val vm = viewModel()
 
-    vm.reopenSquawk("s1")
+    vm.reopenSquawk(SQUAWK_ID)
 
     assertThat(vm.events.first())
       .isEqualTo(UiText.StringRes(CoreRes.string.save_failed))
@@ -192,7 +196,7 @@ class SquawkDetailViewModelTest {
     val vm = viewModel()
     vm.onDeleteClick(squawk)
     vm.cancelDelete()
-    vm.onDismissClick("s1")
+    vm.onDismissClick(SQUAWK_ID)
     vm.cancelDismiss()
 
     coVerify(exactly = 0) { squawkManager.deleteSquawk(any(), any()) }
@@ -204,7 +208,7 @@ class SquawkDetailViewModelTest {
   fun choosingABubbleOption_logsTheCommitAndClosesTheBubble() = runTest {
     val vm = viewModel()
     vm.onResolveClick(squawk)
-    assertThat(vm.uiState.value.resolvingSquawkId).isEqualTo("s1")
+    assertThat(vm.uiState.value.resolvingSquawkId).isEqualTo(SQUAWK_ID)
 
     vm.onFixedClick()
 

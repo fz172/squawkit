@@ -1,6 +1,12 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+
 import com.google.common.truth.Truth.assertThat
+import com.squareup.wire.Instant as WireInstant
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
@@ -19,16 +25,12 @@ import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Thing
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import org.junit.Test
-import com.squareup.wire.Instant as WireInstant
 
 class LogbookExportAggregatorTest {
 
   private val thingId = "ac-1"
+  private val thing = ThingId(thingId)
   private val jan2020 =
     WireInstant.ofEpochSecond(1_577_836_800L) // 2020-01-01T00:00:00Z
   private val jan2025 =
@@ -78,7 +80,7 @@ class LogbookExportAggregatorTest {
       )
     }
     val squawkManager = mockk<SquawkManager> {
-      every { observeSquawks(thingId) } returns flowOf(emptyList<Squawk>())
+      every { observeSquawks(thing) } returns flowOf(emptyList<Squawk>())
     }
     return LogbookExportAggregator(
       fleetManager = fleetManager,
@@ -88,7 +90,7 @@ class LogbookExportAggregatorTest {
       squawkManager = squawkManager,
       technicianManager = mockk<TechnicianManager>(relaxed = true),
       dataLogManager = mockk<DataLogManager> {
-        every { observe(ThingId(thingId)) } returns flowOf(emptyList())
+        every { observe(thing) } returns flowOf(emptyList())
       },
       timeZone = TimeZone.UTC,
     )
@@ -105,7 +107,7 @@ class LogbookExportAggregatorTest {
         ),
         includeOpenSquawks = true,
       ),
-      thingId = thingId,
+      thingId = thing,
     )
 
     assertThat(bundle.logs.map { it.id }).containsExactly("log-2020")
@@ -121,7 +123,7 @@ class LogbookExportAggregatorTest {
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
-      thingId = thingId,
+      thingId = thing,
     )
 
     assertThat(bundle.logs.map { it.id }).containsExactly(

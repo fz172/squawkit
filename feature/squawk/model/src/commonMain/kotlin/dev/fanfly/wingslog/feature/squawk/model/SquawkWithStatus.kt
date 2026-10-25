@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.squawk.model
 
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
@@ -7,7 +8,9 @@ import dev.fanfly.wingslog.thing.SquawkPriority
 data class SquawkWithStatus(
   val squawk: Squawk,
   val status: SquawkStatus,
-)
+) {
+  val id: SquawkId get() = SquawkId(squawk.id)
+}
 
 fun Squawk.toWithStatus(): SquawkWithStatus = SquawkWithStatus(
   squawk = this,

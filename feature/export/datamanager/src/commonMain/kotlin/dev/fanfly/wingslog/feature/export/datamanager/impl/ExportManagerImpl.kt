@@ -1,5 +1,12 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import kotlin.time.Clock
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.file.ZipFileWriter
 import dev.fanfly.wingslog.core.model.id.generateRandomId
@@ -16,12 +23,8 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 
 /**
  * On-device export manager that writes selected thing snapshots to a ZIP archive.
@@ -61,7 +64,8 @@ class ExportManagerImpl(
           percent = 8 + ((index + 1) * 24 / request.thingIds.size),
         )
       )
-      aggregator.collect(request, thingId)
+      val thing = ThingId(thingId)
+      aggregator.collect(request, thing)
     }
     val attachmentManifests = bundles.associate { bundle ->
       bundle.thing.id to attachmentExportResolver.resolve(bundle)

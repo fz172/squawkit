@@ -1,12 +1,5 @@
 package dev.fanfly.wingslog.feature.squawk.dashboard
 
-import com.google.common.truth.Truth.assertThat
-import com.squareup.wire.Instant
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkPriority
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -14,11 +7,21 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+
+import com.google.common.truth.Truth.assertThat
+import com.squareup.wire.Instant
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkPriority
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
 private const val THING_ID = "thing-1"
+private val THING = ThingId(THING_ID)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SquawkOverviewViewModelTest {
@@ -51,11 +54,11 @@ class SquawkOverviewViewModelTest {
     val open1 = Squawk(id = "s-1", title = "1", created_at = Instant.ofEpochSecond(100L, 0))
     val open2 = Squawk(id = "s-2", title = "2", created_at = Instant.ofEpochSecond(200L, 0))
     val open3 = Squawk(id = "s-3", title = "3", created_at = Instant.ofEpochSecond(300L, 0))
-    every { squawkManager.observeSquawks(THING_ID) } returns flowOf(
+    every { squawkManager.observeSquawks(THING) } returns flowOf(
       listOf(open1, open2, open3, openAog, addressedAog)
     )
 
-    val state = SquawkOverviewViewModel(squawkManager, THING_ID).uiState.value
+    val state = SquawkOverviewViewModel(squawkManager, THING).uiState.value
 
     assertThat(state.loaded).isTrue()
     assertThat(state.aogSquawks).containsExactly(openAog)

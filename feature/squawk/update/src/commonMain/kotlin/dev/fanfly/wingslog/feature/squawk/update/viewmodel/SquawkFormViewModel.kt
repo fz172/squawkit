@@ -1,5 +1,18 @@
 package dev.fanfly.wingslog.feature.squawk.update.viewmodel
 
+import kotlin.time.Clock
+
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +27,7 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityRef
@@ -28,28 +42,19 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
-import kotlin.time.Clock
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
@@ -99,14 +104,18 @@ class SquawkFormViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val thingId: String =
-    checkNotNull(savedStateHandle[Screen.THING_ID])
-  private val squawkId: String? = savedStateHandle[Screen.SQUAWK_ID]
+  val thingId: ThingId =
+    ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
+  val squawkId: SquawkId? =
+    savedStateHandle.get<String>(Screen.SQUAWK_ID)?.let(::SquawkId)
+
+  val thingIdString: String get() = thingId.value
+  val squawkIdString: String? get() = squawkId?.value
 
   private val _state = MutableStateFlow(
     SquawkFormState(
-      thingId = thingId,
-      squawkId = squawkId
+      thingId = thingId.value,
+      squawkId = squawkId?.value
     )
   )
   val state: StateFlow<SquawkFormState> = _state.asStateFlow()
@@ -117,8 +126,8 @@ class SquawkFormViewModel(
   private val attachmentForm =
     AttachmentFormController(
       attachmentManager,
-      thingId,
-      owner = squawkId?.let { EntityRef(CollectionKind.Squawk, it) },
+      thingId.value,
+      owner = squawkId?.let { EntityRef(CollectionKind.Squawk, it.value) },
     )
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
@@ -147,17 +156,17 @@ class SquawkFormViewModel(
       // until the subscription capability ships.)
       combine(
         subscriptionManager.canUploadAttachments(),
-        sharingManager.observeIsForeignHosted(thingId),
+        sharingManager.observeIsForeignHosted(thingId.value),
       ) { canUpload, foreignHosted -> foreignHosted || canUpload }
         .collect { _attachmentUploadEnabled.value = it }
     }
   }
 
-  private fun loadExisting(id: String) {
+  private fun loadExisting(id: SquawkId) {
     viewModelScope.launch {
       squawkManager.observeSquawks(thingId)
         .collect { squawks ->
-          val squawk = squawks.find { it.id == id } ?: return@collect
+          val squawk = squawks.find { it.id == id.value } ?: return@collect
           _state.update {
             it.copy(
               title = squawk.title,
@@ -189,7 +198,7 @@ class SquawkFormViewModel(
 
   private fun loadLogs() {
     viewModelScope.launch {
-      logManager.observeLogs(thingId)
+      logManager.observeLogs(thingId.value)
         .collect { logs ->
           _state.update { it.copy(availableLogs = logs) }
         }
@@ -318,7 +327,7 @@ class SquawkFormViewModel(
    * (design §8). Any comment draft is discarded with the record.
    */
   fun delete(onSuccessMessage: String) {
-    val squawkId = _state.value.squawkId ?: return
+    val squawkId = squawkId ?: return
     _state.update { it.copy(showDeleteDialog = false) }
     viewModelScope.launch {
       attachmentForm.deleteSavedFiles()

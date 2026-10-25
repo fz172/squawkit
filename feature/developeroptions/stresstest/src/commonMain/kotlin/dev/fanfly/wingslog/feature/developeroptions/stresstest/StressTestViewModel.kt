@@ -1,23 +1,26 @@
 package dev.fanfly.wingslog.feature.developeroptions.stresstest
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.FieldValue
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.slotLabel
 import dev.fanfly.wingslog.core.template.specLabel
+import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.FakeDataPools
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.FakeDataPools
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 sealed interface StressTestState {
   data object Idle : StressTestState
@@ -141,7 +144,7 @@ class StressTestViewModel(
       runCatching {
         val config = _config.value
         val data = FakeDataGenerator.generate(config)
-        val thingId = data.thing.id
+        val thingId = data.thingId
 
         val totalSteps = 1 +
           data.technicians.size +
@@ -173,7 +176,7 @@ class StressTestViewModel(
 
         data.tasks.forEach { task ->
           progress(StressTestProgressStep.CreatingTask, task.title)
-          taskDataManager.addTask(thingId, task)
+          taskDataManager.addTask(thingId.value, task)
             .getOrThrow()
         }
 
@@ -185,14 +188,17 @@ class StressTestViewModel(
 
         data.logs.forEach { log ->
           progress(StressTestProgressStep.CreatingLog)
-          logManager.addLog(thingId, log)
+          logManager.addLog(thingId.value, log)
             .getOrThrow()
         }
 
         data.addressedSquawks.forEach { (squawkId, logId) ->
           progress(StressTestProgressStep.MarkingSquawkAddressed)
-          squawkManager.markAddressed(thingId, listOf(squawkId), logId)
-            .getOrThrow()
+          squawkManager.markAddressed(
+            thingId,
+            listOf(squawkId),
+            logId,
+          ).getOrThrow()
         }
 
         data.dismissedSquawks.forEach { (squawkId, reason) ->
@@ -223,7 +229,7 @@ class StressTestViewModel(
           dismissedSquawkCount = data.dismissedSquawks.size,
         )
 
-        _state.value = StressTestState.Done(thingId, summary)
+        _state.value = StressTestState.Done(thingId.value, summary)
       }.onFailure { e ->
         _state.value = StressTestState.Error(e.message)
       }

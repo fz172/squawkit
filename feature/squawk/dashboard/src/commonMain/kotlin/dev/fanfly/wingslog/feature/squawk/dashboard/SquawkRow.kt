@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.feature.squawk.viewing.ResolveOptionsMenu
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkQuickActionCallbacks
 import dev.fanfly.wingslog.feature.squawk.viewing.quickActions
+import dev.fanfly.wingslog.id.SquawkId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.search.sharedassets.generated.resources.match_serial
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
@@ -22,7 +23,7 @@ import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 @Composable
 internal fun SquawkRow(
   item: SquawkWithStatus,
-  resolvingSquawkId: String?,
+  resolvingSquawkId: SquawkId?,
   matches: List<FieldMatch>,
   showPriority: Boolean,
   isJumpTarget: Boolean,
@@ -48,7 +49,7 @@ internal fun SquawkRow(
         },
         resolveMenu = {
           ResolveOptionsMenu(
-            expanded = resolvingSquawkId == item.squawk.id,
+            expanded = resolvingSquawkId == item.id,
             onDismissRequest = {
               revealController.close()
               onDismissResolveMenu()
