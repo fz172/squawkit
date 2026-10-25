@@ -11,7 +11,6 @@ import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
-import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
@@ -37,7 +36,6 @@ import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -55,11 +53,9 @@ import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
 import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
 import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
-import wingslog.feature.squawk.sharedassets.generated.resources.squawk_deleted
 import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
-import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 class ThingOverviewViewModel(
@@ -220,9 +216,6 @@ class ThingOverviewViewModel(
             skippingTaskId = current?.skippingTaskId,
             squawks = squawksWithStatus,
             aogSquawks = aogSquawks,
-            resolvingSquawkId = current?.resolvingSquawkId,
-            dismissingSquawkId = current?.dismissingSquawkId,
-            deletingSquawkId = current?.deletingSquawkId,
             myRole = myRole,
             shared = isShared,
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
@@ -344,30 +337,6 @@ class ThingOverviewViewModel(
         }
       }
 
-      is ThingOverviewAction.ShowSquawkDetail -> {
-        val log =
-          cachedLogs.firstOrNull { it.id == action.squawk.squawk.addressed_by_log_id }
-        _uiState.update { state ->
-          if (state is ThingOverviewUiState.Success)
-            state.copy(
-              selectedSquawk = action.squawk,
-              logForSelectedSquawk = log
-            )
-          else state
-        }
-      }
-
-      ThingOverviewAction.DismissSquawkDetail -> {
-        _uiState.update { state ->
-          if (state is ThingOverviewUiState.Success)
-            state.copy(
-              selectedSquawk = null,
-              logForSelectedSquawk = null
-            )
-          else state
-        }
-      }
-
       is ThingOverviewAction.EditSquawkClick -> {
         viewModelScope.launch {
           _events.send(
@@ -379,45 +348,8 @@ class ThingOverviewViewModel(
         }
       }
 
-      is ThingOverviewAction.SquawkResolveClick ->
-        updateSuccess { it.copy(resolvingSquawkId = action.squawk.squawk.id) }
-
-      ThingOverviewAction.DismissSquawkResolveMenu ->
-        updateSuccess { it.copy(resolvingSquawkId = null) }
-
-      // Navigation is the section's job; committing the analytics and closing the bubble is ours.
-      is ThingOverviewAction.SquawkFixedClick -> {
-        logQuickAction(QuickActionSurface.SQUAWKS, QuickActionKind.RESOLVE)
-        updateSuccess { it.copy(resolvingSquawkId = null) }
-      }
-
-      is ThingOverviewAction.SquawkDismissClick ->
-        updateSuccess {
-          it.copy(
-            resolvingSquawkId = null,
-            dismissingSquawkId = action.squawkId
-          )
-        }
-
-      is ThingOverviewAction.ConfirmDismissSquawk -> dismissSquawk(action.reason)
-
-      is ThingOverviewAction.SquawkReopenClick -> reopenSquawk(action.squawkId)
-
-      ThingOverviewAction.CancelDismissSquawk ->
-        updateSuccess { it.copy(dismissingSquawkId = null) }
-
-      is ThingOverviewAction.DeleteSquawkClick ->
-        updateSuccess {
-          it.copy(
-            resolvingSquawkId = null,
-            deletingSquawkId = action.squawk.squawk.id
-          )
-        }
-
-      ThingOverviewAction.ConfirmDeleteSquawk -> confirmDeleteSquawk()
-
-      ThingOverviewAction.CancelDeleteSquawk ->
-        updateSuccess { it.copy(deletingSquawkId = null) }
+      // Navigation only — ThingSectionContent drives the navController and never forwards it.
+      is ThingOverviewAction.SquawkFixedClick -> Unit
 
       is ThingOverviewAction.TaskResolveClick ->
         updateSuccess { it.copy(resolvingTaskId = action.card.card.id) }
@@ -487,74 +419,6 @@ class ThingOverviewViewModel(
         .onFailure {
           _events.send(
             ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
-          )
-        }
-    }
-  }
-
-  private fun dismissSquawk(reason: SquawkDismissReason) {
-    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
-    val squawkId = state.dismissingSquawkId ?: return
-    viewModelScope.launch {
-      // The manager, and nothing lower: the tombstone it writes is what fans the collaborator
-      // notification out (design §8).
-      squawkManager.dismissSquawk(state.thing.id, squawkId, reason)
-        .onSuccess {
-          logQuickAction(
-            QuickActionSurface.SQUAWKS,
-            QuickActionKind.RESOLVE
-          )
-        }
-        .onFailure {
-          _events.send(
-            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
-          )
-        }
-      updateSuccess { it.copy(dismissingSquawkId = null) }
-    }
-  }
-
-  private fun reopenSquawk(squawkId: String) {
-    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
-    viewModelScope.launch {
-      squawkManager.reopenSquawk(state.thing.id, squawkId)
-        .onFailure {
-          _events.send(
-            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
-          )
-        }
-    }
-  }
-
-  private fun confirmDeleteSquawk() {
-    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
-    val squawkId = state.deletingSquawkId ?: return
-    viewModelScope.launch {
-      squawkManager.deleteSquawk(state.thing.id, squawkId)
-        .onSuccess {
-          logQuickAction(QuickActionSurface.SQUAWKS, QuickActionKind.DELETE)
-          updateSuccess {
-            it.copy(
-              deletingSquawkId = null,
-              resolvingSquawkId = null,
-              selectedSquawk = null,
-              logForSelectedSquawk = null,
-            )
-          }
-          _events.send(
-            ThingOverviewEvent.ShowMessage(
-              UiText.StringRes(
-                SquawkRes.string.squawk_deleted,
-                listOf(LexiconFormatter.sentenceCase(lexicon(state).squawkNoun)),
-              )
-            )
-          )
-        }
-        // The card stays and the dialog closes: the record is still there to try again on (R14).
-        .onFailure {
-          updateSuccess { it.copy(deletingSquawkId = null) }
-          _events.send(
-            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.delete_failed))
           )
         }
     }
@@ -666,19 +530,11 @@ class ThingOverviewViewModel(
   }
 }
 
-/** A squawk sheet wins if both are somehow set; in practice only one sheet is ever open. */
 private fun ThingOverviewUiState.Success.commentTarget(): CommentTarget? =
-  selectedSquawk?.let {
+  selectedTask?.let {
     CommentTarget(
       thing.id,
-      it.squawk.id,
-      CommentParentKind.SQUAWK
+      it.card.id,
+      CommentParentKind.MAINTENANCE_TASK
     )
   }
-    ?: selectedTask?.let {
-      CommentTarget(
-        thing.id,
-        it.card.id,
-        CommentParentKind.MAINTENANCE_TASK
-      )
-    }

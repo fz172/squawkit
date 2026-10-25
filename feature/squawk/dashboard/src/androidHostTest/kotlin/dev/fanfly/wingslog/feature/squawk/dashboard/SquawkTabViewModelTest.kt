@@ -123,8 +123,12 @@ class SquawkTabViewModelTest {
     val vm = viewModel()
     vm.onFilterChange(RecordFilter(query = "transponder"))
     assertThat(vm.ids()).containsExactly("s1")
+    assertThat(vm.uiState.value.allSquawks.map { it.squawk.id })
+      .containsExactly("s1", "s2", "s3")
     vm.onFilterChange(RecordFilter(components = setOf(ComponentType.COMPONENT_ENGINE)))
     assertThat(vm.ids()).containsExactly("s2")
+    assertThat(vm.uiState.value.allSquawks.map { it.squawk.id })
+      .containsExactly("s1", "s2", "s3")
   }
 
   @Test
