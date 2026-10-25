@@ -56,7 +56,7 @@ class LogbookExportAggregator(
     thingId: ThingId
   ): ThingBundle = coroutineScope {
     val thingDeferred = async {
-      fleetManager.loadThing(thingId.value)
+      fleetManager.loadThing(thingId)
         .first()
     }
     val logsDeferred = async {

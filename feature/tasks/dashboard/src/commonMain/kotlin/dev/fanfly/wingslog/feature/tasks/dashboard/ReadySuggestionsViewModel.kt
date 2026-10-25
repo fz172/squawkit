@@ -1,14 +1,16 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
-import dev.fanfly.wingslog.task.TaskOriginKind
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.task.TaskOriginKind
 
 /**
  * A model run that finished while the user was elsewhere, its answer held for the day and not yet
@@ -17,7 +19,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 class ReadySuggestionsViewModel(
   suggestionManager: TaskSuggestionManager,
-  thingId: String,
+  thingId: ThingId,
 ) : ViewModel() {
 
   val ready: StateFlow<ReadySuggestions?> = suggestionManager.observeRun(thingId)

@@ -1,17 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
-import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.ai.AiJobId
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
-import dev.fanfly.wingslog.id.MaintenanceTaskId
-import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
-import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
-import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
-import dev.fanfly.wingslog.task.TaskOriginKind
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +9,20 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+
+import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
+import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
+import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.TaskOriginKind
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -31,7 +33,7 @@ class ReadySuggestionsViewModelTest {
   private val dispatcher = StandardTestDispatcher()
   private val runs = MutableStateFlow<SuggestionRun>(SuggestionRun.Idle)
   private val suggestions = mockk<TaskSuggestionManager> {
-    every { observeRun(THING) } returns runs
+    every { observeRun(ThingId(THING)) } returns runs
   }
 
   @Before
@@ -48,7 +50,7 @@ class ReadySuggestionsViewModelTest {
 
   @Test
   fun aHeldModelAnswerIsReadyWithItsCountAndDocument() = runTest(dispatcher) {
-    val vm = ReadySuggestionsViewModel(suggestions, THING)
+    val vm = ReadySuggestionsViewModel(suggestions, ThingId(THING))
     backgroundScope.launch { vm.ready.collect {} }
 
     runs.value = SuggestionRun.Ready(
@@ -70,7 +72,7 @@ class ReadySuggestionsViewModelTest {
 
   @Test
   fun nothingWhileWorkingForACuratedListOrOnceClosed() = runTest(dispatcher) {
-    val vm = ReadySuggestionsViewModel(suggestions, THING)
+    val vm = ReadySuggestionsViewModel(suggestions, ThingId(THING))
     backgroundScope.launch { vm.ready.collect {} }
 
     runs.value = SuggestionRun.Working(AiJobId("job"), SuggestionStage.TAILORING, null)

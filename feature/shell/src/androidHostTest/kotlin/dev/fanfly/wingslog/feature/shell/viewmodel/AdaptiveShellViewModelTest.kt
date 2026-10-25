@@ -1,5 +1,13 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
@@ -26,6 +34,7 @@ import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.TechnicianId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
@@ -34,14 +43,6 @@ import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -58,10 +59,10 @@ class AdaptiveShellViewModelTest {
     override suspend fun updateThing(thing: Thing) =
       Result.success(thing)
 
-    override fun loadThing(id: String): Flow<Thing?> =
+    override fun loadThing(id: ThingId): Flow<Thing?> =
       MutableStateFlow(null)
 
-    override suspend fun deleteThing(id: String) = Result.success(true)
+    override suspend fun deleteThing(id: ThingId) = Result.success(true)
   }
   private val technicianManager = object : TechnicianManager {
     override fun observeTechnicians(): Flow<List<Technician>> =

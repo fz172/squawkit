@@ -1,5 +1,17 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.impl
 
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withTimeoutOrNull
+
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
@@ -8,11 +20,13 @@ import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.storage.resolveNow
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
@@ -38,17 +52,7 @@ import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.withTimeoutOrNull
 import okio.ByteString
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 
 class TaskSuggestionManagerImpl(
   private val client: AiJobClient,
@@ -65,19 +69,19 @@ class TaskSuggestionManagerImpl(
   private val clock: Clock = Clock.System,
 ) : TaskSuggestionManager {
 
-  override suspend fun eligibility(thingId: String, withDocuments: Boolean): AiEligibility =
+  override suspend fun eligibility(thingId: ThingId, withDocuments: Boolean): AiEligibility =
     client.eligibility(
       KIND,
-      ThingId(value_ = thingId),
+      thingId,
       UserId(value_ = hostUidOf(thingId)),
       withDocuments = withDocuments
     )
 
-  override suspend fun isOwner(thingId: String): Boolean =
+  override suspend fun isOwner(thingId: ThingId): Boolean =
     currentUid.currentUid()?.let { it == hostUidOf(thingId) } ?: false
 
   override suspend fun start(
-    thingId: String,
+    thingId: ThingId,
     entryPoint: SuggestionEntryPoint,
     curatedOnly: Boolean,
     documents: List<Attachment>,
@@ -88,7 +92,7 @@ class TaskSuggestionManagerImpl(
     if (!syncObserver.awaitSynced(
         CollectionKind.Thing,
         EntityScope.userRoot(hostUid),
-        thingId,
+        thingId.value,
         SYNC_WAIT
       )
     ) {
@@ -110,12 +114,12 @@ class TaskSuggestionManagerImpl(
     return result
   }
 
-  override fun observeRun(thingId: String): Flow<SuggestionRun> = flow {
+  override fun observeRun(thingId: ThingId): Flow<SuggestionRun> = flow {
     // A working run says each stage in a snapshot that carries the same result, so the result is
     // decoded when its bytes change, not once per snapshot.
     var encoded: ByteString? = null
     var decoded: SuggestTasksResult? = null
-    client.observeLatest(KIND, ThingId(value_ = thingId))
+    client.observeLatest(KIND, thingId)
       .collect { job ->
         if (job?.result != encoded) {
           encoded = job?.result
@@ -126,14 +130,14 @@ class TaskSuggestionManagerImpl(
   }
 
   override suspend fun draftOf(
-    thingId: String,
+    thingId: ThingId,
     suggestion: TaskSuggestion,
     generationVersion: String,
   ): MaintenanceTask =
     mapper.toTask(suggestion, templateOf(thingId), generationVersion)
 
   override suspend fun accept(
-    thingId: String,
+    thingId: ThingId,
     jobId: AiJobId,
     generationVersion: String,
     chosen: List<AcceptedSuggestion>,
@@ -148,7 +152,7 @@ class TaskSuggestionManagerImpl(
         // Named here, so *Undo* knows what to take back.
         .let { if (it.id.isEmpty()) it.copy(id = generateRandomId()) else it }
       WrittenSuggestion(accepted, task.id).takeIf {
-        taskDataManager.addTask(thingId, task)
+        taskDataManager.addTask(thingId.value, task)
           .onFailure { logger.w(it) { "A suggested task was not written" } }
           .isSuccess
       }
@@ -180,10 +184,10 @@ class TaskSuggestionManagerImpl(
     return statuses.all { it == AttachmentStatus.Synced || it == AttachmentStatus.RemoteOnly }
   }
 
-  private suspend fun hostUidOf(thingId: String): String =
+  private suspend fun hostUidOf(thingId: ThingId): String =
     scopeResolver.resolveNow(thingId).hostUid.orEmpty()
 
-  private suspend fun templateOf(thingId: String): ThingTemplate =
+  private suspend fun templateOf(thingId: ThingId): ThingTemplate =
     templateRegistry.forThingWithFallback(
       fleetManager.loadThing(thingId)
         .filterNotNull()

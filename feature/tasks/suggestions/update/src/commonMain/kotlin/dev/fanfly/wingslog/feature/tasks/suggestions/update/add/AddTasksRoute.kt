@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ai.AiSkipped
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_LINK_ACCOUNT
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -73,6 +74,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.text
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.remove
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
@@ -91,7 +93,6 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.sources_sug
 import wingslog.feature.tasks.suggestions.update.generated.resources.sources_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_add_details
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_checking
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The Add Tasks sheet on the shell's nav graph: what the task tab's add button opens. Every way out
@@ -118,7 +119,7 @@ fun AddTasksRoute(
       onCreateManually = {
         replaceWith(
           Screen.AddMaintenanceTask.createRoute(
-            viewModel.thingId
+            viewModel.thingId.value
           )
         )
       },
@@ -134,7 +135,7 @@ fun AddTasksRoute(
           }
 
           is SuggestEntry.MissingIdentity ->
-            replaceWith(Screen.EditThing.createRoute(viewModel.thingId))
+            replaceWith(Screen.EditThing.createRoute(viewModel.thingId.value))
 
           else -> viewModel.onSuggest()
             ?.let(replaceWith)

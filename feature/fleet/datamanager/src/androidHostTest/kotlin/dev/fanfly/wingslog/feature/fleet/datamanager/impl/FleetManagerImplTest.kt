@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
+import kotlin.time.Instant
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
@@ -14,6 +18,7 @@ import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
@@ -23,15 +28,12 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-456"
+private val TEST_THING = ThingId(TEST_THING_ID)
 private const val HOST_UID = "host-user-999"
 
 class FleetManagerImplTest {
@@ -174,7 +176,7 @@ class FleetManagerImplTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.loadThing(TEST_THING_ID)
+    val result = manager.loadThing(TEST_THING)
       .first()
 
     assertThat(result).isNull()
@@ -195,7 +197,7 @@ class FleetManagerImplTest {
       )
     } returns flowOf(entity)
 
-    val result = manager.loadThing(TEST_THING_ID)
+    val result = manager.loadThing(TEST_THING)
       .first()
 
     assertThat(result).isEqualTo(thing)
@@ -227,7 +229,7 @@ class FleetManagerImplTest {
       StorageEntity("shared-1", shared, Instant.DISTANT_PAST)
     )
 
-    val result = manager.loadThing("shared-1")
+    val result = manager.loadThing(ThingId("shared-1"))
       .first()
 
     assertThat(result).isEqualTo(shared)
@@ -284,7 +286,7 @@ class FleetManagerImplTest {
 
   @Test
   fun deleteThing_loggedIn_callsStoreDeleteAndReturnsSuccess() = runTest {
-    val result = manager.deleteThing(TEST_THING_ID)
+    val result = manager.deleteThing(TEST_THING)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -299,7 +301,7 @@ class FleetManagerImplTest {
   fun deleteThing_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.deleteThing(TEST_THING_ID)
+    val result = manager.deleteThing(TEST_THING)
 
     assertThat(result.isFailure).isTrue()
   }
@@ -451,7 +453,7 @@ class FleetManagerImplTest {
       )
     )
 
-    val result = manager.deleteThing("shared-1")
+    val result = manager.deleteThing(ThingId("shared-1"))
 
     assertThat(result.isFailure).isTrue()
     coVerify(exactly = 0) { store.delete(any(), any()) }

@@ -1,5 +1,17 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +29,7 @@ import dev.fanfly.wingslog.core.analytics.TaskSuggestionsFailed
 import dev.fanfly.wingslog.core.analytics.TaskSuggestionsRequested
 import dev.fanfly.wingslog.core.analytics.TaskSuggestionsShown
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -31,26 +44,17 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionEntryPoint
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionSession
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.isFromModel
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.isFromModel
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.SuggestionItem
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlin.time.Clock
-import kotlin.time.Instant
 
 /**
  * The empty task list's recommended tasks, and the Add Tasks sheet's *Suggest* (PRD R1, R2). Not a
@@ -78,7 +82,7 @@ class SuggestionsViewModel(
   private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
-  val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
+  val thingId: ThingId = ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
 
   private val mode =
     SuggestionsMode.fromWire(savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE))
@@ -126,7 +130,7 @@ class SuggestionsViewModel(
           lexicon = templateRegistry.lexiconFor(template)
         )
       }
-      trackedTitles = taskDataManager.observeTasks(thingId)
+      trackedTitles = taskDataManager.observeTasks(thingId.value)
         .first()
         .mapTo(mutableSetOf()) { normalizeTitle(it.title) }
       showRun(template)

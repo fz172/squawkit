@@ -1,5 +1,13 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+
+import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
@@ -7,17 +15,11 @@ import dev.fanfly.wingslog.core.storage.AiJobDocument
 import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
-import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -54,16 +56,16 @@ class JobDocumentReleaserTest {
 
   @Test
   fun `notes a run's documents under the signed-in user`() = runTest {
-    releaser.record(AiJobId("job-1"), "thing-1", listOf(manual))
+    releaser.record(AiJobId("job-1"), ThingId("thing-1"), listOf(manual))
 
     coVerify { store.record("alice", "job-1", "thing-1", listOf(manual)) }
   }
 
   @Test
   fun `notes nothing for a run without documents, or signed out`() = runTest {
-    releaser.record(AiJobId("job-1"), "thing-1", emptyList())
+    releaser.record(AiJobId("job-1"), ThingId("thing-1"), emptyList())
     uid = null
-    releaser.record(AiJobId("job-1"), "thing-1", listOf(manual))
+    releaser.record(AiJobId("job-1"), ThingId("thing-1"), listOf(manual))
 
     coVerify(exactly = 0) { store.record(any(), any(), any(), any()) }
   }
@@ -127,10 +129,10 @@ class JobDocumentReleaserTest {
     val releaser = releaser(this)
     coEvery { attachments.addPickedFile("thing-1", file, "POH.pdf", 100) } returns manual
 
-    assertThat(releaser.pick("thing-1", file, maxBytes = 100).getOrNull()).isEqualTo(manual)
+    assertThat(releaser.pick(ThingId("thing-1"), file, maxBytes = 100).getOrNull()).isEqualTo(manual)
     coVerify { store.record("alice", "picked", "thing-1", listOf(manual)) }
 
-    releaser.record(AiJobId("job-1"), "thing-1", listOf(manual))
+    releaser.record(AiJobId("job-1"), ThingId("thing-1"), listOf(manual))
     coVerify { store.record("alice", "job-1", "thing-1", listOf(manual)) }
     coVerify { store.forget("alice", "picked", listOf("blob-1")) }
   }
@@ -140,7 +142,7 @@ class JobDocumentReleaserTest {
     val releaser = releaser(this)
     coEvery { attachments.addPickedFile(any(), any(), any(), any()) } throws RuntimeException("disk")
 
-    assertThat(releaser.pick("thing-1", file, maxBytes = 100).isFailure).isTrue()
+    assertThat(releaser.pick(ThingId("thing-1"), file, maxBytes = 100).isFailure).isTrue()
     coVerify(exactly = 0) { store.record(any(), any(), any(), any()) }
   }
 
@@ -165,7 +167,7 @@ class JobDocumentReleaserTest {
     val stored = CompletableDeferred<Attachment>()
     coEvery { attachments.addPickedFile(any(), any(), any(), any()) } coAnswers { stored.await() }
 
-    val picking = launch { releaser.pick("thing-1", file, maxBytes = 100) }
+    val picking = launch { releaser.pick(ThingId("thing-1"), file, maxBytes = 100) }
     runCurrent()
     picking.cancel()
     stored.complete(manual)
@@ -178,7 +180,7 @@ class JobDocumentReleaserTest {
   fun `a new session lets go of files a dead process picked, and keeps this one's`() = runTest {
     val releaser = releaser(this)
     coEvery { attachments.addPickedFile("thing-1", file, "POH.pdf", 100) } returns manual
-    releaser.pick("thing-1", file, maxBytes = 100)
+    releaser.pick(ThingId("thing-1"), file, maxBytes = 100)
     coEvery { store.all() } returns listOf(
       AiJobDocument("alice", "picked", "thing-1", manual),
       AiJobDocument("alice", "picked", "thing-1", bulletin),

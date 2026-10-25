@@ -1,18 +1,32 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
+import kotlin.time.Instant
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiEligibility
-import dev.fanfly.wingslog.core.ai.AiJobClient
-import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
-import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.core.ai.AiErrorCode
+import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.ai.AiJobId
 import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.SuggestionsMode
+import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.attachmentsFromDocumentsArg
@@ -25,9 +39,9 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.AddedBatch
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionEntryPoint
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
@@ -35,6 +49,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
 import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SuggestionId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.rpc.suggesttasks.IdentifiedDocument
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
@@ -52,21 +67,9 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Instant
 
 /**
  * The two §13 events and what they count. `starter_tasks_offered` is the denominator: without it
@@ -93,13 +96,13 @@ class SuggestionsViewModelTest {
     // The Thing has no tasks unless a test says so.
     every { taskDataManager.observeTasks(THING_ID) } returns flowOf(emptyList())
     // A model run can start, without documents, unless a test says otherwise.
-    coEvery { suggestions.eligibility(THING_ID, any()) } returns AiEligibility(
+    coEvery { suggestions.eligibility(ThingId(THING_ID), any()) } returns AiEligibility(
       true,
       null,
       false,
       null
     )
-    coEvery { suggestions.isOwner(THING_ID) } returns true
+    coEvery { suggestions.isOwner(ThingId(THING_ID)) } returns true
   }
 
   @After
@@ -109,7 +112,7 @@ class SuggestionsViewModelTest {
   private val attachments = mockk<AttachmentManager>(relaxUnitFun = true)
   private val recentlyAdded = RecentlyAddedTasks()
   private val entry = mockk<TaskSuggestionEntry> {
-    every { observe(THING_ID) } returns flowOf(SuggestEntry.Available)
+    every { observe(ThingId(THING_ID)) } returns flowOf(SuggestEntry.Available)
   }
 
   private fun viewModel(
@@ -123,7 +126,7 @@ class SuggestionsViewModelTest {
         version = 7
       ),
     )
-    every { fleetManager.loadThing(THING_ID) } returns flowOf(thing)
+    every { fleetManager.loadThing(ThingId(THING_ID)) } returns flowOf(thing)
     return SuggestionsViewModel(
       fleetManager = fleetManager,
       taskDataManager = taskDataManager,
@@ -177,8 +180,8 @@ class SuggestionsViewModelTest {
       joined = false
     )
   ) {
-    coEvery { suggestions.start(THING_ID, any(), any()) } returns started
-    every { suggestions.observeRun(THING_ID) } returns flowOf(*runs)
+    coEvery { suggestions.start(ThingId(THING_ID), any(), any()) } returns started
+    every { suggestions.observeRun(ThingId(THING_ID)) } returns flowOf(*runs)
   }
 
   private val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
@@ -198,21 +201,21 @@ class SuggestionsViewModelTest {
     curated: SuggestTasksResult = curatedList,
     documentsAllowed: Boolean = false,
   ): SuggestionsViewModel {
-    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+    coEvery { suggestions.start(ThingId(THING_ID), any(), curatedOnly = true) } returns
       AiStartResult.Started(CURATED_JOB, joined = false)
     coEvery {
       suggestions.start(
-        THING_ID,
+        ThingId(THING_ID),
         any(),
         curatedOnly = false,
         documents = any()
       )
     } returns
       AiStartResult.Started(JOB, joined = false)
-    every { suggestions.observeRun(THING_ID) } returns runs
-    coEvery { suggestions.eligibility(THING_ID, any()) } returns
+    every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
+    coEvery { suggestions.eligibility(ThingId(THING_ID), any()) } returns
       AiEligibility(true, null, documentsAllowed, null)
-    coEvery { suggestions.isOwner(THING_ID) } returns true
+    coEvery { suggestions.isOwner(ThingId(THING_ID)) } returns true
     val vm = viewModel()
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curated))
     advanceUntilIdle()
@@ -231,7 +234,7 @@ class SuggestionsViewModelTest {
 
       coVerify {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           SuggestionEntryPoint.CURATED,
           curatedOnly = true
         )
@@ -265,14 +268,14 @@ class SuggestionsViewModelTest {
     runTest(dispatcher) {
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = false,
           documents = any()
         )
       } returns
         AiStartResult.Started(JOB, joined = false)
-      every { suggestions.observeRun(THING_ID) } returns runs
+      every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
 
       val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
@@ -281,7 +284,7 @@ class SuggestionsViewModelTest {
 
       coVerify {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           SuggestionEntryPoint.ADD,
           curatedOnly = false,
           documents = manuals
@@ -289,7 +292,7 @@ class SuggestionsViewModelTest {
       }
       coVerify(exactly = 0) {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = true,
           any()
@@ -334,7 +337,7 @@ class SuggestionsViewModelTest {
           SuggestTasksResult(suggestions = listOf(oil))
         )
       )
-      coEvery { suggestions.draftOf(THING_ID, oil, any()) } returns
+      coEvery { suggestions.draftOf(ThingId(THING_ID), oil, any()) } returns
         MaintenanceTask(title = "Oil change", rules = oil.rules)
       val vm = viewModel()
       advanceUntilIdle()
@@ -361,7 +364,7 @@ class SuggestionsViewModelTest {
         ),
       )
         .inOrder()
-      coVerify(exactly = 1) { suggestions.draftOf(THING_ID, oil, any()) }
+      coVerify(exactly = 1) { suggestions.draftOf(ThingId(THING_ID), oil, any()) }
 
       // Nothing to change on a rule it does not have, and no zero interval.
       vm.onDaysChange(vm.idAt(0), 30)
@@ -406,14 +409,14 @@ class SuggestionsViewModelTest {
     runTest(dispatcher) {
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = false,
           documents = any()
         )
       } returns
         AiStartResult.Started(JOB, joined = false)
-      every { suggestions.observeRun(THING_ID) } returns runs
+      every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
 
       val withManuals = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
@@ -460,16 +463,16 @@ class SuggestionsViewModelTest {
     runTest(dispatcher) {
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = false,
           documents = any()
         )
       } returns
         AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
-      coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+      coEvery { suggestions.start(ThingId(THING_ID), any(), curatedOnly = true) } returns
         AiStartResult.Started(CURATED_JOB, joined = false)
-      every { suggestions.observeRun(THING_ID) } returns runs
+      every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
 
       val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
@@ -564,7 +567,7 @@ class SuggestionsViewModelTest {
   @Test
   fun theCuratedModeAlsoSaysWhenAiIsBack() = runTest(dispatcher) {
     val back = Instant.fromEpochMilliseconds(9_000)
-    coEvery { suggestions.eligibility(THING_ID, any()) } returns
+    coEvery { suggestions.eligibility(ThingId(THING_ID), any()) } returns
       AiEligibility(false, AiErrorCode.DAILY_LIMIT, false, back)
     serving(SuggestionRun.Ready(JOB, curatedList))
     val vm = viewModel()
@@ -580,12 +583,12 @@ class SuggestionsViewModelTest {
       val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           any()
         )
       } returns AiStartResult.Started(JOB, joined = false)
-      every { suggestions.observeRun(THING_ID) } returns runs
+      every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
       val vm = viewModel()
       runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
       advanceUntilIdle()
@@ -640,7 +643,7 @@ class SuggestionsViewModelTest {
       val chosen = slot<List<AcceptedSuggestion>>()
       coEvery {
         suggestions.accept(
-          THING_ID,
+          ThingId(THING_ID),
           JOB,
           any(),
           capture(chosen)
@@ -664,7 +667,7 @@ class SuggestionsViewModelTest {
       // The task tab says so, with *Undo*.
       assertThat(recentlyAdded.batch.value).isEqualTo(
         AddedBatch(
-          THING_ID,
+          ThingId(THING_ID),
           listOf(
             "t1",
             "t2"
@@ -727,7 +730,7 @@ class SuggestionsViewModelTest {
       advanceUntilIdle()
       assertThat(described.uiState.value.canSuggest).isTrue()
 
-      every { entry.observe(THING_ID) } returns flowOf(
+      every { entry.observe(ThingId(THING_ID)) } returns flowOf(
         SuggestEntry.MissingIdentity(
           listOf("Model")
         )
@@ -750,19 +753,19 @@ class SuggestionsViewModelTest {
       val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = true
         )
       } returns AiStartResult.Started(JOB, joined = false)
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = false
         )
       } returns AiStartResult.Started(AI_JOB, joined = false)
-      every { suggestions.observeRun(THING_ID) } returns runs
+      every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
       val vm = viewModel()
       runs.emit(SuggestionRun.Ready(JOB, curatedList))
       advanceUntilIdle()
@@ -803,7 +806,7 @@ class SuggestionsViewModelTest {
     advanceUntilIdle()
     coEvery {
       suggestions.start(
-        THING_ID,
+        ThingId(THING_ID),
         any(),
         curatedOnly = false
       )
@@ -840,7 +843,7 @@ class SuggestionsViewModelTest {
 
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = false
         )
@@ -871,12 +874,12 @@ class SuggestionsViewModelTest {
     val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
     coEvery {
       suggestions.start(
-        THING_ID,
+        ThingId(THING_ID),
         any(),
         any()
       )
     } returns AiStartResult.Started(JOB, joined = false)
-    every { suggestions.observeRun(THING_ID) } returns runs
+    every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
     val vm = viewModel()
 
     runs.emit(
@@ -940,7 +943,7 @@ class SuggestionsViewModelTest {
     runTest(dispatcher) {
       val vm = curatedModelRun()
       val back = Instant.fromEpochMilliseconds(9_000)
-      coEvery { suggestions.eligibility(THING_ID, any()) } returns
+      coEvery { suggestions.eligibility(ThingId(THING_ID), any()) } returns
         AiEligibility(false, AiErrorCode.DAILY_LIMIT, false, back)
       runs.emit(SuggestionRun.Empty(JOB, curatedList))
       advanceUntilIdle()
@@ -1079,7 +1082,7 @@ class SuggestionsViewModelTest {
       advanceUntilIdle()
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = false
         )
@@ -1095,7 +1098,7 @@ class SuggestionsViewModelTest {
 
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           curatedOnly = false
         )
@@ -1147,7 +1150,7 @@ class SuggestionsViewModelTest {
     )
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
-    coEvery { suggestions.accept(THING_ID, JOB, any(), any()) } answers { written(arg(3)) }
+    coEvery { suggestions.accept(ThingId(THING_ID), JOB, any(), any()) } answers { written(arg(3)) }
     val vm = viewModel()
     advanceUntilIdle()
     vm.onToggle(vm.idAt(0))
@@ -1168,7 +1171,7 @@ class SuggestionsViewModelTest {
   fun whenNothingCouldBeWrittenTheCardsStayAndTheScreenSaysSo() = runTest(dispatcher) {
     val ready = SuggestionRun.Ready(JOB, curatedList)
     serving(ready)
-    coEvery { suggestions.accept(THING_ID, JOB, any(), any()) } returns emptyList()
+    coEvery { suggestions.accept(ThingId(THING_ID), JOB, any(), any()) } returns emptyList()
     val vm = viewModel()
     advanceUntilIdle()
     vm.onToggle(vm.idAt(0))
@@ -1197,7 +1200,7 @@ class SuggestionsViewModelTest {
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
     // The model's card is the one that fails.
-    coEvery { suggestions.accept(THING_ID, JOB, any(), any()) } answers {
+    coEvery { suggestions.accept(ThingId(THING_ID), JOB, any(), any()) } answers {
       written(arg<List<AcceptedSuggestion>>(3).drop(1))
     }
     val vm = viewModel()
@@ -1222,16 +1225,16 @@ class SuggestionsViewModelTest {
     // The model is refused for the day, so the job is written finished and never changes again;
     // the listener hears of it while the start call is still on its way back.
     val skipped = AiSkipped(AiErrorCode.DAILY_LIMIT, null)
-    coEvery { suggestions.start(THING_ID, any(), curatedOnly = true) } returns
+    coEvery { suggestions.start(ThingId(THING_ID), any(), curatedOnly = true) } returns
       AiStartResult.Started(CURATED_JOB, joined = false)
     coEvery {
-      suggestions.start(THING_ID, any(), curatedOnly = false, documents = any())
+      suggestions.start(ThingId(THING_ID), any(), curatedOnly = false, documents = any())
     } coAnswers {
       runs.emit(SuggestionRun.Ready(JOB, curatedList, skipped))
       advanceUntilIdle()
       AiStartResult.Started(JOB, joined = false)
     }
-    every { suggestions.observeRun(THING_ID) } returns runs
+    every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
     val vm = viewModel()
     runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
     advanceUntilIdle()
@@ -1348,7 +1351,7 @@ class SuggestionsViewModelTest {
 
       coVerify {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           SuggestionEntryPoint.CURATED,
           curatedOnly = true
         )
@@ -1367,7 +1370,7 @@ class SuggestionsViewModelTest {
       )
       coEvery {
         suggestions.draftOf(
-          THING_ID,
+          ThingId(THING_ID),
           curatedList.suggestions[0],
           any()
         )
@@ -1393,11 +1396,11 @@ class SuggestionsViewModelTest {
     val ready = SuggestionRun.Ready(JOB, curatedList)
     serving(ready)
     val mapped = MaintenanceTask(title = "Annual")
-    coEvery { suggestions.draftOf(THING_ID, any(), any()) } returns mapped
+    coEvery { suggestions.draftOf(ThingId(THING_ID), any(), any()) } returns mapped
     val chosen = slot<List<AcceptedSuggestion>>()
     coEvery {
       suggestions.accept(
-        THING_ID,
+        ThingId(THING_ID),
         JOB,
         any(),
         capture(chosen)
@@ -1427,15 +1430,15 @@ class SuggestionsViewModelTest {
       val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
       coEvery {
         suggestions.start(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           any()
         )
       } returns AiStartResult.Started(JOB, joined = false)
-      every { suggestions.observeRun(THING_ID) } returns runs
+      every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
       coEvery {
         suggestions.draftOf(
-          THING_ID,
+          ThingId(THING_ID),
           any(),
           any()
         )

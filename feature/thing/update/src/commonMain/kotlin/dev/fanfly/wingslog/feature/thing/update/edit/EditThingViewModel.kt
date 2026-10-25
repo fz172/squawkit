@@ -1,5 +1,13 @@
 package dev.fanfly.wingslog.feature.thing.update.edit
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +15,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.ThingCreated
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.ComponentPath
@@ -25,18 +34,11 @@ import dev.fanfly.wingslog.core.template.withCustomSpec
 import dev.fanfly.wingslog.core.template.withSpec
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class EditThingViewModel(
   private val fleetManager: FleetManager,
@@ -134,7 +136,7 @@ class EditThingViewModel(
     }
   }
 
-  fun loadThingById(id: String) {
+  fun loadThingById(id: ThingId) {
     _uiState.update { it.copy(isLoading = true) }
     viewModelScope.launch {
       // We need a way to get one thing. FleetManager.loadThing returns a Flow.
@@ -160,11 +162,13 @@ class EditThingViewModel(
       } catch (e: CancellationException) {
         throw e
       } catch (e: Exception) {
-        logger.w(e) { "Failed to load thing by id: $id" }
+        logger.w(e) { "Failed to load thing by id: ${id.value}" }
         _uiState.update { it.copy(isLoading = false) }
       }
     }
   }
+
+  fun loadThingById(id: String) = loadThingById(ThingId(id))
 
   fun loadThing(thing: Thing) {
     _uiState.update {
@@ -213,7 +217,7 @@ class EditThingViewModel(
   fun deleteThing() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      val result = fleetManager.deleteThing(uiState.value.thing.id)
+      val result = fleetManager.deleteThing(ThingId(uiState.value.thing.id))
       if (result.isSuccess) {
         _uiState.update { it.copy(isDeleted = true) }
       }

@@ -1,34 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.add
 
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModelStore
-import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.ai.AiEligibility
-import dev.fanfly.wingslog.core.ai.AiJobClient
-import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
-import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
-import dev.fanfly.wingslog.core.ai.AiErrorCode
-import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.nav.SuggestionsMode
-import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
-import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
-import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.attachment.model.toDocumentsArg
-import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.Spec
-import dev.fanfly.wingslog.thing.Thing
-import dev.fanfly.wingslog.thing.ThingTemplate
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
+import kotlin.time.Instant
+
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,10 +13,40 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelStore
+import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.ai.AiEligibility
+import dev.fanfly.wingslog.core.ai.AiErrorCode
+import dev.fanfly.wingslog.core.ai.AiJobClient
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.nav.SuggestionsMode
+import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.toDocumentsArg
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentReleaser
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.Spec
+import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.ThingTemplate
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddTasksViewModelTest {
@@ -54,13 +57,13 @@ class AddTasksViewModelTest {
   private val attachments = mockk<AttachmentManager>(relaxUnitFun = true)
   private val entryFlow = MutableStateFlow<SuggestEntry>(SuggestEntry.Available)
   private val entry = mockk<TaskSuggestionEntry> {
-    every { observe(THING_ID) } returns entryFlow
+    every { observe(ThingId(THING_ID)) } returns entryFlow
   }
 
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    every { fleetManager.loadThing(THING_ID) } returns flowOf(
+    every { fleetManager.loadThing(ThingId(THING_ID)) } returns flowOf(
       Thing(
         id = THING_ID,
         template = ThingTemplate(id = "airplane", version = 1),
@@ -70,7 +73,7 @@ class AddTasksViewModelTest {
         ),
       ),
     )
-    coEvery { suggestions.isOwner(THING_ID) } returns true
+    coEvery { suggestions.isOwner(ThingId(THING_ID)) } returns true
     allowing(AiEligibility(true, null, true, null))
   }
 
@@ -78,7 +81,7 @@ class AddTasksViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   private fun allowing(eligibility: AiEligibility) {
-    coEvery { suggestions.eligibility(THING_ID, any()) } returns eligibility
+    coEvery { suggestions.eligibility(ThingId(THING_ID), any()) } returns eligibility
   }
 
   private val store = ViewModelStore()
@@ -158,7 +161,7 @@ class AddTasksViewModelTest {
   @Test
   fun aMemberOfAFreeOwnersThingGetsNeither() = runTest(dispatcher) {
     allowing(AiEligibility(true, null, false, null))
-    coEvery { suggestions.isOwner(THING_ID) } returns false
+    coEvery { suggestions.isOwner(ThingId(THING_ID)) } returns false
 
     val vm = viewModel()
     advanceUntilIdle()

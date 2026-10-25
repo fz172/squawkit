@@ -1,11 +1,13 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
-import dev.fanfly.wingslog.core.template.TemplateRegistry
-import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.gitlive.firebase.auth.FirebaseAuth
 
 /**
  * What a *Suggest tasks* entry point shows for one Thing (docs/ai/task_population_design.md §9.1,
@@ -28,7 +30,7 @@ class TaskSuggestionEntry(
   private val templateRegistry: TemplateRegistry,
 ) {
 
-  fun observe(thingId: String): Flow<SuggestEntry> {
+  fun observe(thingId: ThingId): Flow<SuggestEntry> {
     return combine(
       auth.authStateChanged.map { user -> user?.isAnonymous ?: true },
       fleetManager.loadThing(thingId),

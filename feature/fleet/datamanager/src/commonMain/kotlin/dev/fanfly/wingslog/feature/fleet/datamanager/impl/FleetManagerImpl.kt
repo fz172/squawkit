@@ -1,7 +1,16 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -13,16 +22,9 @@ import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.withNormalisedText
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 
 /**
  * Local-first [FleetManager] backed by [EntityStore]. The sync engine (M3) reads the underlying
@@ -109,24 +111,24 @@ class FleetManagerImpl(
       }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun loadThing(id: String): Flow<Thing?> =
+  override fun loadThing(id: ThingId): Flow<Thing?> =
     firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
-        logger.d { "User logged out, stopping thing observation for $id" }
+        logger.d { "User logged out, stopping thing observation for ${id.value}" }
         flowOf(null)
       } else {
         // The thing doc lives at the *parent* of its nested data: own → users/{myUid}/thing,
         // shared → users/{hostUid}/thing. A ref for this id (keyed by thing id) names the host;
         // its absence means it's the user's own. (The ThingScopeResolver handles the nested
         // thingChildUnsafe scope; the doc itself needs userRoot, hence the lookup here.)
-        refStore.observe(id, EntityScope.userRoot(user.uid))
+        refStore.observe(id.value, EntityScope.userRoot(user.uid))
           .flatMapLatest { ref ->
             val rootUid = ref?.value?.host_uid ?: user.uid
-            store.observe(id, EntityScope.userRoot(rootUid))
+            store.observe(id.value, EntityScope.userRoot(rootUid))
               .map { it?.value }
           }
           .catch { e ->
-            logger.w(e) { "Error observing thing $id" }
+            logger.w(e) { "Error observing thing ${id.value}" }
             emit(null)
           }
       }
@@ -181,16 +183,16 @@ class FleetManagerImpl(
    * anyway; refusing here means we never queue a write that can only come back denied, which (since
    * #144) a member's client would read as *their own* revocation and purge the share over.
    */
-  override suspend fun deleteThing(id: String): Result<Boolean> =
+  override suspend fun deleteThing(id: ThingId): Result<Boolean> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot delete thing when no user is signed in")
       val ownRoot = EntityScope.userRoot(uid)
-      require(rootScopeOf(id, uid) == ownRoot) {
-        "Only the hosting owner may delete thing $id"
+      require(rootScopeOf(id.value, uid) == ownRoot) {
+        "Only the hosting owner may delete thing ${id.value}"
       }
-      store.delete(id, ownRoot)
-      logger.d { "Thing $id tombstoned in local store" }
+      store.delete(id.value, ownRoot)
+      logger.d { "Thing ${id.value} tombstoned in local store" }
       true
-    }.onFailure { logger.w(it) { "Error deleting aircraft $id" } }
+    }.onFailure { logger.w(it) { "Error deleting aircraft ${id.value}" } }
 }

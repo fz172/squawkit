@@ -1,8 +1,13 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Thing
@@ -11,9 +16,6 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class TaskSuggestionEntryTest {
@@ -44,7 +46,7 @@ class TaskSuggestionEntryTest {
     val auth =
       mockk<FirebaseAuth> { every { authStateChanged } returns flowOf(user) }
     val fleet =
-      mockk<FleetManager> { every { loadThing(THING) } returns flowOf(thing) }
+      mockk<FleetManager> { every { loadThing(ThingId(THING)) } returns flowOf(thing) }
     return TaskSuggestionEntry(
       auth = auth,
       fleetManager = fleet,
@@ -57,7 +59,7 @@ class TaskSuggestionEntryTest {
   @Test
   fun `is available to a signed-in user on a described Thing`() = runTest {
     assertThat(
-      entry().observe(THING)
+      entry().observe(ThingId(THING))
         .first()
     ).isEqualTo(SuggestEntry.Available)
   }
@@ -68,7 +70,7 @@ class TaskSuggestionEntryTest {
       entry(
         guest = true,
         thing = complete.copy(spec = emptyList())
-      ).observe(THING)
+      ).observe(ThingId(THING))
         .first()
     )
       .isEqualTo(SuggestEntry.SignInRequired)
@@ -84,7 +86,7 @@ class TaskSuggestionEntryTest {
     )
 
     assertThat(
-      entry(thing = noModel).observe(THING)
+      entry(thing = noModel).observe(ThingId(THING))
         .first()
     )
       .isEqualTo(SuggestEntry.MissingIdentity(listOf("Model")))
@@ -102,7 +104,7 @@ class TaskSuggestionEntryTest {
       )
 
       assertThat(
-        entry(thing = custom).observe(THING)
+        entry(thing = custom).observe(ThingId(THING))
           .first()
       ).isEqualTo(SuggestEntry.Available)
     }

@@ -1,12 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
-import dev.fanfly.wingslog.core.ai.AiJobId
-import dev.fanfly.wingslog.core.ai.AiStartResult
-import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
-import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
-import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
-import dev.fanfly.wingslog.task.MaintenanceTask
-import dev.fanfly.wingslog.thing.Attachment
+import kotlin.time.Duration.Companion.seconds
+
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +10,15 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Duration.Companion.seconds
+
+import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.core.ai.AiStartResult
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
+import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
+import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.thing.Attachment
 
 /**
  * One open suggestions screen's hold on a Thing's runs (design §9.1, §9.2): which run it shows,
@@ -30,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 class SuggestionSession(
   private val manager: TaskSuggestionManager,
-  private val thingId: String,
+  private val thingId: ThingId,
 ) {
 
   /** The job [runs] follows: the one this screen came back to, or started last. */

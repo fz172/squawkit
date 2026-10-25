@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
+import kotlinx.coroutines.flow.Flow
+
 import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
@@ -7,11 +9,11 @@ import dev.fanfly.wingslog.core.ai.AiSkipped
 import dev.fanfly.wingslog.core.ai.AiStartResult
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Attachment
-import kotlinx.coroutines.flow.Flow
 
 /**
  * AI task suggestions for one Thing (docs/ai/task_population_design.md §7.3): ask whether a run is
@@ -26,7 +28,7 @@ interface TaskSuggestionManager {
    * also asks whether the owner can add documents (Pro, PRD R14).
    */
   suspend fun eligibility(
-    thingId: String,
+    thingId: ThingId,
     withDocuments: Boolean = false
   ): AiEligibility
 
@@ -34,7 +36,7 @@ interface TaskSuggestionManager {
    * Whether the signed-in user owns [thingId], rather than being a member of it: documents need the
    * owner's Pro, so a member's paywall names the owner's plan instead of offering one (PRD R45).
    */
-  suspend fun isOwner(thingId: String): Boolean
+  suspend fun isOwner(thingId: ThingId): Boolean
 
   /**
    * Starts a run, or joins the caller's own run in flight. Waits for the Thing to reach the server
@@ -50,14 +52,14 @@ interface TaskSuggestionManager {
    * [curatedOnly] run reads none, so it neither waits for nor sends them.
    */
   suspend fun start(
-    thingId: String,
+    thingId: ThingId,
     entryPoint: SuggestionEntryPoint,
     curatedOnly: Boolean = false,
     documents: List<Attachment> = emptyList(),
   ): AiStartResult
 
   /** The caller's latest run on [thingId]; [SuggestionRun.Idle] when there is none. */
-  fun observeRun(thingId: String): Flow<SuggestionRun>
+  fun observeRun(thingId: ThingId): Flow<SuggestionRun>
 
   /**
    * [suggestion] as the task [accept] would write, for the task form to start from when the user
@@ -65,7 +67,7 @@ interface TaskSuggestionManager {
    * it is.
    */
   suspend fun draftOf(
-    thingId: String,
+    thingId: ThingId,
     suggestion: TaskSuggestion,
     generationVersion: String
   ): MaintenanceTask
@@ -82,7 +84,7 @@ interface TaskSuggestionManager {
    * there to try again.
    */
   suspend fun accept(
-    thingId: String,
+    thingId: ThingId,
     jobId: AiJobId,
     generationVersion: String,
     chosen: List<AcceptedSuggestion>

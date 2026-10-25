@@ -121,7 +121,7 @@ class MaintenanceLogFormViewModelTest {
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
     // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
-    every { fleetManager.loadThing(TEST_THING_ID) } returns flowOf(null)
+    every { fleetManager.loadThing(TEST_THING) } returns flowOf(null)
     every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
       emptyList()
     )

@@ -1,13 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
-import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.core.ai.AiJobClient
-import dev.fanfly.wingslog.core.ai.AiJobId
-import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
-import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +9,17 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.ai.AiJobClient
+import dev.fanfly.wingslog.core.ai.AiJobId
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.Attachment
 
 /**
  * The one owner of the documents picked for an AI run (docs/ai/task_population_design.md §8.2),
@@ -85,10 +88,10 @@ class JobDocumentReleaser(
    * Runs to its end even if the caller is cancelled (the sheet closed): what it stored is then let
    * go of, since nothing will list it.
    */
-  suspend fun pick(thingId: String, file: PickedFile, maxBytes: Long): Result<Attachment> {
+  suspend fun pick(thingId: ThingId, file: PickedFile, maxBytes: Long): Result<Attachment> {
     val storing = scope.async {
       runCatching {
-        attachments().addPickedFile(thingId, file, displayName = file.name, maxBytes = maxBytes)
+        attachments().addPickedFile(thingId.value, file, displayName = file.name, maxBytes = maxBytes)
       }.onSuccess { hold(thingId, it) }
     }
     return try {
@@ -112,10 +115,10 @@ class JobDocumentReleaser(
    * Notes [documents] against the signed-in user's run [jobId] on [thingId]: from here the run
    * lets them go, so they stop being merely picked.
    */
-  suspend fun record(jobId: AiJobId, thingId: String, documents: List<Attachment>) {
+  suspend fun record(jobId: AiJobId, thingId: ThingId, documents: List<Attachment>) {
     if (documents.isEmpty()) return
     val uid = currentUid() ?: return
-    store.record(uid, jobId.value, thingId, documents)
+    store.record(uid, jobId.value, thingId.value, documents)
     forgetPicked(uid, documents)
   }
 
@@ -159,10 +162,10 @@ class JobDocumentReleaser(
     store.forget(uid, jobId)
   }
 
-  private suspend fun hold(thingId: String, document: Attachment) {
+  private suspend fun hold(thingId: ThingId, document: Attachment) {
     heldHere.update { it + document.id }
     val uid = currentUid() ?: return
-    store.record(uid, PICKED, thingId, listOf(document))
+    store.record(uid, PICKED, thingId.value, listOf(document))
   }
 
   private suspend fun letGoNow(documents: List<Attachment>) {
