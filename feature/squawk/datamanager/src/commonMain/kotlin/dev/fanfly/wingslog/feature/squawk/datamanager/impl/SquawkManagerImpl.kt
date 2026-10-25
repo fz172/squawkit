@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.squawk.datamanager.impl
 
 import kotlin.time.Clock
+
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -8,7 +10,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import co.touchlab.kermit.Logger
+
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.model.id.value
@@ -16,8 +18,6 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.core.storage.resolve
-import dev.fanfly.wingslog.core.storage.resolveNow
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager

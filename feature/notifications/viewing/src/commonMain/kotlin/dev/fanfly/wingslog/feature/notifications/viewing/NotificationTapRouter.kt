@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
@@ -8,9 +12,10 @@ import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.d
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.encode
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.pending
 import dev.fanfly.wingslog.id.DataLogId
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 
 private const val SCHEME = "wingslog"
 private const val HOST = "notification-tap"
@@ -63,17 +68,17 @@ object NotificationTapRouter {
   private val log = Logger.withTag("NotificationTapRouter")
 
   fun encode(target: NotificationTapTarget): String = when (target) {
-    is NotificationTapTarget.Squawk -> "$SCHEME://$HOST/squawk/${target.thingId}/${target.squawkId}"
-    is NotificationTapTarget.Task -> "$SCHEME://$HOST/task/${target.thingId}/${target.taskId}"
-    is NotificationTapTarget.Log -> "$SCHEME://$HOST/log/${target.thingId}/${target.logId}"
+    is NotificationTapTarget.Squawk -> "$SCHEME://$HOST/squawk/${target.thingId.value}/${target.squawkId.value}"
+    is NotificationTapTarget.Task -> "$SCHEME://$HOST/task/${target.thingId.value}/${target.taskId.value}"
+    is NotificationTapTarget.Log -> "$SCHEME://$HOST/log/${target.thingId.value}/${target.logId.value}"
     is NotificationTapTarget.DataLog ->
-      "$SCHEME://$HOST/data_log/${target.thingId}/${target.dataLogId.value}"
+      "$SCHEME://$HOST/data_log/${target.thingId.value}/${target.dataLogId.value}"
 
     is NotificationTapTarget.Thing ->
-      "$SCHEME://$HOST/thing/${target.thingId}" + (target.tab?.let { "?tab=$it" }
+      "$SCHEME://$HOST/thing/${target.thingId.value}" + (target.tab?.let { "?tab=$it" }
         ?: "")
 
-    is NotificationTapTarget.Suggestions -> "$SCHEME://$HOST/suggestions/${target.thingId}"
+    is NotificationTapTarget.Suggestions -> "$SCHEME://$HOST/suggestions/${target.thingId.value}"
   }
 
   /** The target an encoded tap URI names, or null; for a platform deciding whether to present it. */
@@ -97,16 +102,17 @@ object NotificationTapRouter {
         val parts = param.split("=", limit = 2)
         if (parts.size == 2 && parts[0] == "tab") parts[1] else null
       }
-    val thingId = segments.getOrNull(1) ?: return null
+    val rawThingId = segments.getOrNull(1) ?: return null
+    val thingId = ThingId(rawThingId)
     return when (segments.getOrNull(0)) {
       "squawk" -> segments.getOrNull(2)
-        ?.let { NotificationTapTarget.Squawk(thingId, it) }
+        ?.let { NotificationTapTarget.Squawk(thingId, SquawkId(it)) }
 
       "task" -> segments.getOrNull(2)
-        ?.let { NotificationTapTarget.Task(thingId, it) }
+        ?.let { NotificationTapTarget.Task(thingId, MaintenanceTaskId(it)) }
 
       "log" -> segments.getOrNull(2)
-        ?.let { NotificationTapTarget.Log(thingId, it) }
+        ?.let { NotificationTapTarget.Log(thingId, MaintenanceLogId(it)) }
 
       "data_log" -> segments.getOrNull(2)
         ?.let { NotificationTapTarget.DataLog(thingId, DataLogId(it)) }

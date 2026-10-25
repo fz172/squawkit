@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
 import kotlin.time.Instant
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
 import androidx.lifecycle.SavedStateHandle
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
@@ -89,12 +89,12 @@ class SuggestionsViewModelTest {
   fun setUp() {
     Dispatchers.setMain(dispatcher)
     val card = slot<MaintenanceTask>()
-    coEvery { taskDataManager.addTask(THING_ID, capture(card)) } answers {
+    coEvery { taskDataManager.addTask(any<ThingId>(), capture(card)) } answers {
       written += card.captured
       Result.success(true)
     }
     // The Thing has no tasks unless a test says so.
-    every { taskDataManager.observeTasks(THING_ID) } returns flowOf(emptyList())
+    every { taskDataManager.observeTasks(ThingId(THING_ID)) } returns flowOf(emptyList())
     // A model run can start, without documents, unless a test says otherwise.
     coEvery { suggestions.eligibility(ThingId(THING_ID), any()) } returns AiEligibility(
       true,
@@ -191,7 +191,7 @@ class SuggestionsViewModelTest {
 
   /** Every one of [chosen] written, as tasks t1, t2, … */
   private fun written(chosen: List<AcceptedSuggestion>) =
-    chosen.mapIndexed { i, accepted -> WrittenSuggestion(accepted, "t${i + 1}") }
+    chosen.mapIndexed { i, accepted -> WrittenSuggestion(accepted, MaintenanceTaskId("t${i + 1}")) }
 
   /**
    * The curated mode on [curated], and its AI button: the model run is [JOB], and [runs] carries
@@ -505,7 +505,7 @@ class SuggestionsViewModelTest {
 
     assertThat(
       Screen.Suggestions.createRoute(
-        THING_ID,
+        ThingId(THING_ID),
         SuggestionsMode.ADD,
         arg
       )
@@ -516,7 +516,7 @@ class SuggestionsViewModelTest {
     // The curated mode carries no documents.
     assertThat(
       Screen.Suggestions.createRoute(
-        THING_ID,
+        ThingId(THING_ID),
         SuggestionsMode.CURATED,
         arg
       )
@@ -662,15 +662,15 @@ class SuggestionsViewModelTest {
         "Oil change"
       )
         .inOrder()
-      coVerify(exactly = 0) { taskDataManager.addTask(any(), any()) }
+      coVerify(exactly = 0) { taskDataManager.addTask(any<ThingId>(), any()) }
       assertThat(vm.uiState.value.acceptedCount).isEqualTo(2)
       // The task tab says so, with *Undo*.
       assertThat(recentlyAdded.batch.value).isEqualTo(
         AddedBatch(
           ThingId(THING_ID),
           listOf(
-            "t1",
-            "t2"
+            MaintenanceTaskId("t1"),
+            MaintenanceTaskId("t2"),
           )
         )
       )
@@ -999,7 +999,7 @@ class SuggestionsViewModelTest {
 
   @Test
   fun aSuggestionTitledLikeATaskTheThingHasIsNotShown() = runTest(dispatcher) {
-    every { taskDataManager.observeTasks(THING_ID) } returns flowOf(
+    every { taskDataManager.observeTasks(ThingId(THING_ID)) } returns flowOf(
       listOf(
         MaintenanceTask(id = "t1", title = "  oil   CHANGE ")
       )
@@ -1480,8 +1480,8 @@ class SuggestionsViewModelTest {
   @Test
   fun theCuratedRouteIsTheBareRouteAndTheDefault() {
     // The empty list and a finished run's push build the same URL as before the mode existed.
-    assertThat(Screen.Suggestions.createRoute(THING_ID)).isEqualTo("suggestions/$THING_ID")
-    assertThat(Screen.Suggestions.createRoute(THING_ID, SuggestionsMode.ADD))
+    assertThat(Screen.Suggestions.createRoute(ThingId(THING_ID))).isEqualTo("suggestions/$THING_ID")
+    assertThat(Screen.Suggestions.createRoute(ThingId(THING_ID), SuggestionsMode.ADD))
       .isEqualTo("suggestions/$THING_ID?mode=add")
     assertThat(viewModel().uiState.value.mode).isEqualTo(SuggestionsMode.CURATED)
   }

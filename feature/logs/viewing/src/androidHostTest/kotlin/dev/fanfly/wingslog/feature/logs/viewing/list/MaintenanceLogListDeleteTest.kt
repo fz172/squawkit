@@ -74,7 +74,7 @@ class MaintenanceLogListDeleteTest {
     Dispatchers.setMain(dispatcher)
     every { logManager.observeLogs(THING_ID) } returns flowOf(listOf(oil))
     every { logManager.observeLogAuthors(THING_ID) } returns flowOf(emptyMap())
-    every { tasks.observeTasks(THING_ID) } returns flowOf(emptyList())
+    every { tasks.observeTasks(ThingId(THING_ID)) } returns flowOf(emptyList())
     every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(
       emptyList()
     )

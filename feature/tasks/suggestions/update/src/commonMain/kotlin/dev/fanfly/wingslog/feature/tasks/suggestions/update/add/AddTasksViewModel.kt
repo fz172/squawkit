@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
@@ -161,11 +162,11 @@ class AddTasksViewModel(
     val state = uiState.value
     if (state.entry != SuggestEntry.Available || !state.canSuggest) return null
     if (state.sources.blocked != null) return Screen.Suggestions.createRoute(
-      thingId.value
+      thingId
     )
     handedOver = true
     return Screen.Suggestions.createRoute(
-      thingId.value,
+      thingId,
       SuggestionsMode.ADD,
       state.sources.documents.takeIf { it.isNotEmpty() }
         ?.toDocumentsArg(),

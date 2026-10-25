@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
@@ -33,6 +34,9 @@ import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Spec
@@ -478,7 +482,7 @@ class AdaptiveShellViewModelTest {
       fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
       val vm = viewModel()
 
-      vm.onNotificationTap(NotificationTapTarget.Suggestions(thingId = "a2"))
+      vm.onNotificationTap(NotificationTapTarget.Suggestions(thingId = ThingId("a2")))
 
       assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
       assertThat(vm.uiState.value.section).isEqualTo(ShellSection.TASKS)
@@ -493,8 +497,8 @@ class AdaptiveShellViewModelTest {
 
       vm.onNotificationTap(
         NotificationTapTarget.Squawk(
-          thingId = "a2",
-          squawkId = "sq-1"
+          thingId = ThingId("a2"),
+          squawkId = SquawkId("sq-1")
         )
       )
 
@@ -511,7 +515,7 @@ class AdaptiveShellViewModelTest {
 
       vm.onNotificationTap(
         NotificationTapTarget.DataLog(
-          thingId = "a2",
+          thingId = ThingId("a2"),
           dataLogId = DataLogId("dl-1")
         )
       )
@@ -530,8 +534,8 @@ class AdaptiveShellViewModelTest {
 
       vm.onNotificationTap(
         NotificationTapTarget.Task(
-          thingId = "a1",
-          taskId = "task-1"
+          thingId = ThingId("a1"),
+          taskId = MaintenanceTaskId("task-1")
         )
       )
 
@@ -547,8 +551,8 @@ class AdaptiveShellViewModelTest {
 
       vm.onNotificationTap(
         NotificationTapTarget.Log(
-          thingId = "a1",
-          logId = "log-1"
+          thingId = ThingId("a1"),
+          logId = MaintenanceLogId("log-1")
         )
       )
 
@@ -576,7 +580,7 @@ class AdaptiveShellViewModelTest {
 
       vm.onNotificationTap(
         NotificationTapTarget.Thing(
-          thingId = "a1",
+          thingId = ThingId("a1"),
           tab = "tasks"
         )
       )
@@ -605,7 +609,7 @@ class AdaptiveShellViewModelTest {
         val vm = viewModel()
         vm.onNotificationTap(
           NotificationTapTarget.Thing(
-            thingId = "a1",
+            thingId = ThingId("a1"),
             tab = tab
           )
         )
@@ -620,14 +624,14 @@ class AdaptiveShellViewModelTest {
       val vm = viewModel()
       vm.onNotificationTap(
         NotificationTapTarget.Task(
-          thingId = "a1",
-          taskId = "task-1"
+          thingId = ThingId("a1"),
+          taskId = MaintenanceTaskId("task-1")
         )
       )
 
       vm.onNotificationTap(
         NotificationTapTarget.Thing(
-          thingId = "a1",
+          thingId = ThingId("a1"),
           tab = "tasks"
         )
       )
@@ -645,7 +649,7 @@ class AdaptiveShellViewModelTest {
 
       vm.onNotificationTap(
         NotificationTapTarget.Thing(
-          thingId = "a1",
+          thingId = ThingId("a1"),
           tab = null
         )
       )
@@ -659,8 +663,8 @@ class AdaptiveShellViewModelTest {
     val vm = viewModel()
     vm.onNotificationTap(
       NotificationTapTarget.Task(
-        thingId = "a1",
-        taskId = "task-1"
+        thingId = ThingId("a1"),
+        taskId = MaintenanceTaskId("task-1")
       )
     )
 

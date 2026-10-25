@@ -7,6 +7,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_TASK_DRAFT
@@ -17,13 +20,10 @@ import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerS
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
-import dev.fanfly.wingslog.id.ThingId
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.task_added
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 @Composable
 fun AddTaskRoute(
@@ -136,7 +136,7 @@ fun AddTaskRoute(
           onPickError = viewModel::onFilePickError,
           onSeePlans = { navController.navigate(Screen.Subscription.route) },
           dataLogPicker = rememberDataLogPickerSlot(
-            ThingId(viewModel.thingId),
+            viewModel.thingId,
             null,
             pendingAttachments.dataLogIds()
           ),

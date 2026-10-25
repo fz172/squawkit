@@ -1,20 +1,22 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager
 
-import dev.fanfly.wingslog.task.MaintenanceTask
 import kotlinx.coroutines.flow.Flow
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.task.MaintenanceTask
 
 interface TaskDataManager {
 
   /**
    * Observe all task cards for a thing in real-time.
    */
-  fun observeTasks(thingId: String): Flow<List<MaintenanceTask>>
+  fun observeTasks(thingId: ThingId): Flow<List<MaintenanceTask>>
 
   /**
    * Add a new task card to a thing.
    */
   suspend fun addTask(
-    thingId: String,
+    thingId: ThingId,
     card: MaintenanceTask,
   ): Result<Boolean>
 
@@ -22,7 +24,7 @@ interface TaskDataManager {
    * Update an existing task card.
    */
   suspend fun updateTask(
-    thingId: String,
+    thingId: ThingId,
     card: MaintenanceTask,
   ): Result<Boolean>
 
@@ -33,7 +35,7 @@ interface TaskDataManager {
    * never move the next due. [currentReading] is the reading of the card's default meter.
    */
   suspend fun skipCycle(
-    thingId: String,
+    thingId: ThingId,
     card: MaintenanceTask,
     currentReading: Float,
   ): Result<Boolean>
@@ -43,7 +45,7 @@ interface TaskDataManager {
    * which are silently ignored during display.
    */
   suspend fun deleteTask(
-    thingId: String,
-    cardId: String,
+    thingId: ThingId,
+    cardId: MaintenanceTaskId,
   ): Result<Boolean>
 }

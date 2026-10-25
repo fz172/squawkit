@@ -1,6 +1,10 @@
 package dev.fanfly.wingslog.feature.notifications.model
 
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 
 /**
  * Where a tap on a [PendingNotification] should land. Carried over the wire by
@@ -21,31 +25,26 @@ import dev.fanfly.wingslog.id.DataLogId
  * `ShellSection` is the consumer's job.
  */
 sealed interface NotificationTapTarget {
-  val thingId: String
+  val thingId: ThingId
 
-  data class Thing(override val thingId: String, val tab: String? = null) :
+  data class Thing(override val thingId: ThingId, val tab: String? = null) :
     NotificationTapTarget
 
-  data class Squawk(override val thingId: String, val squawkId: String) :
+  data class Squawk(override val thingId: ThingId, val squawkId: SquawkId) :
     NotificationTapTarget
 
-  data class Task(override val thingId: String, val taskId: String) :
+  data class Task(override val thingId: ThingId, val taskId: MaintenanceTaskId) :
     NotificationTapTarget
 
-  data class Log(override val thingId: String, val logId: String) :
+  data class Log(override val thingId: ThingId, val logId: MaintenanceLogId) :
     NotificationTapTarget
 
-  /**
-   * The one variant with a typed id. Data logs were built after ids were boxed (design §4.4), so
-   * there is no untyped [DataLogId] anywhere above this to match; [thingId] stays a `String` like
-   * its siblings until the whole interface moves to `ThingId`.
-   */
-  data class DataLog(override val thingId: String, val dataLogId: DataLogId) :
+  data class DataLog(override val thingId: ThingId, val dataLogId: DataLogId) :
     NotificationTapTarget
 
   /**
    * A suggestion run ended (PRD R20): the Thing's suggestions screen, which shows the answer held
    * for review (task population design §9.1, §17).
    */
-  data class Suggestions(override val thingId: String) : NotificationTapTarget
+  data class Suggestions(override val thingId: ThingId) : NotificationTapTarget
 }

@@ -72,7 +72,7 @@ class LogbookExportAggregatorTest {
       every { observeManualReadings(thingId) } returns flowOf(emptyList())
     }
     val tasksManager = mockk<TaskDataManager> {
-      every { observeTasks(thingId) } returns flowOf(
+      every { observeTasks(ThingId(thingId)) } returns flowOf(
         listOf(
           taskOld,
           taskNew

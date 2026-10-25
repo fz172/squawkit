@@ -105,7 +105,7 @@ class ExportViewModel(
                 val thingId = ThingId(item.id)
                 combine(
                   logsManager.observeLogs(item.id),
-                  taskDataManager.observeTasks(item.id),
+                  taskDataManager.observeTasks(thingId),
                   squawkManager.observeSquawks(thingId),
                 ) { logs, tasks, squawks ->
                   val attachmentSizeBytes =

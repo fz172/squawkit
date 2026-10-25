@@ -127,7 +127,7 @@ class JobDocumentReleaserTest {
   @Test
   fun `a picked file is stored, and noted as picked until a run takes it`() = runTest {
     val releaser = releaser(this)
-    coEvery { attachments.addPickedFile("thing-1", file, "POH.pdf", 100) } returns manual
+    coEvery { attachments.addPickedFile(ThingId("thing-1"), file, "POH.pdf", 100) } returns manual
 
     assertThat(releaser.pick(ThingId("thing-1"), file, maxBytes = 100).getOrNull()).isEqualTo(manual)
     coVerify { store.record("alice", "picked", "thing-1", listOf(manual)) }
@@ -179,7 +179,7 @@ class JobDocumentReleaserTest {
   @Test
   fun `a new session lets go of files a dead process picked, and keeps this one's`() = runTest {
     val releaser = releaser(this)
-    coEvery { attachments.addPickedFile("thing-1", file, "POH.pdf", 100) } returns manual
+    coEvery { attachments.addPickedFile(ThingId("thing-1"), file, "POH.pdf", 100) } returns manual
     releaser.pick(ThingId("thing-1"), file, maxBytes = 100)
     coEvery { store.all() } returns listOf(
       AiJobDocument("alice", "picked", "thing-1", manual),

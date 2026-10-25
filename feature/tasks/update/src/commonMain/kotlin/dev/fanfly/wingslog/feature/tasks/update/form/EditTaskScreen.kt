@@ -61,6 +61,7 @@ import dev.fanfly.wingslog.feature.tasks.update.form.identity.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import kotlinx.coroutines.flow.drop
@@ -98,7 +99,7 @@ fun EditTaskScreen(
   onForcedDateMillisChange: (Long?) -> Unit,
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
-  onDeleteRequest: (String) -> Unit,
+  onDeleteRequest: (MaintenanceTaskId) -> Unit,
   isSaving: Boolean = false,
   showLogPicker: Boolean = false,
   onShowLogPicker: () -> Unit = {},
@@ -340,7 +341,7 @@ fun EditTaskScreen(
       title = state.title,
       onConfirm = {
         showDeleteConfirm = false
-        onDeleteRequest(card.id)
+        onDeleteRequest(MaintenanceTaskId(card.id))
       },
       onDismiss = { showDeleteConfirm = false })
   }

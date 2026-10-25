@@ -1,5 +1,15 @@
 package dev.fanfly.wingslog.feature.export.update.selection
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
@@ -13,21 +23,13 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -60,7 +62,7 @@ class ExportSelectionRowTest {
         every { observeLogs(any()) } returns flowOf(emptyList())
       },
       taskDataManager = mockk<TaskDataManager> {
-        every { observeTasks(any()) } returns flowOf(emptyList())
+        every { observeTasks(any<ThingId>()) } returns flowOf(emptyList())
       },
       squawkManager = mockk<SquawkManager> {
         every { observeSquawks(any()) } returns flowOf(emptyList())

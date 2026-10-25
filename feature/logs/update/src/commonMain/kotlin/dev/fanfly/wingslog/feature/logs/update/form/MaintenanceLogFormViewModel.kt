@@ -141,7 +141,7 @@ class MaintenanceLogFormViewModel(
   private val attachmentForm =
     AttachmentFormController(
       attachmentManager,
-      thingId.value,
+      thingId,
       owner = logId?.let { EntityRef(CollectionKind.MaintenanceLog, it) },
     )
   private val _uiState = MutableStateFlow(
@@ -302,7 +302,7 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeTasks() {
-    inspectionDataManager.observeTasks(thingId.value)
+    inspectionDataManager.observeTasks(thingId)
       .onEach { cards ->
         _uiState.update { state ->
           var next = state.copy(availableInspectionCards = cards)
@@ -769,7 +769,7 @@ class MaintenanceLogFormViewModel(
                   card.force_complied_status != null
                 ) {
                   inspectionDataManager.updateTask(
-                    thingId.value,
+                    thingId,
                     // Clears both the keyed override and the legacy float, so a build that
                     // predates `force_due_meter` does not keep showing one the user cleared.
                     card.withForcedDueMeter(card.defaultMeterKey(), null)

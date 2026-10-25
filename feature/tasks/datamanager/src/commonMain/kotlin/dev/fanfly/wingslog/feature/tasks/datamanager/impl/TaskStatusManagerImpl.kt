@@ -1,18 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
-import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.core.storage.CollectionKind
-import dev.fanfly.wingslog.core.storage.EntityStore
-import dev.fanfly.wingslog.core.storage.EntityStoreFactory
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.core.template.currentReadings
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
-import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.task.MaintenanceTask
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.ManualMeterReading
+import kotlin.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +12,21 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
+import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityStore
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.currentReadings
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.ManualMeterReading
 
 class TaskStatusManagerImpl(
   private val scopeResolver: ThingScopeResolver,
@@ -45,7 +47,7 @@ class TaskStatusManagerImpl(
   private val refreshTick = MutableStateFlow(0)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeTasksWithStatus(thingId: String): Flow<List<MaintenanceTaskWithStatus>> =
+  override fun observeTasksWithStatus(thingId: ThingId): Flow<List<MaintenanceTaskWithStatus>> =
     scopeResolver.resolve(thingId)
       .flatMapLatest { scope ->
         if (scope == null) return@flatMapLatest flowOf(emptyList())
@@ -64,7 +66,7 @@ class TaskStatusManagerImpl(
           refreshTick,
         ) { tasks, logs, manual, _ -> withStatus(tasks, logs, manual) }
           .catch { e ->
-            logger.w(e) { "Error observing task status for thing $thingId" }
+            logger.w(e) { "Error observing task status for thing ${thingId.value}" }
             emit(emptyList())
           }
       }

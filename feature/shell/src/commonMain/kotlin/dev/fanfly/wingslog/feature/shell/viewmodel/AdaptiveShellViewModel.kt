@@ -1,7 +1,17 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
@@ -22,14 +32,7 @@ import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import dev.fanfly.wingslog.id.ThingId
 
 /**
  * Holds the ambient thing selection for the adaptive shell ([AdaptiveAppShell]).
@@ -181,17 +184,17 @@ class AdaptiveShellViewModel(
 
       is NotificationTapTarget.Squawk -> {
         selectSection(ShellSection.SQUAWKS)
-        _pendingScrollTargetId.value = target.squawkId
+        _pendingScrollTargetId.value = target.squawkId.value
       }
 
       is NotificationTapTarget.Task -> {
         selectSection(ShellSection.TASKS)
-        _pendingScrollTargetId.value = target.taskId
+        _pendingScrollTargetId.value = target.taskId.value
       }
 
       is NotificationTapTarget.Log -> {
         selectSection(ShellSection.LOGS)
-        _pendingScrollTargetId.value = target.logId
+        _pendingScrollTargetId.value = target.logId.value
       }
 
       is NotificationTapTarget.DataLog -> {
@@ -265,6 +268,7 @@ class AdaptiveShellViewModel(
   }
 
   /** Switcher selection (above phone): swaps the ambient thing in place and remembers it. */
+  fun selectThing(id: ThingId) = selectThing(id.value)
   fun selectThing(id: String) {
     _uiState.update { it.copy(selectedThingId = id) }
     publishLexicon()

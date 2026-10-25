@@ -61,7 +61,7 @@ class LogAuthorshipGatingTest {
     Dispatchers.setMain(dispatcher)
     every { logManager.observeLogs(AC_ID) } returns flowOf(listOf(log))
     every { logManager.observeLogAuthors(AC_ID) } returns flowOf(mapOf(LOG_ID to OWNER_UID))
-    every { tasks.observeTasks(AC_ID) } returns flowOf(emptyList())
+    every { tasks.observeTasks(ThingId(AC_ID)) } returns flowOf(emptyList())
     every { sharing.observeLinkedTechnicians(AC_ID) } returns flowOf(emptyList())
     every { technicians.observeSelf() } returns flowOf(null)
     every { squawks.observeSquawks(AC_THING) } returns flowOf(emptyList())

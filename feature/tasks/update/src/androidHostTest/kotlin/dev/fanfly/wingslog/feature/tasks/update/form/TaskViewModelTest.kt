@@ -2,37 +2,6 @@ package dev.fanfly.wingslog.feature.tasks.update.form
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.analytics.AnalyticsManager
-import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
-import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
-import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.MeterKeys
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
-import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
-import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
-import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
-import dev.fanfly.wingslog.task.ComplianceType
-import dev.fanfly.wingslog.task.ForceCompliedStatus
-import dev.fanfly.wingslog.task.MaintenanceTask
-import dev.fanfly.wingslog.task.TaskOrigin
-import dev.fanfly.wingslog.task.TaskOriginKind
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.ManualMeterReading
-import dev.fanfly.wingslog.thing.MeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -54,7 +23,43 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.model.toDraftArg
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.ForceCompliedStatus
+import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.task.TaskOrigin
+import dev.fanfly.wingslog.task.TaskOriginKind
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.ManualMeterReading
+import dev.fanfly.wingslog.thing.MeterReading
+
+private val TEST_THING = ThingId("thing-456")
 private const val TEST_THING_ID = "thing-456"
+private val TEST_CARD = MaintenanceTaskId("card-789")
 private const val TEST_CARD_ID = "card-789"
 
 /**
@@ -94,7 +99,7 @@ class TaskViewModelTest {
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
     // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
-    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+    every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
       emptyList()
     )
     every { maintenanceLogManager.observeLogs(TEST_THING_ID) } returns flowOf(
@@ -218,7 +223,7 @@ class TaskViewModelTest {
 
   @Test
   fun editMode_seedsFormStateFromCard() = runTest(testDispatcher) {
-    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+    every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
       listOf(
         MaintenanceTask(
           id = TEST_CARD_ID,
@@ -242,7 +247,7 @@ class TaskViewModelTest {
       val tasksFlow = MutableStateFlow(
         listOf(MaintenanceTask(id = TEST_CARD_ID, title = "Oil change"))
       )
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns tasksFlow
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns tasksFlow
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
 
@@ -324,7 +329,7 @@ class TaskViewModelTest {
           complied_meter = MeterReading(MeterKeys.ENGINE_HOURS, value_ = 10.0)
         ),
       )
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
         listOf(skipped)
       )
       every { taskDueManager.computeNextDue(any(), any(), any()) } answers {
@@ -364,11 +369,11 @@ class TaskViewModelTest {
   fun saveEditedTask_dropsForceCompliedStatus_whenScheduleChanged() =
     runTest(testDispatcher) {
       val stored = skippedCard(forceDueEngine = 0f)
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
         listOf(stored)
       )
       coEvery {
-        inspectionDataManager.updateTask(TEST_THING_ID, any())
+        inspectionDataManager.updateTask(TEST_THING, any())
       } returns Result.success(true)
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
@@ -381,7 +386,7 @@ class TaskViewModelTest {
       val persisted = slot<MaintenanceTask>()
       coVerify {
         inspectionDataManager.updateTask(
-          TEST_THING_ID,
+          TEST_THING,
           capture(persisted)
         )
       }
@@ -392,11 +397,11 @@ class TaskViewModelTest {
   fun saveEditedTask_keepsForceCompliedStatus_whenScheduleUnchanged() =
     runTest(testDispatcher) {
       val stored = skippedCard(forceDueEngine = 0f)
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
         listOf(stored)
       )
       coEvery {
-        inspectionDataManager.updateTask(TEST_THING_ID, any())
+        inspectionDataManager.updateTask(TEST_THING, any())
       } returns Result.success(true)
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
@@ -408,7 +413,7 @@ class TaskViewModelTest {
       val persisted = slot<MaintenanceTask>()
       coVerify {
         inspectionDataManager.updateTask(
-          TEST_THING_ID,
+          TEST_THING,
           capture(persisted)
         )
       }
@@ -421,7 +426,7 @@ class TaskViewModelTest {
   fun saveNewTask_marksTheTaskAsMadeByHand() = runTest(testDispatcher) {
     coEvery {
       inspectionDataManager.addTask(
-        TEST_THING_ID,
+        TEST_THING,
         any()
       )
     } returns Result.success(true)
@@ -446,7 +451,7 @@ class TaskViewModelTest {
     val persisted = slot<MaintenanceTask>()
     coVerify {
       inspectionDataManager.addTask(
-        TEST_THING_ID,
+        TEST_THING,
         capture(persisted)
       )
     }
@@ -458,12 +463,12 @@ class TaskViewModelTest {
     // The form never shows the origin, so the rebuilt card must carry it over (PRD R35).
     val origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)
     val stored = skippedCard(forceDueEngine = 0f).copy(origin = origin)
-    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+    every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
       listOf(stored)
     )
     coEvery {
       inspectionDataManager.updateTask(
-        TEST_THING_ID,
+        TEST_THING,
         any()
       )
     } returns Result.success(true)
@@ -476,7 +481,7 @@ class TaskViewModelTest {
     val persisted = slot<MaintenanceTask>()
     coVerify {
       inspectionDataManager.updateTask(
-        TEST_THING_ID,
+        TEST_THING,
         capture(persisted)
       )
     }
@@ -492,11 +497,11 @@ class TaskViewModelTest {
       is_one_time = true,
       force_due_meter = MeterReading("odometer", value_ = 600.0),
     )
-    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+    every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
       listOf(stored)
     )
     coEvery {
-      inspectionDataManager.updateTask(TEST_THING_ID, any())
+      inspectionDataManager.updateTask(TEST_THING, any())
     } returns Result.success(true)
     val viewModel = buildViewModelForEdit()
     advanceUntilIdle()
@@ -506,7 +511,7 @@ class TaskViewModelTest {
 
     val persisted = slot<MaintenanceTask>()
     coVerify {
-      inspectionDataManager.updateTask(TEST_THING_ID, capture(persisted))
+      inspectionDataManager.updateTask(TEST_THING, capture(persisted))
     }
     assertThat(persisted.captured.force_due_meter)
       .isEqualTo(MeterReading("odometer", value_ = 600.0))
@@ -519,12 +524,12 @@ class TaskViewModelTest {
     val analytics = RecordingAnalyticsManager()
     val stored = skippedCard(forceDueEngine = 0f)
       .copy(origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_AI_THING))
-    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+    every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
       listOf(stored)
     )
     coEvery {
       inspectionDataManager.updateTask(
-        TEST_THING_ID,
+        TEST_THING,
         any()
       )
     } returns Result.success(true)

@@ -26,7 +26,6 @@ import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntitySyncObserver
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.core.storage.resolveNow
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
@@ -42,6 +41,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionM
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.WrittenSuggestion
 import dev.fanfly.wingslog.id.AttachmentId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
@@ -151,8 +151,8 @@ class TaskSuggestionManagerImpl(
         ).withCitedDocument(accepted.suggestion, documents)
         // Named here, so *Undo* knows what to take back.
         .let { if (it.id.isEmpty()) it.copy(id = generateRandomId()) else it }
-      WrittenSuggestion(accepted, task.id).takeIf {
-        taskDataManager.addTask(thingId.value, task)
+      WrittenSuggestion(accepted, MaintenanceTaskId(task.id)).takeIf {
+        taskDataManager.addTask(thingId, task)
           .onFailure { logger.w(it) { "A suggested task was not written" } }
           .isSuccess
       }

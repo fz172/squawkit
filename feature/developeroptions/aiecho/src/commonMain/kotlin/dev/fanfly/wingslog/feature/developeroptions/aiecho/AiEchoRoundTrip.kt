@@ -1,5 +1,13 @@
 package dev.fanfly.wingslog.feature.developeroptions.aiecho
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource
+
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import okio.ByteString
+
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.ai.AiStartResult
@@ -10,12 +18,6 @@ import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksRequest
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.TimeSource
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
-import okio.ByteString
 
 /**
  * One echo job, end to end (AI_JOB_KIND_ECHO; phase A's exit, docs/ai/task_population_design.md
@@ -34,12 +36,12 @@ class AiEchoRoundTrip(
 ) {
 
   suspend fun run(onStep: (EchoStep) -> Unit): EchoOutcome {
-    val thingId = fleet.observeFleetDashboard().first().firstOrNull()?.thing?.id
+    val thingId = fleet.observeFleetDashboard().first().firstOrNull()?.thing?.id?.let(::ThingId)
       ?: return EchoOutcome.NoThing
     // A shared Thing lives in its host's tree: users/{hostUid}/thing/{thingId}.
     val hostUid = scopes.resolveNow(thingId).hostUid ?: return EchoOutcome.NoThing
     val request = SuggestTasksRequest(
-      thing_id = ThingId(value_ = thingId),
+      thing_id = thingId,
       host_uid = UserId(value_ = hostUid),
       entry_point = ENTRY_POINT,
     ).encodeByteString()

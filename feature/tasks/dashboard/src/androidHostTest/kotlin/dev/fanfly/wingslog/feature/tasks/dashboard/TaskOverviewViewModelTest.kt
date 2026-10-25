@@ -1,11 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
-import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.task.MaintenanceTask
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +14,14 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-private const val THING_ID = "thing-1"
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.task.MaintenanceTask
+
+private val THING = ThingId("thing-1")
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskOverviewViewModelTest {
@@ -52,11 +54,11 @@ class TaskOverviewViewModelTest {
       card = MaintenanceTask(id = "t-complied", title = "AD 2024-01"),
       dueStatus = DueMetadata(status = DueStatus.COMPLIED),
     )
-    every { taskStatusManager.observeTasksWithStatus(THING_ID) } returns flowOf(
+    every { taskStatusManager.observeTasksWithStatus(THING) } returns flowOf(
       listOf(overdue, dueSoon, upcoming, complied)
     )
 
-    val state = TaskOverviewViewModel(taskStatusManager, THING_ID).uiState.value
+    val state = TaskOverviewViewModel(taskStatusManager, THING).uiState.value
 
     assertThat(state.loaded).isTrue()
     assertThat(state.overdueTasks).containsExactly(overdue, dueSoon).inOrder()

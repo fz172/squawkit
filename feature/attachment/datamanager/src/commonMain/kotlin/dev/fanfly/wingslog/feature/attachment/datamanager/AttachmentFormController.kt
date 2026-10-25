@@ -1,16 +1,5 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import dev.fanfly.wingslog.core.storage.EntityRef
-import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_ATTACHMENTS
-import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
-import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
-import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
-import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
-import dev.fanfly.wingslog.feature.attachment.model.fileCount
-import dev.fanfly.wingslog.feature.attachment.model.isFile
-import dev.fanfly.wingslog.feature.attachment.model.visible
-import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +12,19 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+import dev.fanfly.wingslog.core.storage.EntityRef
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_ATTACHMENTS
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
+import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
+import dev.fanfly.wingslog.feature.attachment.model.fileCount
+import dev.fanfly.wingslog.feature.attachment.model.isFile
+import dev.fanfly.wingslog.feature.attachment.model.visible
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.Attachment
 
 /**
  * Shared form-side attachment state machine used by the task, squawk, and maintenance-log
@@ -43,7 +45,7 @@ import kotlinx.coroutines.launch
  */
 class AttachmentFormController(
   private val attachmentManager: AttachmentManager,
-  private val thingId: String,
+  private val thingId: ThingId,
   private val owner: EntityRef? = null,
   private val cleanupScope: CoroutineScope =
     CoroutineScope(SupervisorJob() + Dispatchers.Default),

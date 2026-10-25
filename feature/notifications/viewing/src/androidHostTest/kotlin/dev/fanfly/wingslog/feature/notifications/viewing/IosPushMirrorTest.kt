@@ -13,6 +13,10 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
 import java.io.File
@@ -122,12 +126,12 @@ class IosPushMirrorTest {
   @Test
   fun theSwiftEncoderWritesThePathsTheRouterEncodes() {
     val targets = listOf(
-      NotificationTapTarget.Thing("T1", tab = "squawks"),
-      NotificationTapTarget.Squawk("T1", "R1"),
-      NotificationTapTarget.Task("T1", "R1"),
-      NotificationTapTarget.Log("T1", "R1"),
-      NotificationTapTarget.DataLog("T1", DataLogId("R1")),
-      NotificationTapTarget.Suggestions("T1"),
+      NotificationTapTarget.Thing(ThingId("T1"), tab = "squawks"),
+      NotificationTapTarget.Squawk(ThingId("T1"), SquawkId("R1")),
+      NotificationTapTarget.Task(ThingId("T1"), MaintenanceTaskId("R1")),
+      NotificationTapTarget.Log(ThingId("T1"), MaintenanceLogId("R1")),
+      NotificationTapTarget.DataLog(ThingId("T1"), DataLogId("R1")),
+      NotificationTapTarget.Suggestions(ThingId("T1")),
     )
     val segment = Regex("""notification-tap/([a-z_]+)/""")
     val kotlin = targets.map { segment.find(NotificationTapRouter.encode(it))!!.groupValues[1] }

@@ -55,8 +55,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+
 import dev.fanfly.wingslog.core.ai.AiSkipped
-import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_LINK_ACCOUNT
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -119,7 +119,7 @@ fun AddTasksRoute(
       onCreateManually = {
         replaceWith(
           Screen.AddMaintenanceTask.createRoute(
-            viewModel.thingId.value
+            viewModel.thingId
           )
         )
       },
@@ -135,7 +135,7 @@ fun AddTasksRoute(
           }
 
           is SuggestEntry.MissingIdentity ->
-            replaceWith(Screen.EditThing.createRoute(viewModel.thingId.value))
+            replaceWith(Screen.EditThing.createRoute(viewModel.thingId))
 
           else -> viewModel.onSuggest()
             ?.let(replaceWith)

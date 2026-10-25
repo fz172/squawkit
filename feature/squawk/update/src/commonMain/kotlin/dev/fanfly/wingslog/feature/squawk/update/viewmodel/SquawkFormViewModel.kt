@@ -126,7 +126,7 @@ class SquawkFormViewModel(
   private val attachmentForm =
     AttachmentFormController(
       attachmentManager,
-      thingId.value,
+      thingId,
       owner = squawkId?.let { EntityRef(CollectionKind.Squawk, it.value) },
     )
   val pendingAttachments: StateFlow<List<PendingAttachment>> =

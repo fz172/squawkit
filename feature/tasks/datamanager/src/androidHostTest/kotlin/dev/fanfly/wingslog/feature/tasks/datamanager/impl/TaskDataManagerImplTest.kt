@@ -1,5 +1,11 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
+import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.test.runTest
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -22,17 +28,13 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
+private val TEST_THING = ThingId("thing-456")
 private const val TEST_THING_ID = "thing-456"
+private val TEST_TASK = MaintenanceTaskId("task-789")
 private const val TEST_TASK_ID = "task-789"
 
 class TaskDataManagerImplTest {
@@ -70,7 +72,7 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.observeTasks(TEST_THING_ID)
+    val result = manager.observeTasks(TEST_THING)
       .first()
 
     assertThat(result).isEmpty()
@@ -89,7 +91,7 @@ class TaskDataManagerImplTest {
         EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
       every { store.observeAll(scope) } returns flowOf(listOf(entity))
 
-      val result = manager.observeTasks(TEST_THING_ID)
+      val result = manager.observeTasks(TEST_THING)
         .first()
 
       assertThat(result).hasSize(1)
@@ -101,7 +103,7 @@ class TaskDataManagerImplTest {
   fun addTask_withEmptyId_generatesIdAndCallsStorePut() = runTest {
     val task = buildTestTask(id = "")
 
-    val result = manager.addTask(TEST_THING_ID, task)
+    val result = manager.addTask(TEST_THING, task)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -117,7 +119,7 @@ class TaskDataManagerImplTest {
   fun addTask_withExistingId_preservesIdAndCallsStorePut() = runTest {
     val task = buildTestTask(id = TEST_TASK_ID)
 
-    val result = manager.addTask(TEST_THING_ID, task)
+    val result = manager.addTask(TEST_THING, task)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -134,7 +136,7 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns null
 
     val result =
-      manager.addTask(TEST_THING_ID, buildTestTask(id = TEST_TASK_ID))
+      manager.addTask(TEST_THING, buildTestTask(id = TEST_TASK_ID))
 
     assertThat(result.isFailure).isTrue()
   }
@@ -143,7 +145,7 @@ class TaskDataManagerImplTest {
   fun updateTask_loggedIn_callsStorePutAndReturnsSuccess() = runTest {
     val task = buildTestTask(id = TEST_TASK_ID)
 
-    val result = manager.updateTask(TEST_THING_ID, task)
+    val result = manager.updateTask(TEST_THING, task)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -160,14 +162,14 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns null
 
     val result =
-      manager.updateTask(TEST_THING_ID, buildTestTask(id = TEST_TASK_ID))
+      manager.updateTask(TEST_THING, buildTestTask(id = TEST_TASK_ID))
 
     assertThat(result.isFailure).isTrue()
   }
 
   @Test
   fun deleteTask_loggedIn_callsStoreDeleteAndReturnsSuccess() = runTest {
-    val result = manager.deleteTask(TEST_THING_ID, TEST_TASK_ID)
+    val result = manager.deleteTask(TEST_THING, TEST_TASK)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -182,7 +184,7 @@ class TaskDataManagerImplTest {
   fun deleteTask_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.deleteTask(TEST_THING_ID, TEST_TASK_ID)
+    val result = manager.deleteTask(TEST_THING, TEST_TASK)
 
     assertThat(result.isFailure).isTrue()
   }
@@ -191,7 +193,7 @@ class TaskDataManagerImplTest {
   fun skipCycle_persistsForceCompliedStatusAtCurrentReading() = runTest {
     val card = buildTestTask(id = TEST_TASK_ID)
 
-    val result = manager.skipCycle(TEST_THING_ID, card, currentReading = 42f)
+    val result = manager.skipCycle(TEST_THING, card, currentReading = 42f)
 
     assertThat(result.isSuccess).isTrue()
     val persisted = slot<MaintenanceTask>()
@@ -214,7 +216,7 @@ class TaskDataManagerImplTest {
       .copy(force_due_date = toWireInstant(1_800_000_000L))
       .withForcedDueMeter(MeterKeys.ENGINE_HOURS, 1_500f)
 
-    manager.skipCycle(TEST_THING_ID, rescheduled, currentReading = 42f)
+    manager.skipCycle(TEST_THING, rescheduled, currentReading = 42f)
 
     val persisted = slot<MaintenanceTask>()
     coVerify { store.put(TEST_TASK_ID, capture(persisted), any()) }
@@ -228,7 +230,7 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns null
 
     val result =
-      manager.skipCycle(TEST_THING_ID, buildTestTask(), currentReading = 42f)
+      manager.skipCycle(TEST_THING, buildTestTask(), currentReading = 42f)
 
     assertThat(result.isFailure).isTrue()
   }
@@ -241,14 +243,11 @@ class TaskDataManagerImplTest {
   @Test
   fun deleteTask_takesItsCommentThreadWithIt() = runTest {
     // A thread with no record to hang off would otherwise sit in every member's store forever.
-    manager.deleteTask(TEST_THING_ID, TEST_TASK_ID)
+    manager.deleteTask(TEST_THING, TEST_TASK)
 
     coVerify {
       commentManager.deleteThread(
-        CommentTarget.task(
-          ThingId(TEST_THING_ID),
-          MaintenanceTaskId(TEST_TASK_ID),
-        )
+        CommentTarget.task(TEST_THING, TEST_TASK)
       )
     }
   }
@@ -261,13 +260,13 @@ class TaskDataManagerImplTest {
  */
 private class FakeScopeResolver(private val auth: FirebaseAuth) :
   ThingScopeResolver {
-  override fun resolve(thingId: String): Flow<EntityScope?> =
+  override fun resolve(thingId: ThingId): Flow<EntityScope?> =
     auth.authStateChanged.map { user ->
-      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId) }
+      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId.value_) }
     }
 
-  override suspend fun resolveNow(thingId: String): EntityScope {
+  override suspend fun resolveNow(thingId: ThingId): EntityScope {
     val uid = auth.currentUser?.uid ?: error("Not signed in")
-    return EntityScope.thingChildUnsafe(uid, thingId)
+    return EntityScope.thingChildUnsafe(uid, thingId.value_)
   }
 }

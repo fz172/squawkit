@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
 import kotlin.time.Instant
-
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 
@@ -128,7 +127,7 @@ class SuggestionContextBuilderTest {
     val fleet =
       mockk<FleetManager> { every { loadThing(ThingId(THING)) } returns flowOf(thing) }
     val taskData = mockk<TaskDataManager> {
-      every { observeTasks(THING) } returns flowOf(tasks)
+      every { observeTasks(ThingId(THING)) } returns flowOf(tasks)
     }
     val logManager = mockk<MaintenanceLogManager> {
       every { observeLogs(THING) } returns flowOf(logs)
@@ -145,10 +144,9 @@ class SuggestionContextBuilderTest {
         every { forThingWithFallback(any()) } answers { firstArg<Thing>().template!! }
       }
     val scopes = mockk<ThingScopeResolver> {
-      coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe(
-        hostUid,
-        THING
-      )
+      coEvery { resolveNow(any<ThingId>()) } answers {
+        EntityScope.thingChildUnsafe(hostUid, firstArg<ThingId>().value_)
+      }
     }
     return SuggestionContextBuilder(
       fleet,

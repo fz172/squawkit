@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.core.storage
 
-import dev.fanfly.wingslog.core.model.id.value
-import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.Flow
+
+import dev.fanfly.wingslog.id.ThingId
 
 /**
  * Resolves the [EntityScope] that holds a thing's nested maintenance data (logs, tasks,
@@ -23,14 +23,9 @@ interface ThingScopeResolver {
    * changes (a ref appearing/disappearing flips own ↔ shared). Emits `null` while signed out, so
    * observers can clear — mirroring the auth-gated behaviour the managers had before.
    */
-  fun resolve(thingId: String): Flow<EntityScope?>
+  fun resolve(thingId: ThingId): Flow<EntityScope?>
 
   /** One-shot resolution for a mutation. Throws if no user is signed in. */
-  suspend fun resolveNow(thingId: String): EntityScope
+  suspend fun resolveNow(thingId: ThingId): EntityScope
 }
 
-/** Resolves scope using strongly-typed [ThingId]. */
-fun ThingScopeResolver.resolve(thingId: ThingId): Flow<EntityScope?> = resolve(thingId.value)
-
-/** Resolves scope using strongly-typed [ThingId]. */
-suspend fun ThingScopeResolver.resolveNow(thingId: ThingId): EntityScope = resolveNow(thingId.value)

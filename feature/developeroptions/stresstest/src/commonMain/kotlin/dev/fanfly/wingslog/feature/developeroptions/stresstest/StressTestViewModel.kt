@@ -176,7 +176,7 @@ class StressTestViewModel(
 
         data.tasks.forEach { task ->
           progress(StressTestProgressStep.CreatingTask, task.title)
-          taskDataManager.addTask(thingId.value, task)
+          taskDataManager.addTask(thingId, task)
             .getOrThrow()
         }
 

@@ -25,6 +25,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      api(project(":core:model"))
       implementation(project(":core:datetime"))
       implementation(project(":core:storage"))
       // readingFor / MeterKeys — a rule schedules against a meter key now (#759).

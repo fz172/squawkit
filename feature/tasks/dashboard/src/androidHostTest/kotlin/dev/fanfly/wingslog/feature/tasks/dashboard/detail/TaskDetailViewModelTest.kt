@@ -1,24 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard.detail
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
-import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
-import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
-import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
-import dev.fanfly.wingslog.core.ui.text.UiText
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
-import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.id.MaintenanceTaskId
-import dev.fanfly.wingslog.id.ThingId
-import dev.fanfly.wingslog.task.MaintenanceTask
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -36,12 +18,34 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import wingslog.core.sharedassets.generated.resources.delete_failed
-import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
+import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.ui.text.UiText
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.TemplateId
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
+import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
+
+private val THING = ThingId("thing-1")
 private const val THING_ID = "thing-1"
+private val TASK_ID = MaintenanceTaskId("c1")
 
 /**
  * The tasks dashboard's quick actions (design §5.1), and the §8 guard that each one goes through
@@ -71,7 +75,7 @@ class TaskDetailViewModelTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
-    every { taskStatusManager.observeTasksWithStatus(THING_ID) } returns
+    every { taskStatusManager.observeTasksWithStatus(THING) } returns
       flowOf(listOf(dueOilChange))
     every { logManager.observeLogs(THING_ID) } returns flowOf(emptyList())
     every { logManager.observeCurrentReadings(THING_ID) } returns flowOf(emptyList())
@@ -87,8 +91,8 @@ class TaskDetailViewModelTest {
     commentManager = commentManager,
     templateRegistry = BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
     analytics = analytics,
-    thingId = THING_ID,
-    templateId = AirplaneTemplate.ID,
+    thingId = THING,
+    templateId = TemplateId(AirplaneTemplate.ID),
   )
 
   @Test
@@ -97,7 +101,7 @@ class TaskDetailViewModelTest {
     vm.onSkipClick(dueOilChange)
     vm.cancelSkip()
 
-    coVerify(exactly = 0) { taskDataManager.skipCycle(any(), any(), any()) }
+    coVerify(exactly = 0) { taskDataManager.skipCycle(any<ThingId>(), any(), any()) }
     assertThat(analytics.countOf("record_quick_action")).isEqualTo(0)
   }
 
@@ -105,18 +109,18 @@ class TaskDetailViewModelTest {
   fun confirmSkipTask_skipsAgainstTheDashboardsCurrentReading() = runTest {
     coEvery {
       taskDataManager.skipCycle(
-        THING_ID,
+        THING,
         oilChange,
         any(),
       )
     } returns Result.success(true)
     val vm = viewModel()
     vm.onSkipClick(dueOilChange)
-    assertThat(vm.uiState.value.skippingTaskId).isEqualTo("c1")
+    assertThat(vm.uiState.value.skippingTaskId).isEqualTo(TASK_ID)
 
     vm.confirmSkip()
 
-    coVerify(exactly = 1) { taskDataManager.skipCycle(THING_ID, oilChange, 0f) }
+    coVerify(exactly = 1) { taskDataManager.skipCycle(THING, oilChange, 0f) }
     assertThat(vm.uiState.value.skippingTaskId).isNull()
     assertThat(
       analytics.paramsFor("record_quick_action")
@@ -129,17 +133,17 @@ class TaskDetailViewModelTest {
   fun confirmDeleteTask_deletesThroughTheManager() = runTest {
     coEvery {
       taskDataManager.deleteTask(
-        THING_ID,
-        "c1",
+        THING,
+        TASK_ID,
       )
     } returns Result.success(true)
     val vm = viewModel()
     vm.onDeleteClick(dueOilChange)
-    assertThat(vm.uiState.value.deletingTaskId).isEqualTo("c1")
+    assertThat(vm.uiState.value.deletingTaskId).isEqualTo(TASK_ID)
 
     vm.confirmDelete()
 
-    coVerify(exactly = 1) { taskDataManager.deleteTask(THING_ID, "c1") }
+    coVerify(exactly = 1) { taskDataManager.deleteTask(THING, TASK_ID) }
     assertThat(vm.uiState.value.deletingTaskId).isNull()
     assertThat(vm.events.first())
       .isEqualTo(UiText.StringRes(TasksRes.string.task_deleted, listOf("Maintenance task")))
@@ -149,8 +153,8 @@ class TaskDetailViewModelTest {
   fun deleteTaskFailure_closesDialogAndReportsIt() = runTest {
     coEvery {
       taskDataManager.deleteTask(
-        THING_ID,
-        "c1",
+        THING,
+        TASK_ID,
       )
     } returns Result.failure(IllegalStateException("offline"))
     val vm = viewModel()
@@ -174,7 +178,10 @@ class TaskDetailViewModelTest {
     assertThat(vm.commentThread.value).isNotNull()
     verify {
       commentManager.observeComments(
-        CommentTarget.task(ThingId(THING_ID), MaintenanceTaskId("c1"))
+        CommentTarget.task(
+          THING,
+          TASK_ID,
+        )
       )
     }
 

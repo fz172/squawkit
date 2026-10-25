@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
@@ -37,24 +38,24 @@ class TaskDataManagerImpl(
     storeFactory.create(CollectionKind.MaintenanceTask)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeTasks(thingId: String): Flow<List<MaintenanceTask>> =
+  override fun observeTasks(thingId: ThingId): Flow<List<MaintenanceTask>> =
     scopeResolver.resolve(thingId)
       .flatMapLatest { scope ->
         if (scope == null) {
-          logger.d { "No signed-in user; stopping tasks observation for thing $thingId" }
+          logger.d { "No signed-in user; stopping tasks observation for thing ${thingId.value}" }
           flowOf(emptyList())
         } else {
           store.observeAll(scope)
             .map { rows -> rows.map { it.value } }
             .catch { e ->
-              logger.w(e) { "Error observing tasks for thing $thingId" }
+              logger.w(e) { "Error observing tasks for thing ${thingId.value}" }
               emit(emptyList())
             }
         }
       }
 
   override suspend fun addTask(
-    thingId: String,
+    thingId: ThingId,
     card: MaintenanceTask
   ): Result<Boolean> =
     runCatching {
@@ -66,7 +67,7 @@ class TaskDataManagerImpl(
     }.onFailure { logger.w(it) { "Error adding task" } }
 
   override suspend fun updateTask(
-    thingId: String,
+    thingId: ThingId,
     card: MaintenanceTask
   ): Result<Boolean> =
     runCatching {
@@ -76,7 +77,7 @@ class TaskDataManagerImpl(
     }.onFailure { logger.w(it) { "Error updating task ${card.id}" } }
 
   override suspend fun skipCycle(
-    thingId: String,
+    thingId: ThingId,
     card: MaintenanceTask,
     currentReading: Float,
   ): Result<Boolean> {
@@ -96,18 +97,18 @@ class TaskDataManagerImpl(
   }
 
   override suspend fun deleteTask(
-    thingId: String,
-    cardId: String
+    thingId: ThingId,
+    cardId: MaintenanceTaskId
   ): Result<Boolean> =
     runCatching {
       val scope = scopeResolver.resolveNow(thingId)
-      store.delete(cardId, scope)
+      store.delete(cardId.value, scope)
       // The thread goes with its record; see CommentManager.deleteThread.
       commentManager.deleteThread(
-        CommentTarget.task(ThingId(thingId), MaintenanceTaskId(cardId))
+        CommentTarget.task(thingId, cardId)
       )
       true
-    }.onFailure { logger.w(it) { "Error deleting task $cardId" } }
+    }.onFailure { logger.w(it) { "Error deleting task ${cardId.value}" } }
 
   companion object {
     private val logger = Logger.withTag("TaskDataManagerImpl")

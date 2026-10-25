@@ -67,7 +67,7 @@ class DataLogManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observe(thingId: ThingId): Flow<List<DataLog>> =
-    scopeResolver.resolve(thingId.value)
+    scopeResolver.resolve(thingId)
       .flatMapLatest { scope ->
         if (scope == null) {
           flowOf(emptyList())
@@ -98,7 +98,7 @@ class DataLogManagerImpl(
    */
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeOne(thingId: ThingId, id: DataLogId): Flow<DataLog?> =
-    scopeResolver.resolve(thingId.value)
+    scopeResolver.resolve(thingId)
       .flatMapLatest { scope ->
         if (scope == null) {
           flowOf(null)
@@ -219,7 +219,7 @@ class DataLogManagerImpl(
       if (!staleCatalogue && mismatch == record.identity_mismatch) return
       val id = record.id ?: return
       val end = DerivedFields.endPosition(parsed)
-      val scope = scopeResolver.resolveNow(thingId.value)
+      val scope = scopeResolver.resolveNow(thingId)
       val refreshed = if (staleCatalogue) {
         record.copy(
           parser_version = parsed.parserVersion,
@@ -244,7 +244,7 @@ class DataLogManagerImpl(
 
   override suspend fun delete(thingId: ThingId, id: DataLogId): Result<Unit> =
     runCatching {
-      val scope = scopeResolver.resolveNow(thingId.value)
+      val scope = scopeResolver.resolveNow(thingId)
       store.delete(id.value, scope)
       cache.remove(id)
       Unit

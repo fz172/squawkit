@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard.detail
 
+import kotlinx.coroutines.launch
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -8,6 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.koinInject
+
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -21,9 +25,8 @@ import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.detail.TaskDetailSheet
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.ThingId
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 
 /**
  * The open task's detail, which a wide tier hosts as a pane beside the list and a phone as a
@@ -33,10 +36,10 @@ import org.koin.compose.koinInject
 @Composable
 fun taskDetailFor(
   detailViewModel: TaskDetailViewModel,
-  thingId: String,
+  thingId: ThingId,
   isAnonymous: Boolean,
-  onNavigateToEditTask: (cardId: String) -> Unit,
-  onNavigateToCreateLog: (cardId: String) -> Unit,
+  onNavigateToEditTask: (cardId: MaintenanceTaskId) -> Unit,
+  onNavigateToCreateLog: (cardId: MaintenanceTaskId) -> Unit,
   onOpenDataLog: (dataLogId: DataLogId) -> Unit,
 ): (@Composable () -> Unit)? {
   val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
@@ -52,7 +55,7 @@ fun taskDetailFor(
         attachmentManager.observeThingSyncStates(thingId, attachmentOpener)
       }.collectAsStateWithLifecycle(emptyMap())
       val dataLogs by remember(thingId, dataLogManager) {
-        dataLogManager.observeRowInfos(ThingId(thingId))
+        dataLogManager.observeRowInfos(thingId)
       }.collectAsStateWithLifecycle(null)
       TaskDetailSheet(
         cardWithStatus = selectedTask,
@@ -63,7 +66,7 @@ fun taskDetailFor(
         },
         onEditClick = {
           detailViewModel.dismissDetail()
-          onNavigateToEditTask(selectedTask.card.id)
+          onNavigateToEditTask(MaintenanceTaskId(selectedTask.card.id))
         },
         onAttachmentTap = { attachment ->
           taskSheetOpenError = null
@@ -87,7 +90,7 @@ fun taskDetailFor(
         onLogWorkClick = {
           detailViewModel.dismissDetail()
           detailViewModel.onCreateLogClick()
-          onNavigateToCreateLog(selectedTask.card.id)
+          onNavigateToCreateLog(MaintenanceTaskId(selectedTask.card.id))
         },
         onSkipCycleClick = {
           detailViewModel.dismissDetail()
@@ -115,7 +118,7 @@ fun taskDetailFor(
 @Composable
 fun TaskDetailDialogs(
   detailViewModel: TaskDetailViewModel,
-  thingId: String,
+  thingId: ThingId,
 ) {
   val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = LocalSnackbarHostState.current

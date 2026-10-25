@@ -4,6 +4,7 @@ import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -11,8 +12,6 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
-import dev.fanfly.wingslog.core.storage.resolve
-import dev.fanfly.wingslog.core.storage.resolveNow
 import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -23,8 +22,8 @@ import org.junit.Test
 
 private const val MY_UID = "member-scope-001"
 private const val HOST_UID = "host-scope-001"
-private const val OWN_AC = "ac-own"
-private const val SHARED_AC = "ac-shared"
+private val OWN_AC = ThingId("ac-own")
+private val SHARED_AC = ThingId("ac-shared")
 
 class ThingScopeResolverImplTest {
 
@@ -57,13 +56,7 @@ class ThingScopeResolverImplTest {
   @Test
   fun resolveNow_ownThing_usesMyUidScope() = runTest {
     assertThat(resolver.resolveNow(OWN_AC))
-      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
-  }
-
-  @Test
-  fun resolveNow_ownThing_withThingId_usesMyUidScope() = runTest {
-    assertThat(resolver.resolveNow(ThingId(OWN_AC)))
-      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
+      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC.value_))
   }
 
   @Test
@@ -71,7 +64,7 @@ class ThingScopeResolverImplTest {
     seedSharedRef()
 
     assertThat(resolver.resolveNow(SHARED_AC))
-      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC))
+      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC.value_))
   }
 
   @Test
@@ -87,16 +80,7 @@ class ThingScopeResolverImplTest {
       resolver.resolve(OWN_AC)
         .first()
     )
-      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
-  }
-
-  @Test
-  fun resolve_ownThing_withThingId_emitsMyUidScope() = runTest {
-    assertThat(
-      resolver.resolve(ThingId(OWN_AC))
-        .first()
-    )
-      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
+      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC.value_))
   }
 
   @Test
@@ -107,7 +91,7 @@ class ThingScopeResolverImplTest {
       resolver.resolve(SHARED_AC)
         .first()
     )
-      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC))
+      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC.value_))
   }
 
   @Test
@@ -123,13 +107,13 @@ class ThingScopeResolverImplTest {
   private fun seedSharedRef() {
     every {
       refStore.observe(
-        SHARED_AC,
+        SHARED_AC.value_,
         EntityScope.userRoot(MY_UID)
       )
     } returns flowOf(
       StorageEntity(
-        id = SHARED_AC,
-        value = SharedAircraftRef(aircraft_id = SHARED_AC, host_uid = HOST_UID),
+        id = SHARED_AC.value_,
+        value = SharedAircraftRef(aircraft_id = SHARED_AC.value_, host_uid = HOST_UID),
         updatedAt = Instant.DISTANT_PAST,
       ),
     )

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.dashboard.host
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
+
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.id.ThingId
@@ -16,7 +17,7 @@ import dev.fanfly.wingslog.id.ThingId
 internal fun rememberSectionActionHandler(
   viewModel: ThingOverviewViewModel,
   navController: NavController,
-  thingId: String,
+  thingId: ThingId,
 ): (ThingOverviewAction) -> Unit =
   remember(viewModel, navController, thingId) {
     { action ->
@@ -24,7 +25,7 @@ internal fun rememberSectionActionHandler(
         is ThingOverviewAction.AddLogClick ->
           navController.navigate(
             Screen.AddMaintenanceLog.createRoute(
-              thingId
+              action.thingId
             )
           )
 
@@ -47,32 +48,32 @@ internal fun rememberSectionActionHandler(
         is ThingOverviewAction.EditLogClick ->
           navController.navigate(
             Screen.EditMaintenanceLog.createRoute(
-              thingId,
+              action.thingId,
               action.logId
             )
           )
 
         is ThingOverviewAction.AddTaskClick ->
-          navController.navigate(Screen.AddTasks.createRoute(thingId))
+          navController.navigate(Screen.AddTasks.createRoute(action.thingId))
 
         is ThingOverviewAction.BrowseSuggestionsClick ->
-          navController.navigate(Screen.Suggestions.createRoute(thingId))
+          navController.navigate(Screen.Suggestions.createRoute(action.thingId))
 
         is ThingOverviewAction.EditTaskClick ->
           navController.navigate(
             Screen.EditMaintenanceTask.createRoute(
-              thingId,
+              action.thingId,
               action.cardId
             )
           )
 
         is ThingOverviewAction.AddSquawkClick ->
-          navController.navigate(Screen.AddSquawk.createRoute(thingId))
+          navController.navigate(Screen.AddSquawk.createRoute(action.thingId))
 
         is ThingOverviewAction.EditSquawkClick ->
           navController.navigate(
             Screen.EditSquawk.createRoute(
-              thingId,
+              action.thingId,
               action.squawkId
             )
           )
@@ -80,16 +81,16 @@ internal fun rememberSectionActionHandler(
         is ThingOverviewAction.OpenDataLogClick ->
           navController.navigate(
             Screen.DataLogViewer.createRoute(
-              ThingId(action.thingId),
+              action.thingId,
               action.dataLogId
             )
           )
 
         is ThingOverviewAction.EditClick ->
-          navController.navigate(Screen.EditThing.createRoute(thingId))
+          navController.navigate(Screen.EditThing.createRoute(action.thingId))
 
         is ThingOverviewAction.ManageAccessClick ->
-          navController.navigate(Screen.ManageAccess.createRoute(thingId))
+          navController.navigate(Screen.ManageAccess.createRoute(action.thingId))
 
         ThingOverviewAction.BackClick -> Unit
 

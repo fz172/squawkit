@@ -1,19 +1,9 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
+import kotlin.time.Clock
+import kotlin.time.Instant
+
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
-import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
-import dev.fanfly.wingslog.feature.search.model.Facet
-import dev.fanfly.wingslog.feature.search.model.RecordFilter
-import dev.fanfly.wingslog.feature.search.model.SearchTuning
-import dev.fanfly.wingslog.feature.search.model.TimeWindow
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
-import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.task.ComplianceType
-import dev.fanfly.wingslog.task.MaintenanceTask
-import dev.fanfly.wingslog.thing.ComponentType
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -27,10 +17,25 @@ import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Clock
-import kotlin.time.Instant
 
-private const val THING_ID = "thing-1"
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
+import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
+import dev.fanfly.wingslog.feature.search.model.Facet
+import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
+import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.TemplateId
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.task.ComplianceType
+import dev.fanfly.wingslog.task.MaintenanceTask
+import dev.fanfly.wingslog.thing.ComponentType
+
+private val THING = ThingId("thing-1")
+private val TEMPLATE = TemplateId("airplane")
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskTabViewModelTest {
@@ -81,7 +86,7 @@ class TaskTabViewModelTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
-    every { statusManager.observeTasksWithStatus(THING_ID) } returns flowOf(
+    every { statusManager.observeTasksWithStatus(THING) } returns flowOf(
       listOf(dueSoon, dueLater, meterOnly, complied)
     )
   }
@@ -94,8 +99,8 @@ class TaskTabViewModelTest {
     SearchEngineImpl(),
     SearchTuning(0, Dispatchers.Unconfined),
     RecordingAnalyticsManager(),
-    THING_ID,
-    "airplane",
+    THING,
+    TEMPLATE,
     fixedClock,
     TimeZone.UTC,
   )

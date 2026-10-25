@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
@@ -19,6 +20,7 @@ import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.tasks.dashboard.TaskOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.ThingId
 
 @Composable
 internal fun LargeOverviewTab(
@@ -57,16 +59,16 @@ internal fun LargeOverviewTab(
       // reading, so setting one directly is no new power (#1368).
       onSetReading = onSetReading,
       onEditClick = manageAction(state, onMutationAction) {
-        ThingOverviewAction.EditClick(state.thing.id)
+        ThingOverviewAction.EditClick(ThingId(state.thing.id))
       },
       onManageAccessClick = memberAction(state, onMutationAction) {
-        ThingOverviewAction.ManageAccessClick(state.thing.id)
+        ThingOverviewAction.ManageAccessClick(ThingId(state.thing.id))
       },
     )
 
     if (logOverview.logStats?.total == 0L && onMutationAction != null) {
       LogOnboardingCard(
-        onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(state.thing.id)) },
+        onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(ThingId(state.thing.id))) },
       )
     }
 

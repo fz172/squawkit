@@ -1,6 +1,19 @@
 package dev.fanfly.wingslog.feature.datalog.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
+import dev.gitlive.firebase.auth.FirebaseUser
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
+import org.junit.Before
+import org.junit.Test
+
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.file.GzipCodec
@@ -30,18 +43,6 @@ import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
-import dev.gitlive.firebase.auth.FirebaseUser
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.verify
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -93,7 +94,7 @@ class DataLogImporterImplTest {
     every { user.uid } returns "member-uid"
     every { auth.getCurrentUser() } returns user
     val resolver = mockk<ThingScopeResolver>()
-    coEvery { resolver.resolveNow("thing-1") } returns scope
+    coEvery { resolver.resolveNow(ThingId("thing-1")) } returns scope
     val clock = mockk<Clock>()
     every { clock.now() } returns Instant.parse("2026-09-03T00:00:00Z")
     importer = DataLogImporterImpl(

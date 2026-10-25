@@ -1,6 +1,18 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
+
 import com.google.common.truth.Truth.assertThat
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.Before
+import org.junit.Test
+
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
@@ -8,18 +20,9 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
 
 class AttachmentFormControllerTest {
 
@@ -755,7 +758,7 @@ class AttachmentFormControllerTest {
     /** The saved record this form edits; every release must name it. */
     val OWNER = EntityRef(CollectionKind.MaintenanceLog, "log-1")
 
-    const val THING_ID = "thing-1"
+    val THING_ID = ThingId("thing-1")
     const val SHA = "abc123"
   }
 }
