@@ -8,17 +8,12 @@ import dev.fanfly.wingslog.core.analytics.QuickActionSource
 import dev.fanfly.wingslog.core.analytics.QuickActionSurface
 import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.log
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.text.UiText
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
-import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
 import dev.fanfly.wingslog.feature.comments.datamanager.RecordCommentHost
@@ -29,8 +24,6 @@ import dev.fanfly.wingslog.feature.dashboard.api.LogStats
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewEvent
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
-import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
-import dev.fanfly.wingslog.feature.datalog.model.dataLogId
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -42,13 +35,10 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.id.DataLogId
-import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,8 +46,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -79,13 +67,9 @@ class ThingOverviewViewModel(
   private val logManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
   private val taskStatusManager: TaskStatusManager,
-  private val attachmentOpener: AttachmentOpener,
-  private val attachmentManager: AttachmentManager,
-  private val dataLogManager: DataLogManager,
   private val squawkManager: SquawkManager,
   private val commentManager: CommentManager,
   private val sharingManager: SharingManager,
-  private val thingScopeResolver: ThingScopeResolver,
   private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
   private val auth: FirebaseAuth,
@@ -139,41 +123,6 @@ class ThingOverviewViewModel(
     loadThingAndStats()
   }
 
-  // Blob sync state must be observed at the scope that actually holds this thing's data: the
-  // caller's own tree for an owned plane, or the host's tree for a shared one. Deriving the path
-  // from the uid alone (the old `/users/$uid/thing/...`) missed a member's shared thing
-  // entirely, so sync state never resolved. Drive it off [ThingScopeResolver] instead, which
-  // re-emits when the thing flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private fun blobStatesFlow(): Flow<Map<String, BlobSyncState>> =
-    thingScopeResolver.resolve(thingId)
-      .flatMapLatest { scope ->
-        if (scope == null) flowOf(emptyMap())
-        else attachmentManager.observeBlobStates(scope.toPath())
-      }
-
-  /** Every data log with its raw file's blob state, keyed by id, for DATA_LOG attachment rows. */
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private fun dataLogsFlow(): Flow<Map<DataLogId, DataLogRowInfo>> {
-    val typedThingId = ThingId(thingId)
-    return dataLogManager.observe(typedThingId)
-      .flatMapLatest { logs ->
-        if (logs.isEmpty()) return@flatMapLatest flowOf(emptyMap())
-        combine(
-          logs.map { log ->
-            dataLogManager.observeBlobState(typedThingId, log.dataLogId)
-              .map { state ->
-                log.dataLogId to DataLogRowInfo(
-                  log.source?.product.orEmpty(),
-                  log.duration_seconds,
-                  state
-                )
-              }
-          }
-        ) { entries -> entries.toMap() }
-      }
-  }
-
   private fun loadThingAndStats() {
     viewModelScope.launch {
       _uiState.update { ThingOverviewUiState.Loading }
@@ -198,32 +147,17 @@ class ThingOverviewViewModel(
         combine(
           squawkManager.observeSquawks(thingId)
             .distinctUntilChanged(),
-          combine(
-            blobStatesFlow(),
-            attachmentOpener.downloadingIds
-          ) { blobStates, downloadingIds ->
-            buildMap {
-              putAll(blobStates)
-              downloadingIds.forEach {
-                put(
-                  it,
-                  BlobSyncState.Downloading
-                )
-              }
-            }
-          }.distinctUntilChanged(),
           // The caller's role on this thing, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
           sharingManager.observeMyRole(thingId)
             .distinctUntilChanged(),
           sharingManager.observeIsShared(thingId)
             .distinctUntilChanged(),
-          dataLogsFlow().distinctUntilChanged(),
-        ) { squawks, syncs, myRole, shared, dataLogs ->
-          ShareContext(squawks, syncs, myRole, shared, dataLogs)
+        ) { squawks, myRole, shared ->
+          ShareContext(squawks, myRole, shared)
         }
       ) { thing, logs, cardsWithStatus, currentReadings, shareContext ->
-        val (squawkList, syncStates, myRole, isShared, dataLogs) = shareContext
+        val (squawkList, myRole, isShared) = shareContext
         cachedLogs = logs
         val degraded = thing?.let {
           templateRegistry.resolve(it) as? TemplateResolution.Degraded
@@ -284,8 +218,6 @@ class ThingOverviewViewModel(
             deletingTaskId = current?.deletingTaskId,
             resolvingTaskId = current?.resolvingTaskId,
             skippingTaskId = current?.skippingTaskId,
-            syncStates = syncStates,
-            dataLogs = dataLogs,
             squawks = squawksWithStatus,
             aogSquawks = aogSquawks,
             resolvingSquawkId = current?.resolvingSquawkId,

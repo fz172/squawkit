@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogEncoding
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogCache
@@ -29,6 +30,7 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
+import dev.fanfly.wingslog.feature.datalog.model.dataLogId
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
@@ -260,6 +263,26 @@ class DataLogManagerImpl(
       blobs.observe(blobId)
         .map { it?.toBlobSyncState() })
   }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun observeRowInfos(thingId: ThingId): Flow<Map<DataLogId, DataLogRowInfo>> =
+    observe(thingId)
+      .flatMapLatest { logs ->
+        if (logs.isEmpty()) return@flatMapLatest flowOf(emptyMap())
+        combine(
+          logs.map { log ->
+            observeBlobState(thingId, log.dataLogId)
+              .map { state ->
+                log.dataLogId to DataLogRowInfo(
+                  log.source?.product.orEmpty(),
+                  log.duration_seconds,
+                  state,
+                )
+              }
+          }
+        ) { entries -> entries.toMap() }
+      }
+      .distinctUntilChanged()
 
   private suspend fun rawBlobId(thingId: ThingId, id: DataLogId): BlobId? =
     observeOne(thingId, id).first()?.raw_file?.id?.takeIf { it.isNotBlank() }

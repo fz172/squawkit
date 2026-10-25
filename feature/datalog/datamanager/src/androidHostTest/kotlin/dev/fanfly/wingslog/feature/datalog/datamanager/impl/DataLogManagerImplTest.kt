@@ -18,7 +18,9 @@ import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogEncoding
 import dev.fanfly.wingslog.datalog.DataLogFormat
+import dev.fanfly.wingslog.datalog.DataLogSource
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogCache
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogImporter
@@ -35,6 +37,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -43,8 +47,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Instant
 
 class DataLogManagerImplTest {
 
@@ -400,5 +402,43 @@ class DataLogManagerImplTest {
   fun deleteTombstonesTheRecordInTheResolvedScope() = runTest {
     assertThat(manager.delete(thingId, DataLogId("a")).isSuccess).isTrue()
     coVerify { store.delete("a", scope) }
+  }
+
+  @Test
+  fun observeRowInfosCarriesEachRecordsProductDurationAndBlobState() = runTest {
+    val first = record("dl-1", "2026-09-03T00:00:00Z").copy(
+      duration_seconds = 255,
+      source = DataLogSource(product = "GDU 460"),
+      raw_file = Attachment(id = "blob-1", type = AttachmentType.ATTACHMENT_TYPE_FILE),
+    )
+    val second = record("dl-2", "2026-09-01T00:00:00Z").copy(
+      duration_seconds = 60,
+      source = null,
+      raw_file = Attachment(id = "blob-2", type = AttachmentType.ATTACHMENT_TYPE_FILE),
+    )
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        StorageEntity("dl-1", first, Instant.DISTANT_PAST),
+        StorageEntity("dl-2", second, Instant.DISTANT_PAST),
+      )
+    )
+    every { blobs.observe(BlobId("blob-1")) } returns flowOf(ref(RemoteState.Synced))
+    every { blobs.observe(BlobId("blob-2")) } returns flowOf(
+      ref(RemoteState.RemoteOnly).copy(id = BlobId("blob-2"))
+    )
+
+    val rowInfos = manager.observeRowInfos(thingId).first()
+
+    assertThat(rowInfos).containsExactly(
+      DataLogId("dl-1"), DataLogRowInfo("GDU 460", 255, BlobSyncState.Synced),
+      DataLogId("dl-2"), DataLogRowInfo("", 60, BlobSyncState.RemoteOnly),
+    )
+  }
+
+  @Test
+  fun observeRowInfosIsEmptyOnceTheThingHasNone() = runTest {
+    every { store.observeAll(scope) } returns flowOf(emptyList())
+
+    assertThat(manager.observeRowInfos(thingId).first()).isEmpty()
   }
 }

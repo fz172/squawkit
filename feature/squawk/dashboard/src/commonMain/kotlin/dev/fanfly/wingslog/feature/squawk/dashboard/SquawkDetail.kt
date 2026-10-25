@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.comments.dashboard.RecordCommentComposer
@@ -13,9 +15,11 @@ import dev.fanfly.wingslog.feature.comments.dashboard.RecordCommentThread
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -29,11 +33,26 @@ internal fun squawkDetailFor(
   onOpenDataLog: ((DataLogId) -> Unit)?,
   commentThread: CommentThreadController?,
 ): (@Composable () -> Unit)? {
+  val attachmentManager: AttachmentManager = koinInject()
   val attachmentOpener: AttachmentOpener = koinInject()
+  val dataLogManager: DataLogManager = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
   return state.selectedSquawk?.let { selected ->
     {
+      val syncStates by remember(
+        state.thing.id,
+        attachmentManager,
+        attachmentOpener
+      ) {
+        attachmentManager.observeThingSyncStates(
+          state.thing.id,
+          attachmentOpener
+        )
+      }.collectAsStateWithLifecycle(emptyMap())
+      val dataLogs by remember(state.thing.id, dataLogManager) {
+        dataLogManager.observeRowInfos(ThingId(state.thing.id))
+      }.collectAsStateWithLifecycle(null)
       SquawkDetailSheet(
         item = selected,
         addressingLog = state.logForSelectedSquawk,
@@ -58,8 +77,8 @@ internal fun squawkDetailFor(
             }
           }
         },
-        syncStates = state.syncStates,
-        dataLogs = state.dataLogs,
+        syncStates = syncStates,
+        dataLogs = dataLogs,
         openError = openError,
         onFixedClick = onMutationAction?.let { mutate ->
           {

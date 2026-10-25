@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
 import dev.fanfly.wingslog.core.storage.EntityRef
-import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.Flow
  *
  * Replaces the R1 async-upload surface: in R2 the manager is a thin wrapper around
  * [LocalBlobStore] (and, in PR 5, an upload scheduler) — it does not block the form save flow
- * on a network upload. Adding a file is an ms-scale local write; uploads happen out-of-band and
+ * on a network upload. Adding a file is a ms-scale local write; uploads happen out-of-band and
  * surface through [observeStatus].
  */
 /**
@@ -85,9 +85,19 @@ interface AttachmentManager {
 
   /**
    * Observe [BlobSyncState] for all blobs in the given scope path. Returns a map from
-   * attachment id to [BlobSyncState]. Used by the thing overview to drive status badges.
+   * attachment id to [BlobSyncState].
    */
   fun observeBlobStates(scopePath: String): Flow<Map<String, BlobSyncState>>
+
+  /**
+   * Observe [BlobSyncState] for all blobs belonging to [thingId], resolving the thing's scope
+   * (own tree vs. shared host tree) via `ThingScopeResolver` and overlaying in-flight foreground
+   * downloads from [opener].
+   */
+  fun observeThingSyncStates(
+    thingId: String,
+    opener: AttachmentOpener,
+  ): Flow<Map<String, BlobSyncState>> // allow-primitive-tuple: attachment proto id is String
 
   /** Reset upload_attempts for [id] so the scheduler picks it up again on its next pass. */
   suspend fun retryUpload(id: String)
