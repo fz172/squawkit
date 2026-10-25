@@ -14,12 +14,14 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.dashboard.LogOnboardingCard
+import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.tasks.model.needsAttention
 
 @Composable
 internal fun LargeOverviewTab(
   state: ThingOverviewUiState.Success,
+  squawkOverview: SquawkOverviewUiState,
   onAction: (ThingOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit,
   onViewLogsTab: () -> Unit,
@@ -39,7 +41,7 @@ internal fun LargeOverviewTab(
     OverviewHero(state)
 
     NeedsAttentionSection(
-      downSquawks = state.aogSquawks,
+      downSquawks = squawkOverview.aogSquawks,
       tasks = overdueTasks,
       onSquawkClick = { onViewSquawksTab() },
       onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
@@ -71,6 +73,7 @@ internal fun LargeOverviewTab(
 
     DashboardLowerGrid(
       state = state,
+      openSquawksPreview = squawkOverview.openPreview,
       onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
       onLogsClick = onViewLogsTab,
       onViewSquawksClick = onViewSquawksTab,
