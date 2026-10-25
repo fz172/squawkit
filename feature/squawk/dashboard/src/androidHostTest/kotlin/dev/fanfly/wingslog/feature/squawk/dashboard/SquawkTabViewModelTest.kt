@@ -1,23 +1,8 @@
 package dev.fanfly.wingslog.feature.squawk.dashboard
 
-import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
-import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
-import dev.fanfly.wingslog.feature.search.model.Facet
-import dev.fanfly.wingslog.feature.search.model.RecordFilter
-import dev.fanfly.wingslog.feature.search.model.SearchTuning
-import dev.fanfly.wingslog.feature.search.model.TimeWindow
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkPriority
-import io.mockk.every
-import io.mockk.mockk
 import kotlin.time.Clock
 import kotlin.time.Instant
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -29,11 +14,30 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone
+
+import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
+import dev.fanfly.wingslog.feature.search.model.Facet
+import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
+import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkPriority
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
 private const val THING_ID = "thing-1"
+private val THING = ThingId(THING_ID)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SquawkTabViewModelTest {
@@ -77,7 +81,7 @@ class SquawkTabViewModelTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
-    every { squawkManager.observeSquawks(THING_ID) } returns flowOf(
+    every { squawkManager.observeSquawks(THING) } returns flowOf(
       listOf(
         openXpdr,
         openOil,
@@ -96,7 +100,7 @@ class SquawkTabViewModelTest {
     SearchEngineImpl(),
     SearchTuning(0, Dispatchers.Unconfined),
     analytics,
-    THING_ID,
+    THING,
     "airplane",
     fixedClock,
     TimeZone.UTC,
@@ -150,7 +154,7 @@ class SquawkTabViewModelTest {
       SearchEngineImpl(),
       SearchTuning(150, StandardTestDispatcher(testScheduler)),
       analytics,
-      THING_ID,
+      THING,
       "airplane",
       fixedClock,
       TimeZone.UTC,

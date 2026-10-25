@@ -10,12 +10,15 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val logsViewingModule = module {
   viewModel { params ->
+    val raw = params.get<Any>(0)
+    val thingId = raw as? ThingId ?: ThingId(raw as String)
     MaintenanceLogListViewModel(
       get<MaintenanceLogManager>(),
       get<TaskDataManager>(),
@@ -27,7 +30,7 @@ val logsViewingModule = module {
       get<SearchTuning>(),
       get<AnalyticsManager>(),
       get<TemplateRegistry>(),
-      params.get<String>(0),
+      thingId,
       params.get<String>(1),
     )
   }

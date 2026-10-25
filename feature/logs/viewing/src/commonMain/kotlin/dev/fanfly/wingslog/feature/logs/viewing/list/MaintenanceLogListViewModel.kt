@@ -1,5 +1,20 @@
 package dev.fanfly.wingslog.feature.logs.viewing.list
 
+import kotlin.time.Clock
+
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
@@ -10,6 +25,7 @@ import dev.fanfly.wingslog.core.analytics.RecordFilterApplied
 import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.RecordSearch
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.logNoun
@@ -31,26 +47,14 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.feature.logs.sharedassets.generated.resources.log_deleted
-import kotlin.time.Clock
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
@@ -65,7 +69,7 @@ class MaintenanceLogListViewModel(
   private val tuning: SearchTuning,
   private val analytics: AnalyticsManager,
   private val templateRegistry: TemplateRegistry,
-  val thingId: String,
+  val thingId: ThingId,
   private val templateId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -189,7 +193,7 @@ class MaintenanceLogListViewModel(
 
   private fun observeLogs() {
     viewModelScope.launch {
-      logManager.observeLogs(thingId)
+      logManager.observeLogs(thingId.value)
         .onStart { _logsLoadState.value = LogsLoadState.Loading }
         .catch { _logsLoadState.value = LogsLoadState.Error }
         .collect { logs -> _logsLoadState.value = LogsLoadState.Loaded(logs) }
@@ -203,18 +207,18 @@ class MaintenanceLogListViewModel(
    */
   private fun observeAuthorship() {
     viewModelScope.launch {
-      sharingManager.observeIsShared(thingId)
+      sharingManager.observeIsShared(thingId.value)
         .catch { _isShared.value = false }
         .collect { _isShared.value = it }
     }
     viewModelScope.launch {
-      logManager.observeLogAuthors(thingId)
+      logManager.observeLogAuthors(thingId.value)
         .catch { _logAuthors.value = emptyMap() }
         .collect { _logAuthors.value = it }
     }
     viewModelScope.launch {
       combine(
-        sharingManager.observeLinkedTechnicians(thingId),
+        sharingManager.observeLinkedTechnicians(thingId.value),
         technicianManager.observeSelf(),
       ) { linked, self ->
         buildMap {
@@ -231,7 +235,7 @@ class MaintenanceLogListViewModel(
 
   private fun observeTasks() {
     viewModelScope.launch {
-      inspectionDataManager.observeTasks(thingId)
+      inspectionDataManager.observeTasks(thingId.value)
         .catch { _availableCards.value = emptyList() }
         .collect { _availableCards.value = it }
     }
@@ -302,13 +306,18 @@ class MaintenanceLogListViewModel(
 
   fun onAddLog() {
     viewModelScope.launch {
-      _events.send(MaintenanceLogListEvent.NavigateToCreateLog(thingId))
+      _events.send(MaintenanceLogListEvent.NavigateToCreateLog(thingId.value))
     }
   }
 
   fun onEditLog(logId: String) {
     viewModelScope.launch {
-      _events.send(MaintenanceLogListEvent.NavigateToEditLog(thingId, logId))
+      _events.send(
+        MaintenanceLogListEvent.NavigateToEditLog(
+          thingId.value,
+          logId
+        )
+      )
     }
   }
 
@@ -328,7 +337,7 @@ class MaintenanceLogListViewModel(
   fun confirmDeleteLog() {
     val log = _deletingLog.value ?: return
     viewModelScope.launch {
-      logManager.deleteLog(thingId, log.id)
+      logManager.deleteLog(thingId.value, log.id)
         .onSuccess {
           analytics.log(
             RecordQuickAction(

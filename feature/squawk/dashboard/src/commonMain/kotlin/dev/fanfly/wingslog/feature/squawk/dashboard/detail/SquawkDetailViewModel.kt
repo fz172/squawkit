@@ -1,5 +1,17 @@
 package dev.fanfly.wingslog.feature.squawk.dashboard.detail
 
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
@@ -8,6 +20,7 @@ import dev.fanfly.wingslog.core.analytics.QuickActionSource
 import dev.fanfly.wingslog.core.analytics.QuickActionSurface
 import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.squawkNoun
@@ -21,19 +34,10 @@ import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.SquawkDismissReason
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
@@ -54,7 +58,7 @@ class SquawkDetailViewModel(
   commentManager: CommentManager,
   private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
-  private val thingId: String,
+  val thingId: ThingId,
   private val templateId: String,
 ) : ViewModel() {
 
@@ -73,7 +77,7 @@ class SquawkDetailViewModel(
 
   init {
     viewModelScope.launch {
-      logManager.observeLogs(thingId)
+      logManager.observeLogs(thingId.value)
         .distinctUntilChanged()
         .catch { emit(emptyList()) }
         .collect { logs ->
@@ -92,7 +96,7 @@ class SquawkDetailViewModel(
       _uiState
         .map { state ->
           state.selectedSquawk?.let {
-            CommentTarget(thingId, it.squawk.id, CommentParentKind.SQUAWK)
+            CommentTarget(thingId.value, it.squawk.id, CommentParentKind.SQUAWK)
           }
         }
         .distinctUntilChanged()
@@ -111,7 +115,8 @@ class SquawkDetailViewModel(
   }
 
   fun showDetail(squawk: SquawkWithStatus) {
-    val log = cachedLogs.firstOrNull { it.id == squawk.squawk.addressed_by_log_id }
+    val log =
+      cachedLogs.firstOrNull { it.id == squawk.squawk.addressed_by_log_id }
     _uiState.update {
       it.copy(
         selectedSquawk = squawk,
@@ -130,7 +135,7 @@ class SquawkDetailViewModel(
   }
 
   fun onResolveClick(squawk: SquawkWithStatus) {
-    _uiState.update { it.copy(resolvingSquawkId = squawk.squawk.id) }
+    _uiState.update { it.copy(resolvingSquawkId = squawk.id) }
   }
 
   fun dismissResolveMenu() {
@@ -142,7 +147,11 @@ class SquawkDetailViewModel(
     _uiState.update { it.copy(resolvingSquawkId = null) }
   }
 
-  fun onDismissClick(squawkId: String) {
+  fun onDismissClick(squawk: SquawkWithStatus) {
+    onDismissClick(squawk.id)
+  }
+
+  fun onDismissClick(squawkId: SquawkId) {
     _uiState.update {
       it.copy(
         resolvingSquawkId = null,
@@ -150,6 +159,8 @@ class SquawkDetailViewModel(
       )
     }
   }
+
+  fun onDismissClick(squawkId: String) = onDismissClick(SquawkId(squawkId))
 
   fun cancelDismiss() {
     _uiState.update { it.copy(dismissingSquawkId = null) }
@@ -171,7 +182,7 @@ class SquawkDetailViewModel(
     }
   }
 
-  fun reopenSquawk(squawkId: String) {
+  fun reopenSquawk(squawkId: SquawkId) {
     viewModelScope.launch {
       squawkManager.reopenSquawk(thingId, squawkId)
         .onFailure {
@@ -180,14 +191,22 @@ class SquawkDetailViewModel(
     }
   }
 
+  fun reopenSquawk(squawkId: String) = reopenSquawk(SquawkId(squawkId))
+
   fun onDeleteClick(squawk: SquawkWithStatus) {
+    onDeleteClick(squawk.id)
+  }
+
+  fun onDeleteClick(squawkId: SquawkId) {
     _uiState.update {
       it.copy(
         resolvingSquawkId = null,
-        deletingSquawkId = squawk.squawk.id,
+        deletingSquawkId = squawkId,
       )
     }
   }
+
+  fun onDeleteClick(squawkId: String) = onDeleteClick(SquawkId(squawkId))
 
   fun cancelDelete() {
     _uiState.update { it.copy(deletingSquawkId = null) }

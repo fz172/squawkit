@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.developeroptions.stresstest
 
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
+
 import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
@@ -17,6 +21,9 @@ import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.FakeData
 import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.FakeDataPools
 import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.LogTemplate
 import dev.fanfly.wingslog.feature.developeroptions.stresstest.fixtures.SampleNames
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.CertExpireLimit
@@ -33,9 +40,6 @@ import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Instant
 
 data class StressTestData(
   val thing: Thing,
@@ -43,9 +47,11 @@ data class StressTestData(
   val tasks: List<MaintenanceTask>,
   val squawks: List<Squawk>,
   val logs: List<MaintenanceLog>,
-  val addressedSquawks: Map<String, String>,
-  val dismissedSquawks: Map<String, SquawkDismissReason>,
-)
+  val addressedSquawks: Map<SquawkId, MaintenanceLogId>,
+  val dismissedSquawks: Map<SquawkId, SquawkDismissReason>,
+) {
+  val thingId: ThingId get() = ThingId(thing.id)
+}
 
 object FakeDataGenerator {
 
@@ -100,8 +106,14 @@ object FakeDataGenerator {
       tasks = tasks,
       squawks = squawks,
       logs = logs,
-      addressedSquawks = addressedSquawks,
-      dismissedSquawks = dismissedSquawks,
+      addressedSquawks = addressedSquawks.map { (sqId, logId) ->
+        SquawkId(sqId) to MaintenanceLogId(logId)
+      }
+        .toMap(),
+      dismissedSquawks = dismissedSquawks.map { (sqId, reason) ->
+        SquawkId(sqId) to reason
+      }
+        .toMap(),
     )
   }
 
@@ -547,8 +559,9 @@ object FakeDataGenerator {
       val matchingLog = logs.firstOrNull { log ->
         log.component_type == sq.component_type && log.squawk_ids.isEmpty()
       } ?: logs.random()
-      if (!addressedSquawks.containsKey(sq.id)) {
-        addressedSquawks[sq.id] = matchingLog.id
+      val sqId = sq.id
+      if (!addressedSquawks.containsKey(sqId)) {
+        addressedSquawks[sqId] = matchingLog.id
       }
     }
 

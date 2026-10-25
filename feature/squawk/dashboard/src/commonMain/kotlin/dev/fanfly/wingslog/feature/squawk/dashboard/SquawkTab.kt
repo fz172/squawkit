@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
@@ -53,6 +54,7 @@ import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.statusTier
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.first
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -64,7 +66,7 @@ private val squawkOrder = compareByDescending<SquawkWithStatus> {
 
 @Composable
 fun SquawkTab(
-  thingId: String,
+  thingId: ThingId,
   isAnonymous: Boolean = false,
   canMutate: Boolean = true,
   onNavigateToEditSquawk: (squawkId: String) -> Unit = {},
@@ -82,14 +84,14 @@ fun SquawkTab(
   val templateId = LocalThingTemplate.current?.id.orEmpty()
   val tabViewModel: SquawkTabViewModel =
     koinViewModel(
-      key = "squawks:$thingId",
+      key = "squawks:${thingId.value}",
       parameters = {
         parametersOf(thingId, templateId)
       },
     )
   val detailViewModel: SquawkDetailViewModel =
     koinViewModel(
-      key = "squawk-detail:$thingId",
+      key = "squawk-detail:${thingId.value}",
       parameters = {
         parametersOf(thingId, templateId)
       },
@@ -332,3 +334,28 @@ fun SquawkTab(
     onCancelDelete = detailViewModel::cancelDelete,
   )
 }
+
+@Composable
+fun SquawkTab(
+  thingId: String,
+  isAnonymous: Boolean = false,
+  canMutate: Boolean = true,
+  onNavigateToEditSquawk: (squawkId: String) -> Unit = {},
+  onNavigateToCreateLog: (squawkId: String) -> Unit = {},
+  onLogClick: ((logId: String) -> Unit)? = null,
+  onOpenDataLog: ((DataLogId) -> Unit)? = null,
+  scrollToSquawkId: String? = null,
+  showHeader: Boolean = true,
+  modifier: Modifier = Modifier,
+) = SquawkTab(
+  thingId = ThingId(thingId),
+  isAnonymous = isAnonymous,
+  canMutate = canMutate,
+  onNavigateToEditSquawk = onNavigateToEditSquawk,
+  onNavigateToCreateLog = onNavigateToCreateLog,
+  onLogClick = onLogClick,
+  onOpenDataLog = onOpenDataLog,
+  scrollToSquawkId = scrollToSquawkId,
+  showHeader = showHeader,
+  modifier = modifier,
+)

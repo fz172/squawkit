@@ -1,5 +1,12 @@
 package dev.fanfly.wingslog.feature.logs.viewing.list
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
@@ -11,22 +18,18 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
 private const val AC_ID = "ac-1"
+private val AC_THING = ThingId(AC_ID)
 private const val OWNER_UID = "uid-owner"
 private const val LOG_ID = "log-1"
 
@@ -61,7 +64,7 @@ class LogAuthorshipGatingTest {
     every { tasks.observeTasks(AC_ID) } returns flowOf(emptyList())
     every { sharing.observeLinkedTechnicians(AC_ID) } returns flowOf(emptyList())
     every { technicians.observeSelf() } returns flowOf(null)
-    every { squawks.observeSquawks(AC_ID) } returns flowOf(emptyList())
+    every { squawks.observeSquawks(AC_THING) } returns flowOf(emptyList())
     every { auth.currentUser } returns null
   }
 
@@ -79,7 +82,7 @@ class LogAuthorshipGatingTest {
     tuning = SearchTuning(queryDebounceMillis = 0, dispatcher = dispatcher),
     analytics = RecordingAnalyticsManager(),
     templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
-    thingId = AC_ID,
+    thingId = AC_THING,
     templateId = "airplane",
   )
 

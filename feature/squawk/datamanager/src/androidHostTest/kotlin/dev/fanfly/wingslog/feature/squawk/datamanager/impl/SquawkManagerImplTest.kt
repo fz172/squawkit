@@ -10,6 +10,9 @@ import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -28,6 +31,8 @@ import kotlin.time.Instant
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-456"
 private const val TEST_SQUAWK_ID = "squawk-789"
+private val TEST_THING = ThingId(TEST_THING_ID)
+private val TEST_SQUAWK = SquawkId(TEST_SQUAWK_ID)
 
 class SquawkManagerImplTest {
 
@@ -35,7 +40,7 @@ class SquawkManagerImplTest {
   private lateinit var storeFactory: EntityStoreFactory
   private lateinit var commentManager: CommentManager
   private lateinit var store: EntityStore<Squawk>
-  private lateinit var manager: SquawkManagerImpl
+  private lateinit var manager: SquawkManager
 
   private val testScope =
     EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
@@ -81,8 +86,8 @@ class SquawkManagerImplTest {
     )
 
     val result = manager.dismissSquawk(
-      TEST_THING_ID,
-      TEST_SQUAWK_ID,
+      TEST_THING,
+      TEST_SQUAWK,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
     )
 
@@ -110,8 +115,8 @@ class SquawkManagerImplTest {
     )
 
     val result = manager.dismissSquawk(
-      TEST_THING_ID,
-      TEST_SQUAWK_ID,
+      TEST_THING,
+      TEST_SQUAWK,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_NOT_REPRODUCIBLE,
     )
 
@@ -133,8 +138,8 @@ class SquawkManagerImplTest {
     every { store.observeAll(testScope) } returns flowOf(emptyList())
 
     val result = manager.dismissSquawk(
-      TEST_THING_ID,
-      TEST_SQUAWK_ID,
+      TEST_THING,
+      TEST_SQUAWK,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
     )
 
@@ -155,8 +160,8 @@ class SquawkManagerImplTest {
     )
 
     val result = manager.dismissSquawk(
-      TEST_THING_ID,
-      TEST_SQUAWK_ID,
+      TEST_THING,
+      TEST_SQUAWK,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
     )
 
@@ -170,8 +175,8 @@ class SquawkManagerImplTest {
     every { firebaseAuth.currentUser } returns null
 
     val result = manager.dismissSquawk(
-      TEST_THING_ID,
-      TEST_SQUAWK_ID,
+      TEST_THING,
+      TEST_SQUAWK,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
     )
 
@@ -196,7 +201,7 @@ class SquawkManagerImplTest {
       )
     )
 
-    val result = manager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
+    val result = manager.reopenSquawk(TEST_THING, TEST_SQUAWK)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -224,7 +229,7 @@ class SquawkManagerImplTest {
       )
     )
 
-    val result = manager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
+    val result = manager.reopenSquawk(TEST_THING, TEST_SQUAWK)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -242,7 +247,7 @@ class SquawkManagerImplTest {
   fun reopenSquawk_squawkNotFound_returnsFailure() = runTest {
     every { store.observeAll(testScope) } returns flowOf(emptyList())
 
-    val result = manager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
+    val result = manager.reopenSquawk(TEST_THING, TEST_SQUAWK)
 
     assertThat(result.isFailure).isTrue()
   }
@@ -253,7 +258,7 @@ class SquawkManagerImplTest {
   fun reopenSquawk_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
+    val result = manager.reopenSquawk(TEST_THING, TEST_SQUAWK)
 
     assertThat(result.isFailure).isTrue()
   }
@@ -275,9 +280,10 @@ class SquawkManagerImplTest {
   @Test
   fun deleteSquawk_takesItsCommentThreadWithIt() = runTest {
     // A thread with no record to hang off would otherwise sit in every member's store forever.
-    manager.deleteSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
+    manager.deleteSquawk(TEST_THING, TEST_SQUAWK)
 
     coVerify {
+      store.delete(TEST_SQUAWK_ID, testScope)
       commentManager.deleteThread(
         CommentTarget(TEST_THING_ID, TEST_SQUAWK_ID, CommentParentKind.SQUAWK)
       )

@@ -23,6 +23,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -101,10 +102,11 @@ class ExportViewModel(
           } else {
             combine(
               things.map { item ->
+                val thingId = ThingId(item.id)
                 combine(
                   logsManager.observeLogs(item.id),
                   taskDataManager.observeTasks(item.id),
-                  squawkManager.observeSquawks(item.id),
+                  squawkManager.observeSquawks(thingId),
                 ) { logs, tasks, squawks ->
                   val attachmentSizeBytes =
                     logs.sumOf { it.attachments.exportedBytes() } +

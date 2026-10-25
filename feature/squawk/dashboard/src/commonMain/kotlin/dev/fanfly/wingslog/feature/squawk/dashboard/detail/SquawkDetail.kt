@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.dashboard.detail
 
+import kotlinx.coroutines.launch
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -7,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
@@ -18,13 +21,12 @@ import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 /** The open squawk's detail: a pane beside the list on wide tiers, a sheet on a phone. Null while no squawk is selected. */
 @Composable
 internal fun squawkDetailFor(
-  thingId: String,
+  thingId: ThingId,
   isAnonymous: Boolean,
   detailState: SquawkDetailUiState,
   onDismiss: () -> Unit,
@@ -49,10 +51,10 @@ internal fun squawkDetailFor(
         attachmentManager,
         attachmentOpener
       ) {
-        attachmentManager.observeThingSyncStates(thingId, attachmentOpener)
+        attachmentManager.observeThingSyncStates(thingId.value, attachmentOpener)
       }.collectAsStateWithLifecycle(emptyMap())
       val dataLogs by remember(thingId, dataLogManager) {
-        dataLogManager.observeRowInfos(ThingId(thingId))
+        dataLogManager.observeRowInfos(thingId)
       }.collectAsStateWithLifecycle(null)
       SquawkDetailSheet(
         item = selected,

@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -45,6 +46,7 @@ import org.junit.Before
 import org.junit.Test
 
 private const val TEST_THING_ID = "thing-456"
+private val TEST_THING = ThingId(TEST_THING_ID)
 private const val TEST_LOG_ID = "log-123"
 private const val ADDRESSED_SQUAWK_ID = "squawk-addressed-by-this-log"
 private const val OTHER_LOG_SQUAWK_ID = "squawk-addressed-by-other-log"
@@ -170,7 +172,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun observeSquawks_editingLog_includesSquawkAddressedByThisLog() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(
             id = ADDRESSED_SQUAWK_ID,
@@ -202,7 +204,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun observeSquawks_editingLog_excludesSquawkAddressedByAnotherLog() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(
             id = OTHER_LOG_SQUAWK_ID,
@@ -223,7 +225,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun observeSquawks_editingLog_includesUnaddressedSquawks() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(id = OPEN_SQUAWK_ID, title = "Flat tire"),
         )
@@ -240,7 +242,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun observeSquawks_newLog_excludesAlreadyAddressedSquawks() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(
             id = ADDRESSED_SQUAWK_ID,
@@ -265,7 +267,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun preselectedSquawkId_seedsSelectedSquawkIdsAndPendingTitle() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
         )
@@ -284,7 +286,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun preselectedSquawkId_whenEditingExistingLog_isIgnored() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
         )
@@ -436,7 +438,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun consumeResolveSquawkPrefill_setsWorkDescriptionAndClearsPendingTitle() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
         )
@@ -457,7 +459,7 @@ class MaintenanceLogFormViewModelTest {
     runTest(testDispatcher) {
       // On web, stringResource resolves the format string asynchronously and composes with
       // an empty default first — that transient "" must not permanently drop the real value.
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
         )
@@ -475,7 +477,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun consumeResolveSquawkPrefill_whenUserAlreadyTyped_prependsInsteadOfOverwriting() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
         )
@@ -496,7 +498,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun preselectedSquawkId_notInFirstEmission_stillSeedsOnceItAppearsLater() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flow {
+      every { squawkManager.observeSquawks(TEST_THING) } returns flow {
         // Transitional/empty first emission (e.g. auth still resolving) must not
         // permanently disable the preselect.
         emit(emptyList())
@@ -523,7 +525,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun preselectedSquawkId_hasChangesIsFalseOnceSeedingAndPrefillHaveSettled() =
     runTest(testDispatcher) {
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
         )

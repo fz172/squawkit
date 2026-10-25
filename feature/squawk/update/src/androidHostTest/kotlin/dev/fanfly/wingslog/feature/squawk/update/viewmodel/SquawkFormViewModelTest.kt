@@ -13,6 +13,8 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -40,6 +42,8 @@ import java.util.TimeZone as JavaTimeZone
 
 private const val TEST_THING_ID = "thing-456"
 private const val TEST_SQUAWK_ID = "squawk-789"
+private val TEST_THING = ThingId(TEST_THING_ID)
+private val TEST_SQUAWK = SquawkId(TEST_SQUAWK_ID)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SquawkFormViewModelTest {
@@ -74,7 +78,7 @@ class SquawkFormViewModelTest {
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
     // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
-    every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+    every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
       emptyList()
     )
     every { logManager.observeLogs(TEST_THING_ID) } returns flowOf(emptyList())
@@ -109,7 +113,7 @@ class SquawkFormViewModelTest {
     val event = viewModel.events.first()
 
     assertThat(viewModel.state.value.showDeleteDialog).isFalse()
-    coVerify { squawkManager.deleteSquawk(TEST_THING_ID, TEST_SQUAWK_ID) }
+    coVerify { squawkManager.deleteSquawk(TEST_THING, TEST_SQUAWK) }
     assertThat(event).isEqualTo(SquawkFormEvent.SaveSuccess("Squawk deleted"))
   }
 
@@ -281,7 +285,7 @@ class SquawkFormViewModelTest {
   @Test
   fun save_onEdit_preservesOriginalCreatedAt() = runTest(testDispatcher) {
     val originalCreatedAt = Instant.fromEpochSeconds(1_700_000_000L)
-    every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+    every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
       listOf(
         Squawk(
           id = TEST_SQUAWK_ID,
@@ -306,7 +310,7 @@ class SquawkFormViewModelTest {
 
   @Test
   fun save_onEdit_whenCreatedAtMissing_backfillsIt() = runTest(testDispatcher) {
-    every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+    every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
       listOf(
         Squawk(
           id = TEST_SQUAWK_ID,
@@ -354,7 +358,7 @@ class SquawkFormViewModelTest {
       // 2026-07-13 23:00 PDT — the same instant is already 07/14 in UTC, so reading it back in
       // UTC showed a squawk filed late on the 13th as reported on the 14th.
       val createdAt = Instant.parse("2026-07-14T06:00:00Z")
-      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
         listOf(
           Squawk(
             id = TEST_SQUAWK_ID,

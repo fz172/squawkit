@@ -18,7 +18,6 @@ import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormEvent
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormViewModel
-import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
@@ -99,7 +98,7 @@ fun EditSquawkRoute(
         onPickError = viewModel::onFilePickError,
         onSeePlans = { navController.navigate(Screen.Subscription.route) },
         dataLogPicker = rememberDataLogPickerSlot(
-          ThingId(viewModel.thingId),
+          viewModel.thingId,
           null,
           pendingAttachments.dataLogIds()
         ),
