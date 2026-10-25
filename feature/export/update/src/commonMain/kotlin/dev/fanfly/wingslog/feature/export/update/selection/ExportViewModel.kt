@@ -104,7 +104,7 @@ class ExportViewModel(
               things.map { item ->
                 val thingId = ThingId(item.id)
                 combine(
-                  logsManager.observeLogs(item.id),
+                  logsManager.observeLogs(thingId),
                   taskDataManager.observeTasks(thingId),
                   squawkManager.observeSquawks(thingId),
                 ) { logs, tasks, squawks ->

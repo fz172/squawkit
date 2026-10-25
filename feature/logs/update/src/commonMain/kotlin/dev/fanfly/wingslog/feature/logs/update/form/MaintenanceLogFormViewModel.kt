@@ -109,6 +109,7 @@ class MaintenanceLogFormViewModel(
 
   val thingId: ThingId = ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
   private val logId: String? = savedStateHandle[Screen.LOG_ID]
+  val logIdTyped: MaintenanceLogId? = logId?.let(::MaintenanceLogId)
   val isEditMode: Boolean get() = logId != null
 
   // Set when this screen is opened from the squawk edit screen's "Fixed" option, to preselect
@@ -359,7 +360,7 @@ class MaintenanceLogFormViewModel(
     combine(
       // Worked out from the records, not read off the stored overview: that is only as current as
       // the last client to rebuild it, and the prefill must agree with the dashboard (#1368).
-      logManager.observeCurrentReadings(thingId.value),
+      logManager.observeCurrentReadings(thingId),
       // The meters are the template's, and it may not be set yet when the readings land.
       currentThingTemplate.template,
     ) { current, template -> CurrentReadingsFor(template, current) }
@@ -404,7 +405,7 @@ class MaintenanceLogFormViewModel(
   private fun loadLog() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      val log = logManager.observeLogs(thingId.value)
+      val log = logManager.observeLogs(thingId)
         .firstOrNull()
         ?.firstOrNull { it.id == logId }
       if (log != null) {
@@ -745,10 +746,10 @@ class MaintenanceLogFormViewModel(
       )
 
       val result = if (isEditMode) logManager.updateLog(
-        thingId.value,
+        thingId,
         log
       ) else logManager.addLog(
-        thingId.value,
+        thingId,
         log
       )
       result
@@ -805,12 +806,12 @@ class MaintenanceLogFormViewModel(
   // ── Delete ──────────────────────────────────────────────────────────────────
 
   fun deleteLog() {
-    val id = logId ?: return
+    val id = logIdTyped ?: return
     viewModelScope.launch {
       // Tombstone file attachments before removing the Firestore document
       attachmentForm.deleteSavedFiles()
       logManager.deleteLog(
-        thingId.value,
+        thingId,
         id
       )
         .onSuccess {

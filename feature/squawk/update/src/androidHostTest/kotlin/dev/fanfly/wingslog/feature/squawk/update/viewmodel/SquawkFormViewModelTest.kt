@@ -81,7 +81,7 @@ class SquawkFormViewModelTest {
     every { squawkManager.observeSquawks(TEST_THING) } returns flowOf(
       emptyList()
     )
-    every { logManager.observeLogs(TEST_THING_ID) } returns flowOf(emptyList())
+    every { logManager.observeLogs(TEST_THING) } returns flowOf(emptyList())
   }
 
   @After

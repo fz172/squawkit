@@ -62,7 +62,7 @@ class SquawkTabViewModel(
         squawks.map { it.toWithStatus() }
       }
       .catch { emit(emptyList()) },
-    logManager.observeLogs(thingId.value)
+    logManager.observeLogs(thingId)
       .map { logs ->
         SwitchTrace.step("logs loaded: ${logs.size}")
         logs.mapNotNull { log ->

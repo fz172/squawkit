@@ -1,12 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.dashboard
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.core.template.TemplateRegistry
-import dev.fanfly.wingslog.core.ui.text.UiText
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +10,15 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.ui.text.UiText
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.Thing
 import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
@@ -34,10 +36,10 @@ class LogOverviewViewModel(
   val events: Flow<UiText> = _events.receiveAsFlow()
 
   val uiState: StateFlow<LogOverviewUiState> = combine(
-    logManager.observeLogs(thing.id)
+    logManager.observeLogs(ThingId(thing.id))
       .distinctUntilChanged()
       .catch { emit(emptyList()) },
-    logManager.observeCurrentReadings(thing.id)
+    logManager.observeCurrentReadings(ThingId(thing.id))
       .distinctUntilChanged()
       .catch { emit(emptyList()) },
   ) { logs, currentReadings ->
@@ -65,7 +67,7 @@ class LogOverviewViewModel(
   fun setMeterReading(meterKey: String, value: Double) {
     viewModelScope.launch {
       // Nothing to do on success: the card redraws from the reading the manager just stored.
-      logManager.setManualReading(thing.id, meterKey, value)
+      logManager.setManualReading(ThingId(thing.id), meterKey, value)
         .onFailure {
           _events.send(UiText.StringRes(CoreRes.string.save_failed))
         }

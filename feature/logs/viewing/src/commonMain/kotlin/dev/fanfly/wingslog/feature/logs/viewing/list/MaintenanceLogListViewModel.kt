@@ -47,6 +47,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
@@ -100,7 +101,7 @@ class MaintenanceLogListViewModel(
   private val _availableSquawks = MutableStateFlow<List<Squawk>>(emptyList())
 
   /** logId → uid of whoever wrote the latest revision. Envelope data, not payload (§7.5). */
-  private val _logAuthors = MutableStateFlow<Map<String, String?>>(emptyMap())
+  private val _logAuthors = MutableStateFlow<Map<MaintenanceLogId, String?>>(emptyMap())
 
   /** uid → display name, for naming the author of a log this member didn't write. */
   private val _namesByUid = MutableStateFlow<Map<String, String>>(emptyMap())
@@ -176,7 +177,7 @@ class MaintenanceLogListViewModel(
               selectedAuthorship = selectedLog
                 ?.takeIf { isShared }
                 ?.authorship(
-                  writerUid = authors[selectedLog.id],
+                  writerUid = authors[MaintenanceLogId(selectedLog.id)],
                   nameForUid = { uid -> names[uid] },
                 )
                 ?: LogAuthorship.Unknown,
@@ -193,7 +194,7 @@ class MaintenanceLogListViewModel(
 
   private fun observeLogs() {
     viewModelScope.launch {
-      logManager.observeLogs(thingId.value)
+      logManager.observeLogs(thingId)
         .onStart { _logsLoadState.value = LogsLoadState.Loading }
         .catch { _logsLoadState.value = LogsLoadState.Error }
         .collect { logs -> _logsLoadState.value = LogsLoadState.Loaded(logs) }
@@ -212,7 +213,7 @@ class MaintenanceLogListViewModel(
         .collect { _isShared.value = it }
     }
     viewModelScope.launch {
-      logManager.observeLogAuthors(thingId.value)
+      logManager.observeLogAuthors(thingId)
         .catch { _logAuthors.value = emptyMap() }
         .collect { _logAuthors.value = it }
     }
@@ -306,18 +307,13 @@ class MaintenanceLogListViewModel(
 
   fun onAddLog() {
     viewModelScope.launch {
-      _events.send(MaintenanceLogListEvent.NavigateToCreateLog(thingId.value))
+      _events.send(MaintenanceLogListEvent.NavigateToCreateLog(thingId))
     }
   }
 
-  fun onEditLog(logId: String) {
+  fun onEditLog(logId: MaintenanceLogId) {
     viewModelScope.launch {
-      _events.send(
-        MaintenanceLogListEvent.NavigateToEditLog(
-          thingId.value,
-          logId
-        )
-      )
+      _events.send(MaintenanceLogListEvent.NavigateToEditLog(thingId, logId))
     }
   }
 
@@ -337,7 +333,7 @@ class MaintenanceLogListViewModel(
   fun confirmDeleteLog() {
     val log = _deletingLog.value ?: return
     viewModelScope.launch {
-      logManager.deleteLog(thingId.value, log.id)
+      logManager.deleteLog(thingId, MaintenanceLogId(log.id))
         .onSuccess {
           analytics.log(
             RecordQuickAction(

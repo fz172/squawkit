@@ -1,5 +1,11 @@
 package dev.fanfly.wingslog.feature.logs.viewing.list
 
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +32,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.componentTypesApply
@@ -50,16 +59,10 @@ import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
@@ -86,7 +89,7 @@ fun MaintenanceLogListContent(
   onRetry: () -> Unit,
   onLogClick: (MaintenanceLog) -> Unit,
   onDismissDetail: () -> Unit,
-  onEditLog: ((String) -> Unit)?,
+  onEditLog: ((MaintenanceLogId) -> Unit)?,
   /** Delete from a card's swipe panel; null (a read-only caller) leaves the cards gesture-free. */
   onDeleteLog: ((MaintenanceLog) -> Unit)? = null,
   onCancelDeleteLog: () -> Unit = {},
@@ -220,7 +223,7 @@ fun MaintenanceLogListContent(
                   onEditClick = onEditLog?.let { edit ->
                     {
                       onDismissDetail()
-                      edit(log.id)
+                      edit(MaintenanceLogId(log.id))
                     }
                   },
                   onAttachmentTap = onAttachmentTap,

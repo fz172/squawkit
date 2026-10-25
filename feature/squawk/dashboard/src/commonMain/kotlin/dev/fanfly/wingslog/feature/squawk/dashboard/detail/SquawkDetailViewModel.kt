@@ -76,7 +76,7 @@ class SquawkDetailViewModel(
 
   init {
     viewModelScope.launch {
-      logManager.observeLogs(thingId.value)
+      logManager.observeLogs(thingId)
         .distinctUntilChanged()
         .catch { emit(emptyList()) }
         .collect { logs ->

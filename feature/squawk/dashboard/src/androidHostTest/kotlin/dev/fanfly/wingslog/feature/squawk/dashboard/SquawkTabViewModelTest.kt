@@ -88,7 +88,7 @@ class SquawkTabViewModelTest {
         addressedElt
       )
     )
-    every { logManager.observeLogs(THING_ID) } returns flowOf(listOf(eltLog))
+    every { logManager.observeLogs(THING) } returns flowOf(listOf(eltLog))
   }
 
   @After

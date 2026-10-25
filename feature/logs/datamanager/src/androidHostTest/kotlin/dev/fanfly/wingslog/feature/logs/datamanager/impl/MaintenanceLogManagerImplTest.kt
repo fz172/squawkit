@@ -24,6 +24,7 @@ import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
@@ -33,6 +34,8 @@ import dev.fanfly.wingslog.thing.Squawk
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-456"
+private val TEST_THING = ThingId(TEST_THING_ID)
+private val TEST_LOG_ID = MaintenanceLogId("log-1")
 private const val ENGINE = "engine_hours"
 private val SCOPE = EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
 
@@ -91,7 +94,7 @@ class MaintenanceLogManagerImplTest {
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
     var emittedList: List<MaintenanceLog>? = null
-    manager.observeLogs(TEST_THING_ID)
+    manager.observeLogs(TEST_THING)
       .collect {
         emittedList = it
       }
@@ -111,7 +114,7 @@ class MaintenanceLogManagerImplTest {
     } returns flowOf(emptyList())
 
     val result = mutableListOf<List<MaintenanceLog>>()
-    manager.observeLogs(TEST_THING_ID)
+    manager.observeLogs(TEST_THING)
       .collect { result += it }
 
     assertThat(result).hasSize(1)
@@ -137,7 +140,7 @@ class MaintenanceLogManagerImplTest {
       )
     )
 
-    manager.deleteLog(TEST_THING_ID, "log-1")
+    manager.deleteLog(TEST_THING, TEST_LOG_ID)
 
     coVerify(exactly = 1) {
       squawkStore.put(
@@ -152,14 +155,14 @@ class MaintenanceLogManagerImplTest {
 
   @Test
   fun deleteLog_withNoAddressedSquawks_writesNoSquawks() = runTest {
-    manager.deleteLog(TEST_THING_ID, "log-1")
+    manager.deleteLog(TEST_THING, TEST_LOG_ID)
 
     coVerify(exactly = 0) { squawkStore.put(any(), any(), any()) }
   }
 
   @Test
   fun addLog_stampsWhenItsReadingsWereSaved() = runTest {
-    manager.addLog(TEST_THING_ID, engineLog(hours = 1201.5))
+    manager.addLog(TEST_THING, engineLog(hours = 1201.5))
 
     coVerify {
       logStore.put(
@@ -173,7 +176,7 @@ class MaintenanceLogManagerImplTest {
   @Test
   fun addLog_withNoReadings_carriesNoStamp() = runTest {
     // Nothing to order, so nothing to stamp.
-    manager.addLog(TEST_THING_ID, MaintenanceLog(id = "log-1"))
+    manager.addLog(TEST_THING, MaintenanceLog(id = "log-1"))
 
     coVerify { logStore.put("log-1", MaintenanceLog(id = "log-1"), SCOPE) }
   }
@@ -186,7 +189,7 @@ class MaintenanceLogManagerImplTest {
     storedLog(engineLog(hours = 1201.5).copy(readings_saved_at = savedAt))
 
     manager.updateLog(
-      TEST_THING_ID,
+      TEST_THING,
       engineLog(hours = 1201.5).copy(work_description = "Oil change")
     )
 
@@ -210,7 +213,7 @@ class MaintenanceLogManagerImplTest {
       )
     )
 
-    manager.updateLog(TEST_THING_ID, engineLog(hours = 1201.5))
+    manager.updateLog(TEST_THING, engineLog(hours = 1201.5))
 
     coVerify {
       logStore.put(
@@ -223,7 +226,7 @@ class MaintenanceLogManagerImplTest {
 
   @Test
   fun setManualReading_storesItUnderTheMetersKeyWithTheTime() = runTest {
-    manager.setManualReading(TEST_THING_ID, ENGINE, 1200.0)
+    manager.setManualReading(TEST_THING, ENGINE, 1200.0)
 
     coVerify {
       manualStore.put(
@@ -261,7 +264,7 @@ class MaintenanceLogManagerImplTest {
       )
     )
 
-    manager.setManualReading(TEST_THING_ID, ENGINE, 1200.0)
+    manager.setManualReading(TEST_THING, ENGINE, 1200.0)
 
     coVerify {
       overviewStore.put(
@@ -300,7 +303,7 @@ class MaintenanceLogManagerImplTest {
       )
     )
 
-    val current = manager.observeCurrentReadings(TEST_THING_ID)
+    val current = manager.observeCurrentReadings(TEST_THING)
       .first()
 
     assertThat(current.map { it.meterKey to it.value }).containsExactly(

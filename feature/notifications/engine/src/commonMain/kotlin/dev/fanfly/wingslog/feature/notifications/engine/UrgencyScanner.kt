@@ -193,11 +193,11 @@ class UrgencyScanner(
 
     val taskRows = taskStore.observeAll(scope)
       .first()
-    val logs = logManager.observeLogs(thingId.value)
+    val logs = logManager.observeLogs(thingId)
       .first()
     // Due against the same current readings the dashboard shows, or a task could alert as overdue
     // beside a card that says it is not (#1368).
-    val manualReadings = logManager.observeManualReadings(thingId.value)
+    val manualReadings = logManager.observeManualReadings(thingId)
       .first()
     val squawkRows = squawkStore.observeAll(scope)
       .first()

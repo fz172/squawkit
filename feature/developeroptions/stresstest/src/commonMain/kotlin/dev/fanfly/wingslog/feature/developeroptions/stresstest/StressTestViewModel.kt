@@ -188,7 +188,7 @@ class StressTestViewModel(
 
         data.logs.forEach { log ->
           progress(StressTestProgressStep.CreatingLog)
-          logManager.addLog(thingId.value, log)
+          logManager.addLog(thingId, log)
             .getOrThrow()
         }
 

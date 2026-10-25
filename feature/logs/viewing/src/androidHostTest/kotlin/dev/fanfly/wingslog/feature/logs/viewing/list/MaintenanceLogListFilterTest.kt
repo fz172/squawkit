@@ -95,15 +95,15 @@ class MaintenanceLogListFilterTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    every { logManager.observeLogs(THING_ID) } returns flowOf(
+    every { logManager.observeLogs(THING) } returns flowOf(
       listOf(
         oil,
         gasket,
         xpdr
       )
     )
-    every { logManager.observeLogAuthors(THING_ID) } returns flowOf(emptyMap())
-    every { tasks.observeTasks(ThingId(THING_ID)) } returns flowOf(emptyList())
+    every { logManager.observeLogAuthors(THING) } returns flowOf(emptyMap())
+    every { tasks.observeTasks(THING) } returns flowOf(emptyList())
     every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(
       emptyList()
     )

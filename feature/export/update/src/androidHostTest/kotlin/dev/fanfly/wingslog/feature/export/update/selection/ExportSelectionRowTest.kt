@@ -59,7 +59,7 @@ class ExportSelectionRowTest {
       exportManager = mockk(relaxed = true),
       fleetManager = mockk<FleetManager> { every { observeFleetDashboard() } returns fleet },
       logsManager = mockk<MaintenanceLogManager> {
-        every { observeLogs(any()) } returns flowOf(emptyList())
+        every { observeLogs(any<ThingId>()) } returns flowOf(emptyList())
       },
       taskDataManager = mockk<TaskDataManager> {
         every { observeTasks(any<ThingId>()) } returns flowOf(emptyList())

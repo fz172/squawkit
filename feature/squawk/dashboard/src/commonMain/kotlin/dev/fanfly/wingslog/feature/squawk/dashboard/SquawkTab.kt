@@ -334,28 +334,3 @@ fun SquawkTab(
     onCancelDelete = detailViewModel::cancelDelete,
   )
 }
-
-@Composable
-fun SquawkTab(
-  thingId: String,
-  isAnonymous: Boolean = false,
-  canMutate: Boolean = true,
-  onNavigateToEditSquawk: (squawkId: String) -> Unit = {},
-  onNavigateToCreateLog: (squawkId: String) -> Unit = {},
-  onLogClick: ((logId: String) -> Unit)? = null,
-  onOpenDataLog: ((DataLogId) -> Unit)? = null,
-  scrollToSquawkId: String? = null,
-  showHeader: Boolean = true,
-  modifier: Modifier = Modifier,
-) = SquawkTab(
-  thingId = ThingId(thingId),
-  isAnonymous = isAnonymous,
-  canMutate = canMutate,
-  onNavigateToEditSquawk = onNavigateToEditSquawk,
-  onNavigateToCreateLog = onNavigateToCreateLog,
-  onLogClick = onLogClick,
-  onOpenDataLog = onOpenDataLog,
-  scrollToSquawkId = scrollToSquawkId,
-  showHeader = showHeader,
-  modifier = modifier,
-)

@@ -102,10 +102,10 @@ class TaskViewModelTest {
     every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
       emptyList()
     )
-    every { maintenanceLogManager.observeLogs(TEST_THING_ID) } returns flowOf(
+    every { maintenanceLogManager.observeLogs(TEST_THING) } returns flowOf(
       emptyList()
     )
-    every { maintenanceLogManager.observeManualReadings(TEST_THING_ID) } returns flowOf(
+    every { maintenanceLogManager.observeManualReadings(TEST_THING) } returns flowOf(
       emptyList()
     )
   }
@@ -291,7 +291,7 @@ class TaskViewModelTest {
   fun loadData_readsTheCurrentReadingFromLogsAndReadingsSetByHand() =
     runTest(testDispatcher) {
       // The banner’s "now": a reading set on the dashboard after the last log is the current one.
-      every { maintenanceLogManager.observeLogs(TEST_THING_ID) } returns flowOf(
+      every { maintenanceLogManager.observeLogs(TEST_THING) } returns flowOf(
         listOf(
           MaintenanceLog(
             id = "log-1",
@@ -303,7 +303,7 @@ class TaskViewModelTest {
           )
         )
       )
-      every { maintenanceLogManager.observeManualReadings(TEST_THING_ID) } returns flowOf(
+      every { maintenanceLogManager.observeManualReadings(TEST_THING) } returns flowOf(
         listOf(
           ManualMeterReading(
             reading = MeterReading(MeterKeys.ENGINE_HOURS, value_ = 100.0),
