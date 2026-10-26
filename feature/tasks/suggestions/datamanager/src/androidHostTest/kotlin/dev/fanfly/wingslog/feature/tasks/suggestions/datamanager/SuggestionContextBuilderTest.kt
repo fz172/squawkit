@@ -1,5 +1,10 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
+import kotlin.time.Instant
+
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -10,6 +15,7 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -29,10 +35,7 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import kotlin.time.Instant
 
 class SuggestionContextBuilderTest {
 
@@ -123,7 +126,7 @@ class SuggestionContextBuilderTest {
     hostUid: String = "host-uid",
   ): SuggestionContextBuilder {
     val fleet =
-      mockk<FleetManager> { every { loadThing(THING) } returns flowOf(thing) }
+      mockk<FleetManager> { every { loadThing(ThingId(THING)) } returns flowOf(thing) }
     val taskData = mockk<TaskDataManager> {
       every { observeTasks(THING) } returns flowOf(tasks)
     }
@@ -159,7 +162,7 @@ class SuggestionContextBuilderTest {
   @Test
   fun `names the Thing and its host tree, and carries the template`() =
     runTest {
-      val request = builder(hostUid = "the-host").build(THING, SuggestionEntryPoint.CURATED)
+      val request = builder(hostUid = "the-host").build(ThingId(THING), SuggestionEntryPoint.CURATED)
 
       assertThat(request.thing_id?.value_).isEqualTo(THING)
       assertThat(request.host_uid?.value_).isEqualTo("the-host")
@@ -171,7 +174,7 @@ class SuggestionContextBuilderTest {
 
   @Test
   fun `sends no identifier, no invented field and no serial`() = runTest {
-    val context = builder().build(THING, SuggestionEntryPoint.CURATED).context!!
+    val context = builder().build(ThingId(THING), SuggestionEntryPoint.CURATED).context!!
 
     assertThat(context.specs.map { it.key }).containsExactly("make", "model")
     val engine = context.components.first { it.slot_key == "engine" }
@@ -195,7 +198,7 @@ class SuggestionContextBuilderTest {
   fun `takes each meter's current reading, and says when there is none`() =
     runTest {
       val meters = builder().build(
-        THING,
+        ThingId(THING),
         SuggestionEntryPoint.CURATED
       ).context!!.meters.associateBy { it.key }
 
@@ -217,7 +220,7 @@ class SuggestionContextBuilderTest {
     )
 
     val existing = builder(tasks = listOf(task)).build(
-      THING,
+      ThingId(THING),
       SuggestionEntryPoint.CURATED
     ).context!!.existing_tasks.single()
 

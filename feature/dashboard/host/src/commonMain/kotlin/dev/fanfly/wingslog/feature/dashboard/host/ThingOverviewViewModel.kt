@@ -1,16 +1,5 @@
 package dev.fanfly.wingslog.feature.dashboard.host
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.core.template.TemplateRegistry
-import dev.fanfly.wingslog.core.template.TemplateResolution
-import dev.fanfly.wingslog.core.ui.text.UiText
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewEvent
-import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
-import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,15 +10,29 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import wingslog.core.sharedassets.generated.resources.delete_failed
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.TemplateResolution
+import dev.fanfly.wingslog.core.ui.text.UiText
+import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
+import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewEvent
+import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewUiState
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.gitlive.firebase.auth.FirebaseAuth
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.delete_failed
 
 class ThingOverviewViewModel(
   private val fleetManager: FleetManager,
   private val sharingManager: SharingManager,
   private val templateRegistry: TemplateRegistry,
   private val auth: FirebaseAuth,
-  private val thingId: String,
+  private val thingId: ThingId,
 ) : ViewModel() {
 
   private val _uiState =
@@ -53,9 +56,9 @@ class ThingOverviewViewModel(
           .distinctUntilChanged(),
         // The caller's role on this thing, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
         // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
-        sharingManager.observeMyRole(thingId)
+        sharingManager.observeMyRole(thingId.value)
           .distinctUntilChanged(),
-        sharingManager.observeIsShared(thingId)
+        sharingManager.observeIsShared(thingId.value)
           .distinctUntilChanged(),
       ) { thing, myRole, isShared ->
         val degraded = thing?.let {

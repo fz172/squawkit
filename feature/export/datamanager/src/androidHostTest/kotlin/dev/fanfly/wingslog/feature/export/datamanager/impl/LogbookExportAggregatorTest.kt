@@ -55,7 +55,7 @@ class LogbookExportAggregatorTest {
 
   private fun aggregator(): LogbookExportAggregator {
     val fleetManager = mockk<FleetManager> {
-      every { loadThing(thingId) } returns flowOf(
+      every { loadThing(ThingId(thingId)) } returns flowOf(
         Thing(
           id = thingId,
           spec = listOf(

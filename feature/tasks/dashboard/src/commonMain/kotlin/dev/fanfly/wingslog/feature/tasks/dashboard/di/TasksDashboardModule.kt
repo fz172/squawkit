@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.id.ThingId
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -56,20 +57,20 @@ val tasksDashboardModule = module {
   viewModel { params ->
     ReadySuggestionsViewModel(
       get<TaskSuggestionManager>(),
-      params.get<String>(0),
+      ThingId(params.get<String>(0)),
     )
   }
   viewModel { params ->
     AddedTasksViewModel(
       get<RecentlyAddedTasks>(),
       get<TaskDataManager>(),
-      params.get<String>(0),
+      ThingId(params.get<String>(0)),
     )
   }
   viewModel { params ->
     SuggestTasksEntryViewModel(
       get<TaskSuggestionEntry>(),
-      params.get<String>(0)
+      ThingId(params.get<String>(0))
     )
   }
 }

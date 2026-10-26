@@ -37,7 +37,7 @@ class TemplateThingIdentifierLookupTest {
 
   private fun lookup(thing: Thing = airplane): TemplateThingIdentifierLookup {
     val fleet = mockk<FleetManager>()
-    every { fleet.loadThing("thing-1") } returns flowOf(thing)
+    every { fleet.loadThing(thingId) } returns flowOf(thing)
     val templates = mockk<TemplateRegistry>()
     every { templates.forThingWithFallback(any()) } returns AirplaneTemplate.TEMPLATE
     return TemplateThingIdentifierLookup(fleet, templates)

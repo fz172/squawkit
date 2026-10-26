@@ -1,12 +1,15 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
+import dev.fanfly.wingslog.id.ThingId
 
 /**
  * The suggested tasks just added to this Thing (1f): how many, to say once with *Undo*.
@@ -14,7 +17,7 @@ import kotlinx.coroutines.launch
 class AddedTasksViewModel(
   private val recentlyAdded: RecentlyAddedTasks,
   private val taskDataManager: TaskDataManager,
-  private val thingId: String,
+  private val thingId: ThingId,
 ) : ViewModel() {
 
   /**
@@ -26,6 +29,6 @@ class AddedTasksViewModel(
 
   /** *Undo* on a batch's snackbar: its tasks are deleted. */
   fun onUndo(taskIds: List<String>) {
-    viewModelScope.launch { taskIds.forEach { taskDataManager.deleteTask(thingId, it) } }
+    viewModelScope.launch { taskIds.forEach { taskDataManager.deleteTask(thingId.value, it) } }
   }
 }

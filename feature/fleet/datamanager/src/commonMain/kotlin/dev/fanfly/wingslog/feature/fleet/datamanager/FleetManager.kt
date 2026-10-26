@@ -1,8 +1,9 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager
 
-import dev.fanfly.wingslog.core.model.sharing.ShareRole
-import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.flow.Flow
+import dev.fanfly.wingslog.core.model.sharing.ShareRole
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.Thing
 
 /**
  * One thing on the fleet dashboard, tagged with how the current user relates to it.
@@ -32,7 +33,7 @@ interface FleetManager {
    */
   suspend fun updateThing(thing: Thing): Result<Thing>
 
-  fun loadThing(id: String): Flow<Thing?>
+  fun loadThing(id: ThingId): Flow<Thing?>
 
-  suspend fun deleteThing(id: String): Result<Boolean>
+  suspend fun deleteThing(id: ThingId): Result<Boolean>
 }

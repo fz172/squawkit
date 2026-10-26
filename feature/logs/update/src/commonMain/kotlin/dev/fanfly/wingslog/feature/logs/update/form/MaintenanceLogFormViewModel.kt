@@ -1,5 +1,25 @@
 package dev.fanfly.wingslog.feature.logs.update.form
 
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -56,35 +76,17 @@ import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.ThingTemplate
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toLocalDateTime
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.core.sharedassets.generated.resources.save_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
+import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.update.generated.resources.log_not_found
 import wingslog.feature.logs.update.generated.resources.work_description_required
-import kotlin.time.Clock
-import kotlin.time.Instant
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
-import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
@@ -105,8 +107,7 @@ class MaintenanceLogFormViewModel(
   /** Fixed for the life of the build — the baked-in pool cannot change without a release. */
   private val knownCertifications = templateRegistry.knownCertifications()
 
-  val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
-  private val thing = ThingId(thingId)
+  val thingId: ThingId = ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
   private val logId: String? = savedStateHandle[Screen.LOG_ID]
   val isEditMode: Boolean get() = logId != null
 
@@ -140,7 +141,7 @@ class MaintenanceLogFormViewModel(
   private val attachmentForm =
     AttachmentFormController(
       attachmentManager,
-      thingId,
+      thingId.value,
       owner = logId?.let { EntityRef(CollectionKind.MaintenanceLog, it) },
     )
   private val _uiState = MutableStateFlow(
@@ -177,7 +178,7 @@ class MaintenanceLogFormViewModel(
     // the subscription capability ships.)
     combine(
       subscriptionManager.canUploadAttachments(),
-      sharingManager.observeIsForeignHosted(thingId),
+      sharingManager.observeIsForeignHosted(thingId.value),
     ) { canUpload, foreignHosted -> foreignHosted || canUpload }
       .onEach { enabled ->
         _uiState.update { it.copy(attachmentUploadEnabled = enabled) }
@@ -191,7 +192,7 @@ class MaintenanceLogFormViewModel(
       technicianManager.observeSelfId(),
       // Members of THIS thing's share who published a mirror. Scoped to the thing because a
       // log is signed for one thing — only its members are selectable (§7.3).
-      sharingManager.observeLinkedTechnicians(thingId),
+      sharingManager.observeLinkedTechnicians(thingId.value),
     ) { technicians, selfId, linked ->
       // Stamp the self-record with its owning uid so picking it snapshots provenance into the log
       // (§7.3). Manual entries carry no source_uid — they were typed by hand, not linked to an
@@ -250,7 +251,7 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeSquawks() {
-    squawkManager.observeSquawks(thing)
+    squawkManager.observeSquawks(thingId)
       .onEach { squawks ->
         val filtered = squawks.filter { s ->
           s.addressed_by_log_id.isEmpty() || s.addressed_by_log_id == logId
@@ -301,7 +302,7 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeTasks() {
-    inspectionDataManager.observeTasks(thingId)
+    inspectionDataManager.observeTasks(thingId.value)
       .onEach { cards ->
         _uiState.update { state ->
           var next = state.copy(availableInspectionCards = cards)
@@ -358,7 +359,7 @@ class MaintenanceLogFormViewModel(
     combine(
       // Worked out from the records, not read off the stored overview: that is only as current as
       // the last client to rebuild it, and the prefill must agree with the dashboard (#1368).
-      logManager.observeCurrentReadings(thingId),
+      logManager.observeCurrentReadings(thingId.value),
       // The meters are the template's, and it may not be set yet when the readings land.
       currentThingTemplate.template,
     ) { current, template -> CurrentReadingsFor(template, current) }
@@ -403,7 +404,7 @@ class MaintenanceLogFormViewModel(
   private fun loadLog() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      val log = logManager.observeLogs(thingId)
+      val log = logManager.observeLogs(thingId.value)
         .firstOrNull()
         ?.firstOrNull { it.id == logId }
       if (log != null) {
@@ -744,10 +745,10 @@ class MaintenanceLogFormViewModel(
       )
 
       val result = if (isEditMode) logManager.updateLog(
-        thingId,
+        thingId.value,
         log
       ) else logManager.addLog(
-        thingId,
+        thingId.value,
         log
       )
       result
@@ -756,7 +757,7 @@ class MaintenanceLogFormViewModel(
             val squawkIds = state.selectedSquawkIds.map { SquawkId(it) }
             val logId = MaintenanceLogId(resolvedLogId)
             squawkManager.markAddressed(
-              thing,
+              thingId,
               squawkIds,
               logId,
             )
@@ -768,7 +769,7 @@ class MaintenanceLogFormViewModel(
                   card.force_complied_status != null
                 ) {
                   inspectionDataManager.updateTask(
-                    thingId,
+                    thingId.value,
                     // Clears both the keyed override and the legacy float, so a build that
                     // predates `force_due_meter` does not keep showing one the user cleared.
                     card.withForcedDueMeter(card.defaultMeterKey(), null)
@@ -809,7 +810,7 @@ class MaintenanceLogFormViewModel(
       // Tombstone file attachments before removing the Firestore document
       attachmentForm.deleteSavedFiles()
       logManager.deleteLog(
-        thingId,
+        thingId.value,
         id
       )
         .onSuccess {

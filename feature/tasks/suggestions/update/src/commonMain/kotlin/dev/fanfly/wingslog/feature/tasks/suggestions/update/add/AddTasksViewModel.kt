@@ -1,9 +1,17 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.add
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -18,12 +26,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentRele
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import dev.fanfly.wingslog.id.ThingId
 
 /**
  * The Add Tasks sheet, what the task tab's add button opens: the Thing's details the suggestions
@@ -46,7 +49,7 @@ class AddTasksViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
+  val thingId: ThingId = ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
 
   private val _uiState = MutableStateFlow(AddTasksUiState())
   val uiState = _uiState.asStateFlow()
@@ -158,11 +161,11 @@ class AddTasksViewModel(
     val state = uiState.value
     if (state.entry != SuggestEntry.Available || !state.canSuggest) return null
     if (state.sources.blocked != null) return Screen.Suggestions.createRoute(
-      thingId
+      thingId.value
     )
     handedOver = true
     return Screen.Suggestions.createRoute(
-      thingId,
+      thingId.value,
       SuggestionsMode.ADD,
       state.sources.documents.takeIf { it.isNotEmpty() }
         ?.toDocumentsArg(),

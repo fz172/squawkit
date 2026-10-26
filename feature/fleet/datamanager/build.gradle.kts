@@ -24,6 +24,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      api(project(":core:model"))
       implementation(project(":core:storage"))
       implementation(project(":core:template"))
       implementation(libs.gitlive.firebase.auth)

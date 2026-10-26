@@ -1,9 +1,16 @@
 package dev.fanfly.wingslog.feature.sharing.update
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.template.SpecKeys
@@ -16,11 +23,7 @@ import dev.fanfly.wingslog.feature.sharing.viewing.AccessPanelView
 import dev.fanfly.wingslog.feature.sharing.viewing.AccessToast
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessUiState
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import dev.fanfly.wingslog.id.ThingId
 
 /**
  * Drives the Manage Access panel for one thing: the (online-only) Firestore roster + pending
@@ -36,8 +39,7 @@ class ManageAccessViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val thingId: String = savedStateHandle.get<String>(Screen.THING_ID)
-    .orEmpty()
+  val thingId: ThingId = ThingId(savedStateHandle.get<String>(Screen.THING_ID).orEmpty())
 
   private val _uiState =
     MutableStateFlow(ManageAccessUiState(syncEnabled = cloudSync.isCloudSyncEnabled()))
@@ -59,14 +61,14 @@ class ManageAccessViewModel(
     // photos come from the member docs — so a member whose doc is absent renders as a bare uid. This
     // is idempotent and cheap, and it means opening the screen repairs the row rather than staring
     // at the damage. (§7.2)
-    viewModelScope.launch { sharingManager.publishTechnicianMirror(alsoPublishTo = thingId) }
+    viewModelScope.launch { sharingManager.publishTechnicianMirror(alsoPublishTo = thingId.value) }
   }
 
   private fun observeShare() {
     // Role is resolved locally (own thing ⇒ owner, shared ⇒ ref) — always available, and what
     // gates the "Create invite code" action. Kept separate from the roster so it never depends on it.
     viewModelScope.launch {
-      sharingManager.observeMyRole(thingId)
+      sharingManager.observeMyRole(thingId.value)
         .collect { role ->
           _uiState.update { it.copy(isLoading = false, myRole = role) }
         }
@@ -75,10 +77,10 @@ class ManageAccessViewModel(
     // all (the owner isn't in memberRoles until the first invite bootstraps the share doc). Treat a
     // failure as "no members yet" rather than an error, so it can't block the owner from inviting.
     viewModelScope.launch {
-      sharingManager.observeShareState(thingId)
+      sharingManager.observeShareState(thingId.value)
         .catch { e ->
           // Roster unavailable (e.g. no share yet) — leave it empty, don't block inviting.
-          logger.d { "share roster unavailable for $thingId: ${e.message}" }
+          logger.d { "share roster unavailable for ${thingId.value}: ${e.message}" }
         }
         .collect { share ->
           if (share.members.any { it.isSelf }) seenSelfInRoster = true
@@ -90,7 +92,7 @@ class ManageAccessViewModel(
           // just an owner whose thing has no share doc yet, and means nothing.
           if (share.accessDenied) {
             if (seenSelfInRoster) {
-              logger.i { "access to $thingId was revoked; closing Manage Access" }
+              logger.i { "access to ${thingId.value} was revoked; closing Manage Access" }
               _uiState.update { it.copy(accessRevoked = true) }
             }
             return@collect
@@ -190,7 +192,7 @@ class ManageAccessViewModel(
     _uiState.update { it.copy(creatingInvite = true, error = null) }
     viewModelScope.launch {
       sharingManager.createInvite(
-        thingId,
+        thingId.value,
         _uiState.value.selectedInviteRole,
         _uiState.value.thingLabel
       )
@@ -218,7 +220,7 @@ class ManageAccessViewModel(
     if (_uiState.value.cancellingInvite) return
     _uiState.update { it.copy(cancellingInvite = true, error = null) }
     viewModelScope.launch {
-      sharingManager.cancelInvite(thingId, codeId)
+      sharingManager.cancelInvite(thingId.value, codeId)
         .onSuccess {
           _uiState.update {
             it.copy(
@@ -252,7 +254,7 @@ class ManageAccessViewModel(
 
   fun changeRole(uid: String, role: ShareRole) {
     viewModelScope.launch {
-      sharingManager.updateRole(thingId, uid, role)
+      sharingManager.updateRole(thingId.value, uid, role)
         .onSuccess { _uiState.update { it.copy(toast = AccessToast.ROLE_UPDATED) } }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
@@ -260,7 +262,7 @@ class ManageAccessViewModel(
 
   fun revoke(uid: String) {
     viewModelScope.launch {
-      sharingManager.revokeMember(thingId, uid)
+      sharingManager.revokeMember(thingId.value, uid)
         .onSuccess {
           _uiState.update {
             it.copy(
@@ -276,7 +278,7 @@ class ManageAccessViewModel(
 
   fun leave() {
     viewModelScope.launch {
-      sharingManager.leave(thingId)
+      sharingManager.leave(thingId.value)
         .onSuccess { _uiState.update { it.copy(leaveSuccess = true) } }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }

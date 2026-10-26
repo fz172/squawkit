@@ -1,11 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
-import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -15,6 +9,14 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+
+import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
+import dev.fanfly.wingslog.id.ThingId
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -37,11 +39,11 @@ class AddedTasksViewModelTest {
 
   @Test
   fun aBatchIsHandedOutOnce() = runTest(dispatcher) {
-    val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
+    val vm = AddedTasksViewModel(recentlyAdded, tasks, ThingId(THING))
     val said = mutableListOf<List<String>>()
     backgroundScope.launch { vm.added.collect { said += it } }
 
-    recentlyAdded.record(THING, listOf("t1", "t2"))
+    recentlyAdded.record(ThingId(THING), listOf("t1", "t2"))
     runCurrent()
 
     assertThat(said).containsExactly(listOf("t1", "t2"))
@@ -55,8 +57,8 @@ class AddedTasksViewModelTest {
 
   @Test
   fun aBatchAddedBeforeTheTabOpensIsStillSaid() = runTest(dispatcher) {
-    recentlyAdded.record(THING, listOf("t1"))
-    val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
+    recentlyAdded.record(ThingId(THING), listOf("t1"))
+    val vm = AddedTasksViewModel(recentlyAdded, tasks, ThingId(THING))
     val said = mutableListOf<List<String>>()
     backgroundScope.launch { vm.added.collect { said += it } }
     runCurrent()
@@ -66,7 +68,7 @@ class AddedTasksViewModelTest {
 
   @Test
   fun undoDeletesTheBatch() = runTest(dispatcher) {
-    val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
+    val vm = AddedTasksViewModel(recentlyAdded, tasks, ThingId(THING))
 
     vm.onUndo(listOf("t1", "t2"))
     advanceUntilIdle()
@@ -77,15 +79,15 @@ class AddedTasksViewModelTest {
 
   @Test
   fun anotherThingsBatchIsNotThisTabs() = runTest(dispatcher) {
-    val vm = AddedTasksViewModel(recentlyAdded, tasks, THING)
+    val vm = AddedTasksViewModel(recentlyAdded, tasks, ThingId(THING))
     val said = mutableListOf<List<String>>()
     backgroundScope.launch { vm.added.collect { said += it } }
-    recentlyAdded.record("other", listOf("t9"))
+    recentlyAdded.record(ThingId("other"), listOf("t9"))
     runCurrent()
 
     assertThat(said).isEmpty()
     // Left for its own tab.
-    assertThat(recentlyAdded.batch.value?.thingId).isEqualTo("other")
+    assertThat(recentlyAdded.batch.value?.thingId).isEqualTo(ThingId("other"))
   }
 
   private companion object {

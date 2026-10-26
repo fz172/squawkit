@@ -40,7 +40,7 @@ class TemplateThingIdentifierLookup(
   }
 
   override suspend fun identifierOf(thingId: ThingId): String? {
-    val thing = fleet.loadThing(thingId.value)
+    val thing = fleet.loadThing(thingId)
       .first() ?: return null
     val key = templates.forThingWithFallback(thing)
       .identifierKey() ?: return null

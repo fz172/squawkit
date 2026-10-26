@@ -1,6 +1,11 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.storage.resolveNow
 import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.taskNoun
@@ -22,8 +27,6 @@ import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.ThingTemplate
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 
 /**
  * The request an AI suggestion run sends about one Thing (docs/ai/task_population_design.md §7.2,
@@ -48,18 +51,18 @@ class SuggestionContextBuilder(
 ) {
 
   /** The request for [thingId], and the uid of the tree it lives in. */
-  suspend fun build(thingId: String, entryPoint: SuggestionEntryPoint): SuggestTasksRequest {
+  suspend fun build(thingId: ThingId, entryPoint: SuggestionEntryPoint): SuggestTasksRequest {
     val thing = fleetManager.loadThing(thingId)
       .filterNotNull()
       .first()
     val template = templateRegistry.forThingWithFallback(thing)
     // A shared Thing lives in its host's tree: users/{hostUid}/thing/{thingId}.
     val hostUid = scopeResolver.resolveNow(thingId).hostUid.orEmpty()
-    val tasks = taskDataManager.observeTasks(thingId)
+    val tasks = taskDataManager.observeTasks(thingId.value)
       .first()
     // What the dashboard shows, worked out from the records rather than read off the stored
     // overview, which a client that predates manual readings rebuilds without them (#1368).
-    val current = logManager.observeCurrentReadings(thingId)
+    val current = logManager.observeCurrentReadings(thingId.value)
       .first()
 
     val context = SuggestionContext(
@@ -93,7 +96,7 @@ class SuggestionContextBuilder(
       lexicon_task_noun = templateRegistry.lexiconFor(template).taskNoun.singular,
     )
     return SuggestTasksRequest(
-      thing_id = ThingId(value_ = thingId),
+      thing_id = thingId,
       host_uid = UserId(value_ = hostUid),
       context = context,
       entry_point = entryPoint.wire,

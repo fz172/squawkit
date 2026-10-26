@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.review
 
+import kotlinx.coroutines.launch
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_TASK_DRAFT
@@ -66,9 +69,9 @@ import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.OnScreenTapTargets
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.isFromModel
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.feature.tasks.suggestions.update.generated.resources.Res
@@ -76,7 +79,6 @@ import wingslog.feature.tasks.suggestions.update.generated.resources.suggestion_
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_checking
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_screen_title
 import wingslog.feature.tasks.suggestions.update.generated.resources.suggestions_suggest
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The recommended tasks (PRD §4.9): per-item checkboxes, and Skip as a real button.
@@ -96,7 +98,7 @@ fun SuggestionsRoute(
   // While this screen is in front, its own run's "ready" push stays quiet (PRD R20).
   LifecycleResumeEffect(viewModel.thingId) {
     val hide =
-      OnScreenTapTargets.show(NotificationTapTarget.Suggestions(viewModel.thingId))
+      OnScreenTapTargets.show(NotificationTapTarget.Suggestions(viewModel.thingId.value))
     onPauseOrDispose { hide() }
   }
 
@@ -234,9 +236,9 @@ fun SuggestionsRoute(
               }
             }
             ImproveBanner(
-              onAddDetails = { leaveFor(Screen.EditThing.createRoute(viewModel.thingId)) },
+              onAddDetails = { leaveFor(Screen.EditThing.createRoute(viewModel.thingId.value)) },
               // Only where the sheet's *Suggest* can start a run; otherwise the banner says when.
-              onUseManual = { leaveFor(Screen.AddTasks.createRoute(viewModel.thingId)) }
+              onUseManual = { leaveFor(Screen.AddTasks.createRoute(viewModel.thingId.value)) }
                 .takeIf { uiState.canUseManual },
               blocked = uiState.manualBlocked,
             )
@@ -381,7 +383,7 @@ fun SuggestionsRoute(
                           val draft = viewModel.draftFor(item.id) ?: return@launch
                           navController.navigate(
                             Screen.AddMaintenanceTask.createRoute(
-                              viewModel.thingId,
+                              viewModel.thingId.value,
                               draft
                             ),
                           )
