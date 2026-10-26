@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Technician
 import io.mockk.every
 import io.mockk.mockk
@@ -63,7 +64,7 @@ class TechnicianListViewModelTest {
           Technician(id = "manual-1", name = "Hand-typed Mechanic"),
         )
       )
-      every { technicianManager.observeSelfId() } returns flowOf(SELF_ID)
+      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
       every { sharingManager.observeLinkedTechnicians() } returns flowOf(
         listOf(
           Technician(
@@ -112,7 +113,7 @@ class TechnicianListViewModelTest {
     every { technicianManager.observeTechnicians() } returns flowOf(
       listOf(Technician(id = SELF_ID, name = "Sponge Bob"))
     )
-    every { technicianManager.observeSelfId() } returns flowOf(SELF_ID)
+    every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
 
     val state = viewModel().uiState.first { it.technicians.isNotEmpty() }
 
@@ -130,7 +131,7 @@ class TechnicianListViewModelTest {
           Technician(id = "m1", name = "Sponge Bob", cert_number = "AP-123"),
         )
       )
-      every { technicianManager.observeSelfId() } returns flowOf(SELF_ID)
+      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
       every { sharingManager.observeLinkedTechnicians() } returns flowOf(
         listOf(
           Technician(
@@ -209,7 +210,7 @@ class TechnicianListViewModelTest {
         Technician(id = "m1", name = "xyz"),
       )
     )
-    every { technicianManager.observeSelfId() } returns flowOf(SELF_ID)
+    every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
     every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(
       null
     )
@@ -236,7 +237,7 @@ class TechnicianListViewModelTest {
           )
         )
       )
-      every { technicianManager.observeSelfId() } returns flowOf(SELF_ID)
+      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
       every { sharingManager.observeLinkedTechnicians() } returns flowOf(
         listOf(
           Technician(

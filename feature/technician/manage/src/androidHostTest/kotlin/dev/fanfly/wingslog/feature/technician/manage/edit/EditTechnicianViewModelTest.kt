@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.Certification
@@ -191,7 +192,7 @@ class EditTechnicianViewModelTest {
   fun aPre684RecordLoadsAsOneCertification() = runTest(testDispatcher) {
     // Nothing migrates fields 3-7; the read derives. Loading straight from `certifications` would
     // show the mechanic who signs the annual as uncertified, and then SAVE that.
-    every { technicianManager.loadTechnician(TECH_ID) } returns flowOf(
+    every { technicianManager.loadTechnician(TechnicianId(TECH_ID)) } returns flowOf(
       Technician(
         id = TECH_ID,
         name = "Avery",
@@ -210,7 +211,7 @@ class EditTechnicianViewModelTest {
 
   @Test
   fun savingClearsTheLegacyFieldsItJustReadFrom() = runTest(testDispatcher) {
-    every { technicianManager.loadTechnician(TECH_ID) } returns flowOf(
+    every { technicianManager.loadTechnician(TechnicianId(TECH_ID)) } returns flowOf(
       Technician(
         id = TECH_ID,
         name = "Avery",

@@ -1,9 +1,11 @@
 package dev.fanfly.wingslog.feature.technician.manage.list
 
 import androidx.compose.runtime.Composable
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.ui.grouped.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.grouped.GroupedSection
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Technician
 
 /** One labelled card of roster rows. */
@@ -14,7 +16,7 @@ internal fun TechnicianGroup(
   offered: List<OfferedCertification>,
   onClick: (Technician) -> Unit,
   photoFor: (Technician) -> String?,
-  selfId: String? = null,
+  selfId: TechnicianId? = null,
   isLinked: Boolean = false,
 ) {
   GroupedSection(title) {
@@ -26,7 +28,7 @@ internal fun TechnicianGroup(
             offered = offered,
             onClick = { onClick(technician) },
             photoUri = photoFor(technician),
-            isSelf = technician.id == selfId,
+            isSelf = technician.id == selfId?.value,
             isLinked = isLinked,
           )
         }

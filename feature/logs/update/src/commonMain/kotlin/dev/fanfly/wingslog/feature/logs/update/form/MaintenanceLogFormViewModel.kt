@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.analytics.TaskCompleted
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityRef
@@ -46,6 +47,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -194,10 +196,10 @@ class MaintenanceLogFormViewModel(
       // Stamp the self-record with its owning uid so picking it snapshots provenance into the log
       // (§7.3). Manual entries carry no source_uid — they were typed by hand, not linked to an
       // account. Linked mirrors arrive already stamped with their owner's uid.
-      val self = technicians.find { it.id == selfId }
+      val self = technicians.find { it.id == selfId?.value }
         ?.let { it.copy(source_uid = auth.currentUser?.uid.orEmpty()) }
       val others = technicians
-        .filter { it.id != selfId }
+        .filter { it.id != selfId?.value }
         .sortedBy { it.name.lowercase() }
       Triple(self, listOfNotNull(self) + others, linked)
     }
@@ -207,7 +209,7 @@ class MaintenanceLogFormViewModel(
           state.copy(
             availableTechnicians = available,
             linkedTechnicians = linked,
-            selfTechnicianId = selfTech?.id,
+            selfTechnicianId = selfTech?.id?.let(::TechnicianId),
             knownCertifications = knownCertifications,
             selectedTechnician = newSelected,
           )

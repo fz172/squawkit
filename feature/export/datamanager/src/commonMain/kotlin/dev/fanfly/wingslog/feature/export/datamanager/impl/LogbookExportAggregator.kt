@@ -24,6 +24,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
@@ -166,14 +167,15 @@ class LogbookExportAggregator(
         ?.let { technician -> technician.id to technician }
     }
       .toMap()
-    val missingIds = logs.mapNotNull { log ->
-      log.technician_id.takeIf { id -> id.isNotBlank() }
+    val missingIds: Set<TechnicianId> = logs.mapNotNull { log ->
+      log.technician_id.takeIf { id -> id.isNotBlank() && id !in embedded }
+        ?.let(::TechnicianId)
     }
-      .toSet() - embedded.keys
+      .toSet()
     val resolved = missingIds.mapNotNull { id ->
       technicianManager.loadTechnician(id)
         .first()
-        ?.let { technician -> id to technician }
+        ?.let { technician -> id.value to technician }
     }
       .toMap()
     return embedded + resolved

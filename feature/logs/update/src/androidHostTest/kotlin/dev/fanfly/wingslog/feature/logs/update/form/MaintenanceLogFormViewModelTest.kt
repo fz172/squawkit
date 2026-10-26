@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
@@ -549,7 +550,7 @@ class MaintenanceLogFormViewModelTest {
       every { technicianManager.observeTechnicians() } returns flowOf(
         listOf(Technician(id = SELF_TECH_ID, name = "Sponge Bob"))
       )
-      every { technicianManager.observeSelfId() } returns flowOf(SELF_TECH_ID)
+      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_TECH_ID))
 
       val state = buildViewModelForNew().uiState.value
 
@@ -567,7 +568,7 @@ class MaintenanceLogFormViewModelTest {
         Technician(id = "manual-1", name = "Hand-typed Mechanic"),
       )
     )
-    every { technicianManager.observeSelfId() } returns flowOf(SELF_TECH_ID)
+    every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_TECH_ID))
 
     val available = buildViewModelForNew().uiState.value.availableTechnicians
 
@@ -581,7 +582,7 @@ class MaintenanceLogFormViewModelTest {
       every { technicianManager.observeTechnicians() } returns flowOf(
         listOf(Technician(id = SELF_TECH_ID, name = "Sponge Bob"))
       )
-      every { technicianManager.observeSelfId() } returns flowOf(SELF_TECH_ID)
+      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_TECH_ID))
       every { sharingManager.observeLinkedTechnicians(TEST_THING_ID) } returns flowOf(
         listOf(
           Technician(
@@ -602,7 +603,7 @@ class MaintenanceLogFormViewModelTest {
       assertThat(state.linkedTechnicians.single().source_uid).isEqualTo(
         LINKED_UID
       )
-      assertThat(state.selfTechnicianId).isEqualTo(SELF_TECH_ID)
+      assertThat(state.selfTechnicianId).isEqualTo(TechnicianId(SELF_TECH_ID))
     }
 
   @Test

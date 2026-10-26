@@ -1,23 +1,24 @@
 package dev.fanfly.wingslog.feature.technician.datamanager
 
-import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
-import dev.fanfly.wingslog.thing.Technician
 import kotlinx.coroutines.flow.Flow
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
+import dev.fanfly.wingslog.id.TechnicianId
+import dev.fanfly.wingslog.thing.Technician
 
 interface TechnicianManager {
   fun observeTechnicians(): Flow<List<Technician>>
 
-  fun loadTechnician(id: String): Flow<Technician?>
+  fun loadTechnician(id: TechnicianId): Flow<Technician?>
 
   /** Resolves the current user's technician record via UserInfo.self_technician_id. */
   fun observeSelf(): Flow<Technician?>
 
   /** The raw self-technician ID — exposed separately for list-row badging without double-loading. */
-  fun observeSelfId(): Flow<String?>
+  fun observeSelfId(): Flow<TechnicianId?>
 
   suspend fun updateTechnician(technician: Technician): Result<Boolean>
 
-  suspend fun deleteTechnician(id: String): Result<Boolean>
+  suspend fun deleteTechnician(id: TechnicianId): Result<Boolean>
 
   /**
    * Creates or updates the current user's self-technician record with [name].

@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.ui.sheet.PickerActionButton
 import dev.fanfly.wingslog.core.ui.sheet.PickerDoneButton
@@ -23,6 +24,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.list.TechnicianRow
 import dev.fanfly.wingslog.feature.technician.sharedassets.certification.certificationLines
 import dev.fanfly.wingslog.feature.technician.sharedassets.certification.short
+import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.done
@@ -53,7 +55,7 @@ fun TechnicianPickerSheet(
    */
   linkedTechnicians: List<Technician> = emptyList(),
   /** The caller's own record, listed first. Null when they have no self-technician yet. */
-  selfId: String? = null,
+  selfId: TechnicianId? = null,
 ) =
   PickerSheet(
     onDismiss = onDismiss,
@@ -66,8 +68,8 @@ fun TechnicianPickerSheet(
     }
   ) {
     // Self first, then the linked members, then the manual entries — the order of §7.3.
-    val self = availableTechnicians.filter { it.id == selfId }
-    val manual = availableTechnicians.filter { it.id != selfId }
+    val self = availableTechnicians.filter { it.id == selfId?.value }
+    val manual = availableTechnicians.filter { it.id != selfId?.value }
     // Headers only earn their space once there's a linked section to separate from. Without them,
     // the manual entries sit directly under the linked ones and read as part of that group.
     val grouped = linkedTechnicians.isNotEmpty()
