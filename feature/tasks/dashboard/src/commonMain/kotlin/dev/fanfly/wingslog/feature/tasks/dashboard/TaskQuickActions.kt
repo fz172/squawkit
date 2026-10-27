@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
 import androidx.compose.runtime.Composable
-
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.ui.swipe.SwipeAction
 import dev.fanfly.wingslog.core.ui.swipe.SwipeRevealController

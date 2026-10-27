@@ -9,9 +9,9 @@ import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
-import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 import okio.ByteString.Companion.decodeBase64
+import kotlin.time.Instant
 
 /**
  * The wire shapes of the AI callables and the job document (backend `src/ai/jobs.ts` and

@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.ads.viewing
 
-import dev.fanfly.wingslog.feature.ads.viewing.IosAdViewBridge.build
 import platform.UIKit.UIView
 
 /**

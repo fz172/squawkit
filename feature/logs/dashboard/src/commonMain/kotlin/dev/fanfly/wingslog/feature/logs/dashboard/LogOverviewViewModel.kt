@@ -1,5 +1,13 @@
 package dev.fanfly.wingslog.feature.logs.dashboard
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.ui.text.UiText
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -10,15 +18,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.core.template.TemplateRegistry
-import dev.fanfly.wingslog.core.ui.text.UiText
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.id.ThingId
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.Thing
 import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 

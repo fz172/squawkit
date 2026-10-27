@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.update.form
 
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.launch
-
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -68,24 +65,26 @@ import dev.fanfly.wingslog.feature.logs.update.form.hours.LogTimeTab
 import dev.fanfly.wingslog.feature.logs.update.form.records.LogRecordsTab
 import dev.fanfly.wingslog.feature.logs.update.form.work.LogWorkTab
 import dev.fanfly.wingslog.feature.logs.viewing.DeleteLogConfirmDialog
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.save
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
 import wingslog.feature.logs.sharedassets.generated.resources.log_deleted
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_squawk_work_description
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_task_work_description
-import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.update.generated.resources.delete_this_log_subtitle
 import wingslog.feature.logs.update.generated.resources.delete_this_log_title
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 
 @OptIn(
   ExperimentalMaterial3Api::class,

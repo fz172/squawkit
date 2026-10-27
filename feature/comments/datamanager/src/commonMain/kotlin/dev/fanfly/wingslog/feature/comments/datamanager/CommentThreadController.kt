@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.comments.datamanager
 
+import dev.fanfly.wingslog.feature.comments.model.CommentAction
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
+import dev.fanfly.wingslog.id.CommentId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -10,10 +14,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import dev.fanfly.wingslog.feature.comments.model.CommentAction
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
-import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
-import dev.fanfly.wingslog.id.CommentId
 
 /**
  * The comments tab's whole state machine, shared by the squawk and task edit forms the same way

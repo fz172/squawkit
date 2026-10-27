@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.core.template
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter.sentenceCase
-import dev.fanfly.wingslog.core.template.LexiconFormatter.titleCase
-import dev.fanfly.wingslog.core.template.LexiconFormatter.withArticle
 import dev.fanfly.wingslog.thing.Noun
 
 /**

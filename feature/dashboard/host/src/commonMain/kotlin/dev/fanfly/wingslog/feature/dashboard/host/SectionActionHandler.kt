@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.dashboard.host
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
-
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.dashboard.api.ThingOverviewAction
 import dev.fanfly.wingslog.id.ThingId

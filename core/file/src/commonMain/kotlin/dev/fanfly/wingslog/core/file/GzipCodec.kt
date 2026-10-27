@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.core.file
 
-import dev.fanfly.wingslog.core.file.GzipCodec.isAvailable
-
 
 /**
  * Gzip for the stored raw file (design §5.2). Suspending because the web implementation is a

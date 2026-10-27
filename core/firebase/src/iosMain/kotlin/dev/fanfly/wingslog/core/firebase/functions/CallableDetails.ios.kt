@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.core.firebase.functions
 
 import dev.gitlive.firebase.functions.FirebaseFunctionsException
-import dev.gitlive.firebase.functions.details
 import platform.Foundation.NSDictionary
 
 // gitlive passes the NSError's userInfo["details"] through untouched, an NSDictionary. A bridged

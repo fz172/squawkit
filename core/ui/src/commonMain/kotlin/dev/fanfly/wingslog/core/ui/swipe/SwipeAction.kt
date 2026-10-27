@@ -2,10 +2,7 @@ package dev.fanfly.wingslog.core.ui.swipe
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
-import dev.fanfly.wingslog.core.ui.form.BottomButtons
 
 /** One revealable action of a [SwipeActionCard]. */
 @Immutable

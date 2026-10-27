@@ -26,7 +26,6 @@ import dev.fanfly.wingslog.feature.search.viewing.filter.RecordFilterControls
 import dev.fanfly.wingslog.feature.squawk.model.SquawkAdapter
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -38,6 +37,7 @@ import wingslog.feature.search.sharedassets.generated.resources.search_placehold
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
+import kotlin.time.Clock
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 /** Search, filters, the Open/Closed toggle and the count row that head the squawk list. */

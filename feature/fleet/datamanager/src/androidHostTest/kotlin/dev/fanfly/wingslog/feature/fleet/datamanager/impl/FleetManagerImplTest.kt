@@ -1,9 +1,5 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
-import kotlin.time.Instant
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
@@ -28,8 +24,12 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-456"

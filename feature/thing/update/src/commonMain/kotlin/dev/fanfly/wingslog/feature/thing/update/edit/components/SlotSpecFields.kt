@@ -11,7 +11,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
 import dev.fanfly.wingslog.feature.thing.update.edit.SpecFieldInput
 import dev.fanfly.wingslog.thing.SpecField
-import wingslog.feature.thing.update.generated.resources.make
 
 /**
  * The slot's own declared fields — a tyre's position and its normal pressure.

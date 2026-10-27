@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.datalog.model
 
-import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries.GROUND_SPEED
-
 
 /**
  * The namespaced ids presets, defaults and derived rules speak (design §6.3). A recorder's own

@@ -17,9 +17,6 @@ import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
 import dev.fanfly.wingslog.thing.ComponentSlot
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
-import wingslog.feature.thing.update.generated.resources.make
-import wingslog.feature.thing.update.generated.resources.model
-import wingslog.feature.thing.update.generated.resources.serial
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /** Add control for [slot] under [parentPath]; nothing when the slot cannot take another. */

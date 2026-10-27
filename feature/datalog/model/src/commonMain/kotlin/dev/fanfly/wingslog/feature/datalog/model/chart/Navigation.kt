@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.datalog.model.chart
 
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
-import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation.MIN_SPAN_SECONDS
 import kotlin.math.roundToInt
 
 /**

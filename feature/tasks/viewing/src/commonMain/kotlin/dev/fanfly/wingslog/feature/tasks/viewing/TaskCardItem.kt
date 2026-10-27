@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
-import dev.fanfly.wingslog.feature.tasks.model.isAiSuggested
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CalendarToday
@@ -18,6 +17,7 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.feature.tasks.model.isAiSuggested
 import dev.fanfly.wingslog.task.MaintenanceTask
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource

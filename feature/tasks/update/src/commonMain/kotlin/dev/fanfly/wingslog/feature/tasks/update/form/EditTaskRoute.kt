@@ -7,9 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
@@ -22,12 +19,14 @@ import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.task_updated
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 @Composable
 fun EditTaskRoute(

@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.export.update.selection
 
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat

@@ -11,7 +11,6 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Thing
 
 /**

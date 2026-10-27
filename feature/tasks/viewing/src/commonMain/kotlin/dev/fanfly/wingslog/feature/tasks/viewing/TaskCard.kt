@@ -1,15 +1,12 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.tasks.sharedassets.generated.resources.suggested_by_ai
-import org.jetbrains.compose.resources.stringResource
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +27,9 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.tasks.sharedassets.generated.resources.suggested_by_ai
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
 fun TaskCard(

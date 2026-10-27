@@ -1,20 +1,20 @@
 package dev.fanfly.wingslog.feature.attachment.viewing.pdf
 
-import androidx.core.os.BundleCompat
-import android.view.View
-import android.net.Uri
-import android.content.Intent
 import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.FrameLayout
+import androidx.core.os.BundleCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
-import androidx.pdf.PdfDocument
 import androidx.pdf.ExperimentalPdfApi
+import androidx.pdf.PdfDocument
 import androidx.pdf.viewer.fragment.PdfViewerFragment
 
 /**

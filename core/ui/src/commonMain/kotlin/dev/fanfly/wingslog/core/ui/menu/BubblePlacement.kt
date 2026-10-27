@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.ui.menu
 
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize

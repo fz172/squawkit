@@ -5,11 +5,7 @@ import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.ComponentNode
 import dev.fanfly.wingslog.core.template.ComponentRow
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
-import dev.fanfly.wingslog.feature.thing.update.edit.EditThingUiState
 import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
-import wingslog.feature.thing.update.generated.resources.make
-import wingslog.feature.thing.update.generated.resources.model
-import wingslog.feature.thing.update.generated.resources.serial
 
 /**
  * The slot's fields: the make/model/serial triple, then whatever else the slot declares.

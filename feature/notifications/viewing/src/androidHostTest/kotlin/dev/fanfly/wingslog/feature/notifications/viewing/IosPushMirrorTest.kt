@@ -19,8 +19,8 @@ import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
-import java.io.File
 import org.junit.Test
+import java.io.File
 
 /**
  * The iOS notification service extension's Swift copy of this module's push code, held to the

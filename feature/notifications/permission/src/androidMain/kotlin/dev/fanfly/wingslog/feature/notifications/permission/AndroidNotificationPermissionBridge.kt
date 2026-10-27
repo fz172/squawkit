@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.notifications.permission
 
 import androidx.activity.result.ActivityResultLauncher
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.feature.notifications.permission.AndroidNotificationPermissionBridge.attach
 import kotlinx.coroutines.CompletableDeferred
 
 /**

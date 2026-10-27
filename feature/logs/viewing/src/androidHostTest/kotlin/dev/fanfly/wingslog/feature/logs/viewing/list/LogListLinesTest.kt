@@ -3,9 +3,9 @@ package dev.fanfly.wingslog.feature.logs.viewing.list
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import org.junit.Test
+import kotlin.time.Instant
 
 class LogListLinesTest {
 

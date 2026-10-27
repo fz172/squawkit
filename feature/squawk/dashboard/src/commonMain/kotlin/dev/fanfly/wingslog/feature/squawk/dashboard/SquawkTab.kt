@@ -46,7 +46,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
-import dev.fanfly.wingslog.feature.squawk.dashboard.detail.SquawkDetailUiState
 import dev.fanfly.wingslog.feature.squawk.dashboard.detail.SquawkDetailViewModel
 import dev.fanfly.wingslog.feature.squawk.dashboard.detail.SquawkTabDialogs
 import dev.fanfly.wingslog.feature.squawk.dashboard.detail.squawkDetailFor

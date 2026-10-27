@@ -21,7 +21,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.core.ui.badge.StatusChip
-import dev.fanfly.wingslog.core.ui.swipe.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /**

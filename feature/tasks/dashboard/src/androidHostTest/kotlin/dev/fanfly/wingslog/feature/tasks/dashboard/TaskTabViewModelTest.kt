@@ -1,23 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
-import kotlin.time.Clock
-import kotlin.time.Instant
-
 import com.google.common.truth.Truth.assertThat
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.search.model.Facet
@@ -33,6 +16,21 @@ import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 private val THING = ThingId("thing-1")
 private val TEMPLATE = TemplateId("airplane")

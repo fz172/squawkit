@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.login.upgrade
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import dev.fanfly.wingslog.feature.login.data.EmailLinkStore
 
 /**
  * Remembers the address an upgrade link was sent to, so the confirmation step can name it after the

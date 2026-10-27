@@ -1,8 +1,7 @@
 package dev.fanfly.wingslog.core.storage
 
-import kotlinx.coroutines.flow.Flow
-
 import dev.fanfly.wingslog.id.ThingId
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Resolves the [EntityScope] that holds a thing's nested maintenance data (logs, tasks,

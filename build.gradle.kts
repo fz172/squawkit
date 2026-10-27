@@ -63,7 +63,35 @@ val checkPopupSelectionScopes by tasks.registering(Exec::class) {
     }
   }
 }
+
+val checkKotlinImports by tasks.registering(Exec::class) {
+  group = "verification"
+  description =
+    "Checks Kotlin import ordering and wildcard rules match Android Studio / .editorconfig"
+  val script =
+    layout.projectDirectory.file("scripts/check-kotlin-imports.sh")
+  inputs.file(script)
+  inputs.files(
+    fileTree(layout.projectDirectory) {
+      include("**/src/**/*.kt", "**/src/**/*.kts")
+      exclude("**/build/**", "**/node_modules/**", ".gradle/**")
+    }
+  )
+  val marker = layout.buildDirectory.file("reports/kotlin-imports.txt")
+  outputs.file(marker)
+  commandLine("bash", script.asFile.absolutePath)
+  doLast {
+    marker.get().asFile.apply {
+      parentFile.mkdirs()
+      writeText("ok\n")
+    }
+  }
+}
+
 allprojects {
   tasks.matching { it.name == "lint" }
-    .configureEach { dependsOn(checkPopupSelectionScopes) }
+    .configureEach {
+      dependsOn(checkPopupSelectionScopes)
+      dependsOn(checkKotlinImports)
+    }
 }

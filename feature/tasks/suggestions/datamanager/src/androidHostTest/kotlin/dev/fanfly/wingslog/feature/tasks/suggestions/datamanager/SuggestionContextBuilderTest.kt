@@ -1,9 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
-import kotlin.time.Instant
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
-
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -34,7 +30,10 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import kotlin.time.Instant
 
 class SuggestionContextBuilderTest {
 

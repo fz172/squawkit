@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.template.canonical
 
-import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates.ALL
 import dev.fanfly.wingslog.thing.ThingTemplate
 import okio.ByteString.Companion.decodeBase64
 

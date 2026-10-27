@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.comments.datamanager
 
-import kotlinx.coroutines.flow.Flow
 import dev.fanfly.wingslog.feature.comments.model.CommentEntry
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.id.CommentId
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Comments on one record — a squawk or a maintenance task — under a Thing.

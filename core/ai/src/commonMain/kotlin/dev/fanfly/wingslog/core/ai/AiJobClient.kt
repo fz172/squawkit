@@ -4,10 +4,10 @@ import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
-import kotlin.jvm.JvmInline
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import okio.ByteString
+import kotlin.jvm.JvmInline
+import kotlin.time.Instant
 
 /**
  * The app's one door to the AI backend (docs/ai/task_population_design.md §7.1): the three

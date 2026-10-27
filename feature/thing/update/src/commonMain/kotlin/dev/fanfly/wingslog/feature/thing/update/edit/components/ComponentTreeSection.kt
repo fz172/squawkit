@@ -11,7 +11,6 @@ import dev.fanfly.wingslog.core.template.slotsUnder
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
 import dev.fanfly.wingslog.thing.Thing
-import wingslog.core.sharedassets.generated.resources.add
 
 /**
  * The component tree, drawn from the slots the template declares (#729).

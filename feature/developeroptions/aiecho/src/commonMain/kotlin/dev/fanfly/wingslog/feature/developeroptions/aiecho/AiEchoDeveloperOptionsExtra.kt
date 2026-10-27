@@ -24,7 +24,6 @@ import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
-import kotlin.time.DurationUnit
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.developeroptions.aiecho.generated.resources.Res
@@ -42,6 +41,7 @@ import wingslog.feature.developeroptions.aiecho.generated.resources.ai_echo_step
 import wingslog.feature.developeroptions.aiecho.generated.resources.ai_echo_step_starting
 import wingslog.feature.developeroptions.aiecho.generated.resources.ai_echo_timed_out
 import wingslog.feature.developeroptions.aiecho.generated.resources.ai_echo_title
+import kotlin.time.DurationUnit
 
 /**
  * The AI backend's Developer Options section: one button that runs [AiEchoRoundTrip] and shows

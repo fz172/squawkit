@@ -1,11 +1,8 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
-import wingslog.core.sharedassets.generated.resources.cancel
 
 /** Plain UI state for [ManageAccessScreen]; produced by the host-side ManageAccessViewModel. */
 data class ManageAccessUiState(

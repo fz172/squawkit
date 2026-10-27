@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.feature.search.datamanager
 
-import dev.fanfly.wingslog.feature.search.datamanager.Tokenizer.normalize
-import dev.fanfly.wingslog.feature.search.datamanager.Tokenizer.queryTokens
-
 
 /** Lowercase, accent-folded tokens; serials and references are kept whole and also split. */
 object Tokenizer {

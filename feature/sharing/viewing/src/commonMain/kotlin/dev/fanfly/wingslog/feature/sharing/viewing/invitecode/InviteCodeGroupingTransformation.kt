@@ -1,12 +1,9 @@
 package dev.fanfly.wingslog.feature.sharing.viewing.invitecode
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import dev.fanfly.wingslog.feature.sharing.viewing.text
 
 /**
  * Renders the EFA2-GGTH grouping as display-only, over a raw (undashed) field value. The dash is

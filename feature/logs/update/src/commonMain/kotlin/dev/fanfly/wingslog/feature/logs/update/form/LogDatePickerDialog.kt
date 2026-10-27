@@ -6,7 +6,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.ui.popup.DatePickerDialog
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -14,6 +13,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.ok
+import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /** The maintenance-date picker, seeded with the current date so re-opening lands on it. */

@@ -10,7 +10,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.optionLabel
 import dev.fanfly.wingslog.thing.ComponentType
-import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -19,6 +18,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.search.sharedassets.generated.resources.Res
 import wingslog.feature.search.sharedassets.generated.resources.custom_from
 import wingslog.feature.search.sharedassets.generated.resources.custom_to
+import kotlin.time.Clock
 
 internal val COMPONENT_OPTIONS = listOf(
   ComponentType.COMPONENT_AIRFRAME,

@@ -4,8 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Noun
-import java.io.File
 import org.junit.Test
+import java.io.File
 
 /**
  * **The aviation cohort's copy guardrail** (PRD §13; `pivot_rollout_design.md` §8).

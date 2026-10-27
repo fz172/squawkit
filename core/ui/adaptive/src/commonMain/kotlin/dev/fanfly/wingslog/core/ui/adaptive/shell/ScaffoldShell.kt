@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingNavItem
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingPillNavBarHeight
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingPillNavigationBar
-import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.LocalNavPillClearance
 
 /** COMPACT: section content under a floating pill bottom nav, with the switcher in the top bar. */
 @OptIn(ExperimentalComposeUiApi::class)

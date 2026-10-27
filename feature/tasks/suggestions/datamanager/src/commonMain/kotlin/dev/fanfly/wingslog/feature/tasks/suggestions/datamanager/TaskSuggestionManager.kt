@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
-import kotlinx.coroutines.flow.Flow
-
 import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobId
@@ -14,6 +12,7 @@ import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksResult
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Attachment
+import kotlinx.coroutines.flow.Flow
 
 /**
  * AI task suggestions for one Thing (docs/ai/task_population_design.md §7.3): ask whether a run is

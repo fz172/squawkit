@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.squawk.datamanager
 
-import kotlinx.coroutines.flow.Flow
 import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
+import kotlinx.coroutines.flow.Flow
 
 interface SquawkManager {
   fun observeSquawks(thingId: ThingId): Flow<List<Squawk>>

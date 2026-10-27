@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.core.ui.brand
 
 import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.PLATE_COUNT
+import dev.fanfly.wingslog.core.ui.brand.ThingHeroTimeline.IDLE_RISE
+import dev.fanfly.wingslog.core.ui.brand.ThingHeroTimeline.IDLE_SPREAD
 import kotlin.math.PI
 import kotlin.math.sin
 

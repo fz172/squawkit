@@ -1,21 +1,17 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.decode
-import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.deliver
-import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.encode
-import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.pending
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 private const val SCHEME = "wingslog"
 private const val HOST = "notification-tap"

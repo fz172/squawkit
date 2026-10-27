@@ -22,9 +22,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.dashboard.generated.resources.Res
+import wingslog.feature.tasks.dashboard.generated.resources.suggestions_ready_from
 import wingslog.feature.tasks.dashboard.generated.resources.suggestions_ready_many
 import wingslog.feature.tasks.dashboard.generated.resources.suggestions_ready_one
-import wingslog.feature.tasks.dashboard.generated.resources.suggestions_ready_from
 import wingslog.feature.tasks.dashboard.generated.resources.suggestions_review
 
 /**

@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.core.ui.badge
 
-import androidx.compose.foundation.border
-
 /**
  * Read-only informational banner for summarising a multi-step form's current state.
  *

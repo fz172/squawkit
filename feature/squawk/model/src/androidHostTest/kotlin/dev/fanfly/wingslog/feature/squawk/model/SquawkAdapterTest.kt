@@ -7,10 +7,10 @@ import dev.fanfly.wingslog.feature.search.model.TimeDirection
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkPriority
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.junit.Test
+import kotlin.time.Instant
 
 class SquawkAdapterTest {
 

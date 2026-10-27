@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.core.template
 
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate.Companion.ALL_ENABLED
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate.Companion.UNKNOWN_TEMPLATE_ID
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate

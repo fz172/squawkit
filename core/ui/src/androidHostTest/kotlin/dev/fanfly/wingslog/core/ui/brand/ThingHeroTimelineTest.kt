@@ -5,8 +5,8 @@ import dev.fanfly.wingslog.core.ui.brand.BrandStackGeometry.PLATE_COUNT
 import dev.fanfly.wingslog.core.ui.brand.ThingHeroTimeline.SHEET_COUNT
 import dev.fanfly.wingslog.core.ui.brand.ThingHeroTimeline.SHEET_PLATES
 import dev.fanfly.wingslog.core.ui.brand.ThingHeroTimeline.TOTAL_MS
-import kotlin.math.abs
 import org.junit.Test
+import kotlin.math.abs
 
 class ThingHeroTimelineTest {
 

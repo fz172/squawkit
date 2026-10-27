@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import kotlinx.coroutines.flow.Flow
-
 import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
@@ -12,6 +10,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Local-first attachment coordinator. See docs/storage/storage_r2_design.md §6.2.

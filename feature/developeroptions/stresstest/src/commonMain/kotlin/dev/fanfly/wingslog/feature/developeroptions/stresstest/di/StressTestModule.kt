@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.developeroptions.stresstest.di
 
+import dev.fanfly.wingslog.feature.developeroptions.stresstest.StressTestViewModel
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.fanfly.wingslog.feature.developeroptions.stresstest.StressTestViewModel
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import org.koin.core.module.dsl.viewModel

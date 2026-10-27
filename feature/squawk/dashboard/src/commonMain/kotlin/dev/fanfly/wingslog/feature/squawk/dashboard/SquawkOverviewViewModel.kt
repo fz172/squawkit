@@ -1,20 +1,18 @@
 package dev.fanfly.wingslog.feature.squawk.dashboard
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
+import dev.fanfly.wingslog.feature.squawk.model.openAog
+import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.core.model.id.value
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
-import dev.fanfly.wingslog.feature.squawk.model.openAog
-import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
-import dev.fanfly.wingslog.id.ThingId
 
 /**
  * Provides the squawk slice of the Overview (`DASHBOARD`) section: down/AOG squawks for the

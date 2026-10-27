@@ -14,10 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
-
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.thingNoun
@@ -37,13 +33,14 @@ import dev.fanfly.wingslog.feature.tasks.dashboard.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.tasks.dashboard.detail.TaskDetailDialogs
 import dev.fanfly.wingslog.feature.tasks.dashboard.detail.TaskDetailViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.detail.taskDetailFor
-import dev.fanfly.wingslog.id.MaintenanceLogId
-import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
-import wingslog.feature.dashboard.host.generated.resources.Res as DashboardRes
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import wingslog.feature.dashboard.host.generated.resources.thing_load_error
+import wingslog.feature.dashboard.host.generated.resources.Res as DashboardRes
 
 /**
  * Renders the content of a single adaptive-shell [dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection] for a given thing (M3).

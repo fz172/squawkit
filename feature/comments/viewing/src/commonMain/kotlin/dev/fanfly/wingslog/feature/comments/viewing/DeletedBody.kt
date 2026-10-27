@@ -6,10 +6,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
 import dev.fanfly.wingslog.core.datetime.toDisplayDateTime
-import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.comments.sharedassets.generated.resources.Res
 import wingslog.feature.comments.sharedassets.generated.resources.comment_deleted
+import kotlin.time.Instant
 
 /**
  * What a deleted comment says instead of its text. Struck through and muted, so it reads as a gap

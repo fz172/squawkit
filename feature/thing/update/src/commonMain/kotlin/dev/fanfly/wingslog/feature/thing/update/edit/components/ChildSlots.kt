@@ -5,7 +5,6 @@ import dev.fanfly.wingslog.core.template.ComponentNode
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.slotsUnder
 import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
-import wingslog.core.sharedassets.generated.resources.add
 
 /**
  * [node]'s children, slot by slot, each followed by its own add button.

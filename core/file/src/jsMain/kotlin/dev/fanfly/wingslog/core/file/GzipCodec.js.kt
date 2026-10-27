@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.file
 
-import dev.fanfly.wingslog.core.file.GzipCodec.isAvailable
 import kotlinx.coroutines.await
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int8Array

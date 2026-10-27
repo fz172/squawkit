@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.technician.datamanager
 
-import kotlinx.coroutines.flow.Flow
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.thing.Technician
+import kotlinx.coroutines.flow.Flow
 
 interface TechnicianManager {
   fun observeTechnicians(): Flow<List<Technician>>

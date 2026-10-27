@@ -4,8 +4,6 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.SyncPermissionDeniedWrite
 import dev.fanfly.wingslog.core.analytics.SyncShareReconciled
 import dev.fanfly.wingslog.core.analytics.log
-import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry.Companion.TRIGGER_DENIED_READ
-import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry.Companion.TRIGGER_DENIED_WRITE
 
 /**
  * The sharing safety valve from the PRD (§9 Success Metrics): denied writes should sit at ~zero.

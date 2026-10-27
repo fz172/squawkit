@@ -24,8 +24,6 @@ import dev.fanfly.wingslog.feature.search.viewing.filter.ChoiceChip
 import dev.fanfly.wingslog.feature.search.viewing.filter.FilterSection
 import dev.fanfly.wingslog.feature.search.viewing.filter.RecordFilterControls
 import dev.fanfly.wingslog.thing.ComponentType
-import kotlin.time.Clock
-import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -33,6 +31,7 @@ import wingslog.feature.search.sharedassets.generated.resources.filter_all_peopl
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_happened
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_who_signed
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_worked_on
+import kotlin.time.Clock
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 /** The filter sheet (a panel on wide tiers) with the "who signed" facet the log list adds to it. */

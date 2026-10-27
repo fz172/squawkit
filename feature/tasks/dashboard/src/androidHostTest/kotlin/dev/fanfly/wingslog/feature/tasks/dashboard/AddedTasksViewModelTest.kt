@@ -1,6 +1,10 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -16,11 +20,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
-import dev.fanfly.wingslog.id.MaintenanceTaskId
-import dev.fanfly.wingslog.id.ThingId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddedTasksViewModelTest {

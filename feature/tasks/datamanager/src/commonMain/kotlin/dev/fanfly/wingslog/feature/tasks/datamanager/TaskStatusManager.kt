@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager
 
-import kotlinx.coroutines.flow.Flow
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.id.ThingId
+import kotlinx.coroutines.flow.Flow
 
 /** The one place due status is computed. Every screen that shows it reads from here. */
 interface TaskStatusManager {

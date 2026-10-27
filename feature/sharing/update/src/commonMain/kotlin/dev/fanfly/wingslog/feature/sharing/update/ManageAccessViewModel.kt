@@ -1,11 +1,5 @@
 package dev.fanfly.wingslog.feature.sharing.update
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +18,11 @@ import dev.fanfly.wingslog.feature.sharing.viewing.AccessToast
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessUiState
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.id.ThingId
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * Drives the Manage Access panel for one thing: the (online-only) Firestore roster + pending

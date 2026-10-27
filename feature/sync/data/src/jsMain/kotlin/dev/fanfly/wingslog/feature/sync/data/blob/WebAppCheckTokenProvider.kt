@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
-import dev.fanfly.wingslog.feature.sync.data.blob.WebAppCheckBridge.tokenSource
 import kotlinx.coroutines.await
 import kotlin.js.Promise
 

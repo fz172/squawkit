@@ -1,18 +1,5 @@
 package dev.fanfly.wingslog.feature.comments.datamanager.impl
 
-import kotlin.time.Clock
-import kotlin.time.Instant
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toInstant
 import dev.fanfly.wingslog.core.datetime.toWireInstant
@@ -36,6 +23,19 @@ import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.CommentParentType
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 class CommentManagerImpl(
   private val scopeResolver: ThingScopeResolver,

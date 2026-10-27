@@ -2,8 +2,6 @@ package dev.fanfly.wingslog
 
 import androidx.compose.ui.window.ComposeUIViewController
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.MainEntry.installAppCheckTokenProvider
-import dev.fanfly.wingslog.MainEntry.installConsentFormPresenter
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.IosAppleSignInBridge
 import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge

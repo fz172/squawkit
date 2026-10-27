@@ -8,11 +8,11 @@ import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
-import kotlin.time.Instant
 import kotlinx.serialization.descriptors.elementNames
 import kotlinx.serialization.serializer
 import okio.ByteString.Companion.toByteString
 import org.junit.Test
+import kotlin.time.Instant
 
 class AiWireTest {
 

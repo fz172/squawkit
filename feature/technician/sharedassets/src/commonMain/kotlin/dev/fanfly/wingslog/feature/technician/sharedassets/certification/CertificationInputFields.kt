@@ -18,12 +18,12 @@ import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.popup.DropdownMenu
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.CertExpireLimit
-import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
 import wingslog.feature.technician.sharedassets.generated.resources.add_certification
 import wingslog.feature.technician.sharedassets.generated.resources.certifications
 import wingslog.feature.technician.sharedassets.generated.resources.custom_certification
+import kotlin.time.Instant
 
 /**
  * The certifications a person holds, added from what the account's templates declare (PRD §8.6).

@@ -1,9 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-
-import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -26,6 +22,8 @@ import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.ThingTemplate
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 
 /**
  * The request an AI suggestion run sends about one Thing (docs/ai/task_population_design.md §7.2,

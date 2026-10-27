@@ -3,8 +3,8 @@ import androidx.compose.ui.window.ComposeViewport
 import dev.fanfly.wingslog.core.appinfo.configureLogging
 import dev.fanfly.wingslog.core.appinfo.createAppCapability
 import dev.fanfly.wingslog.core.di.commonAppModules
-import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.developeroptions.stresstest.config.stressTestKoinModules
+import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.WebAppCheckBridge
 import dev.fanfly.wingslog.web.ActiveElsewhereScreen

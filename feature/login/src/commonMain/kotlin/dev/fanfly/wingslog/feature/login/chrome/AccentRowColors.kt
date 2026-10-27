@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.login.chrome
 
-import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable

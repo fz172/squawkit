@@ -1,0 +1,27 @@
+# Android Studio / IntelliJ code style and import configuration
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_size = 2
+continuation_indent_size = 2
+indent_style = space
+max_line_length = 80
+
+# Android Studio Kotlin import layout (Gold Standard):
+# 1. All regular/project imports alphabetically (including kotlinx.*)
+# 2. java.**
+# 3. javax.**
+# 4. kotlin.**
+# 5. Import aliases (^, e.g. import foo as bar)
+# No blank lines between groups
+ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
+
+# Prevent wildcard/star imports (enforces explicit single imports)
+ij_kotlin_name_count_to_use_star_import = 999
+ij_kotlin_name_count_to_use_star_import_for_members = 999

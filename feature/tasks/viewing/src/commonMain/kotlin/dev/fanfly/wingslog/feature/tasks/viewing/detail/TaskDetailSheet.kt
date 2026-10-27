@@ -1,25 +1,23 @@
 package dev.fanfly.wingslog.feature.tasks.viewing.detail
 
-import wingslog.feature.tasks.sharedassets.generated.resources.suggested_by_ai
-import dev.fanfly.wingslog.feature.tasks.model.isAiSuggested
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Icon
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.Icons
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -36,6 +34,7 @@ import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.feature.tasks.model.isAiSuggested
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.thing.Attachment
@@ -46,6 +45,7 @@ import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_s
 import wingslog.feature.tasks.sharedassets.generated.resources.create_work_log
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
 import wingslog.feature.tasks.sharedassets.generated.resources.skip_this_cycle_option
+import wingslog.feature.tasks.sharedassets.generated.resources.suggested_by_ai
 import wingslog.feature.tasks.viewing.generated.resources.authority_reference_number
 import wingslog.feature.tasks.viewing.generated.resources.no_maintenance_logs_for_task
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes

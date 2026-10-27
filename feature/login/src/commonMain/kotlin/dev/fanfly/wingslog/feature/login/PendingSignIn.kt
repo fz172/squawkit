@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.login
 
-import dev.fanfly.wingslog.feature.login.email.EmailSignInScreen
-
 /**
  * Which sign-in request is awaiting a result, so only that row shows progress while the rest are
  * locked. Null means idle.

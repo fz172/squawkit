@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.auth
 
-import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks.pendingLink
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

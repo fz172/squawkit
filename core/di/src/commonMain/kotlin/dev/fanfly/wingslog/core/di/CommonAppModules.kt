@@ -15,8 +15,8 @@ import dev.fanfly.wingslog.feature.ads.di.adsModule
 import dev.fanfly.wingslog.feature.attachment.di.attachmentModule
 import dev.fanfly.wingslog.feature.comments.datamanager.commentsModule
 import dev.fanfly.wingslog.feature.dashboard.di.dashboardModule
-import dev.fanfly.wingslog.feature.developeroptions.aiecho.di.aiEchoModule
 import dev.fanfly.wingslog.feature.datalog.di.dataLogModule
+import dev.fanfly.wingslog.feature.developeroptions.aiecho.di.aiEchoModule
 import dev.fanfly.wingslog.feature.export.di.exportModule
 import dev.fanfly.wingslog.feature.fleet.di.fleetModule
 import dev.fanfly.wingslog.feature.login.di.loginModule

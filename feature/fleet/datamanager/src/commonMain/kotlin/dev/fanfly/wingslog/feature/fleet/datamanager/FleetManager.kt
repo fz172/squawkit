@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager
 
-import kotlinx.coroutines.flow.Flow
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Thing
+import kotlinx.coroutines.flow.Flow
 
 /**
  * One thing on the fleet dashboard, tagged with how the current user relates to it.

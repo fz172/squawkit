@@ -1,12 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-
 import com.google.common.truth.Truth.assertThat
-import com.squareup.wire.Instant as WireInstant
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
@@ -25,7 +19,12 @@ import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Thing
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import org.junit.Test
+import com.squareup.wire.Instant as WireInstant
 
 class LogbookExportAggregatorTest {
 

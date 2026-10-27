@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.comments.viewing
 
-import kotlin.time.Instant
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,6 +21,7 @@ import dev.fanfly.wingslog.id.CommentId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.comments.sharedassets.generated.resources.Res
 import wingslog.feature.comments.sharedassets.generated.resources.comments_empty
+import kotlin.time.Instant
 
 /**
  * A record's comments, oldest first. The box they are written in is [CommentComposer].

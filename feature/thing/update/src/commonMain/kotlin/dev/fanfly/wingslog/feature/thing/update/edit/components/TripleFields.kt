@@ -8,8 +8,6 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.ComponentRow
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.edit.EditThingViewModel
-import wingslog.feature.thing.update.generated.resources.model
-import wingslog.feature.thing.update.generated.resources.serial
 
 /** Make, model and serial — the three every component carries, however the slot packs them. */
 @Composable

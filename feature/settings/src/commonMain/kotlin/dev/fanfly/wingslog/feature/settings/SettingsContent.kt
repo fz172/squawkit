@@ -10,12 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -39,7 +36,6 @@ import dev.fanfly.wingslog.feature.settings.section.DataSection
 import dev.fanfly.wingslog.feature.settings.section.PreferencesSection
 import dev.fanfly.wingslog.feature.settings.section.SupportSection
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.sharedassets.generated.resources.settings
 
 /**
  * The settings body — the profile card (who you are, what plan you are on), then Preferences,

@@ -1,9 +1,6 @@
 package dev.fanfly.wingslog.feature.ads.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge.isConsentRequired
-import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge.presentConsentForm
-import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge.resetConsent
 import dev.fanfly.wingslog.feature.ads.model.AdConsentState
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull

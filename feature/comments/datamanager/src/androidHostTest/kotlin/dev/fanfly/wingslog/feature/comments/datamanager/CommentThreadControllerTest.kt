@@ -1,6 +1,13 @@
 package dev.fanfly.wingslog.feature.comments.datamanager
 
-import kotlin.time.Instant
+import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.feature.comments.model.CommentAction
+import dev.fanfly.wingslog.feature.comments.model.CommentEntry
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.id.CommentId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -9,16 +16,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.model.id.value
-import dev.fanfly.wingslog.feature.comments.model.CommentAction
-import dev.fanfly.wingslog.feature.comments.model.CommentEntry
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
-import dev.fanfly.wingslog.id.CommentId
-import dev.fanfly.wingslog.id.SquawkId
-import dev.fanfly.wingslog.id.ThingId
 import org.junit.Test
+import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CommentThreadControllerTest {

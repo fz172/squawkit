@@ -19,14 +19,13 @@ import dev.fanfly.wingslog.feature.login.chrome.LoginLegalFooter
 import dev.fanfly.wingslog.feature.login.chrome.LoginMark
 import dev.fanfly.wingslog.feature.login.chrome.LoginScaffold
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.back
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.email_invalid
 import wingslog.feature.login.generated.resources.email_link_error
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val ResendCooldownSeconds = 60
 

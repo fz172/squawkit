@@ -1,13 +1,5 @@
 package dev.fanfly.wingslog.feature.developeroptions.aiecho
 
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.TimeSource
-
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
-import okio.ByteString
-
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobClient
 import dev.fanfly.wingslog.core.ai.AiStartResult
@@ -18,6 +10,12 @@ import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksRequest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import okio.ByteString
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource
 
 /**
  * One echo job, end to end (AI_JOB_KIND_ECHO; phase A's exit, docs/ai/task_population_design.md

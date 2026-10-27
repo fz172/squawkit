@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
-import com.squareup.wire.Instant as WireInstant
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
@@ -15,6 +14,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import org.junit.Test
 import kotlin.time.Duration.Companion.hours
+import com.squareup.wire.Instant as WireInstant
 
 /**
  * Reading meter values by key (#730).

@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.subscription.model
 
-import dev.fanfly.wingslog.feature.subscription.model.UnsupportedBillingManager.isPurchaseSupported
 import kotlinx.coroutines.flow.Flow
 
 /**

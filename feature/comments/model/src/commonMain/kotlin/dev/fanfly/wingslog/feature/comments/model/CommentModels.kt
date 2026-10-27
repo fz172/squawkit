@@ -1,13 +1,12 @@
 package dev.fanfly.wingslog.feature.comments.model
 
-import kotlin.time.Instant
-
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.id.CommentId
 import dev.fanfly.wingslog.id.CommentParentId
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
+import kotlin.time.Instant
 
 /**
  * Which kind of record a thread hangs off.

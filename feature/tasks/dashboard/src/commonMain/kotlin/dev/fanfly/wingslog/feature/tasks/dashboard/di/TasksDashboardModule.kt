@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard.di
 
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.module
-
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
@@ -22,6 +19,8 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionE
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
 import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
 
 /**
  * The tasks section tab: its filter/search ViewModel, its suggestions state and the tasks just

@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard.detail
 
-import kotlinx.coroutines.launch
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,8 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.compose.koinInject
-
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.text.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -27,6 +23,8 @@ import dev.fanfly.wingslog.feature.tasks.viewing.detail.TaskDetailSheet
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.ThingId
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 /**
  * The open task's detail, which a wide tier hosts as a pane beside the list and a phone as a

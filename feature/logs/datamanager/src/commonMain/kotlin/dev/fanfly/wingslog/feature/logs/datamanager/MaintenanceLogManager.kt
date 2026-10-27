@@ -1,13 +1,12 @@
 package dev.fanfly.wingslog.feature.logs.datamanager
 
-import kotlinx.coroutines.flow.Flow
-
 import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.ManualMeterReading
+import kotlinx.coroutines.flow.Flow
 
 interface MaintenanceLogManager {
   /**

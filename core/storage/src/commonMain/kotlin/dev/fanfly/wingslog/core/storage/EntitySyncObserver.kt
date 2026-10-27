@@ -3,13 +3,13 @@ package dev.fanfly.wingslog.core.storage
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
 
 /**
  * Whether a local row has reached Firestore yet. A server check that reads Firestore, such as the AI

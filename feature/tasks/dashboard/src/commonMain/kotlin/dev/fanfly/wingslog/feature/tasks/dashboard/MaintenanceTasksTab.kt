@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
-import kotlin.math.roundToInt
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,12 +23,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import org.jetbrains.compose.resources.getString
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
-
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
@@ -46,9 +38,15 @@ import dev.fanfly.wingslog.feature.tasks.dashboard.detail.TaskDetailViewModel
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.getString
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import wingslog.feature.tasks.dashboard.generated.resources.Res
 import wingslog.feature.tasks.dashboard.generated.resources.tasks_added
 import wingslog.feature.tasks.dashboard.generated.resources.undo
+import kotlin.math.roundToInt
 
 @Composable
 fun MaintenanceTasksTab(

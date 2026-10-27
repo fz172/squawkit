@@ -1,12 +1,11 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
 
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
-
-import dev.fanfly.wingslog.id.MaintenanceTaskId
-import dev.fanfly.wingslog.id.ThingId
 
 /**
  * The suggested tasks just added, held in memory for the task tab (1f): it says how many with an

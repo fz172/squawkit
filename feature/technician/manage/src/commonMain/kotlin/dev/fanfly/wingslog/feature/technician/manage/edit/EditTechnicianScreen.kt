@@ -43,7 +43,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.sharedassets.certification.CertificationInputFields
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
-import wingslog.core.sharedassets.generated.resources.save
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.certifications
 import wingslog.feature.technician.sharedassets.generated.resources.delete_technician

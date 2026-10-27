@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.popup.DropdownMenu
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_delete
 import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_download

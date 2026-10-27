@@ -627,7 +627,9 @@ reviewable.
    `kotlinx.coroutines.flow.flowOf(...)` should become an `import` plus `flowOf(...)`.
 2. **Trailing blank lines** at the end of files.
 3. **Extra blank lines** — collapse double-or-more blank lines where one is expected.
-4. **Import ordering** — `kotlin.*` before `kotlinx.*`, alphabetical within each group.
+4. **Import ordering** — follow Android Studio's gold standard (`.editorconfig` / `scripts/check-kotlin-imports.sh`):
+   regular imports alphabetical (including `kotlinx.*`), then `java.*` / `javax.*`, then `kotlin.*`,
+   then aliases (`as ...`). No blank lines inside the import block. No wildcard imports.
 5. **Other formatting issues** — inconsistent indentation, long lines that should wrap.
 
 ### Popups start their own text-selection scope (enforced)
