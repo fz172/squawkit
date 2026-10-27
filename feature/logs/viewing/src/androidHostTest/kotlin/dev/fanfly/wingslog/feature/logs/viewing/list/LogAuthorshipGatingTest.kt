@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Technician
@@ -29,9 +30,10 @@ import org.junit.Before
 import org.junit.Test
 
 private const val AC_ID = "ac-1"
-private val AC_THING = ThingId(AC_ID)
+private val AC = ThingId(AC_ID)
 private const val OWNER_UID = "uid-owner"
 private const val LOG_ID = "log-1"
+private val LOG = MaintenanceLogId(LOG_ID)
 
 /**
  * Attestation is a statement about other people. On an unshared thing nobody else can write a
@@ -59,12 +61,12 @@ class LogAuthorshipGatingTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    every { logManager.observeLogs(AC_ID) } returns flowOf(listOf(log))
-    every { logManager.observeLogAuthors(AC_ID) } returns flowOf(mapOf(LOG_ID to OWNER_UID))
-    every { tasks.observeTasks(ThingId(AC_ID)) } returns flowOf(emptyList())
+    every { logManager.observeLogs(AC) } returns flowOf(listOf(log))
+    every { logManager.observeLogAuthors(AC) } returns flowOf(mapOf(LOG to OWNER_UID))
+    every { tasks.observeTasks(AC) } returns flowOf(emptyList())
     every { sharing.observeLinkedTechnicians(AC_ID) } returns flowOf(emptyList())
     every { technicians.observeSelf() } returns flowOf(null)
-    every { squawks.observeSquawks(AC_THING) } returns flowOf(emptyList())
+    every { squawks.observeSquawks(AC) } returns flowOf(emptyList())
     every { auth.currentUser } returns null
   }
 
@@ -82,7 +84,7 @@ class LogAuthorshipGatingTest {
     tuning = SearchTuning(queryDebounceMillis = 0, dispatcher = dispatcher),
     analytics = RecordingAnalyticsManager(),
     templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
-    thingId = AC_THING,
+    thingId = AC,
     templateId = "airplane",
   )
 

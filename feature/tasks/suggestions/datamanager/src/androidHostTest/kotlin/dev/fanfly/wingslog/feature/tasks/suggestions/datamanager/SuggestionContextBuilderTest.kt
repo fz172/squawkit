@@ -130,8 +130,8 @@ class SuggestionContextBuilderTest {
       every { observeTasks(ThingId(THING)) } returns flowOf(tasks)
     }
     val logManager = mockk<MaintenanceLogManager> {
-      every { observeLogs(THING) } returns flowOf(logs)
-      every { observeCurrentReadings(THING) } returns flowOf(
+      every { observeLogs(ThingId(THING)) } returns flowOf(logs)
+      every { observeCurrentReadings(ThingId(THING)) } returns flowOf(
         listOf(
           CurrentReading("airframe_hours", 412.0, asOf = null, isManual = false),
           CurrentReading("engine_hours", 410.0, asOf = null, isManual = true),

@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -42,6 +43,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 private const val THING_ID = "thing-1"
 private val THING = ThingId(THING_ID)
+private val OIL_LOG_ID = MaintenanceLogId("oil")
 
 /**
  * Deleting a log from its card's swipe panel. The §8 guard is the `deleteLog` verification: the
@@ -72,9 +74,9 @@ class MaintenanceLogListDeleteTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    every { logManager.observeLogs(THING_ID) } returns flowOf(listOf(oil))
-    every { logManager.observeLogAuthors(THING_ID) } returns flowOf(emptyMap())
-    every { tasks.observeTasks(ThingId(THING_ID)) } returns flowOf(emptyList())
+    every { logManager.observeLogs(THING) } returns flowOf(listOf(oil))
+    every { logManager.observeLogAuthors(THING) } returns flowOf(emptyMap())
+    every { tasks.observeTasks(THING) } returns flowOf(emptyList())
     every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(
       emptyList()
     )
@@ -109,7 +111,7 @@ class MaintenanceLogListDeleteTest {
 
   @Test
   fun confirmDeleteLog_deletesThroughTheManagerAndSaysSo() = runTest {
-    coEvery { logManager.deleteLog(THING_ID, "oil") } returns Result.success(
+    coEvery { logManager.deleteLog(THING, OIL_LOG_ID) } returns Result.success(
       true
     )
     val vm = viewModel()
@@ -118,7 +120,7 @@ class MaintenanceLogListDeleteTest {
 
     vm.confirmDeleteLog()
 
-    coVerify(exactly = 1) { logManager.deleteLog(THING_ID, "oil") }
+    coVerify(exactly = 1) { logManager.deleteLog(THING, OIL_LOG_ID) }
     assertThat(vm.success().deletingLog).isNull()
     // The lexicon's noun, never a hard-coded "log" (PRD R24).
     assertThat(vm.events.first()).isEqualTo(
@@ -135,7 +137,7 @@ class MaintenanceLogListDeleteTest {
 
   @Test
   fun deleteFailure_keepsTheCardAndReportsIt() = runTest {
-    coEvery { logManager.deleteLog(THING_ID, "oil") } returns
+    coEvery { logManager.deleteLog(THING, OIL_LOG_ID) } returns
       Result.failure(IllegalStateException("offline"))
     val vm = viewModel()
     vm.onDeleteLogClick(oil)
@@ -158,6 +160,6 @@ class MaintenanceLogListDeleteTest {
     vm.cancelDeleteLog()
 
     assertThat(vm.success().deletingLog).isNull()
-    coVerify(exactly = 0) { logManager.deleteLog(any(), any()) }
+    coVerify(exactly = 0) { logManager.deleteLog(any<ThingId>(), any<MaintenanceLogId>()) }
   }
 }

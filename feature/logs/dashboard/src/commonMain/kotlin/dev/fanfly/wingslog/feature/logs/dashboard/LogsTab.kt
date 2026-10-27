@@ -15,6 +15,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.text.UiText
@@ -27,13 +28,14 @@ import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListContent
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.ThingId
 
 @Composable
 fun LogsTab(
-  thingId: String,
+  thingId: ThingId,
   onNavigateToAddLog: (() -> Unit)?,
-  onNavigateToEditLog: ((logId: String) -> Unit)?,
+  onNavigateToEditLog: ((logId: MaintenanceLogId) -> Unit)?,
   onOpenDataLog: (DataLogId) -> Unit,
   onTaskClick: (taskId: String) -> Unit,
   onSquawkClick: (squawkId: String) -> Unit,
@@ -45,7 +47,7 @@ fun LogsTab(
   val templateId = LocalThingTemplate.current?.id.orEmpty()
   val viewModel: MaintenanceLogListViewModel =
     koinViewModel(
-      key = thingId,
+      key = thingId.value,
       parameters = { parametersOf(thingId, templateId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val filter by viewModel.filter.collectAsStateWithLifecycle()
@@ -56,10 +58,10 @@ fun LogsTab(
   val attachmentOpener: AttachmentOpener = koinInject()
   val dataLogManager: DataLogManager = koinInject()
   val syncStates by remember(thingId, attachmentManager, attachmentOpener) {
-    attachmentManager.observeThingSyncStates(ThingId(thingId), attachmentOpener)
+    attachmentManager.observeThingSyncStates(thingId, attachmentOpener)
   }.collectAsStateWithLifecycle(emptyMap())
   val dataLogs by remember(thingId, dataLogManager) {
-    dataLogManager.observeRowInfos(ThingId(thingId))
+    dataLogManager.observeRowInfos(thingId)
   }.collectAsStateWithLifecycle(null)
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }

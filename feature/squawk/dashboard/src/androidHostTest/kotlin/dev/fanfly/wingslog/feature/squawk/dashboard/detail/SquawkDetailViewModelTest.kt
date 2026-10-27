@@ -57,7 +57,7 @@ class SquawkDetailViewModelTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
-    every { logManager.observeLogs(THING_ID) } returns flowOf(emptyList())
+    every { logManager.observeLogs(THING) } returns flowOf(emptyList())
   }
 
   @After

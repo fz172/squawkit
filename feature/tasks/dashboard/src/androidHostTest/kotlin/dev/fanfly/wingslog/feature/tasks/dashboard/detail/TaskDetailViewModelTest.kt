@@ -77,8 +77,8 @@ class TaskDetailViewModelTest {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     every { taskStatusManager.observeTasksWithStatus(THING) } returns
       flowOf(listOf(dueOilChange))
-    every { logManager.observeLogs(THING_ID) } returns flowOf(emptyList())
-    every { logManager.observeCurrentReadings(THING_ID) } returns flowOf(emptyList())
+    every { logManager.observeLogs(THING) } returns flowOf(emptyList())
+    every { logManager.observeCurrentReadings(THING) } returns flowOf(emptyList())
   }
 
   @After
@@ -203,7 +203,7 @@ class TaskDetailViewModelTest {
       inspection_ids = listOf("c2"),
       work_description = "Other work",
     )
-    every { logManager.observeLogs(THING_ID) } returns flowOf(listOf(matchingLog, otherLog))
+    every { logManager.observeLogs(THING) } returns flowOf(listOf(matchingLog, otherLog))
 
     val vm = viewModel()
     advanceUntilIdle()

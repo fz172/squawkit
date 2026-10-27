@@ -61,7 +61,7 @@ class SuggestionContextBuilder(
       .first()
     // What the dashboard shows, worked out from the records rather than read off the stored
     // overview, which a client that predates manual readings rebuilds without them (#1368).
-    val current = logManager.observeCurrentReadings(thingId.value)
+    val current = logManager.observeCurrentReadings(thingId)
       .first()
 
     val context = SuggestionContext(

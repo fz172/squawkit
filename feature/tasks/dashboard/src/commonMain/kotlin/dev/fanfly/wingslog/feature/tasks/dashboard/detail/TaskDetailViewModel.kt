@@ -93,7 +93,7 @@ class TaskDetailViewModel(
         taskStatusManager.observeTasksWithStatus(thingId)
           .distinctUntilChanged()
           .catch { emit(emptyList()) },
-        logManager.observeLogs(thingId.value)
+        logManager.observeLogs(thingId)
           .distinctUntilChanged()
           .catch { emit(emptyList()) },
       ) { tasks, logs ->
@@ -114,7 +114,7 @@ class TaskDetailViewModel(
       }.collect {}
     }
     viewModelScope.launch {
-      logManager.observeCurrentReadings(thingId.value)
+      logManager.observeCurrentReadings(thingId)
         .distinctUntilChanged()
         .catch { emit(emptyList()) }
         .collect { readings ->

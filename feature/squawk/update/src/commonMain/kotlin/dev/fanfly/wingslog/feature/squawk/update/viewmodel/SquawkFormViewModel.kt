@@ -198,7 +198,7 @@ class SquawkFormViewModel(
 
   private fun loadLogs() {
     viewModelScope.launch {
-      logManager.observeLogs(thingId.value)
+      logManager.observeLogs(thingId)
         .collect { logs ->
           _state.update { it.copy(availableLogs = logs) }
         }

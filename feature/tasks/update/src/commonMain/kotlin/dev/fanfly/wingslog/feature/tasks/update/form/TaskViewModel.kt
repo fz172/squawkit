@@ -154,8 +154,8 @@ class TaskViewModel(
     viewModelScope.launch {
       combine(
         inspectionDataManager.observeTasks(thingId),
-        maintenanceLogManager.observeLogs(thingId.value),
-        maintenanceLogManager.observeManualReadings(thingId.value),
+        maintenanceLogManager.observeLogs(thingId),
+        maintenanceLogManager.observeManualReadings(thingId),
       ) { cards, logs, manual ->
         LoadedThingData(cards, logs, manual)
       }.collect { (cards, logs, manual) ->
@@ -290,7 +290,7 @@ class TaskViewModel(
     if (taskId.value in log.inspection_ids) return
     viewModelScope.launch {
       maintenanceLogManager.updateLog(
-        thingId.value,
+        thingId,
         log.copy(inspection_ids = log.inspection_ids + taskId.value)
       )
       _showLogPicker.value = false
@@ -300,7 +300,7 @@ class TaskViewModel(
   fun removeLogFromHistory(taskId: MaintenanceTaskId, log: MaintenanceLog) {
     viewModelScope.launch {
       maintenanceLogManager.updateLog(
-        thingId.value,
+        thingId,
         log.copy(inspection_ids = log.inspection_ids - taskId.value)
       )
     }

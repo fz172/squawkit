@@ -250,7 +250,7 @@ fun ThingSectionContent(
         }
 
         ShellSection.SQUAWKS -> SquawkTab(
-          thingId = thingId,
+          thingId = thingIdTyped,
           isAnonymous = state.isAnonymous,
           canMutate = true,
           onNavigateToEditSquawk = { squawkId ->
@@ -276,7 +276,7 @@ fun ThingSectionContent(
         )
 
         ShellSection.LOGS -> LogsTab(
-          thingId = thingId,
+          thingId = thingIdTyped,
           // Route through the same onAction wrapper as every other section, which navigates directly.
           onNavigateToAddLog = {
             onAction(
@@ -289,7 +289,7 @@ fun ThingSectionContent(
             onAction(
               ThingOverviewAction.EditLogClick(
                 thingIdTyped,
-                MaintenanceLogId(logId)
+                logId
               )
             )
           },

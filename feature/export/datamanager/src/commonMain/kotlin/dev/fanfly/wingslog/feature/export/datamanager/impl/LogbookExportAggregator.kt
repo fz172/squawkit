@@ -60,7 +60,7 @@ class LogbookExportAggregator(
         .first()
     }
     val logsDeferred = async {
-      logsManager.observeLogs(thingId.value)
+      logsManager.observeLogs(thingId)
         .first()
     }
     val tasksDeferred = async {
@@ -73,7 +73,7 @@ class LogbookExportAggregator(
     }
     // The exported next-due is measured against the readings the dashboard shows (#1368).
     val manualReadingsDeferred = async {
-      logsManager.observeManualReadings(thingId.value)
+      logsManager.observeManualReadings(thingId)
         .first()
     }
     val dataLogsDeferred = async {
