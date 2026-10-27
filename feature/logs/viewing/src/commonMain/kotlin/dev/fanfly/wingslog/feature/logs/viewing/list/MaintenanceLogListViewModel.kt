@@ -235,7 +235,7 @@ class MaintenanceLogListViewModel(
 
   private fun observeTasks() {
     viewModelScope.launch {
-      inspectionDataManager.observeTasks(thingId.value)
+      inspectionDataManager.observeTasks(thingId)
         .catch { _availableCards.value = emptyList() }
         .collect { _availableCards.value = it }
     }

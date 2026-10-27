@@ -95,7 +95,7 @@ class DataLogImporterImpl(
       val parsed = sessions.first()
 
       val rawSha256 = withContext(dispatcher) { sha256Hex(bytes) }
-      val scope = scopeResolver.resolveNow(thingId.value)
+      val scope = scopeResolver.resolveNow(thingId)
       val existing = store.observeAll(scope)
         .first()
         .map { it.value }

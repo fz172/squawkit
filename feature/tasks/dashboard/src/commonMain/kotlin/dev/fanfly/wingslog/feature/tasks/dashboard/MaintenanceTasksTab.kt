@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
+import kotlin.math.roundToInt
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,7 +25,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.getString
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.taskNoun
@@ -34,21 +43,18 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.tasks.dashboard.detail.TaskDetailViewModel
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import org.jetbrains.compose.resources.getString
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.TemplateId
+import dev.fanfly.wingslog.id.ThingId
 import wingslog.feature.tasks.dashboard.generated.resources.Res
 import wingslog.feature.tasks.dashboard.generated.resources.tasks_added
 import wingslog.feature.tasks.dashboard.generated.resources.undo
-import kotlin.math.roundToInt
 
 @Composable
 fun MaintenanceTasksTab(
-  thingId: String,
+  thingId: ThingId,
   onNavigateToBrowseSuggestions: () -> Unit = {},
-  onNavigateToCreateLog: (cardId: String) -> Unit = {},
+  onNavigateToCreateLog: (cardId: MaintenanceTaskId) -> Unit = {},
   /** Opens the account upgrade, for a guest's *Browse suggested tasks* (PRD R47). */
   onLinkAccount: () -> Unit = {},
   /** Jumped-to task (from a log's Affected Tasks): switch to its sub-view and scroll to it. */
@@ -63,10 +69,10 @@ fun MaintenanceTasksTab(
   val revealController = rememberSwipeRevealController()
   LaunchedEffect(showComplied) { revealController.close() }
   val analytics = LocalAnalytics.current
-  val templateId = LocalThingTemplate.current?.id.orEmpty()
+  val templateId = TemplateId(LocalThingTemplate.current?.id.orEmpty())
   val tabViewModel: TaskTabViewModel =
     koinViewModel(
-      key = "tasks:$thingId",
+      key = "tasks:${thingId.value}",
       parameters = {
         parametersOf(
           thingId,
@@ -77,7 +83,7 @@ fun MaintenanceTasksTab(
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
   val detailViewModel: TaskDetailViewModel =
     koinViewModel(
-      key = "task-detail:$thingId",
+      key = "task-detail:${thingId.value}",
       parameters = {
         parametersOf(
           thingId,
@@ -88,16 +94,16 @@ fun MaintenanceTasksTab(
   val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
   val suggestViewModel: SuggestTasksEntryViewModel =
     koinViewModel(
-      key = "suggest:$thingId",
+      key = "suggest:${thingId.value}",
       parameters = { parametersOf(thingId) })
   val suggestEntry by suggestViewModel.entry.collectAsStateWithLifecycle()
   val addedViewModel: AddedTasksViewModel =
     koinViewModel(
-      key = "added:$thingId",
+      key = "added:${thingId.value}",
       parameters = { parametersOf(thingId) })
   val readyViewModel: ReadySuggestionsViewModel =
     koinViewModel(
-      key = "ready:$thingId",
+      key = "ready:${thingId.value}",
       parameters = { parametersOf(thingId) })
   val readySuggestions by readyViewModel.ready.collectAsStateWithLifecycle()
   AddedSnackbar(addedViewModel)
@@ -229,7 +235,7 @@ fun MaintenanceTasksTab(
           onDismissResolveMenu = detailViewModel::dismissResolveMenu,
           onCreateWorkLog = {
             detailViewModel.onCreateLogClick()
-            onNavigateToCreateLog(item.card.id)
+            onNavigateToCreateLog(MaintenanceTaskId(item.card.id))
           },
           onSkipThisCycle = { detailViewModel.onSkipClick(item) },
           onDeleteClick = { detailViewModel.onDeleteClick(item) },

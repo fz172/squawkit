@@ -1,7 +1,26 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
+
 import com.google.common.truth.Truth.assertThat
+import dev.gitlive.firebase.auth.FirebaseUser
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.junit.Before
+import org.junit.Test
+
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -22,27 +41,13 @@ import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
-import dev.gitlive.firebase.auth.FirebaseUser
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Test
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-abc"
+private val TEST_THING = ThingId(TEST_THING_ID)
 private const val BLOB = "blob-1"
 private val OWNER = EntityRef(CollectionKind.MaintenanceLog, "log-1")
 private const val TEST_SHA256 =
@@ -92,8 +97,8 @@ class LocalFirstAttachmentManagerImplTest {
     // Default: own thing — the resolver hands back the caller's own tree. A shared-thing case
     // would return thingChildUnsafe(hostUid, ...); the manager just uses whatever scope it is given.
     thingScopeResolver = mockk(relaxed = true)
-    coEvery { thingScopeResolver.resolveNow(any()) } answers {
-      EntityScope.thingChildUnsafe(TEST_USER_ID, firstArg())
+    coEvery { thingScopeResolver.resolveNow(any<ThingId>()) } answers {
+      EntityScope.thingChildUnsafe(TEST_USER_ID, firstArg<ThingId>().value)
     }
 
     manager = LocalFirstAttachmentManagerImpl(
@@ -160,7 +165,7 @@ class LocalFirstAttachmentManagerImplTest {
     // host and the host's download 404'd. The blob must land in the host's tree (design §9), which is
     // also what makes the upload driver route it through the broker (P8.4).
     val hostUid = "host-eng-42"
-    coEvery { thingScopeResolver.resolveNow(TEST_THING_ID) } returns
+    coEvery { thingScopeResolver.resolveNow(TEST_THING) } returns
       EntityScope.thingChildUnsafe(hostUid, TEST_THING_ID)
     val picked = buildPickedFile(
       uri = "content://example/photo.jpg",
@@ -179,7 +184,7 @@ class LocalFirstAttachmentManagerImplTest {
       buildBlobRef(sha256 = TEST_SHA256)
 
     val result = manager.addPickedFile(
-      TEST_THING_ID,
+      TEST_THING,
       picked,
       displayName = "shared.jpg"
     )
@@ -215,7 +220,7 @@ class LocalFirstAttachmentManagerImplTest {
       buildBlobRef(sha256 = TEST_SHA256)
 
     val result =
-      manager.addPickedFile(TEST_THING_ID, picked, displayName = "My Photo")
+      manager.addPickedFile(TEST_THING, picked, displayName = "My Photo")
 
     assertThat(result.sha256).isEqualTo(TEST_SHA256)
     assertThat(result.storage_path)
@@ -245,7 +250,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_THING_ID, picked, displayName = "file")
+      manager.addPickedFile(TEST_THING, picked, displayName = "file")
 
     assertThat(result.created_at).isNotNull()
     assertThat(result.created_at!!.epochSecond).isEqualTo(
@@ -260,7 +265,7 @@ class LocalFirstAttachmentManagerImplTest {
     var caught: Throwable? = null
     try {
       manager.addPickedFile(
-        TEST_THING_ID,
+        TEST_THING,
         buildPickedFile(),
         displayName = "file"
       )
@@ -278,7 +283,7 @@ class LocalFirstAttachmentManagerImplTest {
     var caught: Throwable? = null
     try {
       manager.addPickedFile(
-        TEST_THING_ID,
+        TEST_THING,
         buildPickedFile(),
         displayName = "file"
       )
@@ -303,7 +308,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_THING_ID, picked, displayName = "pic")
+      manager.addPickedFile(TEST_THING, picked, displayName = "pic")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_IMAGE")
   }
@@ -322,7 +327,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_THING_ID, picked, displayName = "doc.pdf")
+      manager.addPickedFile(TEST_THING, picked, displayName = "doc.pdf")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_PDF")
   }
@@ -342,7 +347,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result = manager.addPickedFile(
-      TEST_THING_ID,
+      TEST_THING,
       picked,
       displayName = "manual.pdf",
       maxBytes = QuotaChecker.MAX_AI_DOCUMENT_BYTES,
@@ -358,7 +363,7 @@ class LocalFirstAttachmentManagerImplTest {
 
     var caught: FileTooLargeException? = null
     try {
-      manager.addPickedFile(TEST_THING_ID, picked, displayName = "manual.pdf", maxBytes = 10)
+      manager.addPickedFile(TEST_THING, picked, displayName = "manual.pdf", maxBytes = 10)
     } catch (e: FileTooLargeException) {
       caught = e
     }
@@ -381,7 +386,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_THING_ID, picked, displayName = "notes.txt")
+      manager.addPickedFile(TEST_THING, picked, displayName = "notes.txt")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_FILE")
   }
@@ -408,7 +413,7 @@ class LocalFirstAttachmentManagerImplTest {
 
       val result =
         manager.addPickedFile(
-          TEST_THING_ID,
+          TEST_THING,
           picked,
           displayName = "My Photo"
         )
@@ -440,7 +445,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_THING_ID, picked, displayName = "photo.jpg")
+      manager.addPickedFile(TEST_THING, picked, displayName = "photo.jpg")
 
     coVerify(exactly = 1) {
       blobs.put(any(), rawBytes, contentType = "image/jpeg", scope = any())
@@ -457,7 +462,7 @@ class LocalFirstAttachmentManagerImplTest {
       blobs.put(any(), any(), contentType = any(), scope = any())
     } returns buildBlobRef()
 
-    manager.addPickedFile(TEST_THING_ID, picked, displayName = "doc.pdf")
+    manager.addPickedFile(TEST_THING, picked, displayName = "doc.pdf")
 
     coVerify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
   }
@@ -473,7 +478,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_THING_ID, picked, displayName = "chart.png")
+      manager.addPickedFile(TEST_THING, picked, displayName = "chart.png")
 
     coVerify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
     assertThat(result.mime_type).isEqualTo("image/png")
@@ -493,7 +498,7 @@ class LocalFirstAttachmentManagerImplTest {
 
       var caught: Throwable? = null
       try {
-        manager.addPickedFile(TEST_THING_ID, picked, displayName = "big.jpg")
+        manager.addPickedFile(TEST_THING, picked, displayName = "big.jpg")
       } catch (e: FileTooLargeException) {
         caught = e
       }
@@ -776,7 +781,7 @@ class LocalFirstAttachmentManagerImplTest {
   @Test
   fun observeThingSyncStates_resolvesScopeAndOverlaysDownloadingIds() = runTest {
     val scope = EntityScope.thingChildUnsafe("host-uid", TEST_THING_ID)
-    every { thingScopeResolver.resolve(TEST_THING_ID) } returns flowOf(scope)
+    every { thingScopeResolver.resolve(TEST_THING) } returns flowOf(scope)
     every { blobs.observeForScope(scope.toPath()) } returns flowOf(
       listOf(
         buildBlobRef(remoteState = RemoteState.Synced).copy(id = BlobId("att-1")),
@@ -787,7 +792,7 @@ class LocalFirstAttachmentManagerImplTest {
       every { downloadingIds } returns MutableStateFlow(setOf("att-2"))
     }
 
-    val states = manager.observeThingSyncStates(TEST_THING_ID, opener).first()
+    val states = manager.observeThingSyncStates(TEST_THING, opener).first()
 
     assertThat(states).containsExactly(
       "att-1", BlobSyncState.Synced,
@@ -797,11 +802,11 @@ class LocalFirstAttachmentManagerImplTest {
 
   @Test
   fun observeThingSyncStates_unresolvedScope_emitsEmptyMap() = runTest {
-    every { thingScopeResolver.resolve(TEST_THING_ID) } returns flowOf(null)
+    every { thingScopeResolver.resolve(TEST_THING) } returns flowOf(null)
     val opener = mockk<AttachmentOpener> {
       every { downloadingIds } returns MutableStateFlow(emptySet())
     }
 
-    assertThat(manager.observeThingSyncStates(TEST_THING_ID, opener).first()).isEmpty()
+    assertThat(manager.observeThingSyncStates(TEST_THING, opener).first()).isEmpty()
   }
 }

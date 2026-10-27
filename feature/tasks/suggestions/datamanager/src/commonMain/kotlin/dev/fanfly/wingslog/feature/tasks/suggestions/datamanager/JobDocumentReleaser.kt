@@ -91,7 +91,7 @@ class JobDocumentReleaser(
   suspend fun pick(thingId: ThingId, file: PickedFile, maxBytes: Long): Result<Attachment> {
     val storing = scope.async {
       runCatching {
-        attachments().addPickedFile(thingId.value, file, displayName = file.name, maxBytes = maxBytes)
+        attachments().addPickedFile(thingId, file, displayName = file.name, maxBytes = maxBytes)
       }.onSuccess { hold(thingId, it) }
     }
     return try {

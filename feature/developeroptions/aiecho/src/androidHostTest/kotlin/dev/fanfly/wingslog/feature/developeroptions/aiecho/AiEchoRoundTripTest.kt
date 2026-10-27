@@ -1,6 +1,19 @@
 package dev.fanfly.wingslog.feature.developeroptions.aiecho
 
+import kotlin.time.Instant
+
 import com.google.common.truth.Truth.assertThat
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
+import org.junit.Test
+
 import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJob
@@ -18,17 +31,6 @@ import dev.fanfly.wingslog.rpc.aijob.AiJobKind
 import dev.fanfly.wingslog.rpc.aijob.AiJobStatus
 import dev.fanfly.wingslog.rpc.suggesttasks.SuggestTasksRequest
 import dev.fanfly.wingslog.thing.Thing
-import io.mockk.coEvery
-import io.mockk.every
-import io.mockk.mockk
-import kotlin.time.Instant
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
-import okio.ByteString
-import okio.ByteString.Companion.encodeUtf8
-import org.junit.Test
 
 class AiEchoRoundTripTest {
 
@@ -38,7 +40,7 @@ class AiEchoRoundTripTest {
     )
   }
   private val scopes = mockk<ThingScopeResolver> {
-    coEvery { resolveNow("t1") } returns EntityScope.thingChildUnsafe("host", "t1")
+    coEvery { resolveNow(ThingId("t1")) } returns EntityScope.thingChildUnsafe("host", "t1")
   }
 
   /** Answers start with [startResult], then plays [statuses] on the job's document. */

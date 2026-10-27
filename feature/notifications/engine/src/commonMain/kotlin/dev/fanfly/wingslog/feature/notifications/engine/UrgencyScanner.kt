@@ -1,5 +1,10 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
@@ -31,13 +36,13 @@ import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_due_soon_plural
@@ -167,7 +172,7 @@ class UrgencyScanner(
     entry: FleetEntry,
     settings: NotificationSettings,
   ): Tally {
-    val thingId = entry.thing.id
+    val thingId = ThingId(entry.thing.id)
     // The same label the switcher shows, not the tail-number spec: a home has none, and the body
     // then opened with a bare ": task is due soon". Words come from THIS thing's template too — the
     // selected thing's lexicon is wrong for a scan that walks the whole fleet.
@@ -188,11 +193,11 @@ class UrgencyScanner(
 
     val taskRows = taskStore.observeAll(scope)
       .first()
-    val logs = logManager.observeLogs(thingId)
+    val logs = logManager.observeLogs(thingId.value)
       .first()
     // Due against the same current readings the dashboard shows, or a task could alert as overdue
     // beside a card that says it is not (#1368).
-    val manualReadings = logManager.observeManualReadings(thingId)
+    val manualReadings = logManager.observeManualReadings(thingId.value)
       .first()
     val squawkRows = squawkStore.observeAll(scope)
       .first()
@@ -225,7 +230,7 @@ class UrgencyScanner(
           collection = CollectionKind.MaintenanceTask,
           recordId = row.id,
           title = row.value.title,
-          tapTarget = NotificationTapTarget.Task(thingId, row.id),
+          tapTarget = NotificationTapTarget.Task(thingId, MaintenanceTaskId(row.id)),
         )
       }
     }
@@ -250,7 +255,7 @@ class UrgencyScanner(
           collection = CollectionKind.Squawk,
           recordId = row.id,
           title = row.value.title,
-          tapTarget = NotificationTapTarget.Squawk(thingId, row.id),
+          tapTarget = NotificationTapTarget.Squawk(thingId, SquawkId(row.id)),
           previousRank = previousRank,
           newRank = rank,
         )
@@ -346,7 +351,7 @@ class UrgencyScanner(
   }
 
   private suspend fun buildNotification(
-    thingId: String,
+    thingId: ThingId,
     thingLabel: String,
     lexicon: Lexicon,
     tier: UrgencyTier,
@@ -366,7 +371,7 @@ class UrgencyScanner(
       id = "urgency:${single.collection.wireName}:${single.recordId}"
     } else {
       body = tier.pluralBody(thingLabel, lexicon, group.size)
-      id = "urgency:$thingId:${tier.name}"
+      id = "urgency:${thingId.value_}:${tier.name}"
     }
     return PendingNotification(
       id = id,

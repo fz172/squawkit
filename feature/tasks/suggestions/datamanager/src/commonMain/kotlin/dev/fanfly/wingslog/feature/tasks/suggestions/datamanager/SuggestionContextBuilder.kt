@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.first
 
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.core.storage.resolveNow
 import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.taskNoun
@@ -58,7 +57,7 @@ class SuggestionContextBuilder(
     val template = templateRegistry.forThingWithFallback(thing)
     // A shared Thing lives in its host's tree: users/{hostUid}/thing/{thingId}.
     val hostUid = scopeResolver.resolveNow(thingId).hostUid.orEmpty()
-    val tasks = taskDataManager.observeTasks(thingId.value)
+    val tasks = taskDataManager.observeTasks(thingId)
       .first()
     // What the dashboard shows, worked out from the records rather than read off the stored
     // overview, which a client that predates manual readings rebuilds without them (#1368).

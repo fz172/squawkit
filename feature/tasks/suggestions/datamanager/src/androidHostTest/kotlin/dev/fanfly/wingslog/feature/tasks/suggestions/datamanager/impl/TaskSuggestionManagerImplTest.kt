@@ -5,13 +5,22 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
+import com.google.common.truth.Truth.assertThat
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyOrder
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import okio.ByteString
+import org.junit.Test
 
-import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJob
@@ -36,6 +45,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionRun
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestionStage
 import dev.fanfly.wingslog.feature.tasks.suggestions.model.AcceptedSuggestion
 import dev.fanfly.wingslog.id.AttachmentId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.rpc.aijob.AiJobKind
@@ -50,15 +60,6 @@ import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.coVerifyOrder
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.verify
-import okio.ByteString
-import org.junit.Test
 
 class TaskSuggestionManagerImplTest {
 
@@ -74,16 +75,15 @@ class TaskSuggestionManagerImplTest {
     )
   }
   private val taskData = mockk<TaskDataManager> {
-    every { observeTasks(THING) } returns flowOf(emptyList())
+    every { observeTasks(ThingId(THING)) } returns flowOf(emptyList())
   }
   private val registry = mockk<TemplateRegistry> {
     every { forThingWithFallback(any()) } answers { firstArg<Thing>().template!! }
   }
   private val scopes = mockk<ThingScopeResolver> {
-    coEvery { resolveNow(THING) } returns EntityScope.thingChildUnsafe(
-      "host",
-      THING
-    )
+    coEvery { resolveNow(any<ThingId>()) } answers {
+      EntityScope.thingChildUnsafe("host", firstArg<ThingId>().value_)
+    }
   }
   private val sync = mockk<EntitySyncObserver> {
     coEvery {
@@ -474,7 +474,7 @@ class TaskSuggestionManagerImplTest {
       val written = mutableListOf<MaintenanceTask>()
       coEvery {
         taskData.addTask(
-          THING,
+          ThingId(THING),
           capture(written)
         )
       } returns Result.success(true)
@@ -498,7 +498,7 @@ class TaskSuggestionManagerImplTest {
       )
 
       // Each written task is named, and its id is what comes back, for *Undo*.
-      assertThat(ids.map { it.taskId }).isEqualTo(written.map { it.id })
+      assertThat(ids.map { it.taskId }).isEqualTo(written.map { MaintenanceTaskId(it.id) })
       assertThat(written.map { it.id }.distinct()).hasSize(2)
       assertThat(written[0].id).isNotEmpty()
       assertThat(written[0].title).isEqualTo("Replace spark plugs")
@@ -506,7 +506,7 @@ class TaskSuggestionManagerImplTest {
       assertThat(written[0].origin?.generation_version).isEqualTo("tasks-4")
       assertThat(written[1]).isEqualTo(edited.copy(id = written[1].id))
       coVerifyOrder {
-        taskData.addTask(THING, any())
+        taskData.addTask(ThingId(THING), any())
         client.close(JOB)
         // After the writes, so the reference check keeps a document a task now holds.
         jobDocuments.release(JOB)
@@ -516,7 +516,7 @@ class TaskSuggestionManagerImplTest {
   @Test
   fun `a suggestion citing a document is written holding that same document, at its page`() = runTest {
     val written = mutableListOf<MaintenanceTask>()
-    coEvery { taskData.addTask(THING, capture(written)) } returns Result.success(true)
+    coEvery { taskData.addTask(ThingId(THING), capture(written)) } returns Result.success(true)
     coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
     val cites = TaskSuggestion(
       title = "Gearbox oil",
@@ -551,7 +551,7 @@ class TaskSuggestionManagerImplTest {
   @Test
   fun `the page is kept per attachment, on each task`() = runTest {
     val written = mutableListOf<MaintenanceTask>()
-    coEvery { taskData.addTask(THING, capture(written)) } returns Result.success(true)
+    coEvery { taskData.addTask(ThingId(THING), capture(written)) } returns Result.success(true)
     coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
     val bulletin = Attachment(id = "blob-sb", name = "SB 12.pdf", open_page = 5)
     val cites = { page: Int ->
@@ -590,7 +590,7 @@ class TaskSuggestionManagerImplTest {
 
   @Test
   fun `a failed write drops only its own card`() = runTest {
-    coEvery { taskData.addTask(THING, any()) } returnsMany
+    coEvery { taskData.addTask(ThingId(THING), any()) } returnsMany
       listOf(Result.failure(RuntimeException("disk")), Result.success(true))
     val run = SuggestionRun.Ready(JOB, SuggestTasksResult())
 
@@ -607,7 +607,7 @@ class TaskSuggestionManagerImplTest {
 
   @Test
   fun `when no write succeeds the run and its documents stay`() = runTest {
-    coEvery { taskData.addTask(THING, any()) } returns Result.failure(RuntimeException("disk"))
+    coEvery { taskData.addTask(ThingId(THING), any()) } returns Result.failure(RuntimeException("disk"))
     val run = SuggestionRun.Ready(JOB, SuggestTasksResult())
 
     val written = manager.accept(ThingId(THING), run.jobId, run.result.generation_version, listOf(AcceptedSuggestion(suggestion)))

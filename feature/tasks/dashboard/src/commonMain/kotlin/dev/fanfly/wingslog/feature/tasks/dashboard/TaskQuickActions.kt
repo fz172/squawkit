@@ -1,18 +1,21 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
 import androidx.compose.runtime.Composable
+
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.ui.swipe.SwipeAction
 import dev.fanfly.wingslog.core.ui.swipe.SwipeRevealController
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskQuickActionCallbacks
 import dev.fanfly.wingslog.feature.tasks.viewing.quickActions
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 
 /** A task card's swipe actions: resolve (with its options menu) and delete, closing the card first. */
 @Composable
 internal fun taskQuickActionsFor(
   item: MaintenanceTaskWithStatus,
-  resolvingTaskId: String?,
+  resolvingTaskId: MaintenanceTaskId?,
   revealController: SwipeRevealController,
   onResolveClick: () -> Unit,
   onDismissResolveMenu: () -> Unit,
@@ -29,7 +32,7 @@ internal fun taskQuickActionsFor(
       },
       resolveMenu = {
         ResolveTaskOptionsMenu(
-          expanded = resolvingTaskId == item.card.id,
+          expanded = resolvingTaskId?.value == item.card.id,
           onDismissRequest = {
             revealController.close()
             onDismissResolveMenu()

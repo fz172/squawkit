@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
@@ -19,6 +20,7 @@ import dev.fanfly.wingslog.feature.logs.dashboard.LogOnboardingCard
 import dev.fanfly.wingslog.feature.logs.dashboard.LogOverviewUiState
 import dev.fanfly.wingslog.feature.logs.dashboard.LogStats
 import dev.fanfly.wingslog.feature.logs.dashboard.RecentLogRow
+import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.dashboard.host.generated.resources.Res
 import wingslog.feature.dashboard.host.generated.resources.overview_all_logs
@@ -51,7 +53,7 @@ internal fun WorkLogsSection(
   if (total == 0L) {
     if (onMutationAction != null) {
       LogOnboardingCard(
-        onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(state.thing.id)) },
+        onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(ThingId(state.thing.id))) },
         modifier = modifier,
       )
     }

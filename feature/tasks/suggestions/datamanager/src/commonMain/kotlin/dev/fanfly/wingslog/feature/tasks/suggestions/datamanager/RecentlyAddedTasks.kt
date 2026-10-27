@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.ThingId
 
 /**
@@ -15,7 +16,7 @@ class RecentlyAddedTasks {
   private val _batch = MutableStateFlow<AddedBatch?>(null)
   val batch: StateFlow<AddedBatch?> = _batch.asStateFlow()
 
-  fun record(thingId: ThingId, taskIds: List<String>) {
+  fun record(thingId: ThingId, taskIds: List<MaintenanceTaskId>) {
     if (taskIds.isEmpty()) return
     _batch.value = AddedBatch(thingId, taskIds)
   }
@@ -32,5 +33,5 @@ class RecentlyAddedTasks {
 /** One acceptance's tasks on [thingId]. */
 data class AddedBatch(
   val thingId: ThingId,
-  val taskIds: List<String>,
+  val taskIds: List<MaintenanceTaskId>,
 )

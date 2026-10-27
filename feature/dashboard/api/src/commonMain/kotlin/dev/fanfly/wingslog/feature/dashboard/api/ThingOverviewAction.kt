@@ -1,36 +1,40 @@
 package dev.fanfly.wingslog.feature.dashboard.api
 
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 
 sealed interface ThingOverviewAction {
   data object BackClick : ThingOverviewAction
-  data class EditClick(val thingId: String) : ThingOverviewAction
-  data class ManageAccessClick(val thingId: String) : ThingOverviewAction
+  data class EditClick(val thingId: ThingId) : ThingOverviewAction
+  data class ManageAccessClick(val thingId: ThingId) : ThingOverviewAction
   data object DeleteConfirm : ThingOverviewAction
-  data class AddLogClick(val thingId: String) : ThingOverviewAction
-  data class EditLogClick(val thingId: String, val logId: String) :
+  data class AddLogClick(val thingId: ThingId) : ThingOverviewAction
+  data class EditLogClick(val thingId: ThingId, val logId: MaintenanceLogId) :
     ThingOverviewAction
 
-  data class AddTaskClick(val thingId: String) : ThingOverviewAction
+  data class AddTaskClick(val thingId: ThingId) : ThingOverviewAction
 
   /** The suggestions screen: the curated list from an empty Tasks tab, or a held answer (PRD §4.9). */
-  data class BrowseSuggestionsClick(val thingId: String) : ThingOverviewAction
+  data class BrowseSuggestionsClick(val thingId: ThingId) : ThingOverviewAction
 
   /** A DATA_LOG attachment row was tapped: dismiss the sheet and open the viewer (design §9.3). */
-  data class OpenDataLogClick(val thingId: String, val dataLogId: DataLogId) :
+  data class OpenDataLogClick(val thingId: ThingId, val dataLogId: DataLogId) :
     ThingOverviewAction
 
-  data class EditTaskClick(val thingId: String, val cardId: String) :
+  data class EditTaskClick(val thingId: ThingId, val cardId: MaintenanceTaskId) :
     ThingOverviewAction
 
-  data class AddSquawkClick(val thingId: String) : ThingOverviewAction
+  data class AddSquawkClick(val thingId: ThingId) : ThingOverviewAction
 
-  data class EditSquawkClick(val thingId: String, val squawkId: String) :
+  data class EditSquawkClick(val thingId: ThingId, val squawkId: SquawkId) :
     ThingOverviewAction
 
   /** Navigates to Create Log with the squawk pre-linked; the section drives the navController. */
-  data class SquawkFixedClick(val squawkId: String) : ThingOverviewAction
+  data class SquawkFixedClick(val squawkId: SquawkId) : ThingOverviewAction
 
   /** Navigates to Create Log with the task pre-linked; the section drives the navController. */
-  data class TaskCreateLogClick(val cardId: String) : ThingOverviewAction
+  data class TaskCreateLogClick(val cardId: MaintenanceTaskId) : ThingOverviewAction
 }

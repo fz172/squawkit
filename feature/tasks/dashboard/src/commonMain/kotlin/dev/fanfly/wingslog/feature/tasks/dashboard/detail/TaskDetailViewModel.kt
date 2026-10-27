@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard.detail
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,14 +15,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.QuickActionKind
 import dev.fanfly.wingslog.core.analytics.QuickActionSource
 import dev.fanfly.wingslog.core.analytics.QuickActionSurface
 import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -37,17 +38,18 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
 import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
 import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
 import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
-import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
+import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
 
 /**
  * Owns task detail-sheet selection, comment thread hosting, swipe quick-actions, and skip/delete
@@ -60,8 +62,8 @@ class TaskDetailViewModel(
   commentManager: CommentManager,
   private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
-  private val thingId: String,
-  private val templateId: String,
+  private val thingId: ThingId,
+  private val templateId: TemplateId,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(TaskDetailUiState())
@@ -91,7 +93,7 @@ class TaskDetailViewModel(
         taskStatusManager.observeTasksWithStatus(thingId)
           .distinctUntilChanged()
           .catch { emit(emptyList()) },
-        logManager.observeLogs(thingId)
+        logManager.observeLogs(thingId.value)
           .distinctUntilChanged()
           .catch { emit(emptyList()) },
       ) { tasks, logs ->
@@ -112,7 +114,7 @@ class TaskDetailViewModel(
       }.collect {}
     }
     viewModelScope.launch {
-      logManager.observeCurrentReadings(thingId)
+      logManager.observeCurrentReadings(thingId.value)
         .distinctUntilChanged()
         .catch { emit(emptyList()) }
         .collect { readings ->
@@ -123,7 +125,7 @@ class TaskDetailViewModel(
       _uiState
         .map { state ->
           state.selectedTask?.let {
-            CommentTarget.task(ThingId(thingId), MaintenanceTaskId(it.card.id))
+            CommentTarget.task(thingId, MaintenanceTaskId(it.card.id))
           }
         }
         .distinctUntilChanged()
@@ -163,7 +165,7 @@ class TaskDetailViewModel(
   }
 
   fun onResolveClick(task: MaintenanceTaskWithStatus) {
-    _uiState.update { it.copy(resolvingTaskId = task.card.id) }
+    _uiState.update { it.copy(resolvingTaskId = MaintenanceTaskId(task.card.id)) }
   }
 
   fun dismissResolveMenu() {
@@ -180,7 +182,7 @@ class TaskDetailViewModel(
     _uiState.update {
       it.copy(
         resolvingTaskId = null,
-        skippingTaskId = task.card.id,
+        skippingTaskId = MaintenanceTaskId(task.card.id),
       )
     }
   }
@@ -192,9 +194,9 @@ class TaskDetailViewModel(
 
   fun confirmSkip() {
     val cardId = _uiState.value.skippingTaskId ?: return
-    val card = cachedTasks.find { it.card.id == cardId }?.card ?: pendingSkipCard ?: return
+    val card = cachedTasks.find { it.card.id == cardId.value }?.card ?: pendingSkipCard ?: return
     viewModelScope.launch {
-      val template = templateRegistry.canonicalById(templateId)
+      val template = templateRegistry.canonicalById(templateId.value)
       val meterKey = card.defaultMeterKey()
       val reading = if (template == null || template.meters.any { it.key == meterKey }) {
         cachedReadings.firstOrNull { it.meterKey == meterKey }?.value?.toFloat() ?: 0f
@@ -214,7 +216,7 @@ class TaskDetailViewModel(
     _uiState.update {
       it.copy(
         resolvingTaskId = null,
-        deletingTaskId = task.card.id,
+        deletingTaskId = MaintenanceTaskId(task.card.id),
         deletingTaskTitle = task.card.title,
       )
     }
@@ -265,7 +267,7 @@ class TaskDetailViewModel(
   private fun logQuickAction(action: QuickActionKind) {
     analytics.log(
       RecordQuickAction(
-        templateId = templateId,
+        templateId = templateId.value,
         surface = QuickActionSurface.TASKS,
         action = action,
         source = QuickActionSource.SWIPE,
@@ -274,6 +276,6 @@ class TaskDetailViewModel(
   }
 
   private fun taskWord(): String = LexiconFormatter.sentenceCase(
-    templateRegistry.lexiconFor(templateRegistry.canonicalById(templateId)).taskNoun
+    templateRegistry.lexiconFor(templateRegistry.canonicalById(templateId.value)).taskNoun
   )
 }

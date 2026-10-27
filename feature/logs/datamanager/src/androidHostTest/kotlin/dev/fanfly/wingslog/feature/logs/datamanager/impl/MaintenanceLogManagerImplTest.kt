@@ -1,18 +1,9 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
+import kotlin.time.Clock
+import kotlin.time.Instant
+
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.storage.CollectionKind
-import dev.fanfly.wingslog.core.storage.EntityScope
-import dev.fanfly.wingslog.core.storage.EntityStore
-import dev.fanfly.wingslog.core.storage.EntityStoreFactory
-import dev.fanfly.wingslog.core.storage.StorageEntity
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceOverview
-import dev.fanfly.wingslog.thing.ManualMeterReading
-import dev.fanfly.wingslog.thing.MeterReading
-import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
@@ -25,8 +16,20 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Clock
-import kotlin.time.Instant
+
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStore
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.StorageEntity
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceOverview
+import dev.fanfly.wingslog.thing.ManualMeterReading
+import dev.fanfly.wingslog.thing.MeterReading
+import dev.fanfly.wingslog.thing.Squawk
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-456"
@@ -342,13 +345,13 @@ class MaintenanceLogManagerImplTest {
  */
 private class FakeScopeResolver(private val auth: FirebaseAuth) :
   ThingScopeResolver {
-  override fun resolve(thingId: String): Flow<EntityScope?> =
+  override fun resolve(thingId: ThingId): Flow<EntityScope?> =
     auth.authStateChanged.map { user ->
-      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId) }
+      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId.value_) }
     }
 
-  override suspend fun resolveNow(thingId: String): EntityScope {
+  override suspend fun resolveNow(thingId: ThingId): EntityScope {
     val uid = auth.currentUser?.uid ?: error("Not signed in")
-    return EntityScope.thingChildUnsafe(uid, thingId)
+    return EntityScope.thingChildUnsafe(uid, thingId.value_)
   }
 }

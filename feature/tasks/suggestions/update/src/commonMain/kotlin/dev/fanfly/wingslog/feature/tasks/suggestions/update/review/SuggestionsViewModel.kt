@@ -130,7 +130,7 @@ class SuggestionsViewModel(
           lexicon = templateRegistry.lexiconFor(template)
         )
       }
-      trackedTitles = taskDataManager.observeTasks(thingId.value)
+      trackedTitles = taskDataManager.observeTasks(thingId)
         .first()
         .mapTo(mutableSetOf()) { normalizeTitle(it.title) }
       showRun(template)

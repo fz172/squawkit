@@ -4,6 +4,19 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.wire.Instant
+import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.QuickActionKind
 import dev.fanfly.wingslog.core.analytics.QuickActionSource
@@ -11,6 +24,7 @@ import dev.fanfly.wingslog.core.analytics.QuickActionSurface
 import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityRef
@@ -34,6 +48,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.taskFromDraftArg
 import dev.fanfly.wingslog.feature.tasks.update.form.schedule.ScheduleState
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.ForceCompliedStatus
 import dev.fanfly.wingslog.task.InspectionRule
@@ -43,23 +59,11 @@ import dev.fanfly.wingslog.task.TaskOriginKind
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.ManualMeterReading
-import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 class TaskViewModel(
   private val inspectionDataManager: TaskDataManager,
@@ -74,9 +78,9 @@ class TaskViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val thingId: String =
-    checkNotNull(savedStateHandle[Screen.THING_ID])
-  val cardId: String? = savedStateHandle[Screen.CARD_ID]
+  val thingId: ThingId =
+    checkNotNull(savedStateHandle.get<String>(Screen.THING_ID)?.let(::ThingId))
+  val cardId: MaintenanceTaskId? = savedStateHandle.get<String>(Screen.CARD_ID)?.let(::MaintenanceTaskId)
 
   /**
    * The task the form was opened with in draft mode (task population T18), or null. The form
@@ -104,7 +108,7 @@ class TaskViewModel(
     AttachmentFormController(
       attachmentManager,
       thingId,
-      owner = cardId?.let { EntityRef(CollectionKind.MaintenanceTask, it) },
+      owner = cardId?.let { EntityRef(CollectionKind.MaintenanceTask, it.value) },
     )
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
@@ -140,7 +144,7 @@ class TaskViewModel(
       // until the subscription capability ships.)
       combine(
         subscriptionManager.canUploadAttachments(),
-        sharingManager.observeIsForeignHosted(thingId),
+        sharingManager.observeIsForeignHosted(thingId.value),
       ) { canUpload, foreignHosted -> foreignHosted || canUpload }
         .collect { _attachmentUploadEnabled.value = it }
     }
@@ -150,8 +154,8 @@ class TaskViewModel(
     viewModelScope.launch {
       combine(
         inspectionDataManager.observeTasks(thingId),
-        maintenanceLogManager.observeLogs(thingId),
-        maintenanceLogManager.observeManualReadings(thingId),
+        maintenanceLogManager.observeLogs(thingId.value),
+        maintenanceLogManager.observeManualReadings(thingId.value),
       ) { cards, logs, manual ->
         LoadedThingData(cards, logs, manual)
       }.collect { (cards, logs, manual) ->
@@ -176,7 +180,7 @@ class TaskViewModel(
         }
         // Pre-load attachments and seed the form once when editing.
         if (cardId != null) {
-          cards.firstOrNull { it.id == cardId }
+          cards.firstOrNull { it.id == cardId.value }
             ?.let { card ->
               attachmentForm.seedIfEmpty(card.attachments)
               if (!formSeeded) {
@@ -282,22 +286,22 @@ class TaskViewModel(
     }
   }
 
-  fun addLogToHistory(taskId: String, log: MaintenanceLog) {
-    if (taskId in log.inspection_ids) return
+  fun addLogToHistory(taskId: MaintenanceTaskId, log: MaintenanceLog) {
+    if (taskId.value in log.inspection_ids) return
     viewModelScope.launch {
       maintenanceLogManager.updateLog(
-        thingId,
-        log.copy(inspection_ids = log.inspection_ids + taskId)
+        thingId.value,
+        log.copy(inspection_ids = log.inspection_ids + taskId.value)
       )
       _showLogPicker.value = false
     }
   }
 
-  fun removeLogFromHistory(taskId: String, log: MaintenanceLog) {
+  fun removeLogFromHistory(taskId: MaintenanceTaskId, log: MaintenanceLog) {
     viewModelScope.launch {
       maintenanceLogManager.updateLog(
-        thingId,
-        log.copy(inspection_ids = log.inspection_ids - taskId)
+        thingId.value,
+        log.copy(inspection_ids = log.inspection_ids - taskId.value)
       )
     }
   }
@@ -493,7 +497,7 @@ class TaskViewModel(
   }
 
   fun deleteTask(
-    cardId: String,
+    cardId: MaintenanceTaskId,
     onSuccess: () -> Unit,
   ) {
     viewModelScope.launch {

@@ -64,7 +64,7 @@ class LogbookExportAggregator(
         .first()
     }
     val tasksDeferred = async {
-      tasksManager.observeTasks(thingId.value)
+      tasksManager.observeTasks(thingId)
         .first()
     }
     val squawksDeferred = async {

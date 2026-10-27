@@ -6,6 +6,9 @@ import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
@@ -50,8 +53,8 @@ class PushPayloadParsingTest {
     assertThat(parsed.recordTitle).isEqualTo("Replace left brake pads")
     assertThat(parsed.tapTarget).isEqualTo(
       NotificationTapTarget.Task(
-        "ac-1",
-        "task-1"
+        ThingId("ac-1"),
+        MaintenanceTaskId("task-1")
       )
     )
   }
@@ -82,8 +85,8 @@ class PushPayloadParsingTest {
     assertThat(parsed.recordTitle).isEqualTo("Left brake dragging")
     assertThat(parsed.tapTarget).isEqualTo(
       NotificationTapTarget.Squawk(
-        "ac-1",
-        "sq-9"
+        ThingId("ac-1"),
+        SquawkId("sq-9")
       )
     )
   }
@@ -131,7 +134,7 @@ class PushPayloadParsingTest {
   fun `parses a finished suggestion run as the Thing's suggestions (PRD R20)`() {
     val parsed = PushPayload.parse(activityData(mapOf("tapTarget" to "suggestions:ac-1")))!!
 
-    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Suggestions("ac-1"))
+    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Suggestions(ThingId("ac-1")))
   }
 
   @Test
@@ -142,7 +145,7 @@ class PushPayloadParsingTest {
 
     assertThat(parsed.tapTarget).isEqualTo(
       NotificationTapTarget.Thing(
-        "ac-1",
+        ThingId("ac-1"),
         tab = "squawks"
       )
     )
@@ -161,7 +164,7 @@ class PushPayloadParsingTest {
 
     assertThat(parsed.tapTarget).isEqualTo(
       NotificationTapTarget.Thing(
-        "ac-1",
+        ThingId("ac-1"),
         tab = "tasks"
       )
     )
@@ -229,7 +232,7 @@ class PushPayloadParsingTest {
     )!!
 
     assertThat(parsed.tapTarget)
-      .isEqualTo(NotificationTapTarget.DataLog("ac-1", DataLogId("dl-7")))
+      .isEqualTo(NotificationTapTarget.DataLog(ThingId("ac-1"), DataLogId("dl-7")))
   }
 
   @Test
@@ -246,7 +249,7 @@ class PushPayloadParsingTest {
 
     assertThat(parsed.tapTarget).isEqualTo(
       NotificationTapTarget.Thing(
-        "ac-1",
+        ThingId("ac-1"),
         tab = "datalogs"
       )
     )

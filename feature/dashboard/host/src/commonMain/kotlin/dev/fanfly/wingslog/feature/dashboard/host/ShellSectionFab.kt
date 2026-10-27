@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.dashboard.host
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
+
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
@@ -11,12 +12,12 @@ import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogUploadFab
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.add_log
-import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
-import wingslog.feature.tasks.sharedassets.generated.resources.add_task
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
+import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
+import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
+import wingslog.feature.tasks.sharedassets.generated.resources.add_task
 
 /**
  * The per-section floating action button for the adaptive shell's `sectionFab` slot: Add Squawk /
@@ -31,7 +32,7 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 @Composable
 fun ShellSectionFab(
   section: ShellSection,
-  thingId: String?,
+  thingId: ThingId?,
   navController: NavController,
   /**
    * False for a thing whose DNA this build cannot interpret. Every add route leads to a form built
@@ -43,7 +44,7 @@ fun ShellSectionFab(
   if (thingId == null || !renderable) return
   when (section) {
     ShellSection.DATA_LOGS -> DataLogUploadFab(
-      thingId = ThingId(thingId),
+      thingId = thingId,
       onLinkAccount = onLinkAccount
     )
 

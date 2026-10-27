@@ -122,7 +122,7 @@ class MaintenanceLogFormViewModelTest {
     // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
     every { fleetManager.loadThing(TEST_THING) } returns flowOf(null)
-    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+    every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
       emptyList()
     )
     every { technicianManager.observeTechnicians() } returns flowOf(emptyList())
@@ -326,7 +326,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun preselectedCardId_seedsSelectedInspectionIds() =
     runTest(testDispatcher) {
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
         listOf(
           MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
         )
@@ -345,7 +345,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun preselectedCardId_whenEditingExistingLog_isIgnored() =
     runTest(testDispatcher) {
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
         listOf(
           MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
         )
@@ -382,7 +382,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun consumeResolveTaskPrefill_setsWorkDescriptionAndClearsPendingTitle() =
     runTest(testDispatcher) {
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
         listOf(
           MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
         )
@@ -401,7 +401,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun consumeResolveTaskPrefill_ignoresBlankInput_doesNotClearPendingTitle() =
     runTest(testDispatcher) {
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
         listOf(
           MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
         )
@@ -419,7 +419,7 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun consumeResolveTaskPrefill_whenUserAlreadyTyped_prependsInsteadOfOverwriting() =
     runTest(testDispatcher) {
-      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING) } returns flowOf(
         listOf(
           MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
         )

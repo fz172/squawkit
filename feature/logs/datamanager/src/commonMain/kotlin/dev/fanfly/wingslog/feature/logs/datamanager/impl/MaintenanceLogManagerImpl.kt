@@ -1,5 +1,16 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
+import kotlin.time.Clock
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
@@ -12,22 +23,13 @@ import dev.fanfly.wingslog.core.template.CurrentReading
 import dev.fanfly.wingslog.core.template.currentReadingStates
 import dev.fanfly.wingslog.core.template.currentReadings
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.ManualMeterReading
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Squawk
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlin.time.Clock
 
 class MaintenanceLogManagerImpl(
   private val scopeResolver: ThingScopeResolver,
@@ -50,7 +52,7 @@ class MaintenanceLogManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLogAuthors(thingId: String): Flow<Map<String, String?>> =
-    scopeResolver.resolve(thingId)
+    scopeResolver.resolve(ThingId(thingId))
       .flatMapLatest { scope ->
         if (scope == null) flowOf(emptyMap())
         else logStore.observeAll(scope)
@@ -63,7 +65,7 @@ class MaintenanceLogManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLogs(thingId: String): Flow<List<MaintenanceLog>> =
-    scopeResolver.resolve(thingId)
+    scopeResolver.resolve(ThingId(thingId))
       .flatMapLatest { scope ->
         if (scope == null) {
           logger.d { "No signed-in user; stopping logs observation for thing $thingId" }
@@ -83,7 +85,7 @@ class MaintenanceLogManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeMaintenanceOverview(thingId: String): Flow<MaintenanceOverview?> =
-    scopeResolver.resolve(thingId)
+    scopeResolver.resolve(ThingId(thingId))
       .flatMapLatest { scope ->
         if (scope == null) {
           flowOf(null)
@@ -99,7 +101,7 @@ class MaintenanceLogManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeManualReadings(thingId: String): Flow<List<ManualMeterReading>> =
-    scopeResolver.resolve(thingId)
+    scopeResolver.resolve(ThingId(thingId))
       .flatMapLatest { scope ->
         if (scope == null) flowOf(emptyList())
         else manualStore.observeAll(scope)
@@ -123,7 +125,7 @@ class MaintenanceLogManagerImpl(
     value: Double,
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(thingId)
+      val scope = scopeResolver.resolveNow(ThingId(thingId))
       manualStore.put(
         meterKey,
         ManualMeterReading(
@@ -142,7 +144,7 @@ class MaintenanceLogManagerImpl(
     log: MaintenanceLog
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(thingId)
+      val scope = scopeResolver.resolveNow(ThingId(thingId))
       val withId =
         if (log.id.isEmpty()) log.copy(id = generateRandomId()) else log
       logStore.put(withId.id, withId.withReadingsSavedNow(), scope)
@@ -155,7 +157,7 @@ class MaintenanceLogManagerImpl(
     log: MaintenanceLog
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(thingId)
+      val scope = scopeResolver.resolveNow(ThingId(thingId))
       val stored = logStore.observe(log.id, scope)
         .first()?.value
       // The stored stamp, not the incoming one: the form rebuilds the log from its fields and does
@@ -185,7 +187,7 @@ class MaintenanceLogManagerImpl(
     logId: String
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(thingId)
+      val scope = scopeResolver.resolveNow(ThingId(thingId))
       logStore.delete(logId, scope)
       reopenAddressed(logId, scope)
       refreshOverview(thingId, scope)

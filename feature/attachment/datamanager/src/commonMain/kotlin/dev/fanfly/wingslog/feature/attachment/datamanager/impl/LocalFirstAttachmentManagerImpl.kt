@@ -1,5 +1,19 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.transformWhile
+import kotlinx.coroutines.withTimeoutOrNull
+
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
@@ -23,21 +37,9 @@ import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.transformWhile
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Local-first [AttachmentManager]. See docs/storage/storage_r2_design.md §6.2 + §6.3.
@@ -57,7 +59,7 @@ class LocalFirstAttachmentManagerImpl(
 ) : AttachmentManager {
 
   override suspend fun addPickedFile(
-    thingId: String,
+    thingId: ThingId,
     picked: PickedFile,
     displayName: String,
     maxBytes: Long,
@@ -276,7 +278,7 @@ class LocalFirstAttachmentManagerImpl(
   // re-emits when the thing flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeThingSyncStates(
-    thingId: String,
+    thingId: ThingId,
     opener: AttachmentOpener,
   ): Flow<Map<String, BlobSyncState>> = // allow-primitive-tuple: proto id
     combine(

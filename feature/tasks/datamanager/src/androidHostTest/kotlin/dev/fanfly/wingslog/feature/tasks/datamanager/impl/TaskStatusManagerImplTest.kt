@@ -1,6 +1,18 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
+import kotlin.time.Instant
+
 import com.google.common.truth.Truth.assertThat
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import org.junit.Before
+import org.junit.Test
+
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -11,21 +23,13 @@ import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.ManualMeterReading
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import org.junit.Before
-import org.junit.Test
-import kotlin.time.Instant
 
 private const val THING_ID = "thing-1"
+private val THING = ThingId("thing-1")
 
 class TaskStatusManagerImplTest {
 
@@ -53,7 +57,7 @@ class TaskStatusManagerImplTest {
       storeFactory.create<ManualMeterReading>(CollectionKind.ManualReading)
     } returns manualStore
     every { manualStore.observeAll(any()) } returns flowOf(emptyList())
-    every { resolver.resolve(THING_ID) } returns flowOf(scope)
+    every { resolver.resolve(THING) } returns flowOf(scope)
     every { taskStore.observeAll(scope) } returns flowOf(
       listOf(
         done,
@@ -86,7 +90,7 @@ class TaskStatusManagerImplTest {
 
   @Test
   fun activeFirstByUrgency_thenComplied() = runTest {
-    val result = manager().observeTasksWithStatus(THING_ID)
+    val result = manager().observeTasksWithStatus(THING)
       .first()
     assertThat(result.map { it.card.id }).containsExactly(
       "soon",
@@ -99,9 +103,9 @@ class TaskStatusManagerImplTest {
 
   @Test
   fun noScope_emitsEmpty() = runTest {
-    every { resolver.resolve(THING_ID) } returns flowOf(null)
+    every { resolver.resolve(THING) } returns flowOf(null)
     assertThat(
-      manager().observeTasksWithStatus(THING_ID)
+      manager().observeTasksWithStatus(THING)
         .first()
     ).isEmpty()
   }
@@ -129,7 +133,7 @@ class TaskStatusManagerImplTest {
         any()
       )
     } returns DueMetadata(nextDueDate = LocalDate(2027, 12, 1))
-    val result = manager().observeTasksWithStatus(THING_ID)
+    val result = manager().observeTasksWithStatus(THING)
       .first()
     assertThat(result.map { it.card.id }).containsExactly(
       "later",

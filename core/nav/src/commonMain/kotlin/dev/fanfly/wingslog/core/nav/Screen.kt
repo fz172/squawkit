@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.core.nav
 
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.id.ThingId
@@ -77,13 +79,13 @@ sealed class Screen(val route: String) {
      * before modes existed.
      */
     fun createRoute(
-      thingId: String,
+      thingId: ThingId,
       mode: SuggestionsMode = SuggestionsMode.CURATED,
       documents: String? = null,
     ) = when {
-      mode == SuggestionsMode.CURATED -> "suggestions/$thingId"
-      documents == null -> "suggestions/$thingId?$SUGGESTIONS_MODE=${mode.wire}"
-      else -> "suggestions/$thingId?$SUGGESTIONS_MODE=${mode.wire}&$SUGGESTIONS_DOCUMENT=$documents"
+      mode == SuggestionsMode.CURATED -> "suggestions/${thingId.value}"
+      documents == null -> "suggestions/${thingId.value}?$SUGGESTIONS_MODE=${mode.wire}"
+      else -> "suggestions/${thingId.value}?$SUGGESTIONS_MODE=${mode.wire}&$SUGGESTIONS_DOCUMENT=$documents"
     }
   }
 
@@ -107,11 +109,11 @@ sealed class Screen(val route: String) {
   }
 
   data object EditThing : Screen("edit_thing/{$THING_ID}") {
-    fun createRoute(thingId: String) = "edit_thing/$thingId"
+    fun createRoute(thingId: ThingId) = "edit_thing/${thingId.value}"
   }
 
   data object ManageAccess : Screen("manage_access/{$THING_ID}") {
-    fun createRoute(thingId: String) = "manage_access/$thingId"
+    fun createRoute(thingId: ThingId) = "manage_access/${thingId.value}"
   }
 
   /**
@@ -119,35 +121,35 @@ sealed class Screen(val route: String) {
    * manually*. What the task tab's add button opens.
    */
   data object AddTasks : Screen("add_tasks/{$THING_ID}") {
-    fun createRoute(thingId: String) = "add_tasks/$thingId"
+    fun createRoute(thingId: ThingId) = "add_tasks/${thingId.value}"
   }
 
   data object AddMaintenanceTask :
     Screen("maintenance_task_create/{$THING_ID}?$TASK_DRAFT={$TASK_DRAFT}") {
     /** [draft]: a task to start from, in draft mode (see [TASK_DRAFT]); null for a new one. */
-    fun createRoute(thingId: String, draft: String? = null) =
-      if (draft == null) "maintenance_task_create/$thingId" else "maintenance_task_create/$thingId?$TASK_DRAFT=$draft"
+    fun createRoute(thingId: ThingId, draft: String? = null): String =
+      if (draft == null) "maintenance_task_create/${thingId.value}" else "maintenance_task_create/${thingId.value}?$TASK_DRAFT=$draft"
   }
 
   data object EditMaintenanceTask :
     Screen("maintenance_task_edit/{$THING_ID}/{$CARD_ID}") {
     fun createRoute(
-      thingId: String,
-      cardId: String,
-    ) = "maintenance_task_edit/$thingId/$cardId"
+      thingId: ThingId,
+      cardId: MaintenanceTaskId,
+    ): String = "maintenance_task_edit/${thingId.value}/${cardId.value}"
   }
 
   data object AddMaintenanceLog :
     Screen("maintenance_log_create/{$THING_ID}?$SQUAWK_ID={$SQUAWK_ID}&$CARD_ID={$CARD_ID}") {
     fun createRoute(
-      thingId: String,
-      squawkId: String? = null,
-      cardId: String? = null,
+      thingId: ThingId,
+      squawkId: SquawkId? = null,
+      cardId: MaintenanceTaskId? = null,
     ): String {
-      val base = "maintenance_log_create/$thingId"
+      val base = "maintenance_log_create/${thingId.value}"
       val params = buildList {
-        if (squawkId != null) add("$SQUAWK_ID=$squawkId")
-        if (cardId != null) add("$CARD_ID=$cardId")
+        if (squawkId != null) add("$SQUAWK_ID=${squawkId.value}")
+        if (cardId != null) add("$CARD_ID=${cardId.value}")
       }
       return if (params.isEmpty()) base else "$base?${params.joinToString("&")}"
     }
@@ -156,17 +158,17 @@ sealed class Screen(val route: String) {
   data object EditMaintenanceLog :
     Screen("maintenance_log_edit/{$THING_ID}/{$LOG_ID}") {
     fun createRoute(
-      thingId: String,
-      logId: String,
-    ) = "maintenance_log_edit/$thingId/$logId"
+      thingId: ThingId,
+      logId: MaintenanceLogId,
+    ): String = "maintenance_log_edit/${thingId.value}/${logId.value}"
   }
 
   data object AddSquawk : Screen("squawk_create/{$THING_ID}") {
-    fun createRoute(thingId: String) = "squawk_create/$thingId"
+    fun createRoute(thingId: ThingId) = "squawk_create/${thingId.value}"
   }
 
   data object EditSquawk : Screen("squawk_edit/{$THING_ID}/{$SQUAWK_ID}") {
-    fun createRoute(thingId: String, squawkId: String) =
-      "squawk_edit/$thingId/$squawkId"
+    fun createRoute(thingId: ThingId, squawkId: SquawkId) =
+      "squawk_edit/${thingId.value}/${squawkId.value}"
   }
 }

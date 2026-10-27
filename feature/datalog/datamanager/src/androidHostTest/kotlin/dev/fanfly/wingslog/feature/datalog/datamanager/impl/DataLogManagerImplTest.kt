@@ -76,8 +76,8 @@ class DataLogManagerImplTest {
     val factory = mockk<EntityStoreFactory>()
     every { factory.create<DataLog>(CollectionKind.DataLog) } returns store
     val resolver = mockk<ThingScopeResolver>()
-    every { resolver.resolve("thing-1") } returns flowOf(scope)
-    coEvery { resolver.resolveNow("thing-1") } returns scope
+    every { resolver.resolve(ThingId("thing-1")) } returns flowOf(scope)
+    coEvery { resolver.resolveNow(ThingId("thing-1")) } returns scope
     blobs = mockk(relaxed = true)
     filesystem = mockk()
     scheduler = mockk(relaxed = true)

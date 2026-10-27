@@ -4,6 +4,10 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
 
@@ -122,7 +126,8 @@ data class PushPayload(
     internal fun parseTapTarget(raw: String?): NotificationTapTarget? {
       val parts = raw?.split(":") ?: return null
       if (parts.size < 2) return null
-      val thingId = parts[1].takeIf { it.isNotBlank() } ?: return null
+      val rawThingId = parts[1].takeIf { it.isNotBlank() } ?: return null
+      val thingId = ThingId(rawThingId)
       val recordId = parts.getOrNull(2)
         ?.takeIf { it.isNotBlank() }
       return when (parts[0]) {
@@ -131,13 +136,13 @@ data class PushPayload(
         // The record variants are useless without an id — a tap would scroll to nothing. Falling
         // back to the thing still lands the pilot on the right thing, which is the part every
         // variant shares.
-        "squawk" -> recordId?.let { NotificationTapTarget.Squawk(thingId, it) }
+        "squawk" -> recordId?.let { NotificationTapTarget.Squawk(thingId, SquawkId(it)) }
           ?: NotificationTapTarget.Thing(thingId, tab = "squawks")
 
-        "task" -> recordId?.let { NotificationTapTarget.Task(thingId, it) }
+        "task" -> recordId?.let { NotificationTapTarget.Task(thingId, MaintenanceTaskId(it)) }
           ?: NotificationTapTarget.Thing(thingId, tab = "tasks")
 
-        "log" -> recordId?.let { NotificationTapTarget.Log(thingId, it) }
+        "log" -> recordId?.let { NotificationTapTarget.Log(thingId, MaintenanceLogId(it)) }
           ?: NotificationTapTarget.Thing(thingId, tab = "logs")
 
         "data_log" -> recordId?.let {

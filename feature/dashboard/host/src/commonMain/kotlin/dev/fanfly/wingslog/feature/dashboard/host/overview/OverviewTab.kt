@@ -17,6 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.layout.LayoutTier
@@ -31,8 +34,7 @@ import dev.fanfly.wingslog.feature.squawk.dashboard.SquawkOverviewViewModel
 import dev.fanfly.wingslog.feature.tasks.dashboard.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.tasks.dashboard.TaskOverviewViewModel
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
+import dev.fanfly.wingslog.id.ThingId
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -60,7 +62,7 @@ fun OverviewTab(
   val taskOverviewViewModel: TaskOverviewViewModel =
     koinViewModel(
       key = "task-overview:${state.thing.id}",
-      parameters = { parametersOf(state.thing.id) },
+      parameters = { parametersOf(ThingId(state.thing.id)) },
     )
   val taskOverview by taskOverviewViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -133,10 +135,10 @@ fun OverviewTab(
         onSetReading = onSetReading,
         // Edit + Manage Access are owner-only; technicians get a read-only thing card (§6.3).
         onEditClick = manageAction(state, onMutationAction) {
-          ThingOverviewAction.EditClick(state.thing.id)
+          ThingOverviewAction.EditClick(ThingId(state.thing.id))
         },
         onManageAccessClick = memberAction(state, onMutationAction) {
-          ThingOverviewAction.ManageAccessClick(state.thing.id)
+          ThingOverviewAction.ManageAccessClick(ThingId(state.thing.id))
         },
       )
     }

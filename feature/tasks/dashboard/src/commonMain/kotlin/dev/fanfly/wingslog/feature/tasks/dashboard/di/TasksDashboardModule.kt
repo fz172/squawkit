@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard.di
 
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
+
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
@@ -17,9 +20,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.RecentlyAddedTasks
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.module
 
 /**
  * The tasks section tab: its filter/search ViewModel, its suggestions state and the tasks just
@@ -32,8 +34,8 @@ val tasksDashboardModule = module {
       get<SearchEngine>(),
       get<SearchTuning>(),
       get<AnalyticsManager>(),
-      params.get<String>(0),
-      params.get<String>(1),
+      params.get<ThingId>(),
+      params.get<TemplateId>(),
     )
   }
   viewModel { params ->
@@ -44,33 +46,33 @@ val tasksDashboardModule = module {
       get<CommentManager>(),
       get<TemplateRegistry>(),
       get<AnalyticsManager>(),
-      params.get<String>(0),
-      params.get<String>(1),
+      params.get<ThingId>(),
+      params.get<TemplateId>(),
     )
   }
   viewModel { params ->
     TaskOverviewViewModel(
       get<TaskStatusManager>(),
-      params.get<String>(0),
+      params.get<ThingId>(),
     )
   }
   viewModel { params ->
     ReadySuggestionsViewModel(
       get<TaskSuggestionManager>(),
-      ThingId(params.get<String>(0)),
+      params.get<ThingId>(),
     )
   }
   viewModel { params ->
     AddedTasksViewModel(
       get<RecentlyAddedTasks>(),
       get<TaskDataManager>(),
-      ThingId(params.get<String>(0)),
+      params.get<ThingId>(),
     )
   }
   viewModel { params ->
     SuggestTasksEntryViewModel(
       get<TaskSuggestionEntry>(),
-      ThingId(params.get<String>(0))
+      params.get<ThingId>(),
     )
   }
 }

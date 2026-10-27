@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.model
 
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.rpc.suggesttasks.TaskSuggestion
 import dev.fanfly.wingslog.task.MaintenanceTask
 
@@ -15,5 +16,5 @@ data class AcceptedSuggestion(
 /** One accepted suggestion that was written, and the id of the task it became. */
 data class WrittenSuggestion(
   val accepted: AcceptedSuggestion,
-  val taskId: String,
+  val taskId: MaintenanceTaskId,
 )

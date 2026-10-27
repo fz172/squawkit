@@ -434,7 +434,7 @@ class CommentManagerImplTest {
 
   private class FixedScopeResolver(private val scope: EntityScope) :
     ThingScopeResolver {
-    override fun resolve(thingId: String): Flow<EntityScope?> = flowOf(scope)
-    override suspend fun resolveNow(thingId: String): EntityScope = scope
+    override fun resolve(thingId: ThingId): Flow<EntityScope?> = flowOf(scope)
+    override suspend fun resolveNow(thingId: ThingId): EntityScope = scope
   }
 }

@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.dashboard
 
+import kotlinx.coroutines.launch
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,6 +11,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.text.UiText
@@ -22,10 +28,6 @@ import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
 
 @Composable
 fun LogsTab(
@@ -54,7 +56,7 @@ fun LogsTab(
   val attachmentOpener: AttachmentOpener = koinInject()
   val dataLogManager: DataLogManager = koinInject()
   val syncStates by remember(thingId, attachmentManager, attachmentOpener) {
-    attachmentManager.observeThingSyncStates(thingId, attachmentOpener)
+    attachmentManager.observeThingSyncStates(ThingId(thingId), attachmentOpener)
   }.collectAsStateWithLifecycle(emptyMap())
   val dataLogs by remember(thingId, dataLogManager) {
     dataLogManager.observeRowInfos(ThingId(thingId))

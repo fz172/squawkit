@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
@@ -98,7 +99,7 @@ fun SuggestionsRoute(
   // While this screen is in front, its own run's "ready" push stays quiet (PRD R20).
   LifecycleResumeEffect(viewModel.thingId) {
     val hide =
-      OnScreenTapTargets.show(NotificationTapTarget.Suggestions(viewModel.thingId.value))
+      OnScreenTapTargets.show(NotificationTapTarget.Suggestions(viewModel.thingId))
     onPauseOrDispose { hide() }
   }
 
@@ -236,9 +237,9 @@ fun SuggestionsRoute(
               }
             }
             ImproveBanner(
-              onAddDetails = { leaveFor(Screen.EditThing.createRoute(viewModel.thingId.value)) },
+              onAddDetails = { leaveFor(Screen.EditThing.createRoute(viewModel.thingId)) },
               // Only where the sheet's *Suggest* can start a run; otherwise the banner says when.
-              onUseManual = { leaveFor(Screen.AddTasks.createRoute(viewModel.thingId.value)) }
+              onUseManual = { leaveFor(Screen.AddTasks.createRoute(viewModel.thingId)) }
                 .takeIf { uiState.canUseManual },
               blocked = uiState.manualBlocked,
             )
@@ -383,7 +384,7 @@ fun SuggestionsRoute(
                           val draft = viewModel.draftFor(item.id) ?: return@launch
                           navController.navigate(
                             Screen.AddMaintenanceTask.createRoute(
-                              viewModel.thingId.value,
+                              viewModel.thingId,
                               draft
                             ),
                           )

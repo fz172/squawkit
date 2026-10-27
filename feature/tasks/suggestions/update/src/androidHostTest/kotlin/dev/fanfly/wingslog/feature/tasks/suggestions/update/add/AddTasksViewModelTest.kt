@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.suggestions.update.add
 
 import kotlin.time.Instant
-
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,6 +16,14 @@ import kotlinx.coroutines.test.setMain
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.google.common.truth.Truth.assertThat
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+
 import dev.fanfly.wingslog.core.ai.AiEligibility
 import dev.fanfly.wingslog.core.ai.AiErrorCode
 import dev.fanfly.wingslog.core.ai.AiJobClient
@@ -40,13 +47,6 @@ import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddTasksViewModelTest {
@@ -57,13 +57,13 @@ class AddTasksViewModelTest {
   private val attachments = mockk<AttachmentManager>(relaxUnitFun = true)
   private val entryFlow = MutableStateFlow<SuggestEntry>(SuggestEntry.Available)
   private val entry = mockk<TaskSuggestionEntry> {
-    every { observe(ThingId(THING_ID)) } returns entryFlow
+    every { observe(THING) } returns entryFlow
   }
 
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    every { fleetManager.loadThing(ThingId(THING_ID)) } returns flowOf(
+    every { fleetManager.loadThing(THING) } returns flowOf(
       Thing(
         id = THING_ID,
         template = ThingTemplate(id = "airplane", version = 1),
@@ -73,7 +73,7 @@ class AddTasksViewModelTest {
         ),
       ),
     )
-    coEvery { suggestions.isOwner(ThingId(THING_ID)) } returns true
+    coEvery { suggestions.isOwner(THING) } returns true
     allowing(AiEligibility(true, null, true, null))
   }
 
@@ -81,7 +81,7 @@ class AddTasksViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   private fun allowing(eligibility: AiEligibility) {
-    coEvery { suggestions.eligibility(ThingId(THING_ID), any()) } returns eligibility
+    coEvery { suggestions.eligibility(THING, any()) } returns eligibility
   }
 
   private val store = ViewModelStore()
@@ -115,7 +115,7 @@ class AddTasksViewModelTest {
     names.forEach { name ->
       coEvery {
         attachments.addPickedFile(
-          THING_ID,
+          THING,
           match { it.name == name },
           name,
           QuotaChecker.MAX_AI_DOCUMENT_BYTES
@@ -161,7 +161,7 @@ class AddTasksViewModelTest {
   @Test
   fun aMemberOfAFreeOwnersThingGetsNeither() = runTest(dispatcher) {
     allowing(AiEligibility(true, null, false, null))
-    coEvery { suggestions.isOwner(ThingId(THING_ID)) } returns false
+    coEvery { suggestions.isOwner(THING) } returns false
 
     val vm = viewModel()
     advanceUntilIdle()
@@ -200,7 +200,7 @@ class AddTasksViewModelTest {
     )
     assertThat(route).isEqualTo(
       Screen.Suggestions.createRoute(
-        THING_ID,
+        THING,
         SuggestionsMode.ADD,
         manuals.toDocumentsArg()
       ),
@@ -259,7 +259,7 @@ class AddTasksViewModelTest {
   fun aFileStillBeingStoredWhenTheSheetClosesIsLetGo() = runTest(dispatcher) {
     val stored = CompletableDeferred<Attachment>()
     coEvery {
-      attachments.addPickedFile(THING_ID, any(), "MM.pdf", QuotaChecker.MAX_AI_DOCUMENT_BYTES)
+      attachments.addPickedFile(THING, any(), "MM.pdf", QuotaChecker.MAX_AI_DOCUMENT_BYTES)
     } coAnswers { stored.await() }
     val vm = viewModel()
     advanceUntilIdle()
@@ -319,7 +319,7 @@ class AddTasksViewModelTest {
     storing("a.pdf", "b.pdf", "c.pdf", "d.pdf")
     coEvery {
       attachments.addPickedFile(
-        THING_ID,
+        THING,
         match { it.name == "big.pdf" },
         "big.pdf",
         any()
@@ -351,5 +351,6 @@ class AddTasksViewModelTest {
 
   private companion object {
     const val THING_ID = "thing-1"
+    val THING = ThingId(THING_ID)
   }
 }
