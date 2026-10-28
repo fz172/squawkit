@@ -1,10 +1,11 @@
 package dev.fanfly.wingslog.core.ui.adaptive.shell
 
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ThingTemplate
 
 /** Lightweight thing projection used by the shell's switcher. */
 data class ShellThing(
-  val id: String,
+  val id: ThingId,
   /**
    * The switcher's primary line — the Thing's own name.
    *

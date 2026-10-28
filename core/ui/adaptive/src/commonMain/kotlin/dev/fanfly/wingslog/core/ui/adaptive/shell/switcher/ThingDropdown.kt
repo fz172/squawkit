@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.popup.DropdownMenu
+import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.enter_invite_code
 import wingslog.core.sharedassets.generated.resources.switcher_add_thing
@@ -30,7 +31,7 @@ internal fun ThingDropdown(
   expanded: Boolean,
   onDismiss: () -> Unit,
   state: AdaptiveShellUiState,
-  onSelectThing: (String) -> Unit,
+  onSelectThing: (ThingId) -> Unit,
   onAddThing: (() -> Unit)?,
   onEnterInviteCode: (() -> Unit)?,
 ) {

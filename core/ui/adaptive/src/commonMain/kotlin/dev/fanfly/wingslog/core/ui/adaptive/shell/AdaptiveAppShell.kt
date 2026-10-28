@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.layout.layoutTierFor
 import dev.fanfly.wingslog.core.ui.perf.SwitchTrace
 import dev.fanfly.wingslog.core.ui.perf.TraceFrames
+import dev.fanfly.wingslog.id.ThingId
 
 /**
  * The adaptive web/tablet shell.
@@ -32,18 +33,18 @@ import dev.fanfly.wingslog.core.ui.perf.TraceFrames
 fun AdaptiveAppShell(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectThing: (String) -> Unit,
+  onSelectThing: (ThingId) -> Unit,
   onOpenSettings: () -> Unit,
   onAddThing: () -> Unit,
   // #209: opens the manual invite-code entry surface. Null when thing sharing is gated off for
   // the build, which removes the switcher affordance entirely.
   onEnterInviteCode: (() -> Unit)? = null,
-  sectionContent: @Composable (section: ShellSection, thingId: String?) -> Unit,
+  sectionContent: @Composable (section: ShellSection, thingId: ThingId?) -> Unit,
   emptyFleetContent: @Composable () -> Unit,
   // Per-section floating action button (Add log / task / squawk). A host slot because the add
   // actions navigate into feature screens that `core:ui` cannot depend on. Rendered in the shell's
   // own Scaffold slot so snackbars offset around it automatically.
-  sectionFab: @Composable (section: ShellSection, thingId: String?) -> Unit = { _, _ -> },
+  sectionFab: @Composable (section: ShellSection, thingId: ThingId?) -> Unit = { _, _ -> },
   // Shared across every tier so a caller can drive snackbars (e.g. a cross-screen success message)
   // from a single instance regardless of which shell layout is currently active.
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },

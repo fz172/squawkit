@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.thingNoun
@@ -58,7 +59,7 @@ import wingslog.feature.dashboard.host.generated.resources.Res as DashboardRes
  */
 @Composable
 fun ThingSectionContent(
-  thingId: String,
+  thingId: ThingId,
   section: ShellSection,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit = {},
@@ -69,7 +70,7 @@ fun ThingSectionContent(
   onLinkAccount: () -> Unit = {},
 ) {
   val viewModel: ThingOverviewViewModel =
-    koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
+    koinViewModel(key = thingId.value, parameters = { parametersOf(thingId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   // A quick action runs inside the shell entry, so the cross-screen back-stack channel is the
   // wrong shape for its snackbar; the shell provides its host here instead (design §7). Only the
@@ -138,9 +139,8 @@ fun ThingSectionContent(
     onScrollTargetConsumed()
   }
 
-  val thingIdTyped = ThingId(thingId)
   val onAction =
-    rememberSectionActionHandler(viewModel, navController, thingIdTyped)
+    rememberSectionActionHandler(viewModel, navController, thingId)
 
   when (val state = uiState) {
     // The state is assembled from every flow at once, so Success never carries an empty list that
@@ -172,10 +172,10 @@ fun ThingSectionContent(
     is ThingOverviewUiState.Success -> {
       val taskDetailViewModel: TaskDetailViewModel =
         koinViewModel(
-          key = "task-detail:$thingId",
+          key = "task-detail:${thingId.value}",
           parameters = {
             parametersOf(
-              thingIdTyped,
+              thingId,
               TemplateId(state.thing.template?.id.orEmpty()),
             )
           },
@@ -195,12 +195,12 @@ fun ThingSectionContent(
       }
       val taskDetail = taskDetailFor(
         detailViewModel = taskDetailViewModel,
-        thingId = thingIdTyped,
+        thingId = thingId,
         isAnonymous = state.isAnonymous,
         onNavigateToEditTask = { cardId ->
           onAction(
             ThingOverviewAction.EditTaskClick(
-              thingIdTyped,
+              thingId,
               cardId,
             )
           )
@@ -215,7 +215,7 @@ fun ThingSectionContent(
         onOpenDataLog = { dataLogId ->
           onAction(
             ThingOverviewAction.OpenDataLogClick(
-              thingIdTyped,
+              thingId,
               dataLogId
             )
           )
@@ -234,9 +234,9 @@ fun ThingSectionContent(
 
         ShellSection.TASKS -> ListDetailSection(detail = taskDetail) {
           MaintenanceTasksTab(
-            thingId = thingIdTyped,
+            thingId = thingId,
             onNavigateToBrowseSuggestions = {
-              onAction(ThingOverviewAction.BrowseSuggestionsClick(thingIdTyped))
+              onAction(ThingOverviewAction.BrowseSuggestionsClick(thingId))
             },
             onNavigateToCreateLog = { cardId ->
               onAction(
@@ -253,13 +253,13 @@ fun ThingSectionContent(
         }
 
         ShellSection.SQUAWKS -> SquawkTab(
-          thingId = thingIdTyped,
+          thingId = thingId,
           isAnonymous = state.isAnonymous,
           canMutate = true,
           onNavigateToEditSquawk = { squawkId ->
             onAction(
               ThingOverviewAction.EditSquawkClick(
-                thingIdTyped,
+                thingId,
                 SquawkId(squawkId)
               )
             )
@@ -273,7 +273,7 @@ fun ThingSectionContent(
           onOpenDataLog = { dataLogId ->
             onAction(
               ThingOverviewAction.OpenDataLogClick(
-                thingIdTyped,
+                thingId,
                 dataLogId
               )
             )
@@ -284,19 +284,19 @@ fun ThingSectionContent(
         )
 
         ShellSection.LOGS -> LogsTab(
-          thingId = thingIdTyped,
+          thingId = thingId,
           // Route through the same onAction wrapper as every other section, which navigates directly.
           onNavigateToAddLog = {
             onAction(
               ThingOverviewAction.AddLogClick(
-                thingIdTyped
+                thingId
               )
             )
           },
           onNavigateToEditLog = { logId ->
             onAction(
               ThingOverviewAction.EditLogClick(
-                thingIdTyped,
+                thingId,
                 logId
               )
             )
@@ -304,7 +304,7 @@ fun ThingSectionContent(
           onOpenDataLog = { dataLogId ->
             onAction(
               ThingOverviewAction.OpenDataLogClick(
-                thingIdTyped,
+                thingId,
                 dataLogId
               )
             )
@@ -319,11 +319,11 @@ fun ThingSectionContent(
         )
 
         ShellSection.DATA_LOGS -> DataLogSectionContent(
-          thingId = thingIdTyped,
+          thingId = thingId,
           onOpen = { id ->
             navController.navigate(
               Screen.DataLogViewer.createRoute(
-                ThingId(thingId),
+                thingId,
                 id
               )
             )
@@ -339,7 +339,7 @@ fun ThingSectionContent(
 
       TaskDetailDialogs(
         detailViewModel = taskDetailViewModel,
-        thingId = thingIdTyped,
+        thingId = thingId,
       )
     }
   }

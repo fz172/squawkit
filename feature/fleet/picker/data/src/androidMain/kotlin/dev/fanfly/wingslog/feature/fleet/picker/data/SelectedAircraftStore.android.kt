@@ -1,17 +1,19 @@
 package dev.fanfly.wingslog.feature.fleet.picker.data
 
 import android.content.Context
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.ThingId
 
 /** Device-local selected-thing memory backed by [android.content.SharedPreferences]. */
 class AndroidSelectedThingStore(context: Context) : SelectedThingStore {
   private val prefs =
     context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-  override fun load(): String? = prefs.getString(KEY, null)
+  override fun load(): ThingId? = prefs.getString(KEY, null)?.let(::ThingId)
 
-  override fun save(thingId: String?) {
+  override fun save(thingId: ThingId?) {
     prefs.edit()
-      .apply { if (thingId == null) remove(KEY) else putString(KEY, thingId) }
+      .apply { if (thingId == null) remove(KEY) else putString(KEY, thingId.value) }
       .apply()
   }
 

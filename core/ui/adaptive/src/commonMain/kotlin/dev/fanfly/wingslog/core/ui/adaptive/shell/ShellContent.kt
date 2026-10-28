@@ -41,6 +41,7 @@ import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.settings
@@ -52,7 +53,7 @@ import wingslog.core.sharedassets.generated.resources.Res as UiRes
 internal fun ShellContent(
   state: AdaptiveShellUiState,
   showTopBarSwitcher: Boolean,
-  onSelectThing: (String) -> Unit,
+  onSelectThing: (ThingId) -> Unit,
   onAddThing: (() -> Unit)? = null,
   onEnterInviteCode: (() -> Unit)? = null,
   onOpenSettings: (() -> Unit)? = null,
