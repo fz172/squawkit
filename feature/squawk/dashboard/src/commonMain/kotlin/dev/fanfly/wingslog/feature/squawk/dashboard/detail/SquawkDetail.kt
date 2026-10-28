@@ -17,6 +17,8 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -29,11 +31,11 @@ internal fun squawkDetailFor(
   detailState: SquawkDetailUiState,
   onDismiss: () -> Unit,
   canMutate: Boolean,
-  onFixedClick: (squawkId: String) -> Unit,
-  onDismissClick: (squawkId: String) -> Unit,
-  onReopenClick: (squawkId: String) -> Unit,
-  onEditClick: (squawkId: String) -> Unit,
-  onLogClick: ((logId: String) -> Unit)?,
+  onFixedClick: (squawkId: SquawkId) -> Unit,
+  onDismissClick: (squawkId: SquawkId) -> Unit,
+  onReopenClick: (squawkId: SquawkId) -> Unit,
+  onEditClick: (squawkId: SquawkId) -> Unit,
+  onLogClick: ((logId: MaintenanceLogId) -> Unit)?,
   onOpenDataLog: ((DataLogId) -> Unit)?,
   commentThread: CommentThreadController?,
 ): (@Composable () -> Unit)? {
@@ -89,13 +91,13 @@ internal fun squawkDetailFor(
         onFixedClick = if (canMutate) {
           {
             onDismiss()
-            onFixedClick(selected.squawk.id)
+            onFixedClick(selected.id)
           }
         } else null,
         onDismissNoWorkPlanned = if (canMutate) {
           {
             onDismiss()
-            onDismissClick(selected.squawk.id)
+            onDismissClick(selected.id)
           }
         } else null,
         comments = commentThread?.let { thread -> { RecordCommentThread(thread) } },
@@ -105,13 +107,13 @@ internal fun squawkDetailFor(
         onReopenClick = if (canMutate) {
           {
             onDismiss()
-            onReopenClick(selected.squawk.id)
+            onReopenClick(selected.id)
           }
         } else null,
         onEditClick = if (canMutate) {
           {
             onDismiss()
-            onEditClick(selected.squawk.id)
+            onEditClick(selected.id)
           }
         } else null,
       )

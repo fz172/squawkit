@@ -29,6 +29,8 @@ import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.logs.viewing.LogComponentBadge
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -51,9 +53,9 @@ fun MaintenanceLogDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
-  onTaskClick: ((String) -> Unit)? = null,
+  onTaskClick: ((MaintenanceTaskId) -> Unit)? = null,
   availableSquawks: List<Squawk> = emptyList(),
-  onSquawkClick: ((String) -> Unit)? = null,
+  onSquawkClick: ((SquawkId) -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()

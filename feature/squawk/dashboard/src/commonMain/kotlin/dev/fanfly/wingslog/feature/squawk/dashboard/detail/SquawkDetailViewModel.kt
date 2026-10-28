@@ -157,8 +157,6 @@ class SquawkDetailViewModel(
     }
   }
 
-  fun onDismissClick(squawkId: String) = onDismissClick(SquawkId(squawkId))
-
   fun cancelDismiss() {
     _uiState.update { it.copy(dismissingSquawkId = null) }
   }
@@ -188,8 +186,6 @@ class SquawkDetailViewModel(
     }
   }
 
-  fun reopenSquawk(squawkId: String) = reopenSquawk(SquawkId(squawkId))
-
   fun onDeleteClick(squawk: SquawkWithStatus) {
     onDeleteClick(squawk.id)
   }
@@ -202,8 +198,6 @@ class SquawkDetailViewModel(
       )
     }
   }
-
-  fun onDeleteClick(squawkId: String) = onDeleteClick(SquawkId(squawkId))
 
   fun cancelDelete() {
     _uiState.update { it.copy(deletingSquawkId = null) }

@@ -21,6 +21,7 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
@@ -34,7 +35,7 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTask
 internal fun AffectedTasksSection(
   log: MaintenanceLog,
   availableCards: List<MaintenanceTask>,
-  onTaskClick: ((String) -> Unit)?,
+  onTaskClick: ((MaintenanceTaskId) -> Unit)?,
 ) {
   Text(
     text = stringResource(
@@ -78,7 +79,7 @@ internal fun AffectedTasksSection(
         LinkedEntityRow(
           title = title,
           icon = Icons.Default.Build,
-          onClick = onTaskClick?.let { cb -> { cb(cardId) } },
+          onClick = onTaskClick?.let { cb -> { cb(MaintenanceTaskId(cardId)) } },
         )
       }
     }
