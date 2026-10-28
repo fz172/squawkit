@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.update.selection.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.selection.ExportUiState
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.your_stuff
@@ -28,7 +29,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 @Composable
 internal fun ExportSetupList(
   state: ExportUiState.Configuring,
-  onToggleThing: (String) -> Unit,
+  onToggleThing: (ThingId) -> Unit,
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,

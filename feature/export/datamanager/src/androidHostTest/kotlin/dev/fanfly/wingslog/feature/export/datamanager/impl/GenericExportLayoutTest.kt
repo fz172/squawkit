@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Spec
@@ -61,7 +62,7 @@ class GenericExportLayoutTest {
       appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
-        thingIds = listOf(bundle.thing.id),
+        thingIds = listOf(ThingId(bundle.thing.id)),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),

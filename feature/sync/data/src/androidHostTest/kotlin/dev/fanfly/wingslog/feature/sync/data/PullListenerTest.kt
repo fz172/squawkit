@@ -8,12 +8,13 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 
 private const val TEST_USER_ID = "user-pull-001"
-private const val TEST_THING_ID = "thing-pull-001"
+private val TEST_THING_ID = ThingId("thing-pull-001")
 private val TEST_SCOPE =
   EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog

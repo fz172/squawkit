@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -10,6 +11,7 @@ import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -20,10 +22,10 @@ import org.junit.Test
 
 private const val MEMBER = "member-jan-001"
 private const val HOST = "host-jan-001"
-private const val SHARED_AC = "ac-shared-jan"
+private val SHARED_AC = ThingId("ac-shared-jan")
 private const val OWN_AC = "ac-own-jan"
 private const val GUEST = "guest-jan-001"
-private const val GUEST_AC = "ac-guest-jan"
+private val GUEST_AC = ThingId("ac-guest-jan")
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SharedScopeJanitorTest {
@@ -42,7 +44,7 @@ class SharedScopeJanitorTest {
 
   /** A shared thing in the host's tree (doc + nested log + cursor) plus the member's own thing. */
   private suspend fun seedFixture() {
-    seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
+    seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC.value)
     seedEntity(
       CollectionKind.MaintenanceLog,
       EntityScope.thingChildUnsafe(HOST, SHARED_AC),
@@ -90,7 +92,7 @@ class SharedScopeJanitorTest {
     // delete — that would destroy the host's blob, which is the one thing this must never do.
     val blobs = mockk<LocalBlobStore>(relaxed = true)
     val cached = listOf(BlobId("blob-a"), BlobId("blob-b"))
-    coEvery { blobs.idsInScopePrefix("/users/$HOST/thing/$SHARED_AC/%") } returns cached
+    coEvery { blobs.idsInScopePrefix("/users/$HOST/thing/${SHARED_AC.value}/%") } returns cached
     val janitorWithBlobs =
       SharedScopeJanitor(db, DatabaseWriteLock(), blobs = blobs)
     seedFixture()
@@ -231,7 +233,7 @@ class SharedScopeJanitorTest {
     seedEntity(
       CollectionKind.Thing,
       EntityScope.userRoot(GUEST),
-      GUEST_AC,
+      GUEST_AC.value,
       dirty = true
     )
     seedEntity(
@@ -265,7 +267,7 @@ class SharedScopeJanitorTest {
     seedEntity(
       CollectionKind.Thing,
       EntityScope.userRoot(HOST),
-      SHARED_AC,
+      SHARED_AC.value,
       dirty = true
     )
     val notices = mutableListOf<SyncNotice>()

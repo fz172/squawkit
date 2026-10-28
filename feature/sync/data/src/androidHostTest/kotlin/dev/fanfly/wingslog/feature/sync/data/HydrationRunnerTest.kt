@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -16,7 +17,7 @@ import org.junit.Test
 
 class HydrationRunnerTest {
   private val TEST_UID = "user-hydration-001"
-  private val TEST_THING_ID = "thing-hydration-001"
+  private val TEST_THING_ID = ThingId("thing-hydration-001")
   private val TEST_SCOPE = EntityScope.thingChildUnsafe(
     TEST_UID,
     TEST_THING_ID

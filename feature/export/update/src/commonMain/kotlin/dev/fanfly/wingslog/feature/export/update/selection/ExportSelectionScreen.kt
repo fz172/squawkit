@@ -29,6 +29,7 @@ import dev.fanfly.wingslog.feature.export.update.selection.result.ErrorResult
 import dev.fanfly.wingslog.feature.export.update.selection.result.SuccessResult
 import dev.fanfly.wingslog.feature.export.update.selection.running.RunningContent
 import dev.fanfly.wingslog.feature.export.update.selection.setup.ConfiguringContent
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.export.sharedassets.generated.resources.Res
@@ -41,7 +42,7 @@ fun ExportSelectionScreen(
   state: ExportUiState,
   onNavigateBack: () -> Unit,
   onNavigateToHistory: () -> Unit,
-  onToggleThing: (String) -> Unit,
+  onToggleThing: (ThingId) -> Unit,
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,

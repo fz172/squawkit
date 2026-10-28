@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -15,7 +16,7 @@ import org.junit.Test
 class SyncCursorStoreTest {
   companion object {
     private const val TEST_UID = "user-cursor-001"
-    private const val TEST_THING_ID = "thing-cursor-001"
+    private val TEST_THING_ID = ThingId("thing-cursor-001")
     private val TEST_SCOPE = EntityScope.thingChildUnsafe(
       TEST_UID,
       TEST_THING_ID
@@ -248,7 +249,7 @@ class SyncCursorStoreTest {
   fun cursors_differentScopesSameKind_areIsolated() = runTest {
     val scopeOther = EntityScope.thingChildUnsafe(
       TEST_UID,
-      "other-thing"
+      ThingId("other-thing")
     )
     store.markHydrated(
       TEST_UID,

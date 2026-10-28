@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
+import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.storage.FirebaseStorage
@@ -59,7 +60,7 @@ class BlobDownloadDriverTest {
 
   private fun blobRef() = BlobRef(
     id = BlobId(BLOB_ID),
-    scope = EntityScope.thingChildUnsafe(OWNER_UID, "ac1"),
+    scope = EntityScope.thingChildUnsafe(OWNER_UID, ThingId("ac1")),
     relativePath = "blobs/$BLOB_ID.bin",
     sizeBytes = 10L,
     sha256 = "sha",

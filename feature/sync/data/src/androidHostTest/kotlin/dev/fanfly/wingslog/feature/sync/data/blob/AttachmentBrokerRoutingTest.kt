@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
+import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.storage.FirebaseStorage
@@ -35,7 +36,7 @@ class AttachmentBrokerRoutingTest {
   @Test
   fun blobLocation_ownVsForeign() {
     val own = BlobLocation.of(refAt(member))
-    assertThat(own).isEqualTo(BlobLocation(member, "ac1"))
+    assertThat(own).isEqualTo(BlobLocation(member, ThingId("ac1")))
     assertThat(own!!.isForeign(member)).isFalse()
 
     val shared = BlobLocation.of(refAt(host))
@@ -70,7 +71,7 @@ class AttachmentBrokerRoutingTest {
     val result = driver.runOnce(BlobId(BLOB_ID))
 
     assertThat(result).isTrue()
-    assertThat(broker.downloads).containsExactly(Call(host, "ac1", BLOB_ID))
+    assertThat(broker.downloads).containsExactly(Call(host, ThingId("ac1"), BLOB_ID))
     verify(exactly = 0) { storage.reference(any()) }
   }
 
@@ -94,7 +95,7 @@ class AttachmentBrokerRoutingTest {
     val result = driver.runOnce(BlobId(BLOB_ID))
 
     assertThat(result).isTrue()
-    assertThat(broker.uploads).containsExactly(Call(host, "ac1", BLOB_ID))
+    assertThat(broker.uploads).containsExactly(Call(host, ThingId("ac1"), BLOB_ID))
     verify(exactly = 0) { storage.reference(any()) }
   }
 
@@ -111,7 +112,7 @@ class AttachmentBrokerRoutingTest {
     remoteState: RemoteState = RemoteState.RemoteOnly,
   ) = BlobRef(
     id = BlobId(BLOB_ID),
-    scope = EntityScope.thingChildUnsafe(ownerUid, "ac1"),
+    scope = EntityScope.thingChildUnsafe(ownerUid, ThingId("ac1")),
     relativePath = "blobs/$BLOB_ID.bin",
     sizeBytes = 3L,
     sha256 = "sha",
@@ -130,7 +131,7 @@ class AttachmentBrokerRoutingTest {
 
 private data class Call(
   val hostUid: String,
-  val thingId: String,
+  val thingId: ThingId,
   val blobId: String
 )
 
@@ -141,7 +142,7 @@ private class FakeAttachmentBroker : AttachmentBroker {
 
   override suspend fun upload(
     hostUid: String,
-    thingId: String,
+    thingId: ThingId,
     blobId: String,
     contentType: String?,
     bytes: ByteArray,
@@ -151,7 +152,7 @@ private class FakeAttachmentBroker : AttachmentBroker {
 
   override suspend fun download(
     hostUid: String,
-    thingId: String,
+    thingId: ThingId,
     blobId: String
   ): ByteArray {
     downloads += Call(hostUid, thingId, blobId)

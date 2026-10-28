@@ -46,7 +46,7 @@ class AiEchoRoundTripTest {
   private val scopes = mockk<ThingScopeResolver> {
     coEvery { resolveNow(ThingId("t1")) } returns EntityScope.thingChildUnsafe(
       "host",
-      "t1"
+      ThingId("t1")
     )
   }
 

@@ -2,15 +2,17 @@ package dev.fanfly.wingslog.core.storage
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.db.Ai_job_document
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 
 /** A document [uid]'s AI run [jobId] on [thingId] was started with. */
 data class AiJobDocument(
   val uid: String,
   val jobId: String,
-  val thingId: String,
+  val thingId: ThingId,
   val attachment: Attachment,
 )
 
@@ -26,14 +28,14 @@ class AiJobDocumentStore(
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) {
 
-  suspend fun record(uid: String, jobId: String, thingId: String, attachments: List<Attachment>) {
+  suspend fun record(uid: String, jobId: String, thingId: ThingId, attachments: List<Attachment>) {
     writeLock.withLock {
       db.schemaQueries.transaction {
         attachments.forEach {
           db.schemaQueries.insertAiJobDocument(
             uid = uid,
             job_id = jobId,
-            thing_id = thingId,
+            thing_id = thingId.value,
             attachment_id = it.id,
             attachment = it.encode(),
           )
@@ -72,7 +74,7 @@ class AiJobDocumentStore(
     runCatching { Attachment.ADAPTER.decode(attachment) }
       .onFailure { logger.w(it) { "An AI job document did not decode" } }
       .getOrNull()
-      ?.let { AiJobDocument(uid = uid, jobId = job_id, thingId = thing_id, attachment = it) }
+      ?.let { AiJobDocument(uid = uid, jobId = job_id, thingId = ThingId(thing_id), attachment = it) }
 
   private companion object {
     val logger = Logger.withTag("AiJobDocumentStore")

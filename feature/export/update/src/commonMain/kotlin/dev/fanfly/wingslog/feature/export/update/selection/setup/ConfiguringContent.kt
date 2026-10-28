@@ -14,13 +14,14 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.update.selection.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.selection.ExportUiState
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.datetime.LocalDate
 
 @Composable
 internal fun ConfiguringContent(
   state: ExportUiState.Configuring,
   modifier: Modifier,
-  onToggleThing: (String) -> Unit,
+  onToggleThing: (ThingId) -> Unit,
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,

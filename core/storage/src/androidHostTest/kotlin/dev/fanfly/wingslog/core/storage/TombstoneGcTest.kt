@@ -4,10 +4,12 @@ import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Thing
@@ -20,7 +22,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 private const val UID = "u1"
-private const val THING_ID = "ac-1"
+private val THING_ID = ThingId("ac-1")
 private const val SHA =
   "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 
@@ -144,7 +146,7 @@ class TombstoneGcTest {
     // Same attachment id, different thing — a copy across the fleet. The live one wins.
     putEntity(
       kind = CollectionKind.MaintenanceLog,
-      scope = EntityScope.thingChildUnsafe(UID, "ac-2")
+      scope = EntityScope.thingChildUnsafe(UID, ThingId("ac-2"))
         .toPath(),
       id = "copy",
       payload = MaintenanceLog(
@@ -194,7 +196,7 @@ class TombstoneGcTest {
   fun purgedThingLeavesAnotherThingsBlobsAlone() = runTest {
     putThing(at = LONG_AGO, deleted = true)
     blobs.rows[BlobId("mine")] = THING_SCOPE
-    blobs.rows[BlobId("theirs")] = EntityScope.thingChildUnsafe(UID, "ac-2")
+    blobs.rows[BlobId("theirs")] = EntityScope.thingChildUnsafe(UID, ThingId("ac-2"))
       .toPath()
 
     gc.runOnce(NOW)
@@ -257,7 +259,7 @@ class TombstoneGcTest {
     db.schemaQueries.selectOneForSync(
       CollectionKind.Thing,
       USER_ROOT,
-      THING_ID
+      THING_ID.value
     )
       .awaitAsOneOrNull() != null
 
@@ -287,8 +289,8 @@ class TombstoneGcTest {
     putEntity(
       kind = CollectionKind.Thing,
       scope = USER_ROOT,
-      id = THING_ID,
-      payload = Thing(id = THING_ID).encode(),
+      id = THING_ID.value,
+      payload = Thing(id = THING_ID.value).encode(),
       at = at,
       deleted = deleted,
     )

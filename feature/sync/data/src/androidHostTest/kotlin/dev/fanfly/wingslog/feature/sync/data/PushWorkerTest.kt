@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
@@ -13,6 +14,7 @@ import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
+import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.firestore.FirebaseFirestoreException
 import dev.gitlive.firebase.firestore.FirestoreExceptionCode
 import io.mockk.coEvery
@@ -29,13 +31,13 @@ import org.junit.Before
 import org.junit.Test
 
 private const val TEST_USER_ID = "user-push-001"
-private const val TEST_THING_ID = "thing-push-001"
+private val TEST_THING_ID = ThingId("thing-push-001")
 private val TEST_SCOPE =
   EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog
 
 private const val HOST_UID = "host-push-001"
-private const val SHARED_AC = "thing-shared-001"
+private val SHARED_AC = ThingId("thing-shared-001")
 private val SHARED_SCOPE = EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC)
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -97,8 +99,8 @@ class PushWorkerTest {
     // A live share pointing at another account's thing.
     storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
       .put(
-        SHARED_AC,
-        SharedAircraftRef(aircraft_id = SHARED_AC, host_uid = HOST_UID),
+        SHARED_AC.value,
+        SharedAircraftRef(aircraft_id = SHARED_AC.value, host_uid = HOST_UID),
         EntityScope.userRoot(TEST_USER_ID),
       )
     // A dirty row under the shared thing's scope (the host's tree).
@@ -212,7 +214,7 @@ class PushWorkerTest {
       collection = CollectionKind.Thing,
       scope_path = EntityScope.userRoot(HOST_UID)
         .toPath(),
-      id = SHARED_AC,
+      id = SHARED_AC.value,
       payload = byteArrayOf(0x07),
       payload_schema = CollectionKind.Thing.schemaName,
       updated_at = 1000L,
@@ -234,7 +236,7 @@ class PushWorkerTest {
     testScheduler.advanceUntilIdle()
     job.cancel()
 
-    assertThat(captured.map { it.id }).contains(SHARED_AC)
+    assertThat(captured.map { it.id }).contains(SHARED_AC.value)
     val remaining = db.schemaQueries.selectDirty(limit = 100L)
       .executeAsList()
     assertThat(remaining).isEmpty()
@@ -250,7 +252,7 @@ class PushWorkerTest {
         collection = CollectionKind.Thing,
         scope_path = EntityScope.userRoot(HOST_UID)
           .toPath(),
-        id = SHARED_AC,
+        id = SHARED_AC.value,
         payload = byteArrayOf(0x07),
         payload_schema = CollectionKind.Thing.schemaName,
         updated_at = 1000L,
@@ -270,7 +272,7 @@ class PushWorkerTest {
         writer.push(match { it.scope == EntityScope.userRoot(HOST_UID) })
       } throws permissionDenied()
 
-      val revoked = mutableListOf<Pair<String, String>>()
+      val revoked = mutableListOf<Pair<String, ThingId>>()
       val worker = PushWorker(
         db = db,
         writer = writer,
@@ -302,7 +304,7 @@ class PushWorkerTest {
       coEvery { writer.push(match { it.scope == SHARED_SCOPE }) } throws permissionDenied()
 
       val failures = mutableListOf<SyncFailure?>()
-      val revoked = mutableListOf<Pair<String, String>>()
+      val revoked = mutableListOf<Pair<String, ThingId>>()
       val telemetry = RecordingTelemetry()
       val sharedWorker = PushWorker(
         db = db,
@@ -337,7 +339,7 @@ class PushWorkerTest {
       coEvery { writer.push(any()) } throws permissionDenied()
 
       val failures = mutableListOf<SyncFailure?>()
-      val revoked = mutableListOf<Pair<String, String>>()
+      val revoked = mutableListOf<Pair<String, ThingId>>()
       val telemetry = RecordingTelemetry()
       val ownWorker = PushWorker(
         db = db,
@@ -423,8 +425,8 @@ class PushWorkerTest {
     )
     storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
       .put(
-        SHARED_AC,
-        SharedAircraftRef(aircraft_id = SHARED_AC, host_uid = HOST_UID),
+        SHARED_AC.value,
+        SharedAircraftRef(aircraft_id = SHARED_AC.value, host_uid = HOST_UID),
         EntityScope.userRoot(TEST_USER_ID),
       )
     return storeFactory

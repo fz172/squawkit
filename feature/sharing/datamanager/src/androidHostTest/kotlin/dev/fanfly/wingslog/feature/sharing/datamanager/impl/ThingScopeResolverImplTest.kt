@@ -55,7 +55,7 @@ class ThingScopeResolverImplTest {
   @Test
   fun resolveNow_ownThing_usesMyUidScope() = runTest {
     assertThat(resolver.resolveNow(OWN_AC))
-      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC.value_))
+      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
   }
 
   @Test
@@ -63,7 +63,7 @@ class ThingScopeResolverImplTest {
     seedSharedRef()
 
     assertThat(resolver.resolveNow(SHARED_AC))
-      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC.value_))
+      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC))
   }
 
   @Test
@@ -79,7 +79,7 @@ class ThingScopeResolverImplTest {
       resolver.resolve(OWN_AC)
         .first()
     )
-      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC.value_))
+      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
   }
 
   @Test
@@ -90,7 +90,7 @@ class ThingScopeResolverImplTest {
       resolver.resolve(SHARED_AC)
         .first()
     )
-      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC.value_))
+      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC))
   }
 
   @Test

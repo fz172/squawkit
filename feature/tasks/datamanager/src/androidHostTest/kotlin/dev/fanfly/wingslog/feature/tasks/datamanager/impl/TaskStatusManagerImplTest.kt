@@ -31,7 +31,7 @@ private val THING = ThingId("thing-1")
 
 class TaskStatusManagerImplTest {
 
-  private val scope = EntityScope.thingChildUnsafe("uid-1", THING_ID)
+  private val scope = EntityScope.thingChildUnsafe("uid-1", THING)
   private val resolver: ThingScopeResolver = mockk()
   private val taskStore: EntityStore<MaintenanceTask> = mockk()
   private val logStore: EntityStore<MaintenanceLog> = mockk()

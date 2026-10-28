@@ -36,7 +36,7 @@ class ThingScopeResolverImpl(
         flowOf(null)
       } else {
         refStore.observe(thingId.value_, EntityScope.userRoot(uid))
-          .map { ref -> scopeFor(uid, ref?.value?.host_uid, thingId.value_) }
+          .map { ref -> scopeFor(uid, ref?.value?.host_uid, thingId) }
           .distinctUntilChanged()
       }
     }
@@ -46,14 +46,14 @@ class ThingScopeResolverImpl(
       ?: error("Cannot resolve thing scope when no user is signed in")
     val hostUid = refStore.observe(thingId.value_, EntityScope.userRoot(uid))
       .first()?.value?.host_uid
-    return scopeFor(uid, hostUid, thingId.value_)
+    return scopeFor(uid, hostUid, thingId)
   }
 
   /** Shared when a ref names a foreign host; own otherwise. */
   private fun scopeFor(
     uid: String,
     hostUid: String?,
-    thingId: String
+    thingId: ThingId
   ): EntityScope =
     EntityScope.thingChildUnsafe(hostUid ?: uid, thingId)
 }

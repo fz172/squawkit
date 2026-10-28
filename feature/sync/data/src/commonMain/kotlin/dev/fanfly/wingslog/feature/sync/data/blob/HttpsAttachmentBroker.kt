@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.feature.sync.data.blob
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.firebase.functions.FUNCTIONS_REGION
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import io.ktor.client.HttpClient
@@ -46,7 +48,7 @@ class HttpsAttachmentBroker(
 
   override suspend fun upload(
     hostUid: String,
-    thingId: String,
+    thingId: ThingId,
     blobId: String,
     contentType: String?,
     bytes: ByteArray,
@@ -57,7 +59,7 @@ class HttpsAttachmentBroker(
       .invoke(
         UploadSessionRequest(
           hostUid = hostUid,
-          thingId = thingId,
+          thingId = thingId.value,
           blobId = blobId,
           contentType = contentType,
         )
@@ -82,7 +84,7 @@ class HttpsAttachmentBroker(
 
   override suspend fun download(
     hostUid: String,
-    thingId: String,
+    thingId: ThingId,
     blobId: String,
   ): ByteArray {
     // §9.2.1: the proxy verifies App Check + ID token + the ACL on THIS request, then streams bytes.
@@ -99,7 +101,7 @@ class HttpsAttachmentBroker(
       header(HttpHeaders.Authorization, "Bearer $idToken")
       header(APP_CHECK_HEADER, appCheckToken)
       parameter("hostUid", hostUid)
-      parameter("acId", thingId)
+      parameter("acId", thingId.value)
       parameter("blobId", blobId)
     }
     check(response.status.isSuccess()) {

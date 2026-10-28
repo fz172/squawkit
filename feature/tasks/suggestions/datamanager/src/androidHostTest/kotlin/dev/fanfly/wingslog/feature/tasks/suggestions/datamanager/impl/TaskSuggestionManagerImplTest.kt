@@ -79,7 +79,7 @@ class TaskSuggestionManagerImplTest {
   }
   private val scopes = mockk<ThingScopeResolver> {
     coEvery { resolveNow(any<ThingId>()) } answers {
-      EntityScope.thingChildUnsafe("host", firstArg<ThingId>().value_)
+      EntityScope.thingChildUnsafe("host", firstArg<ThingId>())
     }
   }
   private val sync = mockk<EntitySyncObserver> {

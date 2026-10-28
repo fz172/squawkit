@@ -9,7 +9,7 @@ import dev.fanfly.wingslog.id.UserId
  *
  * Examples
  * - `EntityScope.userRoot("u123")` → `/users/u123/` — top-level collections like the Thing itself.
- * - `EntityScope.thingChildUnsafe("u123", "ac1")` → `/users/u123/thing/ac1/` — nested
+ * - `EntityScope.thingChildUnsafe("u123", ThingId("ac1"))` → `/users/u123/thing/ac1/` — nested
  *   collections like maintenance logs.
  *
  * The path string is what gets persisted in `entity.scope_path`. Two scopes with different
@@ -48,10 +48,10 @@ data class EntityScope(val segments: List<String>) {
      * own implementation, and the sync engine's fan-out (which iterates own thing under
      * `userRoot` and derives shared scopes from each `SharedAircraftRef.host_uid`).
      */
-    fun thingChildUnsafe(uid: String, thingId: String): EntityScope =
-      EntityScope(listOf("users", uid, "thing", thingId))
+    fun thingChildUnsafe(uid: String, thingId: ThingId): EntityScope =
+      EntityScope(listOf("users", uid, "thing", thingId.value))
 
     fun thingChildUnsafe(uid: UserId, thingId: ThingId): EntityScope =
-      thingChildUnsafe(uid.value, thingId.value)
+      thingChildUnsafe(uid.value, thingId)
   }
 }

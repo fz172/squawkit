@@ -55,7 +55,7 @@ class CommentManagerImplTest {
   private lateinit var auth: FirebaseAuth
   private lateinit var manager: CommentManagerImpl
 
-  private val scope = EntityScope.thingChildUnsafe(HOST_UID, THING_ID)
+  private val scope = EntityScope.thingChildUnsafe(HOST_UID, THING)
   private val target = CommentTarget.squawk(THING, SQUAWK)
 
   @Before

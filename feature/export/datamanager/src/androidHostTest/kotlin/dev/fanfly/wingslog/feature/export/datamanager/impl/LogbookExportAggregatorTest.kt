@@ -104,7 +104,7 @@ class LogbookExportAggregatorTest {
   fun collect_customRange_keepsOnlyLogsAndTasksWithinRange() = runTest {
     val bundle = aggregator().collect(
       request = ExportRequest(
-        thingIds = listOf(thingId),
+        thingIds = listOf(thing),
         dateRange = ExportDateRange.Custom(
           LocalDate(2020, 1, 1),
           LocalDate(2020, 12, 31)
@@ -123,7 +123,7 @@ class LogbookExportAggregatorTest {
   fun collect_allTime_keepsEveryLogAndTask() = runTest {
     val bundle = aggregator().collect(
       request = ExportRequest(
-        thingIds = listOf(thingId),
+        thingIds = listOf(thing),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),

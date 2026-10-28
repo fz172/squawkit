@@ -153,7 +153,7 @@ class SuggestionContextBuilderTest {
       }
     val scopes = mockk<ThingScopeResolver> {
       coEvery { resolveNow(any<ThingId>()) } answers {
-        EntityScope.thingChildUnsafe(hostUid, firstArg<ThingId>().value_)
+        EntityScope.thingChildUnsafe(hostUid, firstArg<ThingId>())
       }
     }
     return SuggestionContextBuilder(

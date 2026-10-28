@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
+import dev.fanfly.wingslog.id.ThingId
 
 /**
  * Client half of the attachment broker (design §9.2). Blobs on a **foreign-hosted** (shared)
@@ -26,7 +27,7 @@ interface AttachmentBroker {
    */
   suspend fun upload(
     hostUid: String,
-    thingId: String,
+    thingId: ThingId,
     blobId: String,
     contentType: String?,
     bytes: ByteArray,
@@ -39,7 +40,7 @@ interface AttachmentBroker {
    */
   suspend fun download(
     hostUid: String,
-    thingId: String,
+    thingId: ThingId,
     blobId: String,
   ): ByteArray
 }
@@ -49,7 +50,7 @@ interface AttachmentBroker {
  * [ownerUid] is the tree the object sits in — the signed-in user for an owned thing, the host for
  * a shared one. Returns `null` when the scope is not a thing-child path (nothing to broker).
  */
-data class BlobLocation(val ownerUid: String, val thingId: String) {
+data class BlobLocation(val ownerUid: String, val thingId: ThingId) {
   /** A blob is foreign — and must go through the broker — when its owning tree isn't the caller's. */
   fun isForeign(currentUid: String?): Boolean =
     currentUid != null && ownerUid != currentUid
@@ -61,7 +62,7 @@ data class BlobLocation(val ownerUid: String, val thingId: String) {
       val ownerUid = segs[1]
       val thingId = segs[3]
       if (ownerUid.isBlank() || thingId.isBlank()) return null
-      return BlobLocation(ownerUid, thingId)
+      return BlobLocation(ownerUid, ThingId(thingId))
     }
   }
 }

@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -14,7 +15,7 @@ import org.junit.Test
 class UrgencyWatermarkStoreTest {
   companion object {
     private const val TEST_UID = "user-watermark-001"
-    private const val TEST_THING_ID = "thing-watermark-001"
+    private val TEST_THING_ID = ThingId("thing-watermark-001")
     private val TEST_SCOPE = EntityScope.thingChildUnsafe(
       TEST_UID,
       TEST_THING_ID
@@ -155,7 +156,7 @@ class UrgencyWatermarkStoreTest {
   fun pruneNotIn_doesNotTouchOtherScopes() = runTest {
     val otherScope = EntityScope.thingChildUnsafe(
       TEST_UID,
-      "other-thing"
+      ThingId("other-thing")
     )
     store.upsert(
       TEST_UID,

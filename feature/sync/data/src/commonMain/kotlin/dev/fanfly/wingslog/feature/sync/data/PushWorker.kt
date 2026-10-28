@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.SelectDirtyInScope
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -66,7 +67,7 @@ class PushWorker(
    * [SyncEngine] confirms against the member's own ref doc and returns true only when the share has
    * really ended; false leaves the row dirty for the next drain. Defaults to `false`.
    */
-  var sharedScopeRevokedSink: suspend (String, String) -> Boolean =
+  var sharedScopeRevokedSink: suspend (String, ThingId) -> Boolean =
     { _, _ -> false }
 
   /**
@@ -258,10 +259,10 @@ private fun sharedThingIn(
   if (hostUid == uid) return null
 
   return when {
-    parts.size >= 4 && parts[2] == "thing" -> SharedThingRef(hostUid, parts[3])
+    parts.size >= 4 && parts[2] == "thing" -> SharedThingRef(hostUid, ThingId(parts[3]))
     parts.size == 2 && row.collection == CollectionKind.Thing -> SharedThingRef(
       hostUid,
-      row.id
+      ThingId(row.id)
     )
 
     else -> null

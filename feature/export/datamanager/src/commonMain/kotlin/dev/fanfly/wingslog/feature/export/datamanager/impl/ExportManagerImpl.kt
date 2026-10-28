@@ -62,8 +62,7 @@ class ExportManagerImpl(
           percent = 8 + ((index + 1) * 24 / request.thingIds.size),
         )
       )
-      val thing = ThingId(thingId)
-      aggregator.collect(request, thing)
+      aggregator.collect(request, thingId)
     }
     val attachmentManifests = bundles.associate { bundle ->
       bundle.thing.id to attachmentExportResolver.resolve(bundle)

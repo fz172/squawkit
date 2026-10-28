@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -50,7 +51,7 @@ class BlobReferenceScannerTest {
     putLog("dead", THING_A, listOf("gone"), deleted = true)
     putLog(
       "theirs",
-      EntityScope.thingChildUnsafe("someone-else", "t9")
+      EntityScope.thingChildUnsafe("someone-else", ThingId("t9"))
         .toPath(),
       listOf("theirs")
     )
@@ -174,9 +175,9 @@ class BlobReferenceScannerTest {
       "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
     val USER_ROOT = EntityScope.userRoot(UID)
       .toPath()
-    val THING_A = EntityScope.thingChildUnsafe(UID, "thing-a")
+    val THING_A = EntityScope.thingChildUnsafe(UID, ThingId("thing-a"))
       .toPath()
-    val THING_B = EntityScope.thingChildUnsafe(UID, "thing-b")
+    val THING_B = EntityScope.thingChildUnsafe(UID, ThingId("thing-b"))
       .toPath()
   }
 }
