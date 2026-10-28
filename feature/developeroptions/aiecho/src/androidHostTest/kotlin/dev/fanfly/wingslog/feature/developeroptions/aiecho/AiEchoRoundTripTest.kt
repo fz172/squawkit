@@ -34,11 +34,20 @@ class AiEchoRoundTripTest {
 
   private val fleet = mockk<FleetManager> {
     every { observeFleetDashboard() } returns flowOf(
-      listOf(FleetEntry(thing = Thing(id = "t1"), shared = true, role = ShareRole.SHARE_ROLE_TECHNICIAN)),
+      listOf(
+        FleetEntry(
+          thing = Thing(id = "t1"),
+          shared = true,
+          role = ShareRole.SHARE_ROLE_TECHNICIAN
+        )
+      ),
     )
   }
   private val scopes = mockk<ThingScopeResolver> {
-    coEvery { resolveNow(ThingId("t1")) } returns EntityScope.thingChildUnsafe("host", "t1")
+    coEvery { resolveNow(ThingId("t1")) } returns EntityScope.thingChildUnsafe(
+      "host",
+      "t1"
+    )
   }
 
   /** Answers start with [startResult], then plays [statuses] on the job's document. */
@@ -51,10 +60,23 @@ class AiEchoRoundTripTest {
     val closed = mutableListOf<AiJobId>()
     private val job = MutableStateFlow<AiJob?>(null)
 
-    override suspend fun eligibility(kind: AiJobKind, thingId: ThingId, hostUid: UserId, withDocuments: Boolean) =
-      AiEligibility(allowed = true, reason = null, documentsAllowed = false, nextAvailableAt = null)
+    override suspend fun eligibility(
+      kind: AiJobKind,
+      thingId: ThingId,
+      hostUid: UserId,
+      withDocuments: Boolean
+    ) =
+      AiEligibility(
+        allowed = true,
+        reason = null,
+        documentsAllowed = false,
+        nextAvailableAt = null
+      )
 
-    override suspend fun start(kind: AiJobKind, request: ByteString): AiStartResult {
+    override suspend fun start(
+      kind: AiJobKind,
+      request: ByteString
+    ): AiStartResult {
       sent = request
       sentKind = kind
       job.value = finish(request)
@@ -63,7 +85,10 @@ class AiEchoRoundTripTest {
 
     override fun observe(jobId: AiJobId): Flow<AiJob?> = job
 
-    override fun observeLatest(kind: AiJobKind, thingId: ThingId): Flow<AiJob?> = job
+    override fun observeLatest(
+      kind: AiJobKind,
+      thingId: ThingId
+    ): Flow<AiJob?> = job
 
     override suspend fun isGone(jobId: AiJobId) = false
 
@@ -72,7 +97,11 @@ class AiEchoRoundTripTest {
     }
   }
 
-  private fun job(status: AiJobStatus, result: ByteString? = null, error: AiErrorCode? = null) = AiJob(
+  private fun job(
+    status: AiJobStatus,
+    result: ByteString? = null,
+    error: AiErrorCode? = null
+  ) = AiJob(
     id = AiJobId("j1"),
     kind = AiJobKind.AI_JOB_KIND_ECHO,
     hostUid = UserId(value_ = "host"),
@@ -89,51 +118,76 @@ class AiEchoRoundTripTest {
   private val started = AiStartResult.Started(AiJobId("j1"), joined = false)
 
   @Test
-  fun `passes when the job succeeds with the request's own bytes, and closes it`() = runTest {
-    val client = FakeClient(started) { sent -> job(AiJobStatus.AI_JOB_STATUS_SUCCEEDED, result = sent) }
-    val steps = mutableListOf<EchoStep>()
+  fun `passes when the job succeeds with the request's own bytes, and closes it`() =
+    runTest {
+      val client = FakeClient(started) { sent ->
+        job(
+          AiJobStatus.AI_JOB_STATUS_SUCCEEDED,
+          result = sent
+        )
+      }
+      val steps = mutableListOf<EchoStep>()
 
-    val outcome = AiEchoRoundTrip(client, fleet, scopes).run { steps += it }
+      val outcome = AiEchoRoundTrip(client, fleet, scopes).run { steps += it }
 
-    assertThat(outcome).isInstanceOf(EchoOutcome.Passed::class.java)
-    assertThat(client.sentKind).isEqualTo(AiJobKind.AI_JOB_KIND_ECHO)
-    val request = SuggestTasksRequest.ADAPTER.decode(client.sent!!)
-    assertThat(request.thing_id?.value_).isEqualTo("t1")
-    assertThat(request.host_uid?.value_).isEqualTo("host")
-    assertThat(steps.first()).isEqualTo(EchoStep.Starting)
-    assertThat(steps.last()).isEqualTo(EchoStep.Closing)
-    assertThat(client.closed).containsExactly(AiJobId("j1"))
-  }
+      assertThat(outcome).isInstanceOf(EchoOutcome.Passed::class.java)
+      assertThat(client.sentKind).isEqualTo(AiJobKind.AI_JOB_KIND_ECHO)
+      val request = SuggestTasksRequest.ADAPTER.decode(client.sent!!)
+      assertThat(request.thing_id?.value_).isEqualTo("t1")
+      assertThat(request.host_uid?.value_).isEqualTo("host")
+      assertThat(steps.first()).isEqualTo(EchoStep.Starting)
+      assertThat(steps.last()).isEqualTo(EchoStep.Closing)
+      assertThat(client.closed).containsExactly(AiJobId("j1"))
+    }
 
   @Test
   fun `reports a refusal without closing anything`() = runTest {
-    val client = FakeClient(AiStartResult.Refused(AiErrorCode.DISABLED, null)) { null }
+    val client =
+      FakeClient(AiStartResult.Refused(AiErrorCode.DISABLED, null)) { null }
 
-    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(EchoOutcome.Refused(AiErrorCode.DISABLED))
+    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(
+      EchoOutcome.Refused(AiErrorCode.DISABLED)
+    )
     assertThat(client.closed).isEmpty()
   }
 
   @Test
   fun `reports the worker's failure code, and closes the job`() = runTest {
-    val client = FakeClient(started) { job(AiJobStatus.AI_JOB_STATUS_FAILED, error = AiErrorCode.NOT_MEMBER) }
+    val client = FakeClient(started) {
+      job(
+        AiJobStatus.AI_JOB_STATUS_FAILED,
+        error = AiErrorCode.NOT_MEMBER
+      )
+    }
 
-    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(EchoOutcome.Failed(AiErrorCode.NOT_MEMBER))
+    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(
+      EchoOutcome.Failed(AiErrorCode.NOT_MEMBER)
+    )
     assertThat(client.closed).containsExactly(AiJobId("j1"))
   }
 
   @Test
   fun `catches a result that came back changed`() = runTest {
     val changed = "not the request".encodeUtf8()
-    val client = FakeClient(started) { job(AiJobStatus.AI_JOB_STATUS_SUCCEEDED, result = changed) }
+    val client = FakeClient(started) {
+      job(
+        AiJobStatus.AI_JOB_STATUS_SUCCEEDED,
+        result = changed
+      )
+    }
 
-    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(EchoOutcome.Mismatch(changed))
+    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(
+      EchoOutcome.Mismatch(changed)
+    )
   }
 
   @Test
   fun `times out when the job never finishes, and still closes it`() = runTest {
     val client = FakeClient(started) { job(AiJobStatus.AI_JOB_STATUS_QUEUED) }
 
-    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(EchoOutcome.TimedOut)
+    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(
+      EchoOutcome.TimedOut
+    )
     assertThat(client.closed).containsExactly(AiJobId("j1"))
   }
 
@@ -142,7 +196,9 @@ class AiEchoRoundTripTest {
     every { fleet.observeFleetDashboard() } returns flowOf(emptyList())
     val client = FakeClient(started) { null }
 
-    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(EchoOutcome.NoThing)
+    assertThat(AiEchoRoundTrip(client, fleet, scopes).run {}).isEqualTo(
+      EchoOutcome.NoThing
+    )
     assertThat(client.sent).isNull()
   }
 }

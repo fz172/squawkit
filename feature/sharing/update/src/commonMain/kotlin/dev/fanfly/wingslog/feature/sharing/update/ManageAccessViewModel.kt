@@ -38,7 +38,10 @@ class ManageAccessViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val thingId: ThingId = ThingId(savedStateHandle.get<String>(Screen.THING_ID).orEmpty())
+  val thingId: ThingId = ThingId(
+    savedStateHandle.get<String>(Screen.THING_ID)
+      .orEmpty()
+  )
 
   private val _uiState =
     MutableStateFlow(ManageAccessUiState(syncEnabled = cloudSync.isCloudSyncEnabled()))

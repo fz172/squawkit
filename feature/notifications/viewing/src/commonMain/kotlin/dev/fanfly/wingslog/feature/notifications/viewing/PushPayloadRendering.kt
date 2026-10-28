@@ -65,7 +65,10 @@ private suspend fun PushPayload.renderTitle(lexicon: Lexicon): String =
       )
 
     // PRD R20: "N123AA · Suggestions", the Thing's label first, as the activity titles have it.
-    "notification_suggestions_title" -> getString(Res.string.notification_suggestions_title, tailNumber)
+    "notification_suggestions_title" -> getString(
+      Res.string.notification_suggestions_title,
+      tailNumber
+    )
 
     else -> ""
   }
@@ -74,7 +77,10 @@ private suspend fun PushPayload.renderBody(lexicon: Lexicon): String =
   when (bodyKey) {
     // How a suggestion run the user started ended (PRD R20); the tap opens it either way.
     "notification_suggestions_body_ready" ->
-      getString(Res.string.notification_suggestions_body_ready, lexicon.taskNoun.plural)
+      getString(
+        Res.string.notification_suggestions_body_ready,
+        lexicon.taskNoun.plural
+      )
 
     "notification_suggestions_body_empty" -> getString(Res.string.notification_suggestions_body_empty)
     "notification_suggestions_body_failed" -> getString(Res.string.notification_suggestions_body_failed)

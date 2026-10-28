@@ -14,37 +14,37 @@ internal fun LogFormPickerSheets(
   viewModel: MaintenanceLogFormViewModel,
   navController: NavController,
 ) {
-if (uiState.showTechnicianPicker) {
-  TechnicianPickerSheet(
-    availableTechnicians = uiState.availableTechnicians,
-    knownCertifications = uiState.knownCertifications,
-    linkedTechnicians = uiState.linkedTechnicians,
-    selfId = uiState.selfTechnicianId,
-    selectedId = uiState.selectedTechnician?.id,
-    onSelect = { viewModel.onTechnicianSelect(it) },
-    onAddClick = {
-      viewModel.hideTechnicianPicker()
-      navController.navigate(Screen.EditTechnician.createRoute())
-    },
-    onDismiss = { viewModel.hideTechnicianPicker() },
-  )
-}
+  if (uiState.showTechnicianPicker) {
+    TechnicianPickerSheet(
+      availableTechnicians = uiState.availableTechnicians,
+      knownCertifications = uiState.knownCertifications,
+      linkedTechnicians = uiState.linkedTechnicians,
+      selfId = uiState.selfTechnicianId,
+      selectedId = uiState.selectedTechnician?.id,
+      onSelect = { viewModel.onTechnicianSelect(it) },
+      onAddClick = {
+        viewModel.hideTechnicianPicker()
+        navController.navigate(Screen.EditTechnician.createRoute())
+      },
+      onDismiss = { viewModel.hideTechnicianPicker() },
+    )
+  }
 
-if (uiState.showSquawkPicker) {
-  SquawkPickerSheet(
-    openSquawks = uiState.availableSquawks,
-    selectedIds = uiState.selectedSquawkIds.toSet(),
-    onToggle = { id, _ -> viewModel.toggleSquawkSelection(id) },
-    onDismiss = viewModel::hideSquawkPicker,
-  )
-}
+  if (uiState.showSquawkPicker) {
+    SquawkPickerSheet(
+      openSquawks = uiState.availableSquawks,
+      selectedIds = uiState.selectedSquawkIds.toSet(),
+      onToggle = { id, _ -> viewModel.toggleSquawkSelection(id) },
+      onDismiss = viewModel::hideSquawkPicker,
+    )
+  }
 
-if (uiState.showInspectionPicker) {
-  TaskPickerSheet(
-    availableCards = uiState.availableInspectionCards,
-    selectedIds = uiState.selectedInspectionIds,
-    onToggle = viewModel::toggleInspectionSelection,
-    onDismiss = viewModel::hideInspectionPicker,
-  )
-}
+  if (uiState.showInspectionPicker) {
+    TaskPickerSheet(
+      availableCards = uiState.availableInspectionCards,
+      selectedIds = uiState.selectedInspectionIds,
+      onToggle = viewModel::toggleInspectionSelection,
+      onDismiss = viewModel::hideInspectionPicker,
+    )
+  }
 }

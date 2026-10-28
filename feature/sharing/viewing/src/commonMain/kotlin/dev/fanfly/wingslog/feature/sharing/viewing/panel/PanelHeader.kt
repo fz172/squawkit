@@ -92,9 +92,16 @@ internal fun PanelHeader(state: ManageAccessUiState, onLeading: () -> Unit) {
 @Composable
 private fun panelTitles(state: ManageAccessUiState): PanelTitles =
   when (state.view) {
-    AccessPanelView.MAIN -> PanelTitles(stringResource(Res.string.manage_access_title), state.thingLabel)
+    AccessPanelView.MAIN -> PanelTitles(
+      stringResource(Res.string.manage_access_title),
+      state.thingLabel
+    )
+
     AccessPanelView.INVITE -> PanelTitles(
-      stringResource(Res.string.invite_title, LocalThingLexicon.current.thingNoun.singular),
+      stringResource(
+        Res.string.invite_title,
+        LocalThingLexicon.current.thingNoun.singular
+      ),
       state.thingLabel,
     )
 

@@ -23,8 +23,11 @@ fun attachmentFromDocumentArg(arg: String): Attachment? =
  * Several attachments as one argument: each [toDocumentArg], comma-separated (base64url has no
  * comma). The Add Tasks sheet hands the suggestions screen the files picked there this way.
  */
-fun List<Attachment>.toDocumentsArg(): String = joinToString(",") { it.toDocumentArg() }
+fun List<Attachment>.toDocumentsArg(): String =
+  joinToString(",") { it.toDocumentArg() }
 
 /** The attachments [arg] encodes; one that does not decode is left out. */
 fun attachmentsFromDocumentsArg(arg: String): List<Attachment> =
-  arg.split(",").filter { it.isNotEmpty() }.mapNotNull(::attachmentFromDocumentArg)
+  arg.split(",")
+    .filter { it.isNotEmpty() }
+    .mapNotNull(::attachmentFromDocumentArg)

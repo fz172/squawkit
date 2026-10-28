@@ -92,9 +92,16 @@ class SuggestionsViewModelTest {
       Result.success(true)
     }
     // The Thing has no tasks unless a test says so.
-    every { taskDataManager.observeTasks(ThingId(THING_ID)) } returns flowOf(emptyList())
+    every { taskDataManager.observeTasks(ThingId(THING_ID)) } returns flowOf(
+      emptyList()
+    )
     // A model run can start, without documents, unless a test says otherwise.
-    coEvery { suggestions.eligibility(ThingId(THING_ID), any()) } returns AiEligibility(
+    coEvery {
+      suggestions.eligibility(
+        ThingId(THING_ID),
+        any()
+      )
+    } returns AiEligibility(
       true,
       null,
       false,
@@ -178,18 +185,30 @@ class SuggestionsViewModelTest {
       joined = false
     )
   ) {
-    coEvery { suggestions.start(ThingId(THING_ID), any(), any()) } returns started
+    coEvery {
+      suggestions.start(
+        ThingId(THING_ID),
+        any(),
+        any()
+      )
+    } returns started
     every { suggestions.observeRun(ThingId(THING_ID)) } returns flowOf(*runs)
   }
 
   private val runs = MutableSharedFlow<SuggestionRun>(replay = 1)
 
   /** The id of the card at [index] on screen, as the rows hand it to the view model. */
-  private fun SuggestionsViewModel.idAt(index: Int): String = uiState.value.items[index].id
+  private fun SuggestionsViewModel.idAt(index: Int): String =
+    uiState.value.items[index].id
 
   /** Every one of [chosen] written, as tasks t1, t2, … */
   private fun written(chosen: List<AcceptedSuggestion>) =
-    chosen.mapIndexed { i, accepted -> WrittenSuggestion(accepted, MaintenanceTaskId("t${i + 1}")) }
+    chosen.mapIndexed { i, accepted ->
+      WrittenSuggestion(
+        accepted,
+        MaintenanceTaskId("t${i + 1}")
+      )
+    }
 
   /**
    * The curated mode on [curated], and its AI button: the model run is [JOB], and [runs] carries
@@ -199,7 +218,13 @@ class SuggestionsViewModelTest {
     curated: SuggestTasksResult = curatedList,
     documentsAllowed: Boolean = false,
   ): SuggestionsViewModel {
-    coEvery { suggestions.start(ThingId(THING_ID), any(), curatedOnly = true) } returns
+    coEvery {
+      suggestions.start(
+        ThingId(THING_ID),
+        any(),
+        curatedOnly = true
+      )
+    } returns
       AiStartResult.Started(CURATED_JOB, joined = false)
     coEvery {
       suggestions.start(
@@ -277,7 +302,14 @@ class SuggestionsViewModelTest {
 
       val vm = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
-      runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
+      runs.emit(
+        SuggestionRun.Working(
+          JOB,
+          SuggestionStage.TAILORING,
+          null,
+          curatedList
+        )
+      )
       advanceUntilIdle()
 
       coVerify {
@@ -362,7 +394,13 @@ class SuggestionsViewModelTest {
         ),
       )
         .inOrder()
-      coVerify(exactly = 1) { suggestions.draftOf(ThingId(THING_ID), oil, any()) }
+      coVerify(exactly = 1) {
+        suggestions.draftOf(
+          ThingId(THING_ID),
+          oil,
+          any()
+        )
+      }
 
       // Nothing to change on a rule it does not have, and no zero interval.
       vm.onDaysChange(vm.idAt(0), 30)
@@ -418,7 +456,14 @@ class SuggestionsViewModelTest {
 
       val withManuals = viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
-      runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
+      runs.emit(
+        SuggestionRun.Working(
+          JOB,
+          SuggestionStage.TAILORING,
+          null,
+          curatedList
+        )
+      )
       advanceUntilIdle()
       assertThat(withManuals.uiState.value.readsDocuments).isTrue()
 
@@ -428,15 +473,23 @@ class SuggestionsViewModelTest {
     }
 
   @Test
-  fun aStageArgumentAloneDoesNotMeanTheRunReadsDocuments() = runTest(dispatcher) {
-    serving(SuggestionRun.Working(AI_JOB, SuggestionStage.TAILORING, "Rotax 915", curatedList))
+  fun aStageArgumentAloneDoesNotMeanTheRunReadsDocuments() =
+    runTest(dispatcher) {
+      serving(
+        SuggestionRun.Working(
+          AI_JOB,
+          SuggestionStage.TAILORING,
+          "Rotax 915",
+          curatedList
+        )
+      )
 
-    val vm = viewModel()
-    advanceUntilIdle()
+      val vm = viewModel()
+      advanceUntilIdle()
 
-    assertThat(vm.uiState.value.isSuggesting).isTrue()
-    assertThat(vm.uiState.value.readsDocuments).isFalse()
-  }
+      assertThat(vm.uiState.value.isSuggesting).isTrue()
+      assertThat(vm.uiState.value.readsDocuments).isFalse()
+    }
 
   @Test
   fun aRunOpenedAgainReadsDocumentsWhenAStageNamesOne() = runTest(dispatcher) {
@@ -468,7 +521,13 @@ class SuggestionsViewModelTest {
         )
       } returns
         AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null)
-      coEvery { suggestions.start(ThingId(THING_ID), any(), curatedOnly = true) } returns
+      coEvery {
+        suggestions.start(
+          ThingId(THING_ID),
+          any(),
+          curatedOnly = true
+        )
+      } returns
         AiStartResult.Started(CURATED_JOB, joined = false)
       every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
 
@@ -488,7 +547,14 @@ class SuggestionsViewModelTest {
   @Test
   fun anAnswerAlreadyHeldIsShownAndThePickedFilesAreLetGo() =
     runTest(dispatcher) {
-      serving(SuggestionRun.Working(AI_JOB, SuggestionStage.TAILORING, null, curatedList))
+      serving(
+        SuggestionRun.Working(
+          AI_JOB,
+          SuggestionStage.TAILORING,
+          null,
+          curatedList
+        )
+      )
 
       viewModel(mode = SuggestionsMode.ADD, picked = manuals)
       advanceUntilIdle()
@@ -588,7 +654,14 @@ class SuggestionsViewModelTest {
       } returns AiStartResult.Started(JOB, joined = false)
       every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
       val vm = viewModel()
-      runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
+      runs.emit(
+        SuggestionRun.Working(
+          JOB,
+          SuggestionStage.TAILORING,
+          null,
+          curatedList
+        )
+      )
       advanceUntilIdle()
       vm.onToggle(vm.idAt(0)) // check the annual
 
@@ -712,7 +785,14 @@ class SuggestionsViewModelTest {
       advanceUntilIdle()
       coVerify(exactly = 1) { suggestions.dismiss(JOB) }
 
-      serving(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
+      serving(
+        SuggestionRun.Working(
+          JOB,
+          SuggestionStage.TAILORING,
+          null,
+          curatedList
+        )
+      )
       val working = viewModel()
       advanceUntilIdle()
       working.onSkip()
@@ -775,7 +855,14 @@ class SuggestionsViewModelTest {
       assertThat(vm.uiState.value.isSuggesting).isTrue()
       coVerify { suggestions.dismiss(JOB) }
 
-      runs.emit(SuggestionRun.Working(AI_JOB, SuggestionStage.TAILORING, null, curatedList))
+      runs.emit(
+        SuggestionRun.Working(
+          AI_JOB,
+          SuggestionStage.TAILORING,
+          null,
+          curatedList
+        )
+      )
       advanceUntilIdle()
       assertThat(vm.uiState.value.items.map { it.suggestion.title }).containsExactly(
         "Annual",
@@ -852,7 +939,14 @@ class SuggestionsViewModelTest {
       assertThat(vm.uiState.value.failure).isNull()
       assertThat(vm.uiState.value.isSuggesting).isTrue()
       coVerify { suggestions.dismiss(JOB) }
-      runs.emit(SuggestionRun.Working(AI_JOB, SuggestionStage.TAILORING, null, curatedList))
+      runs.emit(
+        SuggestionRun.Working(
+          AI_JOB,
+          SuggestionStage.TAILORING,
+          null,
+          curatedList
+        )
+      )
       advanceUntilIdle()
       assertThat(vm.uiState.value.failure).isNull()
     }
@@ -1148,7 +1242,14 @@ class SuggestionsViewModelTest {
     )
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
-    coEvery { suggestions.accept(ThingId(THING_ID), JOB, any(), any()) } answers { written(arg(3)) }
+    coEvery {
+      suggestions.accept(
+        ThingId(THING_ID),
+        JOB,
+        any(),
+        any()
+      )
+    } answers { written(arg(3)) }
     val vm = viewModel()
     advanceUntilIdle()
     vm.onToggle(vm.idAt(0))
@@ -1166,29 +1267,37 @@ class SuggestionsViewModelTest {
   }
 
   @Test
-  fun whenNothingCouldBeWrittenTheCardsStayAndTheScreenSaysSo() = runTest(dispatcher) {
-    val ready = SuggestionRun.Ready(JOB, curatedList)
-    serving(ready)
-    coEvery { suggestions.accept(ThingId(THING_ID), JOB, any(), any()) } returns emptyList()
-    val vm = viewModel()
-    advanceUntilIdle()
-    vm.onToggle(vm.idAt(0))
+  fun whenNothingCouldBeWrittenTheCardsStayAndTheScreenSaysSo() =
+    runTest(dispatcher) {
+      val ready = SuggestionRun.Ready(JOB, curatedList)
+      serving(ready)
+      coEvery {
+        suggestions.accept(
+          ThingId(THING_ID),
+          JOB,
+          any(),
+          any()
+        )
+      } returns emptyList()
+      val vm = viewModel()
+      advanceUntilIdle()
+      vm.onToggle(vm.idAt(0))
 
-    vm.onAccept()
-    advanceUntilIdle()
+      vm.onAccept()
+      advanceUntilIdle()
 
-    val state = vm.uiState.value
-    assertThat(state.isDone).isFalse()
-    assertThat(state.isSaving).isFalse()
-    assertThat(state.saveFailed).isTrue()
-    assertThat(state.items.first().selected).isTrue()
-    assertThat(recentlyAdded.batch.value).isNull()
-    assertThat(analytics.countOf("starter_tasks_accepted")).isEqualTo(0)
-    assertThat(analytics.countOf("task_suggestions_accepted")).isEqualTo(0)
+      val state = vm.uiState.value
+      assertThat(state.isDone).isFalse()
+      assertThat(state.isSaving).isFalse()
+      assertThat(state.saveFailed).isTrue()
+      assertThat(state.items.first().selected).isTrue()
+      assertThat(recentlyAdded.batch.value).isNull()
+      assertThat(analytics.countOf("starter_tasks_accepted")).isEqualTo(0)
+      assertThat(analytics.countOf("task_suggestions_accepted")).isEqualTo(0)
 
-    vm.onSaveFailedShown()
-    assertThat(vm.uiState.value.saveFailed).isFalse()
-  }
+      vm.onSaveFailedShown()
+      assertThat(vm.uiState.value.saveFailed).isFalse()
+    }
 
   @Test
   fun aCardWhoseWriteFailedIsNotCounted() = runTest(dispatcher) {
@@ -1198,7 +1307,14 @@ class SuggestionsViewModelTest {
     val ready = SuggestionRun.Ready(JOB, answer)
     serving(ready)
     // The model's card is the one that fails.
-    coEvery { suggestions.accept(ThingId(THING_ID), JOB, any(), any()) } answers {
+    coEvery {
+      suggestions.accept(
+        ThingId(THING_ID),
+        JOB,
+        any(),
+        any()
+      )
+    } answers {
       written(arg<List<AcceptedSuggestion>>(3).drop(1))
     }
     val vm = viewModel()
@@ -1219,68 +1335,92 @@ class SuggestionsViewModelTest {
   }
 
   @Test
-  fun aRunTheListenerSaysBeforeItsStartReturnsIsStillShown() = runTest(dispatcher) {
-    // The model is refused for the day, so the job is written finished and never changes again;
-    // the listener hears of it while the start call is still on its way back.
-    val skipped = AiSkipped(AiErrorCode.DAILY_LIMIT, null)
-    coEvery { suggestions.start(ThingId(THING_ID), any(), curatedOnly = true) } returns
-      AiStartResult.Started(CURATED_JOB, joined = false)
-    coEvery {
-      suggestions.start(ThingId(THING_ID), any(), curatedOnly = false, documents = any())
-    } coAnswers {
-      runs.emit(SuggestionRun.Ready(JOB, curatedList, skipped))
+  fun aRunTheListenerSaysBeforeItsStartReturnsIsStillShown() =
+    runTest(dispatcher) {
+      // The model is refused for the day, so the job is written finished and never changes again;
+      // the listener hears of it while the start call is still on its way back.
+      val skipped = AiSkipped(AiErrorCode.DAILY_LIMIT, null)
+      coEvery {
+        suggestions.start(
+          ThingId(THING_ID),
+          any(),
+          curatedOnly = true
+        )
+      } returns
+        AiStartResult.Started(CURATED_JOB, joined = false)
+      coEvery {
+        suggestions.start(
+          ThingId(THING_ID),
+          any(),
+          curatedOnly = false,
+          documents = any()
+        )
+      } coAnswers {
+        runs.emit(SuggestionRun.Ready(JOB, curatedList, skipped))
+        advanceUntilIdle()
+        AiStartResult.Started(JOB, joined = false)
+      }
+      every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
+      val vm = viewModel()
+      runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
       advanceUntilIdle()
-      AiStartResult.Started(JOB, joined = false)
+
+      vm.onSuggest()
+      advanceUntilIdle()
+
+      assertThat(vm.uiState.value.isSuggesting).isFalse()
+      assertThat(vm.uiState.value.aiSkipped).isEqualTo(skipped)
     }
-    every { suggestions.observeRun(ThingId(THING_ID)) } returns runs
-    val vm = viewModel()
-    runs.tryEmit(SuggestionRun.Ready(CURATED_JOB, curatedList))
-    advanceUntilIdle()
-
-    vm.onSuggest()
-    advanceUntilIdle()
-
-    assertThat(vm.uiState.value.isSuggesting).isFalse()
-    assertThat(vm.uiState.value.aiSkipped).isEqualTo(skipped)
-  }
 
   @Test
-  fun theCuratedStartsOwnAnswerOffersTheAiButtonWithoutAskingAgain() = runTest(dispatcher) {
-    serving(
-      SuggestionRun.Ready(JOB, curatedList),
-      started = AiStartResult.Started(
-        JOB,
-        joined = false,
-        eligibility = AiEligibility(true, null, false, null),
-      ),
-    )
+  fun theCuratedStartsOwnAnswerOffersTheAiButtonWithoutAskingAgain() =
+    runTest(dispatcher) {
+      serving(
+        SuggestionRun.Ready(JOB, curatedList),
+        started = AiStartResult.Started(
+          JOB,
+          joined = false,
+          eligibility = AiEligibility(true, null, false, null),
+        ),
+      )
 
-    val vm = viewModel()
-    advanceUntilIdle()
+      val vm = viewModel()
+      advanceUntilIdle()
 
-    assertThat(vm.uiState.value.canSuggest).isTrue()
-    coVerify(exactly = 0) { suggestions.eligibility(any(), any()) }
-  }
+      assertThat(vm.uiState.value.canSuggest).isTrue()
+      coVerify(exactly = 0) { suggestions.eligibility(any(), any()) }
+    }
 
   @Test
-  fun theCuratedStartsOwnAnswerSaysWhyTheModelCannotRun() = runTest(dispatcher) {
-    val back = Instant.parse("2026-10-08T09:00:00Z")
-    serving(
-      SuggestionRun.Ready(JOB, curatedList),
-      started = AiStartResult.Started(
-        JOB,
-        joined = false,
-        eligibility = AiEligibility(false, AiErrorCode.DAILY_LIMIT, false, back),
-      ),
-    )
+  fun theCuratedStartsOwnAnswerSaysWhyTheModelCannotRun() =
+    runTest(dispatcher) {
+      val back = Instant.parse("2026-10-08T09:00:00Z")
+      serving(
+        SuggestionRun.Ready(JOB, curatedList),
+        started = AiStartResult.Started(
+          JOB,
+          joined = false,
+          eligibility = AiEligibility(
+            false,
+            AiErrorCode.DAILY_LIMIT,
+            false,
+            back
+          ),
+        ),
+      )
 
-    val vm = viewModel()
-    advanceUntilIdle()
+      val vm = viewModel()
+      advanceUntilIdle()
 
-    assertThat(vm.uiState.value.canSuggest).isFalse()
-    assertThat(vm.uiState.value.aiUnavailable).isEqualTo(AiSkipped(AiErrorCode.DAILY_LIMIT, back))
-    coVerify(exactly = 0) { suggestions.eligibility(any(), any()) }
-  }
+      assertThat(vm.uiState.value.canSuggest).isFalse()
+      assertThat(vm.uiState.value.aiUnavailable).isEqualTo(
+        AiSkipped(
+          AiErrorCode.DAILY_LIMIT,
+          back
+        )
+      )
+      coVerify(exactly = 0) { suggestions.eligibility(any(), any()) }
+    }
 
   // Returning to a held answer (PRD R19): leaving does not lose the model's cards.
 
@@ -1394,7 +1534,13 @@ class SuggestionsViewModelTest {
     val ready = SuggestionRun.Ready(JOB, curatedList)
     serving(ready)
     val mapped = MaintenanceTask(title = "Annual")
-    coEvery { suggestions.draftOf(ThingId(THING_ID), any(), any()) } returns mapped
+    coEvery {
+      suggestions.draftOf(
+        ThingId(THING_ID),
+        any(),
+        any()
+      )
+    } returns mapped
     val chosen = slot<List<AcceptedSuggestion>>()
     coEvery {
       suggestions.accept(
@@ -1442,7 +1588,14 @@ class SuggestionsViewModelTest {
         )
       } returns MaintenanceTask(title = "Annual")
       val vm = viewModel()
-      runs.emit(SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null, curatedList))
+      runs.emit(
+        SuggestionRun.Working(
+          JOB,
+          SuggestionStage.TAILORING,
+          null,
+          curatedList
+        )
+      )
       advanceUntilIdle()
       vm.draftFor(vm.idAt(0))
       vm.onEdited(MaintenanceTask(title = "Annual, edited").toDraftArg())
@@ -1479,7 +1632,12 @@ class SuggestionsViewModelTest {
   fun theCuratedRouteIsTheBareRouteAndTheDefault() {
     // The empty list and a finished run's push build the same URL as before the mode existed.
     assertThat(Screen.Suggestions.createRoute(ThingId(THING_ID))).isEqualTo("suggestions/$THING_ID")
-    assertThat(Screen.Suggestions.createRoute(ThingId(THING_ID), SuggestionsMode.ADD))
+    assertThat(
+      Screen.Suggestions.createRoute(
+        ThingId(THING_ID),
+        SuggestionsMode.ADD
+      )
+    )
       .isEqualTo("suggestions/$THING_ID?mode=add")
     assertThat(viewModel().uiState.value.mode).isEqualTo(SuggestionsMode.CURATED)
   }

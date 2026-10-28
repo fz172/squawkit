@@ -37,8 +37,14 @@ class PdfViewerActivity : FragmentActivity() {
     val container = FrameLayout(this).apply { id = CONTAINER_ID }
     // Edge to edge from targetSdk 35: keep the viewer's toolbar and search clear of the bars.
     ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
-      val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
-      view.updatePadding(left = bars.left, top = bars.top, right = bars.right, bottom = bars.bottom)
+      val bars =
+        insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
+      view.updatePadding(
+        left = bars.left,
+        top = bars.top,
+        right = bars.right,
+        bottom = bars.bottom
+      )
       WindowInsetsCompat.CONSUMED
     }
     setContentView(container)
@@ -47,7 +53,10 @@ class PdfViewerActivity : FragmentActivity() {
     val viewer = CitedPagePdfViewerFragment().apply {
       arguments = bundleOf(
         CitedPagePdfViewerFragment.ARG_DOCUMENT to document,
-        CitedPagePdfViewerFragment.ARG_PAGE to intent.getIntExtra(EXTRA_PAGE, 0),
+        CitedPagePdfViewerFragment.ARG_PAGE to intent.getIntExtra(
+          EXTRA_PAGE,
+          0
+        ),
       )
     }
     supportFragmentManager.commitNow { replace(CONTAINER_ID, viewer) }
@@ -55,7 +64,8 @@ class PdfViewerActivity : FragmentActivity() {
 
   companion object {
     /** For starting it by name, from a module that cannot see this class. */
-    const val CLASS_NAME = "dev.fanfly.wingslog.feature.attachment.viewing.pdf.PdfViewerActivity"
+    const val CLASS_NAME =
+      "dev.fanfly.wingslog.feature.attachment.viewing.pdf.PdfViewerActivity"
 
     /** The 1-based page to open at; 0 or absent opens at the start. */
     const val EXTRA_PAGE = "dev.fanfly.wingslog.extra.PDF_PAGE"
@@ -84,7 +94,11 @@ class CitedPagePdfViewerFragment : PdfViewerFragment() {
     super.onViewCreated(view, savedInstanceState)
     // Once: after a rotation the library restores its own document and place.
     if (documentUri == null) {
-      documentUri = BundleCompat.getParcelable(requireArguments(), ARG_DOCUMENT, Uri::class.java)
+      documentUri = BundleCompat.getParcelable(
+        requireArguments(),
+        ARG_DOCUMENT,
+        Uri::class.java
+      )
     }
   }
 
@@ -99,7 +113,10 @@ class CitedPagePdfViewerFragment : PdfViewerFragment() {
     if (jumped || page <= 0) return
     jumped = true
     // The view counts from 0; a citation from 1. A page past the end goes to the last.
-    scrollWhenReady((page - 1).coerceAtMost(document.pageCount - 1), attemptsLeft = SCROLL_ATTEMPTS)
+    scrollWhenReady(
+      (page - 1).coerceAtMost(document.pageCount - 1),
+      attemptsLeft = SCROLL_ATTEMPTS
+    )
   }
 
   /**

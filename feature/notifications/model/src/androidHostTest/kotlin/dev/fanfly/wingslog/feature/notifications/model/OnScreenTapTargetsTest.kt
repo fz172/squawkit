@@ -6,7 +6,8 @@ import org.junit.Test
 
 class OnScreenTapTargetsTest {
 
-  private val suggestions = NotificationTapTarget.Suggestions(ThingId("thing-1"))
+  private val suggestions =
+    NotificationTapTarget.Suggestions(ThingId("thing-1"))
 
   @Test
   fun `a target is on screen only while shown`() {
@@ -14,7 +15,13 @@ class OnScreenTapTargetsTest {
 
     val hide = OnScreenTapTargets.show(suggestions)
     assertThat(OnScreenTapTargets.isOnScreen(suggestions)).isTrue()
-    assertThat(OnScreenTapTargets.isOnScreen(NotificationTapTarget.Suggestions(ThingId("thing-2")))).isFalse()
+    assertThat(
+      OnScreenTapTargets.isOnScreen(
+        NotificationTapTarget.Suggestions(
+          ThingId("thing-2")
+        )
+      )
+    ).isFalse()
 
     hide()
     assertThat(OnScreenTapTargets.isOnScreen(suggestions)).isFalse()

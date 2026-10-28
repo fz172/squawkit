@@ -133,7 +133,10 @@ data class ScheduleState(
    * middle step is what keeps a rule-less one-time item's reading on its meter (an odometer's, say)
    * where the default knows only an aircraft's.
    */
-  fun forcedDueMeterKey(component: ComponentType, rules: List<InspectionRule>): String =
+  fun forcedDueMeterKey(
+    component: ComponentType,
+    rules: List<InspectionRule>
+  ): String =
     rules.firstNotNullOfOrNull { rule -> rule.meter_rule?.meter_key?.takeIf { it.isNotEmpty() } }
       ?: meterKey.takeIf { mode == ScheduleMode.HOURS && it.isNotEmpty() }
       ?: meterKeyFor(component, rules)
@@ -146,7 +149,8 @@ data class ScheduleState(
     /** [today] is what a rule-less item's due date is counted from, for its "in how long". */
     fun fromTask(
       task: MaintenanceTask,
-      today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+      today: LocalDate = Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault()).date,
     ): ScheduleState {
       val timeRule = task.rules.firstNotNullOfOrNull { it.time_rule }
       val meterRule = task.rules.firstNotNullOfOrNull { it.meter_rule }
@@ -154,7 +158,8 @@ data class ScheduleState(
       val linkedRule = task.rules.firstNotNullOfOrNull { it.linked_rule }
       val immediateRule = task.rules.firstNotNullOfOrNull { it.immediate_rule }
       val forcedDue = task.forcedDueMeter()
-      val forcedDate = task.force_due_date?.takeIf { it.getEpochSecond() > 0L }?.toDueDate()
+      val forcedDate = task.force_due_date?.takeIf { it.getEpochSecond() > 0L }
+        ?.toDueDate()
 
       val baseRecurrence = when {
         immediateRule != null -> ScheduleRecurrence.ASAP
@@ -193,7 +198,8 @@ data class ScheduleState(
         meterRule != null -> ScheduleState(
           mode = ScheduleMode.HOURS,
           recurrence = baseRecurrence,
-          hourValue = meterRule.interval.takeIf { it > 0f }?.toIntervalText() ?: "",
+          hourValue = meterRule.interval.takeIf { it > 0f }
+            ?.toIntervalText() ?: "",
           // A rule stored without a key predates MeterRule carrying one; the default is what its
           // component always implied.
           meterKey = meterRule.meter_key.takeIf { it.isNotEmpty() }
@@ -222,7 +228,10 @@ data class ScheduleState(
           mode = ScheduleMode.TIME,
           recurrence = baseRecurrence,
           // The days left until it; a date already here or past has no "in how long" to show.
-          calValue = today.daysUntil(forcedDate).takeIf { it > 0 }?.toString().orEmpty(),
+          calValue = today.daysUntil(forcedDate)
+            .takeIf { it > 0 }
+            ?.toString()
+            .orEmpty(),
           calUnit = ScheduleTimeUnit.DAYS,
         )
 

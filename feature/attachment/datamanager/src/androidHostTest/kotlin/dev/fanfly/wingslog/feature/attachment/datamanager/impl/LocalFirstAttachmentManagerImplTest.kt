@@ -361,13 +361,25 @@ class LocalFirstAttachmentManagerImplTest {
 
     var caught: FileTooLargeException? = null
     try {
-      manager.addPickedFile(TEST_THING, picked, displayName = "manual.pdf", maxBytes = 10)
+      manager.addPickedFile(
+        TEST_THING,
+        picked,
+        displayName = "manual.pdf",
+        maxBytes = 10
+      )
     } catch (e: FileTooLargeException) {
       caught = e
     }
 
     assertThat(caught?.sizeBytes).isEqualTo(11)
-    coVerify(exactly = 0) { blobs.put(any(), any(), contentType = any(), scope = any()) }
+    coVerify(exactly = 0) {
+      blobs.put(
+        any(),
+        any(),
+        contentType = any(),
+        scope = any()
+      )
+    }
   }
 
   @Test
@@ -777,26 +789,28 @@ class LocalFirstAttachmentManagerImplTest {
   // ---- observeThingSyncStates ----
 
   @Test
-  fun observeThingSyncStates_resolvesScopeAndOverlaysDownloadingIds() = runTest {
-    val scope = EntityScope.thingChildUnsafe("host-uid", TEST_THING_ID)
-    every { thingScopeResolver.resolve(TEST_THING) } returns flowOf(scope)
-    every { blobs.observeForScope(scope.toPath()) } returns flowOf(
-      listOf(
-        buildBlobRef(remoteState = RemoteState.Synced).copy(id = BlobId("att-1")),
-        buildBlobRef(remoteState = RemoteState.RemoteOnly).copy(id = BlobId("att-2")),
+  fun observeThingSyncStates_resolvesScopeAndOverlaysDownloadingIds() =
+    runTest {
+      val scope = EntityScope.thingChildUnsafe("host-uid", TEST_THING_ID)
+      every { thingScopeResolver.resolve(TEST_THING) } returns flowOf(scope)
+      every { blobs.observeForScope(scope.toPath()) } returns flowOf(
+        listOf(
+          buildBlobRef(remoteState = RemoteState.Synced).copy(id = BlobId("att-1")),
+          buildBlobRef(remoteState = RemoteState.RemoteOnly).copy(id = BlobId("att-2")),
+        )
       )
-    )
-    val opener = mockk<AttachmentOpener> {
-      every { downloadingIds } returns MutableStateFlow(setOf("att-2"))
+      val opener = mockk<AttachmentOpener> {
+        every { downloadingIds } returns MutableStateFlow(setOf("att-2"))
+      }
+
+      val states = manager.observeThingSyncStates(TEST_THING, opener)
+        .first()
+
+      assertThat(states).containsExactly(
+        "att-1", BlobSyncState.Synced,
+        "att-2", BlobSyncState.Downloading,
+      )
     }
-
-    val states = manager.observeThingSyncStates(TEST_THING, opener).first()
-
-    assertThat(states).containsExactly(
-      "att-1", BlobSyncState.Synced,
-      "att-2", BlobSyncState.Downloading,
-    )
-  }
 
   @Test
   fun observeThingSyncStates_unresolvedScope_emitsEmptyMap() = runTest {
@@ -805,6 +819,9 @@ class LocalFirstAttachmentManagerImplTest {
       every { downloadingIds } returns MutableStateFlow(emptySet())
     }
 
-    assertThat(manager.observeThingSyncStates(TEST_THING, opener).first()).isEmpty()
+    assertThat(
+      manager.observeThingSyncStates(TEST_THING, opener)
+        .first()
+    ).isEmpty()
   }
 }

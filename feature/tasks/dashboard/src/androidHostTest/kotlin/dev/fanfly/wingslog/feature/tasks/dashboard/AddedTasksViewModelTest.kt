@@ -31,7 +31,12 @@ class AddedTasksViewModelTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    coEvery { tasks.deleteTask(any<ThingId>(), any<MaintenanceTaskId>()) } returns Result.success(true)
+    coEvery {
+      tasks.deleteTask(
+        any<ThingId>(),
+        any<MaintenanceTaskId>()
+      )
+    } returns Result.success(true)
   }
 
   @After
@@ -43,10 +48,21 @@ class AddedTasksViewModelTest {
     val said = mutableListOf<List<MaintenanceTaskId>>()
     backgroundScope.launch { vm.added.collect { said += it } }
 
-    recentlyAdded.record(ThingId(THING), listOf(MaintenanceTaskId("t1"), MaintenanceTaskId("t2")))
+    recentlyAdded.record(
+      ThingId(THING),
+      listOf(
+        MaintenanceTaskId("t1"),
+        MaintenanceTaskId("t2")
+      )
+    )
     runCurrent()
 
-    assertThat(said).containsExactly(listOf(MaintenanceTaskId("t1"), MaintenanceTaskId("t2")))
+    assertThat(said).containsExactly(
+      listOf(
+        MaintenanceTaskId("t1"),
+        MaintenanceTaskId("t2")
+      )
+    )
     // Taken, so a tab opened later does not say it again.
     assertThat(recentlyAdded.batch.value).isNull()
     val later = mutableListOf<List<MaintenanceTaskId>>()

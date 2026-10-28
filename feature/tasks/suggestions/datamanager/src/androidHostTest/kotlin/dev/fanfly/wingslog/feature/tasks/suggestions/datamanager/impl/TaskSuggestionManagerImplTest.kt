@@ -193,77 +193,132 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
-  fun `waits for each document to upload, then sends its reference`() = runTest {
-    val status = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.5f))
-    every { attachments.observeStatus("blob-1") } returns status
-    coEvery { builder.build(ThingId(THING), SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
-    val sent = slot<ByteString>()
-    coEvery { client.start(any(), capture(sent)) } coAnswers {
-      AiStartResult.Started(JOB, joined = false)
+  fun `waits for each document to upload, then sends its reference`() =
+    runTest {
+      val status =
+        MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.5f))
+      every { attachments.observeStatus("blob-1") } returns status
+      coEvery {
+        builder.build(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED
+        )
+      } returns SuggestTasksRequest()
+      val sent = slot<ByteString>()
+      coEvery { client.start(any(), capture(sent)) } coAnswers {
+        AiStartResult.Started(JOB, joined = false)
+      }
+
+      val started = backgroundScope.async {
+        manager.start(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED,
+          documents = listOf(manual)
+        )
+      }
+      testScheduler.runCurrent()
+      assertThat(sent.isCaptured).isFalse()
+
+      status.value = AttachmentStatus.Synced
+      assertThat(started.await()).isEqualTo(
+        AiStartResult.Started(
+          JOB,
+          joined = false
+        )
+      )
+      assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured).documents).containsExactly(
+        SourceDocumentRef(
+          blob_id = AttachmentId(value_ = "blob-1"),
+          name = "POH.pdf",
+          mime_type = "application/pdf",
+          sha256 = "abc123",
+          size_bytes = 2_000_000,
+        ),
+      )
+      coVerify { jobDocuments.record(JOB, ThingId(THING), listOf(manual)) }
     }
-
-    val started = backgroundScope.async { manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, documents = listOf(manual)) }
-    testScheduler.runCurrent()
-    assertThat(sent.isCaptured).isFalse()
-
-    status.value = AttachmentStatus.Synced
-    assertThat(started.await()).isEqualTo(AiStartResult.Started(JOB, joined = false))
-    assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured).documents).containsExactly(
-      SourceDocumentRef(
-        blob_id = AttachmentId(value_ = "blob-1"),
-        name = "POH.pdf",
-        mime_type = "application/pdf",
-        sha256 = "abc123",
-        size_bytes = 2_000_000,
-      ),
-    )
-    coVerify { jobDocuments.record(JOB, ThingId(THING), listOf(manual)) }
-  }
 
   @Test
   fun `refuses without starting when a document failed to upload`() = runTest {
     every { attachments.observeStatus("blob-1") } returns
       flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
 
-    assertThat(manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, documents = listOf(manual)))
+    assertThat(
+      manager.start(
+        ThingId(THING),
+        SuggestionEntryPoint.CURATED,
+        documents = listOf(manual)
+      )
+    )
       .isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
     coVerify(exactly = 0) { client.start(any(), any()) }
   }
 
   @Test
-  fun `refuses without starting when a document is still uploading after the wait`() = runTest {
-    every { attachments.observeStatus("blob-1") } returns
-      MutableStateFlow(AttachmentStatus.Uploading(0.1f))
+  fun `refuses without starting when a document is still uploading after the wait`() =
+    runTest {
+      every { attachments.observeStatus("blob-1") } returns
+        MutableStateFlow(AttachmentStatus.Uploading(0.1f))
 
-    assertThat(manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, documents = listOf(manual)))
-      .isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
-    coVerify(exactly = 0) { client.start(any(), any()) }
-  }
+      assertThat(
+        manager.start(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED,
+          documents = listOf(manual)
+        )
+      )
+        .isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
+      coVerify(exactly = 0) { client.start(any(), any()) }
+    }
 
   @Test
-  fun `one failed upload refuses at once, without waiting on the others`() = runTest {
-    every { attachments.observeStatus("blob-1") } returns
-      MutableStateFlow(AttachmentStatus.Uploading(0.1f))
-    every { attachments.observeStatus("blob-2") } returns
-      flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
+  fun `one failed upload refuses at once, without waiting on the others`() =
+    runTest {
+      every { attachments.observeStatus("blob-1") } returns
+        MutableStateFlow(AttachmentStatus.Uploading(0.1f))
+      every { attachments.observeStatus("blob-2") } returns
+        flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
 
-    val result = manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, documents = listOf(manual, manual.copy(id = "blob-2")))
+      val result = manager.start(
+        ThingId(THING),
+        SuggestionEntryPoint.CURATED,
+        documents = listOf(manual, manual.copy(id = "blob-2"))
+      )
 
-    assertThat(result).isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
-    assertThat(testScheduler.currentTime).isEqualTo(0)
-  }
+      assertThat(result).isEqualTo(
+        AiStartResult.Refused(
+          AiErrorCode.DOCUMENT_MISSING,
+          null
+        )
+      )
+      assertThat(testScheduler.currentTime).isEqualTo(0)
+    }
 
   @Test
   fun `waits for several documents together, within one wait`() = runTest {
-    val first = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
-    val second = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
+    val first =
+      MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
+    val second =
+      MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
     every { attachments.observeStatus("blob-1") } returns first
     every { attachments.observeStatus("blob-2") } returns second
-    coEvery { builder.build(ThingId(THING), SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
-    coEvery { client.start(any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+    coEvery {
+      builder.build(
+        ThingId(THING),
+        SuggestionEntryPoint.CURATED
+      )
+    } returns SuggestTasksRequest()
+    coEvery { client.start(any(), any()) } returns AiStartResult.Started(
+      JOB,
+      joined = false
+    )
 
     val started = backgroundScope.async {
-      manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, documents = listOf(manual, manual.copy(id = "blob-2")))
+      manager.start(
+        ThingId(THING),
+        SuggestionEntryPoint.CURATED,
+        documents = listOf(manual, manual.copy(id = "blob-2"))
+      )
     }
     testScheduler.advanceTimeBy(90_000)
     first.value = AttachmentStatus.Synced
@@ -271,50 +326,99 @@ class TaskSuggestionManagerImplTest {
     second.value = AttachmentStatus.Synced
 
     // 110 s in all: each took most of the two minutes, but they were waited on side by side.
-    assertThat(started.await()).isEqualTo(AiStartResult.Started(JOB, joined = false))
+    assertThat(started.await()).isEqualTo(
+      AiStartResult.Started(
+        JOB,
+        joined = false
+      )
+    )
   }
 
   @Test
-  fun `the wait is two minutes for all the documents, not for each`() = runTest {
-    val first = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
-    val second = MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
-    every { attachments.observeStatus("blob-1") } returns first
-    every { attachments.observeStatus("blob-2") } returns second
+  fun `the wait is two minutes for all the documents, not for each`() =
+    runTest {
+      val first =
+        MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
+      val second =
+        MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
+      every { attachments.observeStatus("blob-1") } returns first
+      every { attachments.observeStatus("blob-2") } returns second
 
-    val started = backgroundScope.async {
-      manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, documents = listOf(manual, manual.copy(id = "blob-2")))
+      val started = backgroundScope.async {
+        manager.start(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED,
+          documents = listOf(manual, manual.copy(id = "blob-2"))
+        )
+      }
+      testScheduler.advanceTimeBy(110_000)
+      first.value = AttachmentStatus.Synced
+      testScheduler.advanceTimeBy(20_000)
+      second.value = AttachmentStatus.Synced
+
+      // Waited one after the other, each would have made it inside its own two minutes.
+      assertThat(started.await()).isEqualTo(
+        AiStartResult.Refused(
+          AiErrorCode.DOCUMENT_MISSING,
+          null
+        )
+      )
+      coVerify(exactly = 0) { client.start(any(), any()) }
     }
-    testScheduler.advanceTimeBy(110_000)
-    first.value = AttachmentStatus.Synced
-    testScheduler.advanceTimeBy(20_000)
-    second.value = AttachmentStatus.Synced
-
-    // Waited one after the other, each would have made it inside its own two minutes.
-    assertThat(started.await()).isEqualTo(AiStartResult.Refused(AiErrorCode.DOCUMENT_MISSING, null))
-    coVerify(exactly = 0) { client.start(any(), any()) }
-  }
 
   @Test
   fun `a curated-only run neither waits for nor sends documents`() = runTest {
-    coEvery { builder.build(ThingId(THING), SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
+    coEvery {
+      builder.build(
+        ThingId(THING),
+        SuggestionEntryPoint.CURATED
+      )
+    } returns SuggestTasksRequest()
     val sent = slot<ByteString>()
-    coEvery { client.start(any(), capture(sent)) } returns AiStartResult.Started(JOB, joined = false)
+    coEvery {
+      client.start(
+        any(),
+        capture(sent)
+      )
+    } returns AiStartResult.Started(JOB, joined = false)
 
-    manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, curatedOnly = true, documents = listOf(manual))
+    manager.start(
+      ThingId(THING),
+      SuggestionEntryPoint.CURATED,
+      curatedOnly = true,
+      documents = listOf(manual)
+    )
 
     assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured).documents).isEmpty()
     verify(exactly = 0) { attachments.observeStatus(any()) }
   }
 
   @Test
-  fun `takes a document already in Storage from another device as uploaded`() = runTest {
-    every { attachments.observeStatus("blob-1") } returns flowOf(AttachmentStatus.RemoteOnly)
-    coEvery { builder.build(ThingId(THING), SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
-    coEvery { client.start(any(), any()) } returns AiStartResult.Started(JOB, joined = false)
+  fun `takes a document already in Storage from another device as uploaded`() =
+    runTest {
+      every { attachments.observeStatus("blob-1") } returns flowOf(
+        AttachmentStatus.RemoteOnly
+      )
+      coEvery {
+        builder.build(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED
+        )
+      } returns SuggestTasksRequest()
+      coEvery { client.start(any(), any()) } returns AiStartResult.Started(
+        JOB,
+        joined = false
+      )
 
-    assertThat(manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, documents = listOf(manual)))
-      .isEqualTo(AiStartResult.Started(JOB, joined = false))
-  }
+      assertThat(
+        manager.start(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED,
+          documents = listOf(manual)
+        )
+      )
+        .isEqualTo(AiStartResult.Started(JOB, joined = false))
+    }
 
   @Test
   fun `waits for the Thing to reach the server, then starts with the built request`() =
@@ -323,7 +427,12 @@ class TaskSuggestionManagerImplTest {
         thing_id = ThingId(value_ = THING),
         entry_point = "curated"
       )
-      coEvery { builder.build(ThingId(THING), SuggestionEntryPoint.CURATED) } returns request
+      coEvery {
+        builder.build(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED
+        )
+      } returns request
       val sent = slot<ByteString>()
       coEvery {
         client.start(
@@ -353,7 +462,12 @@ class TaskSuggestionManagerImplTest {
   @Test
   fun `asks for the curated suggestions alone`() = runTest {
     val request = SuggestTasksRequest(thing_id = ThingId(value_ = THING))
-    coEvery { builder.build(ThingId(THING), SuggestionEntryPoint.CURATED) } returns request
+    coEvery {
+      builder.build(
+        ThingId(THING),
+        SuggestionEntryPoint.CURATED
+      )
+    } returns request
     val sent = slot<ByteString>()
     coEvery {
       client.start(
@@ -362,7 +476,11 @@ class TaskSuggestionManagerImplTest {
       )
     } returns AiStartResult.Started(JOB, joined = false)
 
-    manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, curatedOnly = true)
+    manager.start(
+      ThingId(THING),
+      SuggestionEntryPoint.CURATED,
+      curatedOnly = true
+    )
 
     assertThat(SuggestTasksRequest.ADAPTER.decode(sent.captured).curated_only).isTrue()
   }
@@ -371,7 +489,12 @@ class TaskSuggestionManagerImplTest {
   fun `still starts when the Thing is not confirmed synced, and lets the server decide`() =
     runTest {
       coEvery { sync.awaitSynced(any(), any(), any(), any()) } returns false
-      coEvery { builder.build(ThingId(THING), SuggestionEntryPoint.CURATED) } returns SuggestTasksRequest()
+      coEvery {
+        builder.build(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED
+        )
+      } returns SuggestTasksRequest()
       coEvery { client.start(any(), any()) } returns AiStartResult.Refused(
         AiErrorCode.NOT_MEMBER,
         null
@@ -495,8 +618,13 @@ class TaskSuggestionManagerImplTest {
       )
 
       // Each written task is named, and its id is what comes back, for *Undo*.
-      assertThat(ids.map { it.taskId }).isEqualTo(written.map { MaintenanceTaskId(it.id) })
-      assertThat(written.map { it.id }.distinct()).hasSize(2)
+      assertThat(ids.map { it.taskId }).isEqualTo(written.map {
+        MaintenanceTaskId(
+          it.id
+        )
+      })
+      assertThat(written.map { it.id }
+                   .distinct()).hasSize(2)
       assertThat(written[0].id).isNotEmpty()
       assertThat(written[0].title).isEqualTo("Replace spark plugs")
       assertThat(written[0].origin?.kind).isEqualTo(TaskOriginKind.TASK_ORIGIN_KIND_AI_THING)
@@ -511,44 +639,68 @@ class TaskSuggestionManagerImplTest {
     }
 
   @Test
-  fun `a suggestion citing a document is written holding that same document, at its page`() = runTest {
-    val written = mutableListOf<MaintenanceTask>()
-    coEvery { taskData.addTask(ThingId(THING), capture(written)) } returns Result.success(true)
-    coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
-    val cites = TaskSuggestion(
-      title = "Gearbox oil",
-      source_document = AttachmentId(value_ = "blob-1"),
-      source_pages = listOf(212),
-    )
-    val run = SuggestionRun.Ready(JOB, SuggestTasksResult(generation_version = "tasks-5"))
+  fun `a suggestion citing a document is written holding that same document, at its page`() =
+    runTest {
+      val written = mutableListOf<MaintenanceTask>()
+      coEvery {
+        taskData.addTask(
+          ThingId(THING),
+          capture(written)
+        )
+      } returns Result.success(true)
+      coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
+      val cites = TaskSuggestion(
+        title = "Gearbox oil",
+        source_document = AttachmentId(value_ = "blob-1"),
+        source_pages = listOf(212),
+      )
+      val run = SuggestionRun.Ready(
+        JOB,
+        SuggestTasksResult(generation_version = "tasks-5")
+      )
 
-    manager.accept(
-      ThingId(THING),
-      run.jobId,
-      run.result.generation_version,
-      listOf(
-        AcceptedSuggestion(cites),
-        // An edit already holding it: no second copy, and it gains the page it lacked.
-        AcceptedSuggestion(cites, edited = MaintenanceTask(title = "Mine", attachments = listOf(manual))),
-        AcceptedSuggestion(TaskSuggestion(title = "Annual")),
-        AcceptedSuggestion(
-          TaskSuggestion(title = "Elsewhere", source_document = AttachmentId(value_ = "blob-9")),
+      manager.accept(
+        ThingId(THING),
+        run.jobId,
+        run.result.generation_version,
+        listOf(
+          AcceptedSuggestion(cites),
+          // An edit already holding it: no second copy, and it gains the page it lacked.
+          AcceptedSuggestion(
+            cites,
+            edited = MaintenanceTask(
+              title = "Mine",
+              attachments = listOf(manual)
+            )
+          ),
+          AcceptedSuggestion(TaskSuggestion(title = "Annual")),
+          AcceptedSuggestion(
+            TaskSuggestion(
+              title = "Elsewhere",
+              source_document = AttachmentId(value_ = "blob-9")
+            ),
+          ),
         ),
-      ),
-    )
+      )
 
-    assertThat(written.map { it.attachments }).containsExactly(
-      listOf(manual.copy(open_page = 212)),
-      listOf(manual.copy(open_page = 212)),
-      emptyList<Attachment>(),
-      emptyList<Attachment>(),
-    ).inOrder()
-  }
+      assertThat(written.map { it.attachments }).containsExactly(
+        listOf(manual.copy(open_page = 212)),
+        listOf(manual.copy(open_page = 212)),
+        emptyList<Attachment>(),
+        emptyList<Attachment>(),
+      )
+        .inOrder()
+    }
 
   @Test
   fun `the page is kept per attachment, on each task`() = runTest {
     val written = mutableListOf<MaintenanceTask>()
-    coEvery { taskData.addTask(ThingId(THING), capture(written)) } returns Result.success(true)
+    coEvery {
+      taskData.addTask(
+        ThingId(THING),
+        capture(written)
+      )
+    } returns Result.success(true)
     coEvery { jobDocuments.documentsOf(JOB) } returns listOf(manual)
     val bulletin = Attachment(id = "blob-sb", name = "SB 12.pdf", open_page = 5)
     val cites = { page: Int ->
@@ -558,7 +710,10 @@ class TaskSuggestionManagerImplTest {
         source_pages = listOf(page),
       )
     }
-    val run = SuggestionRun.Ready(JOB, SuggestTasksResult(generation_version = "tasks-5"))
+    val run = SuggestionRun.Ready(
+      JOB,
+      SuggestTasksResult(generation_version = "tasks-5")
+    )
 
     manager.accept(
       ThingId(THING),
@@ -569,19 +724,26 @@ class TaskSuggestionManagerImplTest {
         // A task with another document of its own: that one keeps its page.
         AcceptedSuggestion(
           cites(40),
-          edited = MaintenanceTask(title = "Mine", attachments = listOf(bulletin)),
+          edited = MaintenanceTask(
+            title = "Mine",
+            attachments = listOf(bulletin)
+          ),
         ),
         // Edited after the manual was on it at another page: that page stays.
         AcceptedSuggestion(
           cites(99),
-          edited = MaintenanceTask(title = "Kept", attachments = listOf(manual.copy(open_page = 7))),
+          edited = MaintenanceTask(
+            title = "Kept",
+            attachments = listOf(manual.copy(open_page = 7))
+          ),
         ),
       ),
     )
 
     assertThat(written[0].attachments).containsExactly(manual.copy(open_page = 212))
     assertThat(written[1].attachments)
-      .containsExactly(bulletin, manual.copy(open_page = 40)).inOrder()
+      .containsExactly(bulletin, manual.copy(open_page = 40))
+      .inOrder()
     assertThat(written[2].attachments).containsExactly(manual.copy(open_page = 7))
   }
 
@@ -604,10 +766,17 @@ class TaskSuggestionManagerImplTest {
 
   @Test
   fun `when no write succeeds the run and its documents stay`() = runTest {
-    coEvery { taskData.addTask(ThingId(THING), any()) } returns Result.failure(RuntimeException("disk"))
+    coEvery { taskData.addTask(ThingId(THING), any()) } returns Result.failure(
+      RuntimeException("disk")
+    )
     val run = SuggestionRun.Ready(JOB, SuggestTasksResult())
 
-    val written = manager.accept(ThingId(THING), run.jobId, run.result.generation_version, listOf(AcceptedSuggestion(suggestion)))
+    val written = manager.accept(
+      ThingId(THING),
+      run.jobId,
+      run.result.generation_version,
+      listOf(AcceptedSuggestion(suggestion))
+    )
 
     assertThat(written).isEmpty()
     coVerify(exactly = 0) { client.close(any()) }
@@ -615,32 +784,33 @@ class TaskSuggestionManagerImplTest {
   }
 
   @Test
-  fun `a run still working long after its worker is gone reads as stale`() = runTest {
-    val now = Clock.System.now()
-    every {
-      client.observeLatest(
-        AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
-        ThingId(value_ = THING)
+  fun `a run still working long after its worker is gone reads as stale`() =
+    runTest {
+      val now = Clock.System.now()
+      every {
+        client.observeLatest(
+          AiJobKind.AI_JOB_KIND_TASK_SUGGESTIONS,
+          ThingId(value_ = THING)
+        )
+      } returns flowOf(
+        job(AiJobStatus.AI_JOB_STATUS_RUNNING).copy(updatedAt = now - 39.minutes),
+        job(AiJobStatus.AI_JOB_STATUS_RUNNING).copy(updatedAt = now - 41.minutes),
+        job(AiJobStatus.AI_JOB_STATUS_QUEUED).copy(updatedAt = now - 2.hours),
+        // A finished run is what it is, however old.
+        job(AiJobStatus.AI_JOB_STATUS_EMPTY).copy(updatedAt = now - 2.hours),
       )
-    } returns flowOf(
-      job(AiJobStatus.AI_JOB_STATUS_RUNNING).copy(updatedAt = now - 39.minutes),
-      job(AiJobStatus.AI_JOB_STATUS_RUNNING).copy(updatedAt = now - 41.minutes),
-      job(AiJobStatus.AI_JOB_STATUS_QUEUED).copy(updatedAt = now - 2.hours),
-      // A finished run is what it is, however old.
-      job(AiJobStatus.AI_JOB_STATUS_EMPTY).copy(updatedAt = now - 2.hours),
-    )
 
-    assertThat(
-      manager.observeRun(ThingId(THING))
-        .toList()
-    ).containsExactly(
-      SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null),
-      SuggestionRun.Failed(JOB, AiErrorCode.STALE),
-      SuggestionRun.Failed(JOB, AiErrorCode.STALE),
-      SuggestionRun.Empty(JOB),
-    )
-      .inOrder()
-  }
+      assertThat(
+        manager.observeRun(ThingId(THING))
+          .toList()
+      ).containsExactly(
+        SuggestionRun.Working(JOB, SuggestionStage.TAILORING, null),
+        SuggestionRun.Failed(JOB, AiErrorCode.STALE),
+        SuggestionRun.Failed(JOB, AiErrorCode.STALE),
+        SuggestionRun.Empty(JOB),
+      )
+        .inOrder()
+    }
 
   @Test
   fun `a draft is the suggestion as accepting would write it`() = runTest {

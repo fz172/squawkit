@@ -105,7 +105,8 @@ class MaintenanceLogFormViewModel(
   /** Fixed for the life of the build — the baked-in pool cannot change without a release. */
   private val knownCertifications = templateRegistry.knownCertifications()
 
-  val thingId: ThingId = ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
+  val thingId: ThingId =
+    ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
   private val logId: String? = savedStateHandle[Screen.LOG_ID]
   val logIdTyped: MaintenanceLogId? = logId?.let(::MaintenanceLogId)
   val isEditMode: Boolean get() = logId != null

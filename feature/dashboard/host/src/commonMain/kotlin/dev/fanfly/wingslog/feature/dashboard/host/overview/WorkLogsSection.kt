@@ -52,7 +52,13 @@ internal fun WorkLogsSection(
   if (total == 0L) {
     if (onMutationAction != null) {
       LogOnboardingCard(
-        onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(ThingId(state.thing.id))) },
+        onAddLogClick = {
+          onMutationAction(
+            ThingOverviewAction.AddLogClick(
+              ThingId(state.thing.id)
+            )
+          )
+        },
         modifier = modifier,
       )
     }

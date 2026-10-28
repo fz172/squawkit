@@ -354,7 +354,9 @@ fun SuggestionsRoute(
                       // A suggestion with no id is never the open one.
                       expanded = item.id.isNotEmpty() && item.id == expandedId,
                       onToggle = { viewModel.onToggle(item.id) },
-                      onExpandedChange = { open -> expandedId = item.id.takeIf { open } },
+                      onExpandedChange = { open ->
+                        expandedId = item.id.takeIf { open }
+                      },
                       onSource = { sourceShown = item.suggestion },
                       onInterval = { edit ->
                         when (edit) {
@@ -378,7 +380,8 @@ fun SuggestionsRoute(
                       // R28: everything else about it, in the task form.
                       onMoreOptions = {
                         scope.launch {
-                          val draft = viewModel.draftFor(item.id) ?: return@launch
+                          val draft =
+                            viewModel.draftFor(item.id) ?: return@launch
                           navController.navigate(
                             Screen.AddMaintenanceTask.createRoute(
                               viewModel.thingId,

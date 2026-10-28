@@ -50,54 +50,55 @@ class AttachmentOpenerIos(
     _downloadingIds.asStateFlow()
 
   // [page] is not passed on: the system preview takes none (see the interface).
-  override fun open(attachment: Attachment, page: Int?): Flow<OpenState> = flow {
-    emit(OpenState.Downloading)
+  override fun open(attachment: Attachment, page: Int?): Flow<OpenState> =
+    flow {
+      emit(OpenState.Downloading)
 
-    if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
-      val urlString = attachment.url.let {
-        if (!it.startsWith("http://") && !it.startsWith("https://")) "https://$it" else it
-      }
-      val url = NSURL.URLWithString(urlString)
-        ?: throw Exception("Invalid URL: $urlString")
-      UIApplication.sharedApplication.openURL(url)
-      emit(OpenState.Done)
-      return@flow
-    }
-
-    if (_downloadingIds.value.contains(attachment.id)) return@flow
-    _downloadingIds.update { it + attachment.id }
-
-    try {
-      val ref = blobs.get(BlobId(attachment.id))
-      when {
-        ref == null && attachment.sha256.isBlank() -> emit(
-          OpenState.Failed(
-            LegacyAttachment()
-          )
-        )
-
-        ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
-          // Row missing (reconciler not yet run) or row present but not downloaded yet — same path.
-          var downloadError: Throwable? = null
-          attachmentManager.ensureLocal(attachment)
-            .collect { state ->
-              if (state is DownloadState.Failed) downloadError = state.error
-            }
-          if (downloadError != null) {
-            emit(OpenState.Failed(downloadError))
-          } else {
-            emitOpenLocalFile(attachment)
-          }
+      if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
+        val urlString = attachment.url.let {
+          if (!it.startsWith("http://") && !it.startsWith("https://")) "https://$it" else it
         }
-
-        else -> emitOpenLocalFile(attachment)
+        val url = NSURL.URLWithString(urlString)
+          ?: throw Exception("Invalid URL: $urlString")
+        UIApplication.sharedApplication.openURL(url)
+        emit(OpenState.Done)
+        return@flow
       }
-    } catch (e: Exception) {
-      emit(OpenState.Failed(e))
-    } finally {
-      _downloadingIds.update { it - attachment.id }
+
+      if (_downloadingIds.value.contains(attachment.id)) return@flow
+      _downloadingIds.update { it + attachment.id }
+
+      try {
+        val ref = blobs.get(BlobId(attachment.id))
+        when {
+          ref == null && attachment.sha256.isBlank() -> emit(
+            OpenState.Failed(
+              LegacyAttachment()
+            )
+          )
+
+          ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
+            // Row missing (reconciler not yet run) or row present but not downloaded yet — same path.
+            var downloadError: Throwable? = null
+            attachmentManager.ensureLocal(attachment)
+              .collect { state ->
+                if (state is DownloadState.Failed) downloadError = state.error
+              }
+            if (downloadError != null) {
+              emit(OpenState.Failed(downloadError))
+            } else {
+              emitOpenLocalFile(attachment)
+            }
+          }
+
+          else -> emitOpenLocalFile(attachment)
+        }
+      } catch (e: Exception) {
+        emit(OpenState.Failed(e))
+      } finally {
+        _downloadingIds.update { it - attachment.id }
+      }
     }
-  }
 
   @OptIn(ExperimentalForeignApi::class)
   private suspend fun kotlinx.coroutines.flow.FlowCollector<OpenState>.emitOpenLocalFile(

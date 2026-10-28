@@ -40,7 +40,7 @@ internal fun LargeOverviewTab(
       .verticalScroll(rememberScrollState())
       .padding(horizontal = Spacing.screenPadding)
       .padding(top = Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
     OverviewHero(state)
 
@@ -67,7 +67,13 @@ internal fun LargeOverviewTab(
 
     if (logOverview.logStats?.total == 0L && onMutationAction != null) {
       LogOnboardingCard(
-        onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(ThingId(state.thing.id))) },
+        onAddLogClick = {
+          onMutationAction(
+            ThingOverviewAction.AddLogClick(
+              ThingId(state.thing.id)
+            )
+          )
+        },
       )
     }
 

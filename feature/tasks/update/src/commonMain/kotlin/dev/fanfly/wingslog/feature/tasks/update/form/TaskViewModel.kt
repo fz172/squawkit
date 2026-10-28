@@ -78,8 +78,12 @@ class TaskViewModel(
 ) : ViewModel() {
 
   val thingId: ThingId =
-    checkNotNull(savedStateHandle.get<String>(Screen.THING_ID)?.let(::ThingId))
-  val cardId: MaintenanceTaskId? = savedStateHandle.get<String>(Screen.CARD_ID)?.let(::MaintenanceTaskId)
+    checkNotNull(
+      savedStateHandle.get<String>(Screen.THING_ID)
+        ?.let(::ThingId)
+    )
+  val cardId: MaintenanceTaskId? = savedStateHandle.get<String>(Screen.CARD_ID)
+    ?.let(::MaintenanceTaskId)
 
   /**
    * The task the form was opened with in draft mode (task population T18), or null. The form
@@ -107,7 +111,12 @@ class TaskViewModel(
     AttachmentFormController(
       attachmentManager,
       thingId,
-      owner = cardId?.let { EntityRef(CollectionKind.MaintenanceTask, it.value) },
+      owner = cardId?.let {
+        EntityRef(
+          CollectionKind.MaintenanceTask,
+          it.value
+        )
+      },
     )
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
@@ -378,7 +387,9 @@ class TaskViewModel(
           // Made by hand here, so it says so (design §4.1); only tasks written before origins
           // existed carry none.
           origin = TaskOrigin(kind = TaskOriginKind.TASK_ORIGIN_KIND_USER),
-        ).withForcedDueMeter(forceDueMeterKey, forceDueEngine.takeIf { it > 0f })
+        ).withForcedDueMeter(
+          forceDueMeterKey,
+          forceDueEngine.takeIf { it > 0f })
         inspectionDataManager.addTask(
           thingId,
           card
@@ -472,7 +483,9 @@ class TaskViewModel(
         )
           // The card is rebuilt from the form, so the meter due has to be put back on it: left
           // off, every save of an edit dropped the reading the task was due at.
-          .withForcedDueMeter(forceDueMeterKey, forceDueEngine.takeIf { it > 0f })
+          .withForcedDueMeter(
+            forceDueMeterKey,
+            forceDueEngine.takeIf { it > 0f })
         val before = storedTask(cardId)
         inspectionDataManager.updateTask(
           thingId,

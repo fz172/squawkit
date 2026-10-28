@@ -124,7 +124,11 @@ class SuggestionContextBuilderTest {
     hostUid: String = "host-uid",
   ): SuggestionContextBuilder {
     val fleet =
-      mockk<FleetManager> { every { loadThing(ThingId(THING)) } returns flowOf(thing) }
+      mockk<FleetManager> {
+        every { loadThing(ThingId(THING)) } returns flowOf(
+          thing
+        )
+      }
     val taskData = mockk<TaskDataManager> {
       every { observeTasks(ThingId(THING)) } returns flowOf(tasks)
     }
@@ -132,7 +136,12 @@ class SuggestionContextBuilderTest {
       every { observeLogs(ThingId(THING)) } returns flowOf(logs)
       every { observeCurrentReadings(ThingId(THING)) } returns flowOf(
         listOf(
-          CurrentReading("airframe_hours", 412.0, asOf = null, isManual = false),
+          CurrentReading(
+            "airframe_hours",
+            412.0,
+            asOf = null,
+            isManual = false
+          ),
           CurrentReading("engine_hours", 410.0, asOf = null, isManual = true),
         )
       )
@@ -159,7 +168,10 @@ class SuggestionContextBuilderTest {
   @Test
   fun `names the Thing and its host tree, and carries the template`() =
     runTest {
-      val request = builder(hostUid = "the-host").build(ThingId(THING), SuggestionEntryPoint.CURATED)
+      val request = builder(hostUid = "the-host").build(
+        ThingId(THING),
+        SuggestionEntryPoint.CURATED
+      )
 
       assertThat(request.thing_id?.value_).isEqualTo(THING)
       assertThat(request.host_uid?.value_).isEqualTo("the-host")
@@ -171,7 +183,8 @@ class SuggestionContextBuilderTest {
 
   @Test
   fun `sends no identifier, no invented field and no serial`() = runTest {
-    val context = builder().build(ThingId(THING), SuggestionEntryPoint.CURATED).context!!
+    val context =
+      builder().build(ThingId(THING), SuggestionEntryPoint.CURATED).context!!
 
     assertThat(context.specs.map { it.key }).containsExactly("make", "model")
     val engine = context.components.first { it.slot_key == "engine" }

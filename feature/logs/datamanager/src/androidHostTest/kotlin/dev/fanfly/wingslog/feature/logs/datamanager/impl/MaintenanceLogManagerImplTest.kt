@@ -183,7 +183,8 @@ class MaintenanceLogManagerImplTest {
   fun updateLog_thatLeavesTheReadingsAlone_keepsTheirStamp() = runTest {
     // Fixing a typo in the description must not make an old reading the newest again. The form
     // rebuilds the log without the stamp, so it is the stored one that has to survive.
-    val savedAt = Instant.parse("2026-04-01T12:00:00Z").toWireInstant()
+    val savedAt = Instant.parse("2026-04-01T12:00:00Z")
+      .toWireInstant()
     storedLog(engineLog(hours = 1201.5).copy(readings_saved_at = savedAt))
 
     manager.updateLog(
@@ -207,7 +208,8 @@ class MaintenanceLogManagerImplTest {
   fun updateLog_thatChangesAReading_stampsItAgain() = runTest {
     storedLog(
       engineLog(hours = 12015.0).copy(
-        readings_saved_at = Instant.parse("2026-04-01T12:00:00Z").toWireInstant()
+        readings_saved_at = Instant.parse("2026-04-01T12:00:00Z")
+          .toWireInstant()
       )
     )
 
@@ -245,7 +247,8 @@ class MaintenanceLogManagerImplTest {
       listOf(
         row(
           engineLog(hours = 1300.0).copy(
-            timestamp = Instant.parse("2026-04-01T00:00:00Z").toWireInstant()
+            timestamp = Instant.parse("2026-04-01T00:00:00Z")
+              .toWireInstant()
           )
         )
       )
@@ -280,7 +283,8 @@ class MaintenanceLogManagerImplTest {
         row(
           MaintenanceLog(
             id = "log-1",
-            timestamp = Instant.parse("2026-04-01T00:00:00Z").toWireInstant(),
+            timestamp = Instant.parse("2026-04-01T00:00:00Z")
+              .toWireInstant(),
             readings = listOf(
               MeterReading(ENGINE, value_ = 1300.0),
               MeterReading("airframe_hours", value_ = 2100.0),

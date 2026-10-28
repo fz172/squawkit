@@ -196,7 +196,8 @@ class StressTestViewModel(
             thingId,
             listOf(squawkId),
             logId,
-          ).getOrThrow()
+          )
+            .getOrThrow()
         }
 
         data.dismissedSquawks.forEach { (squawkId, reason) ->
@@ -217,7 +218,12 @@ class StressTestViewModel(
           components = data.thing.components
             .groupingBy { it.slot_key }
             .eachCount()
-            .map { (key, count) -> SlotCount(template.slotLabel(key, key), count) },
+            .map { (key, count) ->
+              SlotCount(
+                template.slotLabel(key, key),
+                count
+              )
+            },
           technicianCount = data.technicians.size,
           taskCount = data.tasks.size,
           logCount = data.logs.size,

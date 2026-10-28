@@ -45,7 +45,11 @@ class TaskSuggestionEntryTest {
     val auth =
       mockk<FirebaseAuth> { every { authStateChanged } returns flowOf(user) }
     val fleet =
-      mockk<FleetManager> { every { loadThing(ThingId(THING)) } returns flowOf(thing) }
+      mockk<FleetManager> {
+        every { loadThing(ThingId(THING)) } returns flowOf(
+          thing
+        )
+      }
     return TaskSuggestionEntry(
       auth = auth,
       fleetManager = fleet,

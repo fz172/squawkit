@@ -55,7 +55,8 @@ class ScheduleStateTest {
   @Test
   fun aOneTimeItemDueByADateIsTrackedByCalendarOnce() {
     val due = LocalDate(2027, 3, 31)
-    val task = MaintenanceTask(is_one_time = true, force_due_date = due.toDueInstant())
+    val task =
+      MaintenanceTask(is_one_time = true, force_due_date = due.toDueInstant())
 
     val state = ScheduleState.fromTask(task, today = LocalDate(2027, 3, 1))
 
@@ -65,15 +66,28 @@ class ScheduleStateTest {
     assertThat(state.calValue).isEqualTo("30")
     assertThat(state.calUnit).isEqualTo(ScheduleTimeUnit.DAYS)
     // One already past has no "in how long".
-    assertThat(ScheduleState.fromTask(task, today = LocalDate(2027, 4, 2)).calValue).isEmpty()
+    assertThat(
+      ScheduleState.fromTask(
+        task,
+        today = LocalDate(2027, 4, 2)
+      ).calValue
+    ).isEmpty()
   }
 
   @Test
   fun aRulesMeterStillDecidesWhereAnOverrideIsRead() {
     val rules = listOf(
-      InspectionRule(meter_rule = MeterRule(meter_key = "odometer", interval = 5000f)),
+      InspectionRule(
+        meter_rule = MeterRule(
+          meter_key = "odometer",
+          interval = 5000f
+        )
+      ),
     )
-    val state = ScheduleState(mode = ScheduleMode.HOURS, meterKey = MeterKeys.ENGINE_HOURS)
+    val state = ScheduleState(
+      mode = ScheduleMode.HOURS,
+      meterKey = MeterKeys.ENGINE_HOURS
+    )
 
     assertThat(state.forcedDueMeterKey(ComponentType.COMPONENT_ENGINE, rules))
       .isEqualTo("odometer")
@@ -81,6 +95,8 @@ class ScheduleStateTest {
 
   @Test
   fun aTaskWithNoRuleAndNoDueHasNothingSelected() {
-    assertThat(ScheduleState.fromTask(MaintenanceTask(title = "Wash"))).isEqualTo(ScheduleState())
+    assertThat(ScheduleState.fromTask(MaintenanceTask(title = "Wash"))).isEqualTo(
+      ScheduleState()
+    )
   }
 }

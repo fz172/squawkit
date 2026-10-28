@@ -150,7 +150,9 @@ class ThingCreatedAnalyticsTest {
 
   @Test
   fun editingAnExistingThingEmitsNothing() = runTest(dispatcher) {
-    every { fleetManager.loadThing(ThingId("thing-1")) } returns flowOf(completeThing())
+    every { fleetManager.loadThing(ThingId("thing-1")) } returns flowOf(
+      completeThing()
+    )
 
     val vm = viewModel(existingId = "thing-1")
     advanceUntilIdle()

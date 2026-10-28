@@ -197,7 +197,10 @@ class MaintenanceLogManagerImpl(
 
   // The fix was un-logged, so the squawks it closed are open again (#815). Matched on the stored
   // `addressed_by_log_id` rather than the log's `squawk_ids`, which drifts when a log is edited.
-  private suspend fun reopenAddressed(logId: MaintenanceLogId, scope: EntityScope) {
+  private suspend fun reopenAddressed(
+    logId: MaintenanceLogId,
+    scope: EntityScope
+  ) {
     squawkStore.observeAll(scope)
       .first()
       .filter { it.value.addressed_by_log_id == logId.value }

@@ -100,7 +100,13 @@ class TaskDetailViewModelTest {
     vm.onSkipClick(dueOilChange)
     vm.cancelSkip()
 
-    coVerify(exactly = 0) { taskDataManager.skipCycle(any<ThingId>(), any(), any()) }
+    coVerify(exactly = 0) {
+      taskDataManager.skipCycle(
+        any<ThingId>(),
+        any(),
+        any()
+      )
+    }
     assertThat(analytics.countOf("record_quick_action")).isEqualTo(0)
   }
 
@@ -145,7 +151,12 @@ class TaskDetailViewModelTest {
     coVerify(exactly = 1) { taskDataManager.deleteTask(THING, TASK_ID) }
     assertThat(vm.uiState.value.deletingTaskId).isNull()
     assertThat(vm.events.first())
-      .isEqualTo(UiText.StringRes(TasksRes.string.task_deleted, listOf("Maintenance task")))
+      .isEqualTo(
+        UiText.StringRes(
+          TasksRes.string.task_deleted,
+          listOf("Maintenance task")
+        )
+      )
   }
 
   @Test
@@ -167,28 +178,29 @@ class TaskDetailViewModelTest {
   }
 
   @Test
-  fun openingATaskSheet_opensThatTasksThread_andClosingItClosesTheThread() = runTest {
-    val vm = viewModel()
-    assertThat(vm.commentThread.value).isNull()
+  fun openingATaskSheet_opensThatTasksThread_andClosingItClosesTheThread() =
+    runTest {
+      val vm = viewModel()
+      assertThat(vm.commentThread.value).isNull()
 
-    vm.showDetail(dueOilChange)
-    advanceUntilIdle()
+      vm.showDetail(dueOilChange)
+      advanceUntilIdle()
 
-    assertThat(vm.commentThread.value).isNotNull()
-    verify {
-      commentManager.observeComments(
-        CommentTarget.task(
-          THING,
-          TASK_ID,
+      assertThat(vm.commentThread.value).isNotNull()
+      verify {
+        commentManager.observeComments(
+          CommentTarget.task(
+            THING,
+            TASK_ID,
+          )
         )
-      )
+      }
+
+      vm.dismissDetail()
+      advanceUntilIdle()
+
+      assertThat(vm.commentThread.value).isNull()
     }
-
-    vm.dismissDetail()
-    advanceUntilIdle()
-
-    assertThat(vm.commentThread.value).isNull()
-  }
 
   @Test
   fun showDetail_populatesLogsForSelectedTask() = runTest {
@@ -202,7 +214,12 @@ class TaskDetailViewModelTest {
       inspection_ids = listOf("c2"),
       work_description = "Other work",
     )
-    every { logManager.observeLogs(THING) } returns flowOf(listOf(matchingLog, otherLog))
+    every { logManager.observeLogs(THING) } returns flowOf(
+      listOf(
+        matchingLog,
+        otherLog
+      )
+    )
 
     val vm = viewModel()
     advanceUntilIdle()

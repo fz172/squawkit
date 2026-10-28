@@ -550,7 +550,11 @@ class MaintenanceLogFormViewModelTest {
       every { technicianManager.observeTechnicians() } returns flowOf(
         listOf(Technician(id = SELF_TECH_ID, name = "Sponge Bob"))
       )
-      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_TECH_ID))
+      every { technicianManager.observeSelfId() } returns flowOf(
+        TechnicianId(
+          SELF_TECH_ID
+        )
+      )
 
       val state = buildViewModelForNew().uiState.value
 
@@ -568,7 +572,11 @@ class MaintenanceLogFormViewModelTest {
         Technician(id = "manual-1", name = "Hand-typed Mechanic"),
       )
     )
-    every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_TECH_ID))
+    every { technicianManager.observeSelfId() } returns flowOf(
+      TechnicianId(
+        SELF_TECH_ID
+      )
+    )
 
     val available = buildViewModelForNew().uiState.value.availableTechnicians
 
@@ -582,7 +590,11 @@ class MaintenanceLogFormViewModelTest {
       every { technicianManager.observeTechnicians() } returns flowOf(
         listOf(Technician(id = SELF_TECH_ID, name = "Sponge Bob"))
       )
-      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_TECH_ID))
+      every { technicianManager.observeSelfId() } returns flowOf(
+        TechnicianId(
+          SELF_TECH_ID
+        )
+      )
       every { sharingManager.observeLinkedTechnicians(TEST_THING_ID) } returns flowOf(
         listOf(
           Technician(

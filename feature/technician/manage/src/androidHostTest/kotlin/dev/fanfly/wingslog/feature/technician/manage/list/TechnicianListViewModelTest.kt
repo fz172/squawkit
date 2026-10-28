@@ -64,7 +64,11 @@ class TechnicianListViewModelTest {
           Technician(id = "manual-1", name = "Hand-typed Mechanic"),
         )
       )
-      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
+      every { technicianManager.observeSelfId() } returns flowOf(
+        TechnicianId(
+          SELF_ID
+        )
+      )
       every { sharingManager.observeLinkedTechnicians() } returns flowOf(
         listOf(
           Technician(
@@ -113,7 +117,11 @@ class TechnicianListViewModelTest {
     every { technicianManager.observeTechnicians() } returns flowOf(
       listOf(Technician(id = SELF_ID, name = "Sponge Bob"))
     )
-    every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
+    every { technicianManager.observeSelfId() } returns flowOf(
+      TechnicianId(
+        SELF_ID
+      )
+    )
 
     val state = viewModel().uiState.first { it.technicians.isNotEmpty() }
 
@@ -131,7 +139,11 @@ class TechnicianListViewModelTest {
           Technician(id = "m1", name = "Sponge Bob", cert_number = "AP-123"),
         )
       )
-      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
+      every { technicianManager.observeSelfId() } returns flowOf(
+        TechnicianId(
+          SELF_ID
+        )
+      )
       every { sharingManager.observeLinkedTechnicians() } returns flowOf(
         listOf(
           Technician(
@@ -210,7 +222,11 @@ class TechnicianListViewModelTest {
         Technician(id = "m1", name = "xyz"),
       )
     )
-    every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
+    every { technicianManager.observeSelfId() } returns flowOf(
+      TechnicianId(
+        SELF_ID
+      )
+    )
     every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(
       null
     )
@@ -237,7 +253,11 @@ class TechnicianListViewModelTest {
           )
         )
       )
-      every { technicianManager.observeSelfId() } returns flowOf(TechnicianId(SELF_ID))
+      every { technicianManager.observeSelfId() } returns flowOf(
+        TechnicianId(
+          SELF_ID
+        )
+      )
       every { sharingManager.observeLinkedTechnicians() } returns flowOf(
         listOf(
           Technician(

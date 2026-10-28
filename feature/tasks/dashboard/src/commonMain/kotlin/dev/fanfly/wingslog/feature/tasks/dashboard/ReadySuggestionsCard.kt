@@ -32,15 +32,24 @@ import wingslog.feature.tasks.dashboard.generated.resources.suggestions_review
  * the list for an answer that came in while the user was elsewhere.
  */
 @Composable
-internal fun ReadySuggestionsCard(ready: ReadySuggestions, onReview: () -> Unit) {
+internal fun ReadySuggestionsCard(
+  ready: ReadySuggestions,
+  onReview: () -> Unit
+) {
   Surface(
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
   ) {
     Row(
-      modifier = Modifier.padding(start = Spacing.medium, end = Spacing.extraSmall),
+      modifier = Modifier.padding(
+        start = Spacing.medium,
+        end = Spacing.extraSmall
+      ),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {

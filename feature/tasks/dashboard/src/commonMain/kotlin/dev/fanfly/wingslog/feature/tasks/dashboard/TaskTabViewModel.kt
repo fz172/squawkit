@@ -79,7 +79,14 @@ class TaskTabViewModel(
     _filter.value = filter
     filter.changesFrom(previous)
       .forEach {
-        analytics.log(RecordFilterApplied(templateId.value, TAB, it.kind, it.value))
+        analytics.log(
+          RecordFilterApplied(
+            templateId.value,
+            TAB,
+            it.kind,
+            it.value
+          )
+        )
       }
   }
 

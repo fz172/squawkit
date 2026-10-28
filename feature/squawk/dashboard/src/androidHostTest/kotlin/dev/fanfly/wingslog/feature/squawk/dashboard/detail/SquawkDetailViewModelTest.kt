@@ -52,7 +52,8 @@ class SquawkDetailViewModelTest {
   }
   private val analytics = RecordingAnalyticsManager()
 
-  private val squawk = Squawk(id = "s1", title = "Transponder intermittent").toWithStatus()
+  private val squawk =
+    Squawk(id = "s1", title = "Transponder intermittent").toWithStatus()
 
   @Before
   fun setUp() {
@@ -74,21 +75,32 @@ class SquawkDetailViewModelTest {
   )
 
   @Test
-  fun confirmDeleteSquawk_deletesThroughTheManager_clearsTheIdsAndSaysSo() = runTest {
-    coEvery { squawkManager.deleteSquawk(THING, SQUAWK_ID) } returns Result.success(true)
-    val vm = viewModel()
-    vm.showDetail(squawk)
-    vm.onDeleteClick(squawk)
-    assertThat(vm.uiState.value.deletingSquawkId).isEqualTo(SQUAWK_ID)
+  fun confirmDeleteSquawk_deletesThroughTheManager_clearsTheIdsAndSaysSo() =
+    runTest {
+      coEvery {
+        squawkManager.deleteSquawk(
+          THING,
+          SQUAWK_ID
+        )
+      } returns Result.success(true)
+      val vm = viewModel()
+      vm.showDetail(squawk)
+      vm.onDeleteClick(squawk)
+      assertThat(vm.uiState.value.deletingSquawkId).isEqualTo(SQUAWK_ID)
 
-    vm.confirmDelete()
+      vm.confirmDelete()
 
-    coVerify(exactly = 1) { squawkManager.deleteSquawk(THING, SQUAWK_ID) }
-    assertThat(vm.uiState.value.deletingSquawkId).isNull()
-    assertThat(vm.uiState.value.selectedSquawk).isNull()
-    assertThat(vm.events.first())
-      .isEqualTo(UiText.StringRes(SquawkRes.string.squawk_deleted, listOf("Squawk")))
-  }
+      coVerify(exactly = 1) { squawkManager.deleteSquawk(THING, SQUAWK_ID) }
+      assertThat(vm.uiState.value.deletingSquawkId).isNull()
+      assertThat(vm.uiState.value.selectedSquawk).isNull()
+      assertThat(vm.events.first())
+        .isEqualTo(
+          UiText.StringRes(
+            SquawkRes.string.squawk_deleted,
+            listOf("Squawk")
+          )
+        )
+    }
 
   @Test
   fun deleteSquawkFailure_closesDialogAndReportsIt() = runTest {
@@ -129,25 +141,26 @@ class SquawkDetailViewModelTest {
   }
 
   @Test
-  fun openingASquawkSheet_opensThatSquawksThread_andClosingItClosesTheThread() = runTest {
-    val vm = viewModel()
-    assertThat(vm.commentThread.value).isNull()
+  fun openingASquawkSheet_opensThatSquawksThread_andClosingItClosesTheThread() =
+    runTest {
+      val vm = viewModel()
+      assertThat(vm.commentThread.value).isNull()
 
-    vm.showDetail(squawk)
-    advanceUntilIdle()
+      vm.showDetail(squawk)
+      advanceUntilIdle()
 
-    assertThat(vm.commentThread.value).isNotNull()
-    verify {
-      commentManager.observeComments(
-        CommentTarget.squawk(THING, SQUAWK_ID)
-      )
+      assertThat(vm.commentThread.value).isNotNull()
+      verify {
+        commentManager.observeComments(
+          CommentTarget.squawk(THING, SQUAWK_ID)
+        )
+      }
+
+      vm.dismissDetail()
+      advanceUntilIdle()
+
+      assertThat(vm.commentThread.value).isNull()
     }
-
-    vm.dismissDetail()
-    advanceUntilIdle()
-
-    assertThat(vm.commentThread.value).isNull()
-  }
 
   @Test
   fun anUnpostedDraft_survivesClosingTheSheet() = runTest {
@@ -166,7 +179,12 @@ class SquawkDetailViewModelTest {
 
   @Test
   fun squawkReopenClick_reopensThroughTheManager() = runTest {
-    coEvery { squawkManager.reopenSquawk(THING, SQUAWK_ID) } returns Result.success(Unit)
+    coEvery {
+      squawkManager.reopenSquawk(
+        THING,
+        SQUAWK_ID
+      )
+    } returns Result.success(Unit)
     val vm = viewModel()
 
     vm.reopenSquawk(SQUAWK_ID)
@@ -208,7 +226,10 @@ class SquawkDetailViewModelTest {
     vm.onFixedClick()
 
     assertThat(vm.uiState.value.resolvingSquawkId).isNull()
-    assertThat(analytics.paramsFor("record_quick_action").single())
+    assertThat(
+      analytics.paramsFor("record_quick_action")
+        .single()
+    )
       .containsAtLeast(
         "surface",
         "squawks",

@@ -193,15 +193,19 @@ class TaskDetailViewModel(
 
   fun confirmSkip() {
     val cardId = _uiState.value.skippingTaskId ?: return
-    val card = cachedTasks.find { it.card.id == cardId.value }?.card ?: pendingSkipCard ?: return
+    val card =
+      cachedTasks.find { it.card.id == cardId.value }?.card ?: pendingSkipCard
+      ?: return
     viewModelScope.launch {
       val template = templateRegistry.canonicalById(templateId.value)
       val meterKey = card.defaultMeterKey()
-      val reading = if (template == null || template.meters.any { it.key == meterKey }) {
-        cachedReadings.firstOrNull { it.meterKey == meterKey }?.value?.toFloat() ?: 0f
-      } else {
-        0f
-      }
+      val reading =
+        if (template == null || template.meters.any { it.key == meterKey }) {
+          cachedReadings.firstOrNull { it.meterKey == meterKey }?.value?.toFloat()
+            ?: 0f
+        } else {
+          0f
+        }
       taskDataManager.skipCycle(thingId, card, reading)
         .onSuccess {
           logQuickAction(QuickActionKind.SKIP)

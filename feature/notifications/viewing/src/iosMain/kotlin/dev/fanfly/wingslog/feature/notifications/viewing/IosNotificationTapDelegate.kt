@@ -64,8 +64,11 @@ class IosNotificationTapDelegate : NSObject(),
   ) {
     // Except about what the user is looking at right now: a suggestion run's push while its screen
     // is open (task population PRD R20).
-    val uri = willPresentNotification.request.content.userInfo[TAP_URI_USER_INFO_KEY] as? String
-    if (uri?.let(NotificationTapRouter::targetOf)?.let(OnScreenTapTargets::isOnScreen) == true) {
+    val uri =
+      willPresentNotification.request.content.userInfo[TAP_URI_USER_INFO_KEY] as? String
+    if (uri?.let(NotificationTapRouter::targetOf)
+        ?.let(OnScreenTapTargets::isOnScreen) == true
+    ) {
       withCompletionHandler(0u)
       return
     }

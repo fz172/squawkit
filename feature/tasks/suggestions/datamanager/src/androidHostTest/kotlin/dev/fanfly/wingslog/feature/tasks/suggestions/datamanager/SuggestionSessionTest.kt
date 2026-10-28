@@ -37,15 +37,30 @@ class SuggestionSessionTest {
   )
 
   private val curated = SuggestTasksResult(
-    suggestions = listOf(suggestion("c0", TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED)),
+    suggestions = listOf(
+      suggestion(
+        "c0",
+        TaskOriginKind.TASK_ORIGIN_KIND_PRE_CURATED
+      )
+    ),
     generation_version = "tasks-5",
   )
   private val answer = curated.copy(
-    suggestions = curated.suggestions + suggestion("s1", TaskOriginKind.TASK_ORIGIN_KIND_AI_THING),
+    suggestions = curated.suggestions + suggestion(
+      "s1",
+      TaskOriginKind.TASK_ORIGIN_KIND_AI_THING
+    ),
   )
 
   private fun starting(curatedOnly: Boolean, result: AiStartResult) {
-    coEvery { manager.start(ThingId(THING), any(), curatedOnly, any()) } returns result
+    coEvery {
+      manager.start(
+        ThingId(THING),
+        any(),
+        curatedOnly,
+        any()
+      )
+    } returns result
   }
 
   /** Everything [SuggestionSession.runs] says while the test runs. */
@@ -56,22 +71,24 @@ class SuggestionSessionTest {
   }
 
   @Test
-  fun `comes back to a run that holds the model's answer, and follows it`() = runTest {
-    val held = SuggestionRun.Ready(MODEL, answer)
-    every { manager.observeRun(ThingId(THING)) } returns flowOf(held)
+  fun `comes back to a run that holds the model's answer, and follows it`() =
+    runTest {
+      val held = SuggestionRun.Ready(MODEL, answer)
+      every { manager.observeRun(ThingId(THING)) } returns flowOf(held)
 
-    assertThat(session.resume()).isEqualTo(held)
-    val said = said()
-    runCurrent()
+      assertThat(session.resume()).isEqualTo(held)
+      val said = said()
+      runCurrent()
 
-    assertThat(said).containsExactly(held)
-    assertThat(session.modelRequested).isTrue()
-    coVerify(exactly = 0) { manager.start(any(), any(), any(), any()) }
-  }
+      assertThat(said).containsExactly(held)
+      assertThat(session.modelRequested).isTrue()
+      coVerify(exactly = 0) { manager.start(any(), any(), any(), any()) }
+    }
 
   @Test
   fun `comes back to a run still working`() = runTest {
-    val working = SuggestionRun.Working(MODEL, SuggestionStage.TAILORING, null, curated)
+    val working =
+      SuggestionRun.Working(MODEL, SuggestionStage.TAILORING, null, curated)
     every { manager.observeRun(ThingId(THING)) } returns flowOf(working)
 
     assertThat(session.resume()).isEqualTo(working)
@@ -113,52 +130,78 @@ class SuggestionSessionTest {
   }
 
   @Test
-  fun `a run the listener says before its start returns is said once it is followed`() = runTest {
-    every { manager.observeRun(ThingId(THING)) } returns listener
-    starting(curatedOnly = true, AiStartResult.Started(CURATED, joined = false))
-    val said = said()
-    session.startCurated(SuggestionEntryPoint.CURATED)
-    listener.emit(SuggestionRun.Ready(CURATED, curated))
-    runCurrent()
-
-    // Written already finished, so the listener says it once, while start is on its way back.
-    val born = SuggestionRun.Ready(MODEL, curated)
-    coEvery { manager.start(ThingId(THING), any(), curatedOnly = false, any()) } coAnswers {
-      listener.emit(born)
+  fun `a run the listener says before its start returns is said once it is followed`() =
+    runTest {
+      every { manager.observeRun(ThingId(THING)) } returns listener
+      starting(
+        curatedOnly = true,
+        AiStartResult.Started(CURATED, joined = false)
+      )
+      val said = said()
+      session.startCurated(SuggestionEntryPoint.CURATED)
+      listener.emit(SuggestionRun.Ready(CURATED, curated))
       runCurrent()
-      AiStartResult.Started(MODEL, joined = false)
-    }
-    session.startModel(SuggestionEntryPoint.CURATED)
-    runCurrent()
 
-    assertThat(said.last()).isEqualTo(born)
-    assertThat(said.count { it == born }).isEqualTo(1)
-  }
+      // Written already finished, so the listener says it once, while start is on its way back.
+      val born = SuggestionRun.Ready(MODEL, curated)
+      coEvery {
+        manager.start(
+          ThingId(THING),
+          any(),
+          curatedOnly = false,
+          any()
+        )
+      } coAnswers {
+        listener.emit(born)
+        runCurrent()
+        AiStartResult.Started(MODEL, joined = false)
+      }
+      session.startModel(SuggestionEntryPoint.CURATED)
+      runCurrent()
+
+      assertThat(said.last()).isEqualTo(born)
+      assertThat(said.count { it == born }).isEqualTo(1)
+    }
 
   @Test
-  fun `a model run closes the run it replaces, before it is followed`() = runTest {
-    every { manager.observeRun(ThingId(THING)) } returns listener
-    starting(curatedOnly = true, AiStartResult.Started(CURATED, joined = false))
-    starting(curatedOnly = false, AiStartResult.Started(MODEL, joined = false))
-    said()
-    session.startCurated(SuggestionEntryPoint.CURATED)
-    listener.emit(SuggestionRun.Ready(CURATED, curated))
-    runCurrent()
+  fun `a model run closes the run it replaces, before it is followed`() =
+    runTest {
+      every { manager.observeRun(ThingId(THING)) } returns listener
+      starting(
+        curatedOnly = true,
+        AiStartResult.Started(CURATED, joined = false)
+      )
+      starting(
+        curatedOnly = false,
+        AiStartResult.Started(MODEL, joined = false)
+      )
+      said()
+      session.startCurated(SuggestionEntryPoint.CURATED)
+      listener.emit(SuggestionRun.Ready(CURATED, curated))
+      runCurrent()
 
-    session.startModel(SuggestionEntryPoint.CURATED)
+      session.startModel(SuggestionEntryPoint.CURATED)
 
-    coVerifyOrder {
-      manager.start(ThingId(THING), SuggestionEntryPoint.CURATED, curatedOnly = false, emptyList())
-      manager.dismiss(CURATED)
+      coVerifyOrder {
+        manager.start(
+          ThingId(THING),
+          SuggestionEntryPoint.CURATED,
+          curatedOnly = false,
+          emptyList()
+        )
+        manager.dismiss(CURATED)
+      }
+      assertThat(session.modelRequested).isTrue()
     }
-    assertThat(session.modelRequested).isTrue()
-  }
 
   @Test
   fun `a refused model run leaves the run on screen alone`() = runTest {
     every { manager.observeRun(ThingId(THING)) } returns listener
     starting(curatedOnly = true, AiStartResult.Started(CURATED, joined = false))
-    starting(curatedOnly = false, AiStartResult.Refused(AiErrorCode.DAILY_LIMIT, null))
+    starting(
+      curatedOnly = false,
+      AiStartResult.Refused(AiErrorCode.DAILY_LIMIT, null)
+    )
     val said = said()
     session.startCurated(SuggestionEntryPoint.CURATED)
     val ours = SuggestionRun.Ready(CURATED, curated)
@@ -174,42 +217,70 @@ class SuggestionSessionTest {
   }
 
   @Test
-  fun `leaving closes a run with nothing of the model's, and keeps one that has`() = runTest {
-    every { manager.observeRun(ThingId(THING)) } returns listener
-    starting(curatedOnly = true, AiStartResult.Started(CURATED, joined = false))
-    starting(curatedOnly = false, AiStartResult.Started(MODEL, joined = false))
-    said()
-    session.startCurated(SuggestionEntryPoint.CURATED)
-    listener.emit(SuggestionRun.Ready(CURATED, curated))
-    runCurrent()
+  fun `leaving closes a run with nothing of the model's, and keeps one that has`() =
+    runTest {
+      every { manager.observeRun(ThingId(THING)) } returns listener
+      starting(
+        curatedOnly = true,
+        AiStartResult.Started(CURATED, joined = false)
+      )
+      starting(
+        curatedOnly = false,
+        AiStartResult.Started(MODEL, joined = false)
+      )
+      said()
+      session.startCurated(SuggestionEntryPoint.CURATED)
+      listener.emit(SuggestionRun.Ready(CURATED, curated))
+      runCurrent()
 
-    session.leave()
-    coVerify(exactly = 1) { manager.dismiss(CURATED) }
+      session.leave()
+      coVerify(exactly = 1) { manager.dismiss(CURATED) }
 
-    session.startModel(SuggestionEntryPoint.CURATED)
-    listener.emit(SuggestionRun.Ready(MODEL, answer))
-    runCurrent()
+      session.startModel(SuggestionEntryPoint.CURATED)
+      listener.emit(SuggestionRun.Ready(MODEL, answer))
+      runCurrent()
 
-    session.leave()
-    coVerify(exactly = 0) { manager.dismiss(MODEL) }
-  }
+      session.leave()
+      coVerify(exactly = 0) { manager.dismiss(MODEL) }
+    }
 
   @Test
   fun `accepting writes from the followed run, whatever its state`() = runTest {
     every { manager.observeRun(ThingId(THING)) } returns listener
     starting(curatedOnly = false, AiStartResult.Started(MODEL, joined = false))
-    coEvery { manager.accept(ThingId(THING), MODEL, "tasks-5", any()) } returns emptyList()
+    coEvery {
+      manager.accept(
+        ThingId(THING),
+        MODEL,
+        "tasks-5",
+        any()
+      )
+    } returns emptyList()
     said()
     // Nothing to accept from before a run is in.
     assertThat(session.accept(emptyList())).isEmpty()
 
     session.startModel(SuggestionEntryPoint.ADD)
-    listener.emit(SuggestionRun.Working(MODEL, SuggestionStage.TAILORING, null, curated))
+    listener.emit(
+      SuggestionRun.Working(
+        MODEL,
+        SuggestionStage.TAILORING,
+        null,
+        curated
+      )
+    )
     runCurrent()
     val chosen = listOf(AcceptedSuggestion(curated.suggestions.single()))
     session.accept(chosen)
 
-    coVerify(exactly = 1) { manager.accept(ThingId(THING), MODEL, "tasks-5", chosen) }
+    coVerify(exactly = 1) {
+      manager.accept(
+        ThingId(THING),
+        MODEL,
+        "tasks-5",
+        chosen
+      )
+    }
   }
 
   private companion object {

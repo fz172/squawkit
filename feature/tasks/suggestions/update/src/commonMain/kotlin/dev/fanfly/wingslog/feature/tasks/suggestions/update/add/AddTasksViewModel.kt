@@ -47,7 +47,8 @@ class AddTasksViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val thingId: ThingId = ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
+  val thingId: ThingId =
+    ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
 
   private val _uiState = MutableStateFlow(AddTasksUiState())
   val uiState = _uiState.asStateFlow()
@@ -119,7 +120,8 @@ class AddTasksViewModel(
         }
         // Stored on a scope that outlives the sheet, and let go of there if the sheet closes
         // meanwhile.
-        val stored = documents.pick(thingId, file, QuotaChecker.MAX_AI_DOCUMENT_BYTES)
+        val stored =
+          documents.pick(thingId, file, QuotaChecker.MAX_AI_DOCUMENT_BYTES)
         stored.fold(
           onSuccess = { added -> updateSources { it.copy(documents = it.documents + added) } },
           onFailure = { e ->

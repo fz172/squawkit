@@ -112,7 +112,7 @@ fun StressTestScreen(
         val isError = state is StressTestState.Error
         val isIdle = state is StressTestState.Idle
 
-AnimatedVisibility(visible = isIdle || isError) {
+        AnimatedVisibility(visible = isIdle || isError) {
           StressTestConfigForm(
             config = config,
             state = state,

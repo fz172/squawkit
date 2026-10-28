@@ -41,11 +41,12 @@ class ReadySuggestionsViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun suggestion(origin: TaskOriginKind, tracked: Boolean = false) = TaskSuggestion(
-    title = "t",
-    origin_kind = origin,
-    matches_existing_task_id = if (tracked) MaintenanceTaskId(value_ = "x") else null,
-  )
+  private fun suggestion(origin: TaskOriginKind, tracked: Boolean = false) =
+    TaskSuggestion(
+      title = "t",
+      origin_kind = origin,
+      matches_existing_task_id = if (tracked) MaintenanceTaskId(value_ = "x") else null,
+    )
 
   @Test
   fun aHeldModelAnswerIsReadyWithItsCountAndDocument() = runTest(dispatcher) {
@@ -66,7 +67,12 @@ class ReadySuggestionsViewModelTest {
     )
     advanceUntilIdle()
 
-    assertThat(vm.ready.value).isEqualTo(ReadySuggestions(count = 2, document = "Rotax.pdf"))
+    assertThat(vm.ready.value).isEqualTo(
+      ReadySuggestions(
+        count = 2,
+        document = "Rotax.pdf"
+      )
+    )
   }
 
   @Test
@@ -74,7 +80,8 @@ class ReadySuggestionsViewModelTest {
     val vm = ReadySuggestionsViewModel(suggestions, ThingId(THING))
     backgroundScope.launch { vm.ready.collect {} }
 
-    runs.value = SuggestionRun.Working(AiJobId("job"), SuggestionStage.TAILORING, null)
+    runs.value =
+      SuggestionRun.Working(AiJobId("job"), SuggestionStage.TAILORING, null)
     advanceUntilIdle()
     assertThat(vm.ready.value).isNull()
 

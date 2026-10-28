@@ -5,7 +5,10 @@ package dev.fanfly.wingslog.feature.tasks.suggestions.datamanager
  * `tasks/pipeline.ts`, `PipelineStage`). [readsDocument] stages work on one document, which the
  * run names beside the stage.
  */
-enum class SuggestionStage(val wire: String?, val readsDocument: Boolean = false) {
+enum class SuggestionStage(
+  val wire: String?,
+  val readsDocument: Boolean = false
+) {
   READING_DOCUMENT("reading_document", readsDocument = true),
   FINDING_SCHEDULE("finding_schedule", readsDocument = true),
   EXTRACTING_SCHEDULE("extracting_schedule", readsDocument = true),
@@ -20,6 +23,7 @@ enum class SuggestionStage(val wire: String?, val readsDocument: Boolean = false
   companion object {
     /** The stage [wire] names; null for a run that has reported none yet. */
     fun fromWire(wire: String?): SuggestionStage? =
-      if (wire == null) null else entries.firstOrNull { it.wire == wire } ?: OTHER
+      if (wire == null) null else entries.firstOrNull { it.wire == wire }
+        ?: OTHER
   }
 }

@@ -76,5 +76,8 @@ interface MaintenanceLogManager {
   /**
    * Deletes a maintenance log.
    */
-  suspend fun deleteLog(thingId: ThingId, logId: MaintenanceLogId): Result<Boolean>
+  suspend fun deleteLog(
+    thingId: ThingId,
+    logId: MaintenanceLogId
+  ): Result<Boolean>
 }

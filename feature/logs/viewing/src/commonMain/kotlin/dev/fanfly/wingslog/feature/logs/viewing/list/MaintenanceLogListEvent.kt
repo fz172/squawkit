@@ -11,6 +11,9 @@ sealed interface MaintenanceLogListEvent {
   data class NavigateToCreateLog(val thingId: ThingId) :
     MaintenanceLogListEvent
 
-  data class NavigateToEditLog(val thingId: ThingId, val logId: MaintenanceLogId) :
+  data class NavigateToEditLog(
+    val thingId: ThingId,
+    val logId: MaintenanceLogId
+  ) :
     MaintenanceLogListEvent
 }

@@ -170,7 +170,8 @@ fun MaintenanceTasksTab(
         onReview = onNavigateToBrowseSuggestions,
       )
     }
-    val isEmpty = tabState.allActiveTasks.isEmpty() && tabState.allCompletedTasks.isEmpty()
+    val isEmpty =
+      tabState.allActiveTasks.isEmpty() && tabState.allCompletedTasks.isEmpty()
     val hasCuratedList = hasCuratedList(LocalThingTemplate.current?.id)
     ComplianceSection(
       activeTasks = activeTasks,

@@ -228,7 +228,10 @@ class UrgencyScanner(
           collection = CollectionKind.MaintenanceTask,
           recordId = row.id,
           title = row.value.title,
-          tapTarget = NotificationTapTarget.Task(thingId, MaintenanceTaskId(row.id)),
+          tapTarget = NotificationTapTarget.Task(
+            thingId,
+            MaintenanceTaskId(row.id)
+          ),
         )
       }
     }

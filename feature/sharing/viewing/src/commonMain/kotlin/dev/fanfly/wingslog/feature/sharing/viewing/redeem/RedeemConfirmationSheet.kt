@@ -50,7 +50,10 @@ fun RedeemConfirmationSheet(
             preview == null -> stringResource(Res.string.redeem_confirm_body)
 
             preview.hostName.isBlank() || preview.thingLabel.isBlank() ->
-              stringResource(Res.string.redeem_confirm_body_role, roleLabel(preview.role))
+              stringResource(
+                Res.string.redeem_confirm_body_role,
+                roleLabel(preview.role)
+              )
 
             else -> stringResource(
               Res.string.redeem_confirm_body_full,

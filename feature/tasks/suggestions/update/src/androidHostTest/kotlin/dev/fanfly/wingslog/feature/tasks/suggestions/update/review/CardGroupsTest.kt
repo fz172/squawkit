@@ -32,7 +32,10 @@ class CardGroupsTest {
       "propeller"
     )
       .inOrder()
-    assertThat(groups[1].cards.map { it.suggestion.title }).containsExactly("Spark plugs", "Oil")
+    assertThat(groups[1].cards.map { it.suggestion.title }).containsExactly(
+      "Spark plugs",
+      "Oil"
+    )
       .inOrder()
     assertThat(groups[0].cards.single().suggestion.title).isEqualTo("Annual")
   }

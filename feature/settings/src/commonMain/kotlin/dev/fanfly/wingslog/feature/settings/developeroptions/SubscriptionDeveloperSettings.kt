@@ -41,9 +41,18 @@ fun SubscriptionDeveloperSettings(
   onSelectForceStatus: (Subscription.Status?) -> Unit,
 ) {
   val options: List<LabelledChoice<Subscription.Status?>> = listOf(
-    LabelledChoice(stringResource(Res.string.developer_options_force_off), null),
-    LabelledChoice(stringResource(Res.string.developer_options_force_free), Subscription.Status.STATUS_FREE),
-    LabelledChoice(stringResource(Res.string.developer_options_force_pro), Subscription.Status.STATUS_PRO),
+    LabelledChoice(
+      stringResource(Res.string.developer_options_force_off),
+      null
+    ),
+    LabelledChoice(
+      stringResource(Res.string.developer_options_force_free),
+      Subscription.Status.STATUS_FREE
+    ),
+    LabelledChoice(
+      stringResource(Res.string.developer_options_force_pro),
+      Subscription.Status.STATUS_PRO
+    ),
   )
   Column(
     modifier = Modifier

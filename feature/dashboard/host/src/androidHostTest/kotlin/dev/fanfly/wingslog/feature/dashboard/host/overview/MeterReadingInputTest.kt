@@ -9,7 +9,12 @@ class MeterReadingInputTest {
   fun aDecimalMeterKeepsDigitsAndOnePoint() {
     assertThat(filterMeterInput("1201.5", decimal = true)).isEqualTo("1201.5")
     assertThat(filterMeterInput("12.5.3", decimal = true)).isEqualTo("12.53")
-    assertThat(filterMeterInput("-1,201.5 hrs", decimal = true)).isEqualTo("1.2015")
+    assertThat(
+      filterMeterInput(
+        "-1,201.5 hrs",
+        decimal = true
+      )
+    ).isEqualTo("1.2015")
   }
 
   @Test

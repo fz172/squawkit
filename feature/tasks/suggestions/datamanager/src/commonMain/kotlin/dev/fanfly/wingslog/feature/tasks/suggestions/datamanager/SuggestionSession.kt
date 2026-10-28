@@ -114,7 +114,12 @@ class SuggestionSession(
     documents: List<Attachment> = emptyList(),
   ): AiStartResult {
     val replaced = run?.jobId
-    val started = manager.start(thingId, entryPoint, curatedOnly = false, documents = documents)
+    val started = manager.start(
+      thingId,
+      entryPoint,
+      curatedOnly = false,
+      documents = documents
+    )
     if (started !is AiStartResult.Started) return started
     if (replaced != null && replaced != started.jobId) manager.dismiss(replaced)
     modelRequested = true
@@ -124,7 +129,11 @@ class SuggestionSession(
 
   /** [suggestion] as accepting it from the followed run would write it (PRD R28). */
   suspend fun draftOf(suggestion: TaskSuggestion): MaintenanceTask =
-    manager.draftOf(thingId, suggestion, run?.result?.generation_version.orEmpty())
+    manager.draftOf(
+      thingId,
+      suggestion,
+      run?.result?.generation_version.orEmpty()
+    )
 
   /**
    * Writes [chosen] from the followed run, which ends it; a run still working gives up its answer

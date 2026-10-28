@@ -130,7 +130,11 @@ class CommentManagerImplTest {
         .first()
         .map { it.id }
     )
-      .containsExactly(CommentId("older"), CommentId("middle"), CommentId("newer"))
+      .containsExactly(
+        CommentId("older"),
+        CommentId("middle"),
+        CommentId("newer")
+      )
       .inOrder()
   }
 
@@ -307,7 +311,12 @@ class CommentManagerImplTest {
       flowOf(row(comment("c1", authorUid = ME, text = "said too much")))
     val written = slot<Comment>()
 
-    assertThat(manager.deleteComment(target, CommentId("c1")).isSuccess).isTrue()
+    assertThat(
+      manager.deleteComment(
+        target,
+        CommentId("c1")
+      ).isSuccess
+    ).isTrue()
 
     // Never store.delete: an edit shows an "Edited …" line, so a hard delete would let an author
     // launder a rewrite by deleting and re-posting. The row stays, the content goes.
@@ -324,7 +333,12 @@ class CommentManagerImplTest {
 
     // Re-stamping would move the recorded deletion time, which is the one thing the tombstone is
     // there to pin down.
-    assertThat(manager.deleteComment(target, CommentId("c1")).isSuccess).isTrue()
+    assertThat(
+      manager.deleteComment(
+        target,
+        CommentId("c1")
+      ).isSuccess
+    ).isTrue()
 
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
   }
@@ -334,7 +348,8 @@ class CommentManagerImplTest {
     every { store.observe("c1", scope) } returns
       flowOf(row(comment("c1", authorUid = ME, deletedAtSeconds = 5)))
 
-    val result = manager.updateComment(target, CommentId("c1"), "back from the dead")
+    val result =
+      manager.updateComment(target, CommentId("c1"), "back from the dead")
 
     assertThat(result.isFailure).isTrue()
     coVerify(exactly = 0) { store.put(any(), any(), any()) }

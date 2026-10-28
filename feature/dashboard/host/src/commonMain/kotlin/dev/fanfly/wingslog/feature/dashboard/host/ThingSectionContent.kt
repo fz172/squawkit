@@ -139,7 +139,8 @@ fun ThingSectionContent(
   }
 
   val thingIdTyped = ThingId(thingId)
-  val onAction = rememberSectionActionHandler(viewModel, navController, thingIdTyped)
+  val onAction =
+    rememberSectionActionHandler(viewModel, navController, thingIdTyped)
 
   when (val state = uiState) {
     // The state is assembled from every flow at once, so Success never carries an empty list that
@@ -212,7 +213,12 @@ fun ThingSectionContent(
           )
         },
         onOpenDataLog = { dataLogId ->
-          onAction(ThingOverviewAction.OpenDataLogClick(thingIdTyped, dataLogId))
+          onAction(
+            ThingOverviewAction.OpenDataLogClick(
+              thingIdTyped,
+              dataLogId
+            )
+          )
         },
       )
 
@@ -265,7 +271,12 @@ fun ThingSectionContent(
             onJumpToRecord(RecordJump(ShellSection.LOGS, logId))
           },
           onOpenDataLog = { dataLogId ->
-            onAction(ThingOverviewAction.OpenDataLogClick(thingIdTyped, dataLogId))
+            onAction(
+              ThingOverviewAction.OpenDataLogClick(
+                thingIdTyped,
+                dataLogId
+              )
+            )
           },
           scrollToSquawkId = pendingSquawkScrollTarget,
           // The shell top bar already shows the section title; avoid duplicating it.
@@ -291,7 +302,12 @@ fun ThingSectionContent(
             )
           },
           onOpenDataLog = { dataLogId ->
-            onAction(ThingOverviewAction.OpenDataLogClick(thingIdTyped, dataLogId))
+            onAction(
+              ThingOverviewAction.OpenDataLogClick(
+                thingIdTyped,
+                dataLogId
+              )
+            )
           },
           onTaskClick = { taskId ->
             onJumpToRecord(RecordJump(ShellSection.TASKS, taskId))

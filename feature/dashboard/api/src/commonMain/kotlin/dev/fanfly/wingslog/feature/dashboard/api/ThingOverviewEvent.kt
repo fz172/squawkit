@@ -19,11 +19,17 @@ sealed interface ThingOverviewEvent {
     ThingOverviewEvent
 
   data class NavigateToAddLog(val thingId: ThingId) : ThingOverviewEvent
-  data class NavigateToEditLog(val thingId: ThingId, val logId: MaintenanceLogId) :
+  data class NavigateToEditLog(
+    val thingId: ThingId,
+    val logId: MaintenanceLogId
+  ) :
     ThingOverviewEvent
 
   data class NavigateToAddTask(val thingId: ThingId) : ThingOverviewEvent
-  data class NavigateToEditTask(val thingId: ThingId, val cardId: MaintenanceTaskId) :
+  data class NavigateToEditTask(
+    val thingId: ThingId,
+    val cardId: MaintenanceTaskId
+  ) :
     ThingOverviewEvent
 
   data class NavigateToAddSquawk(val thingId: ThingId) : ThingOverviewEvent

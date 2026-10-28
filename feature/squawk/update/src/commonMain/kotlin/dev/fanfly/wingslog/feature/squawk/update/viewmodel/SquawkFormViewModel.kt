@@ -105,7 +105,8 @@ class SquawkFormViewModel(
   val thingId: ThingId =
     ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
   val squawkId: SquawkId? =
-    savedStateHandle.get<String>(Screen.SQUAWK_ID)?.let(::SquawkId)
+    savedStateHandle.get<String>(Screen.SQUAWK_ID)
+      ?.let(::SquawkId)
 
   val thingIdString: String get() = thingId.value
   val squawkIdString: String? get() = squawkId?.value

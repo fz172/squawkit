@@ -112,7 +112,10 @@ class ThingScopeResolverImplTest {
     } returns flowOf(
       StorageEntity(
         id = SHARED_AC.value_,
-        value = SharedAircraftRef(aircraft_id = SHARED_AC.value_, host_uid = HOST_UID),
+        value = SharedAircraftRef(
+          aircraft_id = SHARED_AC.value_,
+          host_uid = HOST_UID
+        ),
         updatedAt = Instant.DISTANT_PAST,
       ),
     )

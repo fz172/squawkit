@@ -182,7 +182,13 @@ internal fun ExportHistoryCard(
         hasUpperMenuItems = hasUpperMenuItems,
         onResendDelivery = onResendDelivery,
         onRetryDelivery = onRetryDelivery,
-        onDownload = { onDownloadExport(record.export_id, record.file_path, record.file_name) },
+        onDownload = {
+          onDownloadExport(
+            record.export_id,
+            record.file_path,
+            record.file_name
+          )
+        },
         onSaveToDevice = onSaveToDevice,
         onDelete = { showDeleteConfirm = true },
       )

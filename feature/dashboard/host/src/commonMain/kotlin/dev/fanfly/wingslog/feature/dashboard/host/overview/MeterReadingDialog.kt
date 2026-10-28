@@ -70,7 +70,14 @@ internal fun MeterReadingDialog(
   AlertDialog(
     onDismissRequest = onDismiss,
     // The template's own name for the meter, with its unit: "Engine Time (hrs)".
-    title = { Text(template.meterLabelWithUnit(meter.key, ifAbsent = meter.label)) },
+    title = {
+      Text(
+        template.meterLabelWithUnit(
+          meter.key,
+          ifAbsent = meter.label
+        )
+      )
+    },
     text = {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         FormTextField(

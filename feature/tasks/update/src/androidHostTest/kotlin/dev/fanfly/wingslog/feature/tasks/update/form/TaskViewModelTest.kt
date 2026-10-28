@@ -314,8 +314,12 @@ class TaskViewModelTest {
       val viewModel = buildViewModelForNew()
       advanceUntilIdle()
 
-      assertThat(viewModel.currentReading(MeterKeys.ENGINE_HOURS)).isEqualTo(100f)
-      assertThat(viewModel.currentReading(MeterKeys.AIRFRAME_HOURS)).isEqualTo(90f)
+      assertThat(viewModel.currentReading(MeterKeys.ENGINE_HOURS)).isEqualTo(
+        100f
+      )
+      assertThat(viewModel.currentReading(MeterKeys.AIRFRAME_HOURS)).isEqualTo(
+        90f
+      )
     }
 
   @Test
@@ -595,7 +599,8 @@ class TaskViewModelTest {
       isOneTime = card.is_one_time,
       forceDueDate = card.force_due_date,
       forceDueEngine = card.forcedDueMeter()?.value ?: 0f,
-      forceDueMeterKey = card.forcedDueMeter()?.meterKey ?: MeterKeys.ENGINE_HOURS,
+      forceDueMeterKey = card.forcedDueMeter()?.meterKey
+        ?: MeterKeys.ENGINE_HOURS,
       forceCompliedStatus = card.force_complied_status,
       notes = card.notes,
       onSuccess = {},

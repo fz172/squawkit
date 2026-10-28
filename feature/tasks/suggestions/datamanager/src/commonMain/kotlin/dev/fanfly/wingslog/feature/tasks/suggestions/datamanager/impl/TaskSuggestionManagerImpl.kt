@@ -67,7 +67,10 @@ class TaskSuggestionManagerImpl(
   private val clock: Clock = Clock.System,
 ) : TaskSuggestionManager {
 
-  override suspend fun eligibility(thingId: ThingId, withDocuments: Boolean): AiEligibility =
+  override suspend fun eligibility(
+    thingId: ThingId,
+    withDocuments: Boolean
+  ): AiEligibility =
     client.eligibility(
       KIND,
       thingId,
@@ -76,7 +79,8 @@ class TaskSuggestionManagerImpl(
     )
 
   override suspend fun isOwner(thingId: ThingId): Boolean =
-    currentUid.currentUid()?.let { it == hostUidOf(thingId) } ?: false
+    currentUid.currentUid()
+      ?.let { it == hostUidOf(thingId) } ?: false
 
   override suspend fun start(
     thingId: ThingId,
@@ -108,7 +112,11 @@ class TaskSuggestionManagerImpl(
     val result = client.start(KIND, request.encodeByteString())
     // Noted on a join too: the run in flight ignores this request, so its documents are let go
     // with that run.
-    if (result is AiStartResult.Started) jobDocuments.record(result.jobId, thingId, documents)
+    if (result is AiStartResult.Started) jobDocuments.record(
+      result.jobId,
+      thingId,
+      documents
+    )
     return result
   }
 
@@ -121,7 +129,8 @@ class TaskSuggestionManagerImpl(
       .collect { job ->
         if (job?.result != encoded) {
           encoded = job?.result
-          decoded = encoded?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
+          decoded =
+            encoded?.let { runCatching { SuggestTasksResult.ADAPTER.decode(it) }.getOrNull() }
         }
         emit(job?.toRun(clock.now(), decoded) ?: SuggestionRun.Idle)
       }
@@ -234,9 +243,11 @@ class TaskSuggestionManagerImpl(
       suggestion: TaskSuggestion,
       documents: List<Attachment>,
     ): MaintenanceTask {
-      val cited = suggestion.source_document?.value_?.takeIf { it.isNotEmpty() } ?: return this
+      val cited = suggestion.source_document?.value_?.takeIf { it.isNotEmpty() }
+        ?: return this
       val document = documents.firstOrNull { it.id == cited } ?: return this
-      val page = suggestion.source_pages.firstOrNull()?.takeIf { it > 0 } ?: 0
+      val page = suggestion.source_pages.firstOrNull()
+        ?.takeIf { it > 0 } ?: 0
       if (attachments.none { it.id == cited }) {
         return copy(attachments = attachments + document.copy(open_page = page))
       }
@@ -270,7 +281,12 @@ class TaskSuggestionManagerImpl(
         else -> if (updatedAt.toEpochMilliseconds() > 0 && now - updatedAt > STALE_AFTER) {
           SuggestionRun.Failed(id, AiErrorCode.STALE, decoded)
         } else {
-          SuggestionRun.Working(id, SuggestionStage.fromWire(stage), stageArg, decoded)
+          SuggestionRun.Working(
+            id,
+            SuggestionStage.fromWire(stage),
+            stageArg,
+            decoded
+          )
         }
       }
     }

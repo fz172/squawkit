@@ -87,16 +87,29 @@ class JobDocumentReleaser(
    * Runs to its end even if the caller is cancelled (the sheet closed): what it stored is then let
    * go of, since nothing will list it.
    */
-  suspend fun pick(thingId: ThingId, file: PickedFile, maxBytes: Long): Result<Attachment> {
+  suspend fun pick(
+    thingId: ThingId,
+    file: PickedFile,
+    maxBytes: Long
+  ): Result<Attachment> {
     val storing = scope.async {
       runCatching {
-        attachments().addPickedFile(thingId, file, displayName = file.name, maxBytes = maxBytes)
+        attachments().addPickedFile(
+          thingId,
+          file,
+          displayName = file.name,
+          maxBytes = maxBytes
+        )
       }.onSuccess { hold(thingId, it) }
     }
     return try {
       storing.await()
     } catch (e: CancellationException) {
-      scope.launch { storing.await().getOrNull()?.let { letGoNow(listOf(it)) } }
+      scope.launch {
+        storing.await()
+          .getOrNull()
+          ?.let { letGoNow(listOf(it)) }
+      }
       throw e
     }
   }
@@ -114,7 +127,11 @@ class JobDocumentReleaser(
    * Notes [documents] against the signed-in user's run [jobId] on [thingId]: from here the run
    * lets them go, so they stop being merely picked.
    */
-  suspend fun record(jobId: AiJobId, thingId: ThingId, documents: List<Attachment>) {
+  suspend fun record(
+    jobId: AiJobId,
+    thingId: ThingId,
+    documents: List<Attachment>
+  ) {
     if (documents.isEmpty()) return
     val uid = currentUid() ?: return
     store.record(uid, jobId.value, thingId.value, documents)
@@ -124,13 +141,18 @@ class JobDocumentReleaser(
   /** The documents the signed-in user's run [jobId] was started with. */
   suspend fun documentsOf(jobId: AiJobId): List<Attachment> {
     val uid = currentUid() ?: return emptyList()
-    return store.forJob(uid, jobId.value).map { it.attachment }
+    return store.forJob(uid, jobId.value)
+      .map { it.attachment }
   }
 
   /** Releases the signed-in user's run [jobId]'s documents and forgets them. */
   suspend fun release(jobId: AiJobId) {
     val uid = currentUid() ?: return
-    releaseJob(uid, jobId.value, store.forJob(uid, jobId.value).map { it.attachment })
+    releaseJob(
+      uid,
+      jobId.value,
+      store.forJob(uid, jobId.value)
+        .map { it.attachment })
   }
 
   /**
@@ -156,7 +178,11 @@ class JobDocumentReleaser(
       }
   }
 
-  private suspend fun releaseJob(uid: String, jobId: String, documents: List<Attachment>) {
+  private suspend fun releaseJob(
+    uid: String,
+    jobId: String,
+    documents: List<Attachment>
+  ) {
     documents.forEach { attachments().release(it, owner = null) }
     store.forget(uid, jobId)
   }

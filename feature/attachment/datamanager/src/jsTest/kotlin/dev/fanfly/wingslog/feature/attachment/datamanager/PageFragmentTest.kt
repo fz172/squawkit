@@ -22,6 +22,12 @@ class PageFragmentTest {
   fun noPageAPageBeforeTheFirstOrAnotherFileOpensAtTheStart() {
     assertEquals("", pageFragment(pdf, null))
     assertEquals("", pageFragment(pdf, 0))
-    assertEquals("", pageFragment(Attachment(id = "b2", mime_type = "image/jpeg"), 3))
+    assertEquals(
+      "",
+      pageFragment(
+        Attachment(id = "b2", mime_type = "image/jpeg"),
+        3
+      )
+    )
   }
 }

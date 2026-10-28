@@ -158,6 +158,11 @@ class MaintenanceLogListDeleteTest {
     vm.cancelDeleteLog()
 
     assertThat(vm.success().deletingLog).isNull()
-    coVerify(exactly = 0) { logManager.deleteLog(any<ThingId>(), any<MaintenanceLogId>()) }
+    coVerify(exactly = 0) {
+      logManager.deleteLog(
+        any<ThingId>(),
+        any<MaintenanceLogId>()
+      )
+    }
   }
 }

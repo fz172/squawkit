@@ -48,11 +48,15 @@ class LogOverviewViewModel(
     }
     val stats = LogStats(
       total = logs.size.toLong(),
-      airframe = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME }.toLong(),
-      engine = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE }.toLong(),
-      propeller = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER }.toLong(),
+      airframe = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME }
+        .toLong(),
+      engine = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE }
+        .toLong(),
+      propeller = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER }
+        .toLong(),
       readings = declared.associate { it.meterKey to it.value },
-      readingsAsOf = declared.mapNotNull { it.asOf }.maxOrNull(),
+      readingsAsOf = declared.mapNotNull { it.asOf }
+        .maxOrNull(),
     )
     LogOverviewUiState(
       loaded = true,

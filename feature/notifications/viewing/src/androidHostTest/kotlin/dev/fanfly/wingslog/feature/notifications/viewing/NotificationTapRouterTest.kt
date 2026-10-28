@@ -24,7 +24,8 @@ class NotificationTapRouterTest {
   fun encodeThenDeliver_suggestions_roundTrips() {
     val target = NotificationTapTarget.Suggestions(thingId = ThingId("ac-1"))
 
-    val delivered = NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
+    val delivered =
+      NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
     assertThat(delivered).isTrue()
     assertThat(NotificationTapRouter.pending.value).isEqualTo(target)
@@ -33,7 +34,10 @@ class NotificationTapRouterTest {
   @Test
   fun encodeThenDeliver_squawk_roundTrips() {
     val target =
-      NotificationTapTarget.Squawk(thingId = ThingId("ac-1"), squawkId = SquawkId("sq-1"))
+      NotificationTapTarget.Squawk(
+        thingId = ThingId("ac-1"),
+        squawkId = SquawkId("sq-1")
+      )
 
     val delivered =
       NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
@@ -45,7 +49,10 @@ class NotificationTapRouterTest {
   @Test
   fun encodeThenDeliver_task_roundTrips() {
     val target =
-      NotificationTapTarget.Task(thingId = ThingId("ac-1"), taskId = MaintenanceTaskId("task-1"))
+      NotificationTapTarget.Task(
+        thingId = ThingId("ac-1"),
+        taskId = MaintenanceTaskId("task-1")
+      )
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
@@ -54,7 +61,10 @@ class NotificationTapRouterTest {
 
   @Test
   fun encodeThenDeliver_log_roundTrips() {
-    val target = NotificationTapTarget.Log(thingId = ThingId("ac-1"), logId = MaintenanceLogId("log-1"))
+    val target = NotificationTapTarget.Log(
+      thingId = ThingId("ac-1"),
+      logId = MaintenanceLogId("log-1")
+    )
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
@@ -73,7 +83,8 @@ class NotificationTapRouterTest {
 
   @Test
   fun encodeThenDeliver_thingWithoutTab_roundTrips() {
-    val target = NotificationTapTarget.Thing(thingId = ThingId("ac-1"), tab = null)
+    val target =
+      NotificationTapTarget.Thing(thingId = ThingId("ac-1"), tab = null)
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
@@ -90,7 +101,12 @@ class NotificationTapRouterTest {
 
     assertThat(delivered).isTrue()
     assertThat(NotificationTapRouter.pending.value)
-      .isEqualTo(NotificationTapTarget.Thing(thingId = ThingId("ac-1"), tab = "tasks"))
+      .isEqualTo(
+        NotificationTapTarget.Thing(
+          thingId = ThingId("ac-1"),
+          tab = "tasks"
+        )
+      )
   }
 
   @Test
@@ -98,7 +114,12 @@ class NotificationTapRouterTest {
     NotificationTapRouter.deliver("wingslog://notification-tap/aircraft/ac-1")
 
     assertThat(NotificationTapRouter.pending.value)
-      .isEqualTo(NotificationTapTarget.Thing(thingId = ThingId("ac-1"), tab = null))
+      .isEqualTo(
+        NotificationTapTarget.Thing(
+          thingId = ThingId("ac-1"),
+          tab = null
+        )
+      )
   }
 
   // deliver() dispatch contract — false, and no delivery, for a URI this router doesn't own.

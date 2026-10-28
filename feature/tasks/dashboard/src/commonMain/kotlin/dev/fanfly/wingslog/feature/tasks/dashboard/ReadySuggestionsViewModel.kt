@@ -21,21 +21,23 @@ class ReadySuggestionsViewModel(
   thingId: ThingId,
 ) : ViewModel() {
 
-  val ready: StateFlow<ReadySuggestions?> = suggestionManager.observeRun(thingId)
-    .map { run ->
-      val result = (run as? SuggestionRun.Ready)?.result ?: return@map null
-      val fromModel = result.suggestions.count {
-        it.matches_existing_task_id?.value_.isNullOrEmpty() &&
-          (it.origin_kind == TaskOriginKind.TASK_ORIGIN_KIND_AI_THING ||
-            it.origin_kind == TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT)
+  val ready: StateFlow<ReadySuggestions?> =
+    suggestionManager.observeRun(thingId)
+      .map { run ->
+        val result = (run as? SuggestionRun.Ready)?.result ?: return@map null
+        val fromModel = result.suggestions.count {
+          it.matches_existing_task_id?.value_.isNullOrEmpty() &&
+            (it.origin_kind == TaskOriginKind.TASK_ORIGIN_KIND_AI_THING ||
+              it.origin_kind == TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT)
+        }
+        if (fromModel == 0) return@map null
+        ReadySuggestions(
+          count = fromModel,
+          document = result.documents.firstOrNull()
+            ?.let { it.title.ifBlank { it.name } },
+        )
       }
-      if (fromModel == 0) return@map null
-      ReadySuggestions(
-        count = fromModel,
-        document = result.documents.firstOrNull()?.let { it.title.ifBlank { it.name } },
-      )
-    }
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }
 
 /** [count] suggestions the model drafted, from [document] when it read one. */

@@ -31,7 +31,11 @@ fun stageText(stage: SuggestionStage?, stageArg: String?): String {
       thing
     )
 
-    SuggestionStage.TAILORING -> stringResource(Res.string.suggestions_suggesting, thing)
+    SuggestionStage.TAILORING -> stringResource(
+      Res.string.suggestions_suggesting,
+      thing
+    )
+
     SuggestionStage.VALIDATING -> stringResource(Res.string.suggestions_stage_validating)
     SuggestionStage.READING_DOCUMENT -> stringResource(
       Res.string.suggestions_stage_reading,

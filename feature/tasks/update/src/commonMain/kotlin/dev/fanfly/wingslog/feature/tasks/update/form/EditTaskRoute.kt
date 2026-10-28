@@ -71,7 +71,8 @@ fun EditTaskRoute(
   }
 
   // Find the card in the list
-  val card = successState?.allInspections?.find { it.id == viewModel.cardId?.value }
+  val card =
+    successState?.allInspections?.find { it.id == viewModel.cardId?.value }
 
   if (card != null) {
     EditTaskScreen(

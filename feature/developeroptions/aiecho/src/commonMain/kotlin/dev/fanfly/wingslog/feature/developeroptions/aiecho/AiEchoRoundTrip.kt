@@ -34,10 +34,13 @@ class AiEchoRoundTrip(
 ) {
 
   suspend fun run(onStep: (EchoStep) -> Unit): EchoOutcome {
-    val thingId = fleet.observeFleetDashboard().first().firstOrNull()?.thing?.id?.let(::ThingId)
+    val thingId = fleet.observeFleetDashboard()
+      .first()
+      .firstOrNull()?.thing?.id?.let(::ThingId)
       ?: return EchoOutcome.NoThing
     // A shared Thing lives in its host's tree: users/{hostUid}/thing/{thingId}.
-    val hostUid = scopes.resolveNow(thingId).hostUid ?: return EchoOutcome.NoThing
+    val hostUid =
+      scopes.resolveNow(thingId).hostUid ?: return EchoOutcome.NoThing
     val request = SuggestTasksRequest(
       thing_id = thingId,
       host_uid = UserId(value_ = hostUid),
@@ -46,20 +49,25 @@ class AiEchoRoundTrip(
 
     val started = timeSource.markNow()
     onStep(EchoStep.Starting)
-    val jobId = when (val start = client.start(AiJobKind.AI_JOB_KIND_ECHO, request)) {
-      is AiStartResult.Refused -> return EchoOutcome.Refused(start.reason)
-      is AiStartResult.Started -> start.jobId
-    }
+    val jobId =
+      when (val start = client.start(AiJobKind.AI_JOB_KIND_ECHO, request)) {
+        is AiStartResult.Refused -> return EchoOutcome.Refused(start.reason)
+        is AiStartResult.Started -> start.jobId
+      }
     try {
       val job = withTimeoutOrNull(TIMEOUT) {
-        client.observe(jobId).first { job ->
-          job?.let { onStep(EchoStep.Running(it.status, it.stage)) }
-          job?.status in TERMINAL
-        }
+        client.observe(jobId)
+          .first { job ->
+            job?.let { onStep(EchoStep.Running(it.status, it.stage)) }
+            job?.status in TERMINAL
+          }
       } ?: return EchoOutcome.TimedOut
       return when (job.status) {
         AiJobStatus.AI_JOB_STATUS_SUCCEEDED ->
-          if (job.result == request) EchoOutcome.Passed(started.elapsedNow()) else EchoOutcome.Mismatch(job.result)
+          if (job.result == request) EchoOutcome.Passed(started.elapsedNow()) else EchoOutcome.Mismatch(
+            job.result
+          )
+
         else -> EchoOutcome.Failed(job.error ?: AiErrorCode.UNKNOWN)
       }
     } finally {

@@ -97,7 +97,11 @@ class SquawkManagerImpl(
       ?.associateBy { it.id } ?: emptyMap()
     squawkIds.forEach { squawkId ->
       val existing = allSquawks[squawkId.value]?.value ?: return@forEach
-      store.put(squawkId.value, existing.copy(addressed_by_log_id = logId.value), scope)
+      store.put(
+        squawkId.value,
+        existing.copy(addressed_by_log_id = logId.value),
+        scope
+      )
     }
   }.onFailure { logger.w(it) { "Error marking squawks addressed: ${squawkIds.map { it.value }}" } }
 

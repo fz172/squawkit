@@ -60,7 +60,8 @@ class TaskOverviewViewModelTest {
     val state = TaskOverviewViewModel(taskStatusManager, THING).uiState.value
 
     assertThat(state.loaded).isTrue()
-    assertThat(state.overdueTasks).containsExactly(overdue, dueSoon).inOrder()
+    assertThat(state.overdueTasks).containsExactly(overdue, dueSoon)
+      .inOrder()
     assertThat(state.nextDueTask).isEqualTo(upcoming)
   }
 }

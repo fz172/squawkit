@@ -136,13 +136,30 @@ data class PushPayload(
         // The record variants are useless without an id — a tap would scroll to nothing. Falling
         // back to the thing still lands the pilot on the right thing, which is the part every
         // variant shares.
-        "squawk" -> recordId?.let { NotificationTapTarget.Squawk(thingId, SquawkId(it)) }
+        "squawk" -> recordId?.let {
+          NotificationTapTarget.Squawk(
+            thingId,
+            SquawkId(it)
+          )
+        }
           ?: NotificationTapTarget.Thing(thingId, tab = "squawks")
 
-        "task" -> recordId?.let { NotificationTapTarget.Task(thingId, MaintenanceTaskId(it)) }
+        "task" -> recordId?.let {
+          NotificationTapTarget.Task(
+            thingId,
+            MaintenanceTaskId(
+              it
+            )
+          )
+        }
           ?: NotificationTapTarget.Thing(thingId, tab = "tasks")
 
-        "log" -> recordId?.let { NotificationTapTarget.Log(thingId, MaintenanceLogId(it)) }
+        "log" -> recordId?.let {
+          NotificationTapTarget.Log(
+            thingId,
+            MaintenanceLogId(it)
+          )
+        }
           ?: NotificationTapTarget.Thing(thingId, tab = "logs")
 
         "data_log" -> recordId?.let {

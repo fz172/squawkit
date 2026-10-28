@@ -48,102 +48,102 @@ internal fun StressTestConfigForm(
   viewModel: StressTestViewModel,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-  // The template drives everything below it, so it comes first. Airplane is the only
-  // preset with knobs of its own; every other thing is built from what its template
-  // declares, and the preview says what that will be.
-  val template = viewModel.templateFor(config.templateId)
-  val limits = viewModel.poolLimits(config.templateId)
-  ConfigSection(title = stringResource(Res.string.stress_test_config_thing)) {
-    TemplateRow(
-      selectedId = config.templateId,
-      onSelect = { viewModel.setTemplateId(it) },
-    )
-    if (template.id == AirplaneTemplate.ID) {
-      StepperRow(
-        label = stringResource(Res.string.stress_test_config_engines),
-        value = config.engineCount,
-        range = 1..2,
-        onDecrement = { viewModel.setEngineCount(config.engineCount - 1) },
-        onIncrement = { viewModel.setEngineCount(config.engineCount + 1) },
+    // The template drives everything below it, so it comes first. Airplane is the only
+    // preset with knobs of its own; every other thing is built from what its template
+    // declares, and the preview says what that will be.
+    val template = viewModel.templateFor(config.templateId)
+    val limits = viewModel.poolLimits(config.templateId)
+    ConfigSection(title = stringResource(Res.string.stress_test_config_thing)) {
+      TemplateRow(
+        selectedId = config.templateId,
+        onSelect = { viewModel.setTemplateId(it) },
       )
-      StepperRow(
-        label = stringResource(Res.string.stress_test_config_blades_per_engine),
-        value = config.bladesPerEngine,
-        range = 2..4,
-        onDecrement = { viewModel.setBladesPerEngine(config.bladesPerEngine - 1) },
-        onIncrement = { viewModel.setBladesPerEngine(config.bladesPerEngine + 1) },
+      if (template.id == AirplaneTemplate.ID) {
+        StepperRow(
+          label = stringResource(Res.string.stress_test_config_engines),
+          value = config.engineCount,
+          range = 1..2,
+          onDecrement = { viewModel.setEngineCount(config.engineCount - 1) },
+          onIncrement = { viewModel.setEngineCount(config.engineCount + 1) },
+        )
+        StepperRow(
+          label = stringResource(Res.string.stress_test_config_blades_per_engine),
+          value = config.bladesPerEngine,
+          range = 2..4,
+          onDecrement = { viewModel.setBladesPerEngine(config.bladesPerEngine - 1) },
+          onIncrement = { viewModel.setBladesPerEngine(config.bladesPerEngine + 1) },
+        )
+      } else {
+        TemplatePreview(template)
+      }
+      SwitchRow(
+        label = stringResource(Res.string.stress_test_config_future_dna),
+        checked = config.dnaFromANewerBuild,
+        onCheckedChange = { viewModel.setDnaFromANewerBuild(it) },
       )
-    } else {
-      TemplatePreview(template)
     }
-    SwitchRow(
-      label = stringResource(Res.string.stress_test_config_future_dna),
-      checked = config.dnaFromANewerBuild,
-      onCheckedChange = { viewModel.setDnaFromANewerBuild(it) },
-    )
-  }
 
-  // Tasks and squawks stop at the preset's pool: the generator never makes more distinct
-  // records than it has samples for, so the slider should not offer them either.
-  ConfigSection(title = stringResource(Res.string.stress_test_config_records)) {
-    SliderRow(
-      label = stringResource(Res.string.stress_test_config_squawks),
-      value = config.squawkCount,
-      range = 1..limits.squawks,
-      onValueChange = { viewModel.setSquawkCount(it) },
-    )
-    SliderRow(
-      label = stringResource(Res.string.stress_test_config_tasks),
-      value = config.taskCount,
-      range = 1..limits.tasks,
-      onValueChange = { viewModel.setTaskCount(it) },
-    )
-    SliderRow(
-      label = stringResource(Res.string.stress_test_config_log_entries),
-      value = config.logCount,
-      range = 10..100,
-      onValueChange = { viewModel.setLogCount(it) },
-    )
-    SliderRow(
-      label = stringResource(Res.string.stress_test_config_technicians),
-      value = config.technicianCount,
-      range = 1..5,
-      onValueChange = { viewModel.setTechnicianCount(it) },
-    )
-  }
+    // Tasks and squawks stop at the preset's pool: the generator never makes more distinct
+    // records than it has samples for, so the slider should not offer them either.
+    ConfigSection(title = stringResource(Res.string.stress_test_config_records)) {
+      SliderRow(
+        label = stringResource(Res.string.stress_test_config_squawks),
+        value = config.squawkCount,
+        range = 1..limits.squawks,
+        onValueChange = { viewModel.setSquawkCount(it) },
+      )
+      SliderRow(
+        label = stringResource(Res.string.stress_test_config_tasks),
+        value = config.taskCount,
+        range = 1..limits.tasks,
+        onValueChange = { viewModel.setTaskCount(it) },
+      )
+      SliderRow(
+        label = stringResource(Res.string.stress_test_config_log_entries),
+        value = config.logCount,
+        range = 10..100,
+        onValueChange = { viewModel.setLogCount(it) },
+      )
+      SliderRow(
+        label = stringResource(Res.string.stress_test_config_technicians),
+        value = config.technicianCount,
+        range = 1..5,
+        onValueChange = { viewModel.setTechnicianCount(it) },
+      )
+    }
 
-  if (isError) {
-    val error = state as StressTestState.Error
-    val colors = MaterialTheme.statusColors.critical
-    Surface(
-      color = colors.container,
-      shape = RoundedCornerShape(Spacing.cardCornerRadius),
+    if (isError) {
+      val error = state as StressTestState.Error
+      val colors = MaterialTheme.statusColors.critical
+      Surface(
+        color = colors.container,
+        shape = RoundedCornerShape(Spacing.cardCornerRadius),
+      ) {
+        Text(
+          text = stringResource(
+            Res.string.stress_test_error_message,
+            error.message
+              ?: stringResource(Res.string.stress_test_unknown_error),
+          ),
+          style = MaterialTheme.typography.bodySmall,
+          color = colors.onContainer,
+          modifier = Modifier.padding(Spacing.medium),
+        )
+      }
+    }
+
+    Button(
+      onClick = viewModel::generate,
+      modifier = Modifier.fillMaxWidth()
+        .height(Spacing.buttonHeight),
+      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
     ) {
-      Text(
-        text = stringResource(
-          Res.string.stress_test_error_message,
-          error.message
-            ?: stringResource(Res.string.stress_test_unknown_error),
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = colors.onContainer,
-        modifier = Modifier.padding(Spacing.medium),
+      Icon(
+        imageVector = Icons.Default.Build,
+        contentDescription = null,
+        modifier = Modifier.padding(end = Spacing.small),
       )
+      Text(stringResource(Res.string.stress_test_generate))
     }
   }
-
-  Button(
-    onClick = viewModel::generate,
-    modifier = Modifier.fillMaxWidth()
-      .height(Spacing.buttonHeight),
-    shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-  ) {
-    Icon(
-      imageVector = Icons.Default.Build,
-      contentDescription = null,
-      modifier = Modifier.padding(end = Spacing.small),
-    )
-    Text(stringResource(Res.string.stress_test_generate))
-  }
-}
 }

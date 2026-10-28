@@ -149,7 +149,8 @@ private fun NumberField(
 
 /** The number [text] reads as, when it is above zero and no more than [max]; null otherwise. */
 internal fun parseInterval(text: String, max: Double): Double? =
-  text.toDoubleOrNull()?.takeIf { it > 0 && it <= max }
+  text.toDoubleOrNull()
+    ?.takeIf { it > 0 && it <= max }
 
 /** 50.0 → "50", 7.5 → "7.5": a meter interval as the field shows it, with no stray ".0". */
 internal fun Float.toFieldText(): String {

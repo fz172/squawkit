@@ -80,7 +80,10 @@ class AiEchoDeveloperOptionsExtra(
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      Column(modifier = Modifier.weight(1f).padding(end = Spacing.medium)) {
+      Column(
+        modifier = Modifier.weight(1f)
+          .padding(end = Spacing.medium)
+      ) {
         Text(
           text = stringResource(Res.string.ai_echo_title),
           style = MaterialTheme.typography.bodyLarge,
@@ -113,17 +116,36 @@ private fun EchoStep?.label(): String = when (this) {
   null, EchoStep.Starting -> stringResource(Res.string.ai_echo_step_starting)
   is EchoStep.Running -> when {
     status == AiJobStatus.AI_JOB_STATUS_QUEUED -> stringResource(Res.string.ai_echo_step_queued)
-    else -> stringResource(Res.string.ai_echo_step_running, stage ?: status?.name.orEmpty())
+    else -> stringResource(
+      Res.string.ai_echo_step_running,
+      stage ?: status?.name.orEmpty()
+    )
   }
+
   EchoStep.Closing -> stringResource(Res.string.ai_echo_step_closing)
 }
 
 @Composable
 private fun EchoOutcome?.label(): String = when (this) {
   null -> stringResource(Res.string.ai_echo_idle)
-  is EchoOutcome.Passed -> stringResource(Res.string.ai_echo_passed, elapsed.toString(DurationUnit.SECONDS, 1))
-  is EchoOutcome.Refused -> stringResource(Res.string.ai_echo_refused, reason.wire ?: reason.name)
-  is EchoOutcome.Failed -> stringResource(Res.string.ai_echo_failed, reason.wire ?: reason.name)
+  is EchoOutcome.Passed -> stringResource(
+    Res.string.ai_echo_passed,
+    elapsed.toString(
+      DurationUnit.SECONDS,
+      1
+    )
+  )
+
+  is EchoOutcome.Refused -> stringResource(
+    Res.string.ai_echo_refused,
+    reason.wire ?: reason.name
+  )
+
+  is EchoOutcome.Failed -> stringResource(
+    Res.string.ai_echo_failed,
+    reason.wire ?: reason.name
+  )
+
   is EchoOutcome.Mismatch -> stringResource(Res.string.ai_echo_mismatch)
   EchoOutcome.TimedOut -> stringResource(Res.string.ai_echo_timed_out)
   EchoOutcome.NoThing -> stringResource(Res.string.ai_echo_no_thing)

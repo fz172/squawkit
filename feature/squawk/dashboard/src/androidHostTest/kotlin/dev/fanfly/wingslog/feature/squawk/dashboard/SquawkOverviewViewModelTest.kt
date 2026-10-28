@@ -50,9 +50,21 @@ class SquawkOverviewViewModelTest {
       addressed_by_log_id = "log-1",
       created_at = Instant.ofEpochSecond(500L, 0),
     )
-    val open1 = Squawk(id = "s-1", title = "1", created_at = Instant.ofEpochSecond(100L, 0))
-    val open2 = Squawk(id = "s-2", title = "2", created_at = Instant.ofEpochSecond(200L, 0))
-    val open3 = Squawk(id = "s-3", title = "3", created_at = Instant.ofEpochSecond(300L, 0))
+    val open1 = Squawk(
+      id = "s-1",
+      title = "1",
+      created_at = Instant.ofEpochSecond(100L, 0)
+    )
+    val open2 = Squawk(
+      id = "s-2",
+      title = "2",
+      created_at = Instant.ofEpochSecond(200L, 0)
+    )
+    val open3 = Squawk(
+      id = "s-3",
+      title = "3",
+      created_at = Instant.ofEpochSecond(300L, 0)
+    )
     every { squawkManager.observeSquawks(THING) } returns flowOf(
       listOf(open1, open2, open3, openAog, addressedAog)
     )

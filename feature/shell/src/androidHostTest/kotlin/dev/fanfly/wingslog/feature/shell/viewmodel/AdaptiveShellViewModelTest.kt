@@ -79,7 +79,9 @@ class AdaptiveShellViewModelTest {
     override suspend fun updateTechnician(technician: Technician) =
       Result.success(true)
 
-    override suspend fun deleteTechnician(id: TechnicianId) = Result.success(true)
+    override suspend fun deleteTechnician(id: TechnicianId) =
+      Result.success(true)
+
     override suspend fun saveSelfName(name: String) = Result.success(Unit)
     override suspend fun ensureSelfProfile() =
       Result.success(Unit)

@@ -73,16 +73,20 @@ class IosPushMirrorTest {
    * above it — the input type the template reads.
    */
   private fun serverKeys(): Set<String> {
-    val literals = notificationKeys(serverPush, """"(notification_[a-z0-9_]+)"""")
-    val templated = Regex("""`(notification_[a-z0-9_]+)\$\{input\.kind\}`""").findAll(serverPush)
-      .flatMap { template ->
-        val union = Regex("""kind: ("[a-z]+"(?: \| "[a-z]+")*);""")
-          .findAll(serverPush.substring(0, template.range.first))
-          .last()
-          .groupValues[1]
-        Regex(""""([a-z]+)"""").findAll(union)
-          .map { template.groupValues[1] + it.groupValues[1] }
-      }
+    val literals =
+      notificationKeys(serverPush, """"(notification_[a-z0-9_]+)"""")
+    val templated =
+      Regex("""`(notification_[a-z0-9_]+)\$\{input\.kind\}`""").findAll(
+        serverPush
+      )
+        .flatMap { template ->
+          val union = Regex("""kind: ("[a-z]+"(?: \| "[a-z]+")*);""")
+            .findAll(serverPush.substring(0, template.range.first))
+            .last()
+            .groupValues[1]
+          Regex(""""([a-z]+)"""").findAll(union)
+            .map { template.groupValues[1] + it.groupValues[1] }
+        }
     return literals + templated
   }
 
@@ -92,15 +96,19 @@ class IosPushMirrorTest {
     // Sanity: a regex that matched nothing would pass every assertion below.
     assertThat(sent).contains("notification_n1_body_record_created")
 
-    val kotlin = notificationKeys(kotlinRenderer, """"(notification_[a-z0-9_]+)" ->""")
-    val swift = swiftCases(swiftRenderer).filter { it.startsWith("notification_") }
-      .toSet()
+    val kotlin =
+      notificationKeys(kotlinRenderer, """"(notification_[a-z0-9_]+)" ->""")
+    val swift =
+      swiftCases(swiftRenderer).filter { it.startsWith("notification_") }
+        .toSet()
 
     assertWithMessage("keys the server sends that PushPayloadRendering.kt does not render")
-      .that(sent - kotlin).isEmpty()
+      .that(sent - kotlin)
+      .isEmpty()
     // Equal, not a superset: a key only Swift renders is one the Kotlin side retired.
     assertWithMessage("PushPayloadRendering.swift vs PushPayloadRendering.kt")
-      .that(swift).isEqualTo(kotlin)
+      .that(swift)
+      .isEqualTo(kotlin)
   }
 
   @Test
@@ -109,18 +117,26 @@ class IosPushMirrorTest {
     val literal = notificationKeys(serverPush, """tapTarget:\s*`([a-z_]+):""") +
       notificationKeys(serverPush, """\? `([a-z_]+):\$\{""")
     val recordTypes = notificationKeys(
-      serverModels.substringAfter("export const RECORD_TYPE = {").substringBefore("}"),
+      serverModels.substringAfter("export const RECORD_TYPE = {")
+        .substringBefore("}"),
       """:\s*"([a-z_]+)"""",
     )
     val sent = literal + recordTypes
-    assertThat(sent).containsAtLeast("aircraft", "squawk", "data_log", "suggestions")
+    assertThat(sent).containsAtLeast(
+      "aircraft",
+      "squawk",
+      "data_log",
+      "suggestions"
+    )
 
     for (kind in sent) {
       assertWithMessage("PushPayload.parseTapTarget(\"$kind:T1:R1\")")
-        .that(PushPayload.parseTapTarget("$kind:T1:R1")).isNotNull()
+        .that(PushPayload.parseTapTarget("$kind:T1:R1"))
+        .isNotNull()
     }
     assertWithMessage("tap kinds the server sends that PushPayload.swift has no case for")
-      .that(sent - swiftCases(swiftParser)).isEmpty()
+      .that(sent - swiftCases(swiftParser))
+      .isEmpty()
   }
 
   @Test
@@ -134,8 +150,9 @@ class IosPushMirrorTest {
       NotificationTapTarget.Suggestions(ThingId("T1")),
     )
     val segment = Regex("""notification-tap/([a-z_]+)/""")
-    val kotlin = targets.map { segment.find(NotificationTapRouter.encode(it))!!.groupValues[1] }
-      .toSet()
+    val kotlin =
+      targets.map { segment.find(NotificationTapRouter.encode(it))!!.groupValues[1] }
+        .toSet()
     val swift = segment.findAll(swiftEncoder)
       .map { it.groupValues[1] }
       .toSet()
@@ -152,12 +169,23 @@ class IosPushMirrorTest {
     val registry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE)
     val expected = CanonicalTemplates.ALL.map { it.id }
       .sorted()
-      .map { id -> "    \"$id\": ${nounsLine(registry.lexiconFor(ThingTemplate(id = id)))}," } +
+      .map { id ->
+        "    \"$id\": ${
+          nounsLine(
+            registry.lexiconFor(
+              ThingTemplate(
+                id = id
+              )
+            )
+          )
+        },"
+      } +
       "  static let generic = ${nounsLine(GenericLexicon.LEXICON)}"
     val actual = swiftNouns.lines()
       .filter { "PushNouns(thing:" in it }
 
-    assertThat(actual).containsExactlyElementsIn(expected).inOrder()
+    assertThat(actual).containsExactlyElementsIn(expected)
+      .inOrder()
   }
 
   /** One `PushNouns(…)` initialiser, in `PushNouns.swift`'s field order. */
@@ -179,7 +207,11 @@ class IosPushMirrorTest {
       "aDataLog" to LexiconFormatter.withArticle(lexicon.dataLogNoun),
       "dataLogsTitle" to LexiconFormatter.titleCasePlural(lexicon.dataLogNoun),
     )
-    return fields.joinToString(", ", prefix = "PushNouns(", postfix = ")") { (name, value) ->
+    return fields.joinToString(
+      ", ",
+      prefix = "PushNouns(",
+      postfix = ")"
+    ) { (name, value) ->
       "$name: \"$value\""
     }
   }

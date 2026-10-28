@@ -99,7 +99,8 @@ class MaintenanceLogListViewModel(
   private val _availableSquawks = MutableStateFlow<List<Squawk>>(emptyList())
 
   /** logId → uid of whoever wrote the latest revision. Envelope data, not payload (§7.5). */
-  private val _logAuthors = MutableStateFlow<Map<MaintenanceLogId, String?>>(emptyMap())
+  private val _logAuthors =
+    MutableStateFlow<Map<MaintenanceLogId, String?>>(emptyMap())
 
   /** uid → display name, for naming the author of a log this member didn't write. */
   private val _namesByUid = MutableStateFlow<Map<String, String>>(emptyMap())

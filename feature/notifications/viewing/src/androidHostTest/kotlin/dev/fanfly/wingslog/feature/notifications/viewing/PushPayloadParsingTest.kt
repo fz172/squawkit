@@ -132,9 +132,14 @@ class PushPayloadParsingTest {
 
   @Test
   fun `parses a finished suggestion run as the Thing's suggestions (PRD R20)`() {
-    val parsed = PushPayload.parse(activityData(mapOf("tapTarget" to "suggestions:ac-1")))!!
+    val parsed =
+      PushPayload.parse(activityData(mapOf("tapTarget" to "suggestions:ac-1")))!!
 
-    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Suggestions(ThingId("ac-1")))
+    assertThat(parsed.tapTarget).isEqualTo(
+      NotificationTapTarget.Suggestions(
+        ThingId("ac-1")
+      )
+    )
   }
 
   @Test
@@ -232,7 +237,12 @@ class PushPayloadParsingTest {
     )!!
 
     assertThat(parsed.tapTarget)
-      .isEqualTo(NotificationTapTarget.DataLog(ThingId("ac-1"), DataLogId("dl-7")))
+      .isEqualTo(
+        NotificationTapTarget.DataLog(
+          ThingId("ac-1"),
+          DataLogId("dl-7")
+        )
+      )
   }
 
   @Test
@@ -268,7 +278,12 @@ class PushPayloadParsingTest {
 
     assertThat(parsed.templateId).isEqualTo("automotive")
     // The aeroplane is open, but the push is about the car.
-    assertThat(parsed.lexiconIn(registry, onScreen = airplaneOnScreen).squawkNoun.singular)
+    assertThat(
+      parsed.lexiconIn(
+        registry,
+        onScreen = airplaneOnScreen
+      ).squawkNoun.singular
+    )
       .isEqualTo("issue")
   }
 

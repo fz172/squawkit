@@ -33,7 +33,10 @@ sealed interface NotificationTapTarget {
   data class Squawk(override val thingId: ThingId, val squawkId: SquawkId) :
     NotificationTapTarget
 
-  data class Task(override val thingId: ThingId, val taskId: MaintenanceTaskId) :
+  data class Task(
+    override val thingId: ThingId,
+    val taskId: MaintenanceTaskId
+  ) :
     NotificationTapTarget
 
   data class Log(override val thingId: ThingId, val logId: MaintenanceLogId) :

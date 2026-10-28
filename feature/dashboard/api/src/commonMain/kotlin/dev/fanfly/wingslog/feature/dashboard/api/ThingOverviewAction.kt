@@ -24,7 +24,10 @@ sealed interface ThingOverviewAction {
   data class OpenDataLogClick(val thingId: ThingId, val dataLogId: DataLogId) :
     ThingOverviewAction
 
-  data class EditTaskClick(val thingId: ThingId, val cardId: MaintenanceTaskId) :
+  data class EditTaskClick(
+    val thingId: ThingId,
+    val cardId: MaintenanceTaskId
+  ) :
     ThingOverviewAction
 
   data class AddSquawkClick(val thingId: ThingId) : ThingOverviewAction
@@ -36,5 +39,6 @@ sealed interface ThingOverviewAction {
   data class SquawkFixedClick(val squawkId: SquawkId) : ThingOverviewAction
 
   /** Navigates to Create Log with the task pre-linked; the section drives the navController. */
-  data class TaskCreateLogClick(val cardId: MaintenanceTaskId) : ThingOverviewAction
+  data class TaskCreateLogClick(val cardId: MaintenanceTaskId) :
+    ThingOverviewAction
 }

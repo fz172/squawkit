@@ -409,12 +409,18 @@ class DataLogManagerImplTest {
     val first = record("dl-1", "2026-09-03T00:00:00Z").copy(
       duration_seconds = 255,
       source = DataLogSource(product = "GDU 460"),
-      raw_file = Attachment(id = "blob-1", type = AttachmentType.ATTACHMENT_TYPE_FILE),
+      raw_file = Attachment(
+        id = "blob-1",
+        type = AttachmentType.ATTACHMENT_TYPE_FILE
+      ),
     )
     val second = record("dl-2", "2026-09-01T00:00:00Z").copy(
       duration_seconds = 60,
       source = null,
-      raw_file = Attachment(id = "blob-2", type = AttachmentType.ATTACHMENT_TYPE_FILE),
+      raw_file = Attachment(
+        id = "blob-2",
+        type = AttachmentType.ATTACHMENT_TYPE_FILE
+      ),
     )
     every { store.observeAll(scope) } returns flowOf(
       listOf(
@@ -427,7 +433,8 @@ class DataLogManagerImplTest {
       ref(RemoteState.RemoteOnly).copy(id = BlobId("blob-2"))
     )
 
-    val rowInfos = manager.observeRowInfos(thingId).first()
+    val rowInfos = manager.observeRowInfos(thingId)
+      .first()
 
     assertThat(rowInfos).containsExactly(
       DataLogId("dl-1"), DataLogRowInfo("GDU 460", 255, BlobSyncState.Synced),
@@ -439,6 +446,9 @@ class DataLogManagerImplTest {
   fun observeRowInfosIsEmptyOnceTheThingHasNone() = runTest {
     every { store.observeAll(scope) } returns flowOf(emptyList())
 
-    assertThat(manager.observeRowInfos(thingId).first()).isEmpty()
+    assertThat(
+      manager.observeRowInfos(thingId)
+        .first()
+    ).isEmpty()
   }
 }

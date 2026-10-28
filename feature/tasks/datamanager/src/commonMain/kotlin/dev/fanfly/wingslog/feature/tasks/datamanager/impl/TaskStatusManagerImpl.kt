@@ -98,8 +98,9 @@ class TaskStatusManagerImpl(
         due.nextDueDate?.let { candidates.add(it.toEpochDays() - today.toEpochDays()) }
         due.nextDueEngine?.let {
           // Remaining in the due’s own meter; raw values would sort mileage tasks behind hours (#759).
-          val current = readings.firstOrNull { it.meter_key == due.nextDueMeterKey }
-            ?.value_ ?: 0.0
+          val current =
+            readings.firstOrNull { it.meter_key == due.nextDueMeterKey }
+              ?.value_ ?: 0.0
           candidates.add((it.toDouble() - current).toLong())
         }
         candidates.minOrNull() ?: Long.MAX_VALUE

@@ -148,7 +148,10 @@ class TechnicianManagerImpl(
     firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) flowOf(null)
       else userInfoStore.observe("main", EntityScope.userRoot(user.uid))
-        .map { it?.value?.self_technician_id?.takeIf { id -> id.isNotBlank() }?.let(::TechnicianId) }
+        .map {
+          it?.value?.self_technician_id?.takeIf { id -> id.isNotBlank() }
+            ?.let(::TechnicianId)
+        }
         .catch { e ->
           logger.w(e) { "Error observing UserInfo" }
           emit(null)

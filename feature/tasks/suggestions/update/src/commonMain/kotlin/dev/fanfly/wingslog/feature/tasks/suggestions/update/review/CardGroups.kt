@@ -16,5 +16,9 @@ fun groupsOf(items: List<SuggestionItem>): List<CardGroup> {
   return items.map { it.suggestion.component_slot_key }
     .distinct()
     .sortedBy { it.isNotEmpty() }
-    .map { key -> CardGroup(key, items.filter { it.suggestion.component_slot_key == key }) }
+    .map { key ->
+      CardGroup(
+        key,
+        items.filter { it.suggestion.component_slot_key == key })
+    }
 }

@@ -79,7 +79,8 @@ class SuggestionsViewModel(
   private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
-  val thingId: ThingId = ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
+  val thingId: ThingId =
+    ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
 
   private val mode =
     SuggestionsMode.fromWire(savedStateHandle.get<String>(Screen.SUGGESTIONS_MODE))
@@ -514,7 +515,8 @@ class SuggestionsViewModel(
 
   /** The card on screen known by [id]; null when it is gone, or [id] is empty. */
   private fun itemOf(id: String): SuggestionItem? =
-    id.takeIf { it.isNotEmpty() }?.let { uiState.value.items.firstOrNull { item -> item.id == it } }
+    id.takeIf { it.isNotEmpty() }
+      ?.let { uiState.value.items.firstOrNull { item -> item.id == it } }
 
   fun onAccept() {
     val state = uiState.value
@@ -558,7 +560,12 @@ class SuggestionsViewModel(
    * while the model still works takes the cards on screen and ends the run.
    */
   private suspend fun writeRun(chosen: List<SuggestionItem>): List<WrittenSuggestion> {
-    val written = session.accept(chosen.map { AcceptedSuggestion(it.suggestion, it.edited) })
+    val written = session.accept(chosen.map {
+      AcceptedSuggestion(
+        it.suggestion,
+        it.edited
+      )
+    })
     if (written.isNotEmpty()) {
       // What was written, not what was chosen: a card whose write failed is not counted.
       val accepted = written.map { it.accepted }
