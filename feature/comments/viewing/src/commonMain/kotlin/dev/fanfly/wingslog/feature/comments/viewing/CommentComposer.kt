@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.comments.viewing
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +16,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import dev.fanfly.wingslog.core.ui.form.FormKeyboard
 import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -41,6 +48,7 @@ fun CommentComposer(
   onDraftChange: (String) -> Unit,
   onPost: () -> Unit,
   modifier: Modifier = Modifier,
+  onFocus: () -> Unit = {},
 ) {
   if (isAnonymous) {
     Text(
@@ -51,6 +59,8 @@ fun CommentComposer(
     )
     return
   }
+  val keyboard = LocalSoftwareKeyboardController.current
+  val focusManager = LocalFocusManager.current
   Row(
     modifier = modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -63,11 +73,25 @@ fun CommentComposer(
       singleLine = false,
       maxLines = 4,
       onValueChange = onDraftChange,
-      modifier = Modifier.weight(1f),
+      modifier = Modifier
+        .weight(1f)
+        .pointerInput(Unit) {
+          awaitEachGesture {
+            awaitFirstDown(pass = PointerEventPass.Initial)
+            onFocus()
+          }
+        }
+        .onFocusChanged { if (it.isFocused || it.hasFocus) onFocus() },
       keyboardOptions = FormKeyboard.Sentences,
     )
     FilledIconButton(
-      onClick = onPost,
+      onClick = {
+        // Sending ends the typing: drop the keyboard so the thread, and the comment just
+        // posted, get the screen back.
+        keyboard?.hide()
+        focusManager.clearFocus()
+        onPost()
+      },
       enabled = state.canPost,
       modifier = Modifier.size(Spacing.buttonHeight),
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),

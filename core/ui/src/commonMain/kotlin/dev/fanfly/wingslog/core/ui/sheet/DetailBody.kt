@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.sheet
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,67 +47,70 @@ internal fun DetailBody(
   bottomBar: (@Composable () -> Unit)?,
   headerSlot: @Composable ColumnScope.() -> Unit,
   content: @Composable ColumnScope.() -> Unit,
+  scrollState: ScrollState = rememberScrollState(),
   // The drawer is full height, so its bar belongs at the bottom edge. A bottom sheet hugs its
   // content instead: a short record keeps a short sheet, with the bar right under it.
   fillHeight: Boolean = false,
   /** A pane has no scrim to tap and no handle to drag, so it carries its own close control. */
   onClose: (() -> Unit)? = null,
 ) {
-  TextSelectionLayer {
-    Column(
-      modifier = Modifier.fillMaxWidth()
-        .then(if (fillHeight) Modifier.fillMaxHeight() else Modifier),
-    ) {
+  CompositionLocalProvider(LocalDetailSheetScrollState provides scrollState) {
+    TextSelectionLayer {
       Column(
-        modifier = Modifier
-          .fillMaxWidth()
-          .weight(1f, fill = fillHeight)
-          .padding(horizontal = Spacing.extraLarge)
-          .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(Spacing.small),
+        modifier = Modifier.fillMaxWidth()
+          .then(if (fillHeight) Modifier.fillMaxHeight() else Modifier),
       ) {
-        if (onClose != null) {
-          IconButton(
-            onClick = onClose,
-            modifier = Modifier.align(Alignment.End)
-              .padding(top = Spacing.small),
-          ) {
-            Icon(
-              Icons.Default.Close,
-              contentDescription = stringResource(Res.string.dismiss)
-            )
-          }
-        } else {
-          Spacer(Modifier.height(Spacing.large))
-        }
-
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          verticalAlignment = Alignment.Top,
-        ) {
-          Column(modifier = Modifier.weight(1f)) { headerSlot() }
-          headerAction?.invoke()
-        }
-
-        // Body Content
-        content()
-
-        // Footer Spacer
-        Spacer(Modifier.height(if (bottomBar == null) Spacing.huge else Spacing.large))
-      }
-
-      if (bottomBar != null) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Box(
+        Column(
           modifier = Modifier
             .fillMaxWidth()
-            .imePadding()
-            .padding(
-              horizontal = Spacing.extraLarge,
-              vertical = Spacing.medium
-            ),
+            .weight(1f, fill = fillHeight)
+            .padding(horizontal = Spacing.extraLarge)
+            .verticalScroll(scrollState),
+          verticalArrangement = Arrangement.spacedBy(Spacing.small),
         ) {
-          bottomBar()
+          if (onClose != null) {
+            IconButton(
+              onClick = onClose,
+              modifier = Modifier.align(Alignment.End)
+                .padding(top = Spacing.small),
+            ) {
+              Icon(
+                Icons.Default.Close,
+                contentDescription = stringResource(Res.string.dismiss)
+              )
+            }
+          } else {
+            Spacer(Modifier.height(Spacing.large))
+          }
+
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+          ) {
+            Column(modifier = Modifier.weight(1f)) { headerSlot() }
+            headerAction?.invoke()
+          }
+
+          // Body Content
+          content()
+
+          // Footer Spacer
+          Spacer(Modifier.height(if (bottomBar == null) Spacing.huge else Spacing.large))
+        }
+
+        if (bottomBar != null) {
+          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+          Box(
+            modifier = Modifier
+              .fillMaxWidth()
+              .imePadding()
+              .padding(
+                horizontal = Spacing.extraLarge,
+                vertical = Spacing.medium
+              ),
+          ) {
+            bottomBar()
+          }
         }
       }
     }

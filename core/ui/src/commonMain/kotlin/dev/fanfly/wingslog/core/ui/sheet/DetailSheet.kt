@@ -1,14 +1,20 @@
 package dev.fanfly.wingslog.core.ui.sheet
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.layout.LayoutTier
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
+
+/** The [ScrollState] of the active [DetailSheet], if any. */
+val LocalDetailSheetScrollState = compositionLocalOf<ScrollState?> { null }
 
 /**
  * A standardized template for displaying record details, adaptive by [dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier]:
@@ -34,6 +40,7 @@ fun DetailSheet(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+  scrollState: ScrollState = rememberScrollState(),
   /** A [DetailSheetEditAction], typically — small enough to share the title row. */
   headerAction: (@Composable () -> Unit)? = null,
   /** Pinned under the scrolling body — for an input that must stay reachable, such as comments. */
@@ -48,6 +55,7 @@ fun DetailSheet(
       bottomBar = bottomBar,
       headerSlot = headerSlot,
       content = content,
+      scrollState = scrollState,
       onClose = onDismiss,
     )
     return
@@ -62,7 +70,8 @@ fun DetailSheet(
         headerAction = headerAction,
         bottomBar = bottomBar,
         headerSlot = headerSlot,
-        content = content
+        content = content,
+        scrollState = scrollState,
       )
     }
   } else {
@@ -72,7 +81,8 @@ fun DetailSheet(
         headerAction = headerAction,
         bottomBar = bottomBar,
         headerSlot = headerSlot,
-        content = content
+        content = content,
+        scrollState = scrollState,
       )
     }
   }
