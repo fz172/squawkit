@@ -1,9 +1,11 @@
 package dev.fanfly.wingslog.core.ui.adaptive.shell
 
+import dev.fanfly.wingslog.id.ThingId
+
 /** Plain UI state for [AdaptiveAppShell]; produced by a host-side ViewModel. */
 data class AdaptiveShellUiState(
   val things: List<ShellThing> = emptyList(),
-  val selectedThingId: String? = null,
+  val selectedThingId: ThingId? = null,
   val section: ShellSection = ShellSection.DASHBOARD,
   /** Current user's display name + photo, for the sidebar account/settings entry. */
   val accountName: String? = null,

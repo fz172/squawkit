@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingNavItem
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingPillNavBarHeight
 import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingPillNavigationBar
+import dev.fanfly.wingslog.id.ThingId
 
 /** COMPACT: section content under a floating pill bottom nav, with the switcher in the top bar. */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -24,7 +25,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.shell.navpill.FloatingPillNavigation
 internal fun ScaffoldShell(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectThing: (String) -> Unit,
+  onSelectThing: (ThingId) -> Unit,
   onOpenSettings: () -> Unit,
   onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)?,

@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveShellUiState
+import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
@@ -20,7 +21,7 @@ import wingslog.core.sharedassets.generated.resources.Res as UiRes
 @Composable
 internal fun TopBarSwitcher(
   state: AdaptiveShellUiState,
-  onSelectThing: (String) -> Unit,
+  onSelectThing: (ThingId) -> Unit,
   onAddThing: (() -> Unit)?,
   onEnterInviteCode: (() -> Unit)?,
 ) {

@@ -69,14 +69,14 @@ class AdaptiveShellViewModel(
    * on the same thing. Kept in sync with [SelectedThingStore] as the selection changes; falls
    * back to the first thing when the remembered one no longer exists.
    */
-  private var rememberedThingId: String? = selectedThingStore.load()
+  private var rememberedThingId: ThingId? = selectedThingStore.load()
 
   /**
    * A Thing just created, to be selected as soon as the fleet carries it. Held aside rather than
    * selected outright: the create form's write and the fleet flow's next emission race, and a
    * selection the collector cannot find in the fleet is what it treats as a deleted Thing.
    */
-  private var pendingNewThingId: String? = null
+  private var pendingNewThingId: ThingId? = null
 
   /**
    * Work the sync engine had to throw away (PRD D3). Surfaced from the shell because it outlives
@@ -101,14 +101,14 @@ class AdaptiveShellViewModel(
           // Outside `update`: it may re-run its lambda under contention, and clearing the pending
           // id is a side effect that must happen exactly once.
           val arrived =
-            pendingNewThingId?.takeIf { id -> fleet.any { it.thing.id == id } }
+            pendingNewThingId?.takeIf { id -> fleet.any { it.thing.id == id.value } }
           if (arrived != null) pendingNewThingId = null
           _uiState.update { state ->
             val mapped = fleet.map { entry ->
               val ac = entry.thing
               val resolution = templateRegistry.resolve(ac)
               ShellThing(
-                id = ac.id,
+                id = ThingId(ac.id),
                 label = ac.displayLabel(resolution.template),
                 subtitle = ac.displaySubtitle(resolution.template),
                 // resolve(), not ac.template: a Thing created before templates existed carries
@@ -257,7 +257,7 @@ class AdaptiveShellViewModel(
    * A Thing the create form just wrote. Selected now if the fleet already carries it, otherwise
    * the moment it does — see [pendingNewThingId].
    */
-  fun selectNewThing(id: String) {
+  fun selectNewThing(id: ThingId) {
     if (uiState.value.things.any { it.id == id }) {
       selectThing(id)
     } else {
@@ -266,8 +266,7 @@ class AdaptiveShellViewModel(
   }
 
   /** Switcher selection (above phone): swaps the ambient thing in place and remembers it. */
-  fun selectThing(id: ThingId) = selectThing(id.value)
-  fun selectThing(id: String) {
+  fun selectThing(id: ThingId) {
     _uiState.update { it.copy(selectedThingId = id) }
     publishLexicon()
     rememberedThingId = id

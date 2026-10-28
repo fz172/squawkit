@@ -26,6 +26,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.shell.switcher.SelectedThingBlock
 import dev.fanfly.wingslog.core.ui.avatar.AvatarIcon
 import dev.fanfly.wingslog.core.ui.brand.BrandStack
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
+import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
@@ -38,7 +39,7 @@ import wingslog.core.sharedassets.generated.resources.Res as UiRes
 internal fun WingsSidebar(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectThing: (String) -> Unit,
+  onSelectThing: (ThingId) -> Unit,
   onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)? = null,
   onOpenAccount: () -> Unit,

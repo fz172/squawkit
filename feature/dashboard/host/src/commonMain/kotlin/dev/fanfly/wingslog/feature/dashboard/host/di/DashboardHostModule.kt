@@ -16,14 +16,15 @@ val dashboardHostModule = module {
   // thingId comes from an explicit parameter (adaptive shell, ambient selection) when present,
   // otherwise from the navigation SavedStateHandle (legacy maintenance_overview/{thingId} route).
   viewModel { params ->
-    val thingId = params.getOrNull<String>()
-      ?: checkNotNull(get<SavedStateHandle>().get<String>(Screen.THING_ID))
+    val thingId = params.getOrNull<ThingId>()
+      ?: params.getOrNull<String>()?.let(::ThingId)
+      ?: checkNotNull(get<SavedStateHandle>().get<String>(Screen.THING_ID)).let(::ThingId)
     ThingOverviewViewModel(
       get<FleetManager>(),
       get<SharingManager>(),
       get<TemplateRegistry>(),
       get<FirebaseAuth>(),
-      ThingId(thingId),
+      thingId,
     )
   }
 }

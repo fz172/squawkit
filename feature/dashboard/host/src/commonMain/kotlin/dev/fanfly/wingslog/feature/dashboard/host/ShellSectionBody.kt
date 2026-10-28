@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
+import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.empty_add_thing
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -27,7 +28,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 @Composable
 fun ShellSectionBody(
   section: ShellSection,
-  thingId: String?,
+  thingId: ThingId?,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit,
   /** Switch to an associated record's section and scroll to it. The host owns the target: each

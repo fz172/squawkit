@@ -125,7 +125,7 @@ fun AdaptiveShellRoute(
   LaunchedEffect(selectThingId) {
     val id = selectThingId ?: return@LaunchedEffect
     shellEntry.savedStateHandle[CROSS_SCREEN_SELECT_THING_ID] = null
-    viewModel.selectNewThing(id)
+    viewModel.selectNewThing(ThingId(id))
   }
 
   // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until
@@ -225,7 +225,7 @@ fun AdaptiveShellRoute(
     sectionFab = { section, thingId ->
       ShellSectionFab(
         section = section,
-        thingId = thingId?.let(::ThingId),
+        thingId = thingId,
         navController = navController,
         renderable = state.things.find { it.id == thingId }?.renderable != false,
         onLinkAccount = linkAccount,

@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.fleet.picker.data
 
+import dev.fanfly.wingslog.id.ThingId
+
 /**
  * Device-local memory of the thing the user last had selected in the fleet picker, so the app
  * reopens on the same thing after a restart. Deliberately not synced — it is a per-device UI
@@ -7,8 +9,8 @@ package dev.fanfly.wingslog.feature.fleet.picker.data
  */
 interface SelectedThingStore {
   /** The last-selected thing id, or null if none has been remembered on this device. */
-  fun load(): String?
+  fun load(): ThingId?
 
   /** Remember [thingId] as the current selection; null clears it. */
-  fun save(thingId: String?)
+  fun save(thingId: ThingId?)
 }

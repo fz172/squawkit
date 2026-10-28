@@ -29,6 +29,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
 import wingslog.core.sharedassets.generated.resources.switcher_switch
@@ -42,7 +43,7 @@ import wingslog.core.sharedassets.generated.resources.Res as UiRes
 @Composable
 internal fun SelectedThingBlock(
   state: AdaptiveShellUiState,
-  onSelectThing: (String) -> Unit,
+  onSelectThing: (ThingId) -> Unit,
   onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)?,
   modifier: Modifier = Modifier,

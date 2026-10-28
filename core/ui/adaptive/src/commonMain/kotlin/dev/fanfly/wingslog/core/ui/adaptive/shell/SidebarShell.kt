@@ -7,13 +7,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.id.ThingId
 
 /** MEDIUM / EXPANDED / LARGE: the [WingsSidebar] beside the section content. */
 @Composable
 internal fun SidebarShell(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectThing: (String) -> Unit,
+  onSelectThing: (ThingId) -> Unit,
   onOpenSettings: () -> Unit,
   onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)?,

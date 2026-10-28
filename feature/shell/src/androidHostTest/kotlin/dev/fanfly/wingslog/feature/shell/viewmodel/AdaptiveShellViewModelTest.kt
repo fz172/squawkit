@@ -257,9 +257,9 @@ class AdaptiveShellViewModelTest {
   // In-memory device-local selection store; starts empty so tests behave like a fresh install
   // unless they seed [selectedThingStore.saved].
   private val selectedThingStore = object : SelectedThingStore {
-    var saved: String? = null
-    override fun load(): String? = saved
-    override fun save(thingId: String?) {
+    var saved: ThingId? = null
+    override fun load(): ThingId? = saved
+    override fun save(thingId: ThingId?) {
       saved = thingId
     }
   }
@@ -290,14 +290,14 @@ class AdaptiveShellViewModelTest {
     // the first one; holding it until it arrives is what makes the switcher land on it.
     fleet.value = listOf(thing("a1", "N1"))
     val vm = viewModel()
-    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a1")
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a1"))
 
-    vm.selectNewThing("a2")
-    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a1")
+    vm.selectNewThing(ThingId("a2"))
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a1"))
 
     fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
-    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
-    assertThat(selectedThingStore.saved).isEqualTo("a2")
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a2"))
+    assertThat(selectedThingStore.saved).isEqualTo(ThingId("a2"))
     assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(
       "aircraft"
     )
@@ -308,9 +308,9 @@ class AdaptiveShellViewModelTest {
     fleet.value = listOf(thing("a1", "N1"), home("h1"))
     val vm = viewModel()
 
-    vm.selectNewThing("h1")
+    vm.selectNewThing(ThingId("h1"))
 
-    assertThat(vm.uiState.value.selectedThingId).isEqualTo("h1")
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("h1"))
     assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(
       "home"
     )
@@ -327,7 +327,7 @@ class AdaptiveShellViewModelTest {
     assertThat(s.things.map { it.label }).containsExactly("N1", "N2")
       .inOrder()
     assertThat(s.things.first().subtitle).isEqualTo("Cessna 172")
-    assertThat(s.selectedThingId).isEqualTo("a1")
+    assertThat(s.selectedThingId).isEqualTo(ThingId("a1"))
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
   }
 
@@ -359,15 +359,15 @@ class AdaptiveShellViewModelTest {
     runTest(testDispatcher) {
       fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
       val vm = viewModel()
-      vm.selectThing("a2")
+      vm.selectThing(ThingId("a2"))
 
       // Re-emit with the same thing; the explicit selection must survive.
       fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
-      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a2"))
 
       // Remove the selected one; selection falls back to the first remaining.
       fleet.value = listOf(thing("a1", "N1"))
-      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a1")
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a1"))
     }
 
   @Test
@@ -381,30 +381,30 @@ class AdaptiveShellViewModelTest {
       fleet.value = listOf(thing("a1", "N1"))
 
       val s = vm.uiState.value
-      assertThat(s.selectedThingId).isEqualTo("a1")
+      assertThat(s.selectedThingId).isEqualTo(ThingId("a1"))
       assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
     }
 
   @Test
   fun restoresRememberedThingFromStore() = runTest(testDispatcher) {
     // Simulate a previous session that left "a2" selected on this device.
-    selectedThingStore.saved = "a2"
+    selectedThingStore.saved = ThingId("a2")
     fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
 
-    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a2"))
   }
 
   @Test
   fun fallsBackToFirstWhenRememberedThingIsGone() = runTest(testDispatcher) {
     // The remembered thing was deleted since last session.
-    selectedThingStore.saved = "deleted"
+    selectedThingStore.saved = ThingId("deleted")
     fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
 
-    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a1")
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a1"))
     // The effective selection is written back so the stale id doesn't linger.
-    assertThat(selectedThingStore.saved).isEqualTo("a1")
+    assertThat(selectedThingStore.saved).isEqualTo(ThingId("a1"))
   }
 
   @Test
@@ -412,9 +412,9 @@ class AdaptiveShellViewModelTest {
     fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
 
-    vm.selectThing("a2")
+    vm.selectThing(ThingId("a2"))
 
-    assertThat(selectedThingStore.saved).isEqualTo("a2")
+    assertThat(selectedThingStore.saved).isEqualTo(ThingId("a2"))
   }
 
   @Test
@@ -485,7 +485,7 @@ class AdaptiveShellViewModelTest {
 
       vm.onNotificationTap(NotificationTapTarget.Suggestions(thingId = ThingId("a2")))
 
-      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a2"))
       assertThat(vm.uiState.value.section).isEqualTo(ShellSection.TASKS)
       assertThat(vm.pendingScrollTargetId.value).isNull()
     }
@@ -503,7 +503,7 @@ class AdaptiveShellViewModelTest {
         )
       )
 
-      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a2"))
       assertThat(vm.uiState.value.section).isEqualTo(ShellSection.SQUAWKS)
       assertThat(vm.pendingScrollTargetId.value).isEqualTo("sq-1")
     }
@@ -521,7 +521,7 @@ class AdaptiveShellViewModelTest {
         )
       )
 
-      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo(ThingId("a2"))
       assertThat(vm.uiState.value.section).isEqualTo(ShellSection.DATA_LOGS)
       // The scroll target is the plain id: the list keys its rows by the same string.
       assertThat(vm.pendingScrollTargetId.value).isEqualTo("dl-1")
@@ -689,7 +689,7 @@ class AdaptiveShellViewModelTest {
 
     val s = viewModel().uiState.value
 
-    assertThat(s.things.map { it.id }).containsExactly("a1", "a2")
+    assertThat(s.things.map { it.id }).containsExactly(ThingId("a1"), ThingId("a2"))
       .inOrder()
     assertThat(s.things.map { it.renderable }).containsExactly(true, false)
       .inOrder()
