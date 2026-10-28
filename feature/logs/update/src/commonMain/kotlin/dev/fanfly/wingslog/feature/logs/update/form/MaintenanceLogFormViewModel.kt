@@ -178,7 +178,7 @@ class MaintenanceLogFormViewModel(
     // the subscription capability ships.)
     combine(
       subscriptionManager.canUploadAttachments(),
-      sharingManager.observeIsForeignHosted(thingId.value),
+      sharingManager.observeIsForeignHosted(thingId),
     ) { canUpload, foreignHosted -> foreignHosted || canUpload }
       .onEach { enabled ->
         _uiState.update { it.copy(attachmentUploadEnabled = enabled) }
@@ -192,7 +192,7 @@ class MaintenanceLogFormViewModel(
       technicianManager.observeSelfId(),
       // Members of THIS thing's share who published a mirror. Scoped to the thing because a
       // log is signed for one thing — only its members are selectable (§7.3).
-      sharingManager.observeLinkedTechnicians(thingId.value),
+      sharingManager.observeLinkedTechnicians(thingId),
     ) { technicians, selfId, linked ->
       // Stamp the self-record with its owning uid so picking it snapshots provenance into the log
       // (§7.3). Manual entries carry no source_uid — they were typed by hand, not linked to an

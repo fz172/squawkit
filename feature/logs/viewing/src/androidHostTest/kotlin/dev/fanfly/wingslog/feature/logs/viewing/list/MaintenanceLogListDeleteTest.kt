@@ -75,10 +75,10 @@ class MaintenanceLogListDeleteTest {
     every { logManager.observeLogs(THING) } returns flowOf(listOf(oil))
     every { logManager.observeLogAuthors(THING) } returns flowOf(emptyMap())
     every { tasks.observeTasks(THING) } returns flowOf(emptyList())
-    every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(
+    every { sharing.observeLinkedTechnicians(THING) } returns flowOf(
       emptyList()
     )
-    every { sharing.observeIsShared(THING_ID) } returns flowOf(false)
+    every { sharing.observeIsShared(THING) } returns flowOf(false)
     every { technicians.observeSelf() } returns flowOf(null)
     every { squawks.observeSquawks(THING) } returns flowOf(emptyList())
     every { auth.currentUser } returns null

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -21,6 +22,7 @@ import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.Certification
@@ -71,14 +73,14 @@ class SharingManagerImpl(
     storeFactory.create<Thing>(CollectionKind.Thing)
 
   /**
-   * The ACL for [acId] under [hostUid]. Keyed by host since #204: a thing id is unique only
+   * The ACL for [thingId] under [hostUid]. Keyed by host since #204: a thing id is unique only
    * within a tree, so a globally-keyed ACL could be claimed by anyone who knew the id.
    */
-  private fun shareDoc(hostUid: String, acId: String) =
+  private fun shareDoc(hostUid: String, thingId: ThingId) =
     firestore.collection(SHARES)
       .document(hostUid)
       .collection(SHARE_THING)
-      .document(acId)
+      .document(thingId.value)
 
   /**
    * Whose tree this thing lives in — ours if we own it, otherwise the host named on our ref.
@@ -87,12 +89,12 @@ class SharingManagerImpl(
    * Null when neither is present: we are not the owner and hold no ref, so we have no business
    * building a path into anyone's share.
    */
-  private fun observeHostUid(acId: String): Flow<String?> {
+  private fun observeHostUid(thingId: ThingId): Flow<String?> {
     val uid = auth.currentUser?.uid ?: return flowOf(null)
     val scope = EntityScope.userRoot(uid)
     return combine(
-      thingStore.observe(acId, scope),
-      refStore.observe(acId, scope),
+      thingStore.observe(thingId.value, scope),
+      refStore.observe(thingId.value, scope),
     ) { own, ref ->
       when {
         own != null -> uid
@@ -103,9 +105,9 @@ class SharingManagerImpl(
   }
 
   /** One-shot [observeHostUid], for the suspend paths (invite create/cancel, callables). */
-  private suspend fun hostUidFor(acId: String): String =
-    observeHostUid(acId).first()
-      ?: error("Not a member of thing $acId; cannot resolve its share")
+  private suspend fun hostUidFor(thingId: ThingId): String =
+    observeHostUid(thingId).first()
+      ?: error("Not a member of thing ${thingId.value}; cannot resolve its share")
 
   /**
    * Bumped after a successful [createInvite] to force the roster listener in [observeShareState]
@@ -116,30 +118,30 @@ class SharingManagerImpl(
    */
   private val rosterRetryTrigger = MutableStateFlow(0)
 
-  override fun observeShareState(acId: String): Flow<ThingShareState> =
-    combine(observeHostUid(acId), rosterRetryTrigger) { hostUid, _ -> hostUid }
+  override fun observeShareState(thingId: ThingId): Flow<ThingShareState> =
+    combine(observeHostUid(thingId), rosterRetryTrigger) { hostUid, _ -> hostUid }
       .flatMapLatest { hostUid ->
         if (hostUid == null) flowOf(ThingShareState()) else shareStateIn(
           hostUid,
-          acId
+          thingId
         )
       }
 
   private fun shareStateIn(
     hostUid: String,
-    acId: String
+    thingId: ThingId
   ): Flow<ThingShareState> {
     val myUid = auth.currentUser?.uid
-    val root = shareDoc(hostUid, acId).snapshots.map {
+    val root = shareDoc(hostUid, thingId).snapshots.map {
       it.takeIf { s -> s.exists }
         ?.data<RootWire>()
     }
-    val members = shareDoc(hostUid, acId).collection(MEMBERS).snapshots
+    val members = shareDoc(hostUid, thingId).collection(MEMBERS).snapshots
     // Invites are owner-only in the rules, so a technician's listener is denied. Degrade to "no
     // pending invites" rather than letting that failure take down the combine — the roster IS
     // readable by any member, and it's what backs their read-only view and the Leave action.
     val invites: Flow<List<PendingInvite>> =
-      shareDoc(hostUid, acId).collection(INVITES).snapshots
+      shareDoc(hostUid, thingId).collection(INVITES).snapshots
         .map { inviteSnaps ->
           // No `revoked` / `useCount` to filter on any more: cancelling and redeeming both DELETE the
           // code, so a doc that still exists is a live invite (#164). Expired ones are filtered by
@@ -250,11 +252,11 @@ class SharingManagerImpl(
   private fun isPermissionDenied(e: Throwable): Boolean =
     e is FirebaseFirestoreException && e.code == FirestoreExceptionCode.PERMISSION_DENIED
 
-  override fun observeIsShared(acId: String): Flow<Boolean> {
+  override fun observeIsShared(thingId: ThingId): Flow<Boolean> {
     val uid = auth.currentUser?.uid ?: return flowOf(false)
-    val sharedIntoMyFleet = refStore.observe(acId, EntityScope.userRoot(uid))
+    val sharedIntoMyFleet = refStore.observe(thingId.value, EntityScope.userRoot(uid))
       .map { it != null }
-    val hasPartners = observeShareState(acId)
+    val hasPartners = observeShareState(thingId)
       .map { it.members.size > 1 }
       // The roster is an online-only listener. Seed it so a combine of this flow produces a value
       // immediately instead of hanging until Firestore answers — offline it never would, and the
@@ -266,13 +268,13 @@ class SharingManagerImpl(
     }.distinctUntilChanged()
   }
 
-  override fun observeMyRole(acId: String): Flow<ShareRole?> {
+  override fun observeMyRole(thingId: ThingId): Flow<ShareRole?> {
     val uid = auth.currentUser?.uid ?: return flowOf(null)
     val scope = EntityScope.userRoot(uid)
     // Own thing ⇒ owner; otherwise the ref's advisory role; otherwise not a member.
     return combine(
-      thingStore.observe(acId, scope),
-      refStore.observe(acId, scope),
+      thingStore.observe(thingId.value, scope),
+      refStore.observe(thingId.value, scope),
     ) { own, ref ->
       when {
         own != null -> ShareRole.OWNER
@@ -282,24 +284,24 @@ class SharingManagerImpl(
     }
   }
 
-  override fun observeIsForeignHosted(acId: String): Flow<Boolean> {
+  override fun observeIsForeignHosted(thingId: ThingId): Flow<Boolean> {
     val uid = auth.currentUser?.uid ?: return flowOf(false)
     // A ref exists iff the thing was shared *into* this fleet — exactly the foreign-hosted case,
     // and the co-owner-on-a-foreign-tree case too, since a co-owner also holds a ref.
-    return refStore.observe(acId, EntityScope.userRoot(uid))
+    return refStore.observe(thingId.value, EntityScope.userRoot(uid))
       .map { it != null }
       .distinctUntilChanged()
   }
 
   override suspend fun createInvite(
-    acId: String,
+    thingId: ThingId,
     role: ShareRole,
     thingLabel: String,
   ): Result<InviteLink> = runCatching {
     val res = functions.httpsCallable("createThingShareInvite")
       .invoke(
         CreateInviteRequest(
-          thingId = acId,
+          thingId = thingId.value,
           role = role.wire(),
           thingLabel = thingLabel,
         ),
@@ -329,11 +331,11 @@ class SharingManagerImpl(
   }
 
   override suspend fun cancelInvite(
-    acId: String,
+    thingId: ThingId,
     codeId: String
   ): Result<Unit> = runCatching {
     functions.httpsCallable("cancelThingShareInvite")
-      .invoke(CancelInviteRequest(thingId = acId, codeId = codeId))
+      .invoke(CancelInviteRequest(thingId = thingId.value, codeId = codeId))
     val uid = requireUid()
     writeLock.withLock {
       db.schemaQueries.deleteConfig(
@@ -349,7 +351,7 @@ class SharingManagerImpl(
         .invoke(RedeemRequest(code = code))
         .data<RedeemResponse>()
       RedeemOutcome(
-        thingId = res.thingId,
+        thingId = ThingId(res.thingId),
         hostUid = res.hostUid,
         role = res.role.toModel(),
         alreadyMember = res.alreadyMember,
@@ -368,36 +370,36 @@ class SharingManagerImpl(
       )
     }
 
-  override suspend fun revokeMember(acId: String, uid: String): Result<Unit> =
+  override suspend fun revokeMember(thingId: ThingId, uid: String): Result<Unit> =
     runCatching {
       functions.httpsCallable("revokeThingShare")
         .invoke(
           RevokeRequest(
-            hostUid = hostUidFor(acId),
-            thingId = acId,
+            hostUid = hostUidFor(thingId),
+            thingId = thingId.value,
             memberUid = uid,
           ),
         )
     }
 
   override suspend fun updateRole(
-    acId: String,
+    thingId: ThingId,
     uid: String,
     role: ShareRole
   ): Result<Unit> = runCatching {
     functions.httpsCallable("updateThingShareRole")
       .invoke(
         UpdateRoleRequest(
-          hostUid = hostUidFor(acId),
-          thingId = acId,
+          hostUid = hostUidFor(thingId),
+          thingId = thingId.value,
           memberUid = uid,
           role = role.wire()
         )
       )
   }
 
-  override suspend fun leave(acId: String): Result<Unit> =
-    revokeMember(acId, requireUid())
+  override suspend fun leave(thingId: ThingId): Result<Unit> =
+    revokeMember(thingId, requireUid())
 
   /**
    * Publishes the caller's display fields + self-technician mirror into their member doc on every
@@ -409,7 +411,7 @@ class SharingManagerImpl(
    * still carrying a name from before this existed. Best-effort by design: freshness is eventual,
    * and log snapshots capture whatever is current at signing time.
    */
-  override suspend fun publishTechnicianMirror(alsoPublishTo: String?): Result<Unit> =
+  override suspend fun publishTechnicianMirror(alsoPublishTo: ThingId?): Result<Unit> =
     runCatching {
       val user = auth.currentUser ?: return@runCatching
       if (user.isAnonymous) return@runCatching
@@ -431,8 +433,8 @@ class SharingManagerImpl(
 
       // Each target on its own: the rules deny the ACL read for an own thing that was never shared
       // (no doc to find our uid in), and one such denial must not skip the shares after it.
-      targets.forEach { acId ->
-        runCatching { publishMirrorTo(uid, acId, update) }
+      targets.forEach { thingId ->
+        runCatching { publishMirrorTo(uid, thingId, update) }
           .onFailure {
             logger.d(it) { "Mirror publish skipped for one thing; retries on next app start" }
           }
@@ -441,23 +443,23 @@ class SharingManagerImpl(
 
   private suspend fun publishMirrorTo(
     uid: String,
-    acId: String,
+    thingId: ThingId,
     update: MemberSelfUpdateWire,
   ) {
     // Each target sits in its host's namespace (#204): our own thing under us, a shared one
     // under whoever hosts it. A target we can place in neither is not ours to publish into.
-    val hostUid = observeHostUid(acId).first() ?: return
+    val hostUid = observeHostUid(thingId).first() ?: return
 
     // The ACL decides whether we're a member at all, and with what role. An own thing that was
     // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
-    val myRole = shareDoc(hostUid, acId).get()
+    val myRole = shareDoc(hostUid, thingId).get()
       .takeIf { it.exists }
       ?.data<RootWire>()
       ?.memberRoles
       ?.get(uid)
       ?: return
 
-    val memberDoc = shareDoc(hostUid, acId).collection(MEMBERS)
+    val memberDoc = shareDoc(hostUid, thingId).collection(MEMBERS)
       .document(uid)
     if (memberDoc.get().exists) {
       memberDoc.set(update, merge = true)
@@ -492,13 +494,13 @@ class SharingManagerImpl(
     return combine(
       refStore.observeAll(scope),
       thingStore.observeAll(scope),
-    ) { refs, own -> (refs.map { it.id } + own.map { it.id }).distinct() }
+    ) { refs, own -> (refs.map { ThingId(it.id) } + own.map { ThingId(it.id) }).distinct() }
       .distinctUntilChanged()
-      .flatMapLatest { acIds ->
-        if (acIds.isEmpty()) return@flatMapLatest flowOf(emptyList())
-        combine(acIds.map { acId ->
+      .flatMapLatest { thingIds ->
+        if (thingIds.isEmpty()) return@flatMapLatest flowOf(emptyList())
+        combine(thingIds.map { thingId ->
           linkedTechniciansIn(
-            acId,
+            thingId,
             uid
           )
         }) { perShare ->
@@ -508,10 +510,10 @@ class SharingManagerImpl(
       }
   }
 
-  override fun observeLinkedTechnicians(acId: String): Flow<List<Technician>> {
+  override fun observeLinkedTechnicians(thingId: ThingId): Flow<List<Technician>> {
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
     return linkedTechniciansIn(
-      acId,
+      thingId,
       uid
     ).map { members ->
       members.map { it.technician }
@@ -536,23 +538,23 @@ class SharingManagerImpl(
    * rather than taking the caller's whole list down.
    */
   private fun linkedTechniciansIn(
-    acId: String,
+    thingId: ThingId,
     selfUid: String
   ): Flow<List<LinkedMember>> =
-    observeHostUid(acId).flatMapLatest { hostUid ->
+    observeHostUid(thingId).flatMapLatest { hostUid ->
       if (hostUid == null) flowOf(emptyList()) else membersOf(
         hostUid,
-        acId,
+        thingId,
         selfUid
       )
     }
 
   private fun membersOf(
     hostUid: String,
-    acId: String,
+    thingId: ThingId,
     selfUid: String,
   ): Flow<List<LinkedMember>> =
-    shareDoc(hostUid, acId).collection(MEMBERS).snapshots
+    shareDoc(hostUid, thingId).collection(MEMBERS).snapshots
       .map { snaps ->
         snaps.documents.mapNotNull { doc ->
           if (doc.id == selfUid) return@mapNotNull null
@@ -574,14 +576,14 @@ class SharingManagerImpl(
    * §7.2) plus their own thing, which are the shares they host. Own thing that were never
    * shared simply have no member doc, and are skipped by the existence check at the call site.
    */
-  private suspend fun memberships(uid: String): List<String> {
+  private suspend fun memberships(uid: String): List<ThingId> {
     val scope = EntityScope.userRoot(uid)
     val shared = refStore.observeAll(scope)
       .first()
-      .map { it.id }
+      .map { ThingId(it.id) }
     val own = thingStore.observeAll(scope)
       .first()
-      .map { it.id }
+      .map { ThingId(it.id) }
     return (shared + own).distinct()
   }
 
@@ -606,7 +608,7 @@ class SharingManagerImpl(
     private val logger = Logger.withTag("SharingManager")
 
     // MIGRATION (Phase G3, docs/product/thing_migration_design.md §5.4): the ACL tree moved from
-    // aircraft_shares/{hostUid}/thing/{acId} to thing_shares/{hostUid}/thing/{acId}.
+    // aircraft_shares/{hostUid}/thing/{thingId} to thing_shares/{hostUid}/thing/{thingId}.
     //
     // The constant NAMES keep saying "aircraft" deliberately — only their values move. §3.3 draws
     // the line there: rename what is stored identity, leave alone what is only a name in code.

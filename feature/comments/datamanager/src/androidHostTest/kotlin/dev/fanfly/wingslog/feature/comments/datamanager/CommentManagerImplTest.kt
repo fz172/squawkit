@@ -72,7 +72,7 @@ class CommentManagerImplTest {
     every { auth.currentUser } returns null
 
     sharingManager = mockk(relaxed = true)
-    every { sharingManager.observeShareState(THING_ID) } returns flowOf(
+    every { sharingManager.observeShareState(THING) } returns flowOf(
       ThingShareState()
     )
 
@@ -168,7 +168,7 @@ class CommentManagerImplTest {
           row(comment("stranger", authorUid = "left-the-share")),
         )
       )
-      every { sharingManager.observeShareState(THING_ID) } returns flowOf(
+      every { sharingManager.observeShareState(THING) } returns flowOf(
         ThingShareState(
           members = listOf(
             ShareMember(
@@ -206,7 +206,7 @@ class CommentManagerImplTest {
   fun observeComments_rendersWithoutPhotosWhenTheRosterFails() = runTest {
     every { store.observeAll(scope) } returns
       flowOf(listOf(row(comment("c1", authorUid = THEM))))
-    every { sharingManager.observeShareState(THING_ID) } returns
+    every { sharingManager.observeShareState(THING) } returns
       flow { throw IllegalStateException("PERMISSION_DENIED") }
 
     val thread = manager.observeComments(target)

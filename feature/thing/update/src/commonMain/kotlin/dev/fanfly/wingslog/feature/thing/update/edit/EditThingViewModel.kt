@@ -119,7 +119,7 @@ class EditThingViewModel(
   /** Everyone on the share except us — the people a delete would take the thing away from. */
   private fun observeOtherMembers(thingId: String) {
     viewModelScope.launch {
-      sharingManager.observeShareState(thingId)
+      sharingManager.observeShareState(ThingId(thingId))
         .map { share -> share.members.count { !it.isSelf } }
         .distinctUntilChanged()
         .catch { emit(0) } // roster unreadable (unshared thing) — nobody else to warn about
