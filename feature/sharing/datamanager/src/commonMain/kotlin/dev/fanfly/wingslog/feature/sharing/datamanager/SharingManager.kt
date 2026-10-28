@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Technician
 import kotlinx.coroutines.flow.Flow
 
@@ -19,14 +20,14 @@ import kotlinx.coroutines.flow.Flow
  * Scaffold: signatures per the design; implementations land with the membership plumbing (P2, #114–120).
  */
 interface SharingManager {
-  /** Members + pending invites for [acId], from Firestore snapshots (online-only). */
-  fun observeShareState(acId: String): Flow<ThingShareState>
+  /** Members + pending invites for [thingId], from Firestore snapshots (online-only). */
+  fun observeShareState(thingId: ThingId): Flow<ThingShareState>
 
-  /** The caller's role on [acId], resolved locally (refs store / own thing) — instant, offline-correct. */
-  fun observeMyRole(acId: String): Flow<ShareRole?>
+  /** The caller's role on [thingId], resolved locally (refs store / own thing) — instant, offline-correct. */
+  fun observeMyRole(thingId: ThingId): Flow<ShareRole?>
 
   /**
-   * Whether [acId] is hosted by *another* account — shared into this user's fleet, so the host, not
+   * Whether [thingId] is hosted by *another* account — shared into this user's fleet, so the host, not
    * this user, owns and pays for its storage. Answered locally from the refs store (a ref exists iff
    * the thing was shared in), so it is instant and offline-correct; false for an own thing and
    * while signed out.
@@ -35,7 +36,7 @@ interface SharingManager {
    * thing the member is never blocked by their *own* subscription — the host's entitlement governs
    * and the broker enforces it — so an unsubscribed technician can still upload on a paid owner's plane.
    */
-  fun observeIsForeignHosted(acId: String): Flow<Boolean>
+  fun observeIsForeignHosted(thingId: ThingId): Flow<Boolean>
 
   /**
    * Whether this thing is part of a share at all — true for *every* partner in it, the hosting
@@ -50,7 +51,7 @@ interface SharingManager {
    * covers the host (but is an online-only listener, so it goes quiet offline — it starts `false`
    * rather than stalling whatever combines it).
    */
-  fun observeIsShared(acId: String): Flow<Boolean>
+  fun observeIsShared(thingId: ThingId): Flow<Boolean>
 
   /**
    * Mints a pairing code (#164). Server-side: the code doc lives in a collection no client may read,
@@ -60,13 +61,13 @@ interface SharingManager {
    * cannot read it out of the thing record, which is opaque proto bytes.
    */
   suspend fun createInvite(
-    acId: String,
+    thingId: ThingId,
     role: ShareRole,
     thingLabel: String,
   ): Result<InviteLink>
 
   /** Destroys the code. A cancelled invite and a never-existed one become the same state. */
-  suspend fun cancelInvite(acId: String, codeId: String): Result<Unit>
+  suspend fun cancelInvite(thingId: ThingId, codeId: String): Result<Unit>
 
   /**
    * Joins by code alone — no thing id, no host uid. The invitee never holds either, which is the
@@ -81,15 +82,15 @@ interface SharingManager {
    */
   suspend fun previewInvite(code: String): Result<InvitePreview>
 
-  suspend fun revokeMember(acId: String, uid: String): Result<Unit>
+  suspend fun revokeMember(thingId: ThingId, uid: String): Result<Unit>
 
   suspend fun updateRole(
-    acId: String,
+    thingId: ThingId,
     uid: String,
     role: ShareRole
   ): Result<Unit>
 
-  suspend fun leave(acId: String): Result<Unit>
+  suspend fun leave(thingId: ThingId): Result<Unit>
 
   /**
    * Publishes the caller's display fields + self-technician mirror to every share they belong to
@@ -102,7 +103,7 @@ interface SharingManager {
    * path does) to publish into it anyway; without it the member doc keeps the auth-token name the
    * redeem function seeded until the next app start.
    */
-  suspend fun publishTechnicianMirror(alsoPublishTo: String? = null): Result<Unit>
+  suspend fun publishTechnicianMirror(alsoPublishTo: ThingId? = null): Result<Unit>
 
   /**
    * Every *other* member, across all of the user's shares, who has published a technician mirror —
@@ -118,7 +119,7 @@ interface SharingManager {
    * is what the log-form picker lists — you sign a log for a specific thing, so only that
    * thing's members are selectable (§7.3).
    */
-  fun observeLinkedTechnicians(acId: String): Flow<List<Technician>>
+  fun observeLinkedTechnicians(thingId: ThingId): Flow<List<Technician>>
 
   /**
    * The account photo of every technician [observeLinkedTechnicians] lists, keyed by their uid (the

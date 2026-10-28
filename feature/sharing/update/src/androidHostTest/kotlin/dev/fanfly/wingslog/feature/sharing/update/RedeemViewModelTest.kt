@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.viewing.redeem.RedeemUiState
+import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -24,7 +25,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-private const val AC_ID = "ac-redeem-1"
+private val AC_ID = ThingId("ac-redeem-1")
 private const val CODE = "EFA2GGTH"
 private const val SHARE_URL = "https://squawkit.fanfly.dev/share#$CODE"
 

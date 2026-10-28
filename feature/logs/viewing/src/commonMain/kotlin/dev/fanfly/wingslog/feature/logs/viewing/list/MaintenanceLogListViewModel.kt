@@ -207,7 +207,7 @@ class MaintenanceLogListViewModel(
    */
   private fun observeAuthorship() {
     viewModelScope.launch {
-      sharingManager.observeIsShared(thingId.value)
+      sharingManager.observeIsShared(thingId)
         .catch { _isShared.value = false }
         .collect { _isShared.value = it }
     }
@@ -218,7 +218,7 @@ class MaintenanceLogListViewModel(
     }
     viewModelScope.launch {
       combine(
-        sharingManager.observeLinkedTechnicians(thingId.value),
+        sharingManager.observeLinkedTechnicians(thingId),
         technicianManager.observeSelf(),
       ) { linked, self ->
         buildMap {

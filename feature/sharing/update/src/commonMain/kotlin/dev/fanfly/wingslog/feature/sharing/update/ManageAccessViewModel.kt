@@ -63,14 +63,14 @@ class ManageAccessViewModel(
     // photos come from the member docs — so a member whose doc is absent renders as a bare uid. This
     // is idempotent and cheap, and it means opening the screen repairs the row rather than staring
     // at the damage. (§7.2)
-    viewModelScope.launch { sharingManager.publishTechnicianMirror(alsoPublishTo = thingId.value) }
+    viewModelScope.launch { sharingManager.publishTechnicianMirror(alsoPublishTo = thingId) }
   }
 
   private fun observeShare() {
     // Role is resolved locally (own thing ⇒ owner, shared ⇒ ref) — always available, and what
     // gates the "Create invite code" action. Kept separate from the roster so it never depends on it.
     viewModelScope.launch {
-      sharingManager.observeMyRole(thingId.value)
+      sharingManager.observeMyRole(thingId)
         .collect { role ->
           _uiState.update { it.copy(isLoading = false, myRole = role) }
         }
@@ -79,7 +79,7 @@ class ManageAccessViewModel(
     // all (the owner isn't in memberRoles until the first invite bootstraps the share doc). Treat a
     // failure as "no members yet" rather than an error, so it can't block the owner from inviting.
     viewModelScope.launch {
-      sharingManager.observeShareState(thingId.value)
+      sharingManager.observeShareState(thingId)
         .catch { e ->
           // Roster unavailable (e.g. no share yet) — leave it empty, don't block inviting.
           logger.d { "share roster unavailable for ${thingId.value}: ${e.message}" }
@@ -194,7 +194,7 @@ class ManageAccessViewModel(
     _uiState.update { it.copy(creatingInvite = true, error = null) }
     viewModelScope.launch {
       sharingManager.createInvite(
-        thingId.value,
+        thingId,
         _uiState.value.selectedInviteRole,
         _uiState.value.thingLabel
       )
@@ -222,7 +222,7 @@ class ManageAccessViewModel(
     if (_uiState.value.cancellingInvite) return
     _uiState.update { it.copy(cancellingInvite = true, error = null) }
     viewModelScope.launch {
-      sharingManager.cancelInvite(thingId.value, codeId)
+      sharingManager.cancelInvite(thingId, codeId)
         .onSuccess {
           _uiState.update {
             it.copy(
@@ -256,7 +256,7 @@ class ManageAccessViewModel(
 
   fun changeRole(uid: String, role: ShareRole) {
     viewModelScope.launch {
-      sharingManager.updateRole(thingId.value, uid, role)
+      sharingManager.updateRole(thingId, uid, role)
         .onSuccess { _uiState.update { it.copy(toast = AccessToast.ROLE_UPDATED) } }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
@@ -264,7 +264,7 @@ class ManageAccessViewModel(
 
   fun revoke(uid: String) {
     viewModelScope.launch {
-      sharingManager.revokeMember(thingId.value, uid)
+      sharingManager.revokeMember(thingId, uid)
         .onSuccess {
           _uiState.update {
             it.copy(
@@ -280,7 +280,7 @@ class ManageAccessViewModel(
 
   fun leave() {
     viewModelScope.launch {
-      sharingManager.leave(thingId.value)
+      sharingManager.leave(thingId)
         .onSuccess { _uiState.update { it.copy(leaveSuccess = true) } }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
