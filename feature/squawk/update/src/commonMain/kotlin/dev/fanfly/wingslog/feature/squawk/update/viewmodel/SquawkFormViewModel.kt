@@ -57,8 +57,8 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 data class SquawkFormState(
-  val thingId: String = "",
-  val squawkId: String? = null,
+  val thingId: ThingId = ThingId(""),
+  val squawkId: SquawkId? = null,
   val title: String = "",
   val description: String = "",
   val priority: SquawkPriority = SquawkPriority.SQUAWK_PRIORITY_LOW,
@@ -113,8 +113,8 @@ class SquawkFormViewModel(
 
   private val _state = MutableStateFlow(
     SquawkFormState(
-      thingId = thingId.value,
-      squawkId = squawkId?.value
+      thingId = thingId,
+      squawkId = squawkId
     )
   )
   val state: StateFlow<SquawkFormState> = _state.asStateFlow()
@@ -273,7 +273,7 @@ class SquawkFormViewModel(
     }
     _state.update { it.copy(isSaving = true) }
     viewModelScope.launch {
-      val resolvedId = current.squawkId ?: generateRandomId()
+      val resolvedId = current.squawkId?.value ?: generateRandomId()
       val attachments = attachmentForm.resolveForSave()
       val squawk = Squawk(
         id = resolvedId,

@@ -39,6 +39,7 @@ import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
@@ -59,7 +60,7 @@ fun SquawkDetailSheet(
   onDismiss: () -> Unit,
   onEditClick: (() -> Unit)?,
   /** Jump to the addressing work log in the Logs tab. Null renders the log statically (no affordance). */
-  onLogClick: ((logId: String) -> Unit)? = null,
+  onLogClick: ((logId: MaintenanceLogId) -> Unit)? = null,
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
@@ -189,7 +190,7 @@ fun SquawkDetailSheet(
     when {
       addressingLog != null -> LogHistoryRow(
         log = addressingLog,
-        onClick = onLogClick?.let { jump -> { jump(addressingLog.id) } },
+        onClick = onLogClick?.let { jump -> { jump(MaintenanceLogId(addressingLog.id)) } },
       )
 
       item.status == SquawkStatus.DISMISSED -> DismissedHistoryRow(item)

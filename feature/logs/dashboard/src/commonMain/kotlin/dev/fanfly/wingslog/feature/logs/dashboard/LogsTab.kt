@@ -23,6 +23,8 @@ import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.logs.viewing.list.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -35,8 +37,8 @@ fun LogsTab(
   onNavigateToAddLog: (() -> Unit)?,
   onNavigateToEditLog: ((logId: MaintenanceLogId) -> Unit)?,
   onOpenDataLog: (DataLogId) -> Unit,
-  onTaskClick: (taskId: String) -> Unit,
-  onSquawkClick: (squawkId: String) -> Unit,
+  onTaskClick: (taskId: MaintenanceTaskId) -> Unit,
+  onSquawkClick: (squawkId: SquawkId) -> Unit,
   scrollToLogId: String? = null,
   modifier: Modifier = Modifier,
 ) {

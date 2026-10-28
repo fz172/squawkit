@@ -53,6 +53,8 @@ import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.statusTier
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.first
 import org.koin.compose.koinInject
@@ -68,9 +70,9 @@ fun SquawkTab(
   thingId: ThingId,
   isAnonymous: Boolean = false,
   canMutate: Boolean = true,
-  onNavigateToEditSquawk: (squawkId: String) -> Unit = {},
-  onNavigateToCreateLog: (squawkId: String) -> Unit = {},
-  onLogClick: ((logId: String) -> Unit)? = null,
+  onNavigateToEditSquawk: (squawkId: SquawkId) -> Unit = {},
+  onNavigateToCreateLog: (squawkId: SquawkId) -> Unit = {},
+  onLogClick: ((logId: MaintenanceLogId) -> Unit)? = null,
   onOpenDataLog: ((DataLogId) -> Unit)? = null,
   /** Jumped-to squawk (from a log's Resolved Squawks): switch to its sub-view and scroll to it. */
   scrollToSquawkId: String? = null,
@@ -304,11 +306,11 @@ fun SquawkTab(
                       onResolveClick = { detailViewModel.onResolveClick(item) },
                       onDismissResolveMenu = detailViewModel::dismissResolveMenu,
                       onDismissNoWorkPlanned = {
-                        detailViewModel.onDismissClick(item.squawk.id)
+                        detailViewModel.onDismissClick(item.id)
                       },
                       onFixedClick = {
                         detailViewModel.onFixedClick()
-                        onNavigateToCreateLog(item.squawk.id)
+                        onNavigateToCreateLog(item.id)
                       },
                       onDeleteClick = { detailViewModel.onDeleteClick(item) },
                       modifier = Modifier.weight(1f),

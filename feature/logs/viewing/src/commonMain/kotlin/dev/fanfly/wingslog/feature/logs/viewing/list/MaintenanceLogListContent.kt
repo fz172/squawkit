@@ -50,6 +50,8 @@ import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -94,8 +96,8 @@ fun MaintenanceLogListContent(
   onAddLog: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit,
   openError: String? = null,
-  onTaskClick: ((String) -> Unit)? = null,
-  onSquawkClick: ((String) -> Unit)? = null,
+  onTaskClick: ((MaintenanceTaskId) -> Unit)? = null,
+  onSquawkClick: ((SquawkId) -> Unit)? = null,
   /**
    * When set, scroll the list to the log with this id (a jump from a squawk's work history). The
    * caller must not toggle this back to null while the Logs tab is on screen — doing so remounts this

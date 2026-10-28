@@ -260,15 +260,15 @@ fun ThingSectionContent(
             onAction(
               ThingOverviewAction.EditSquawkClick(
                 thingId,
-                SquawkId(squawkId)
+                squawkId
               )
             )
           },
           onNavigateToCreateLog = { squawkId ->
-            onAction(ThingOverviewAction.SquawkFixedClick(SquawkId(squawkId)))
+            onAction(ThingOverviewAction.SquawkFixedClick(squawkId))
           },
           onLogClick = { logId ->
-            onJumpToRecord(RecordJump(ShellSection.LOGS, logId))
+            onJumpToRecord(RecordJump(ShellSection.LOGS, logId.value))
           },
           onOpenDataLog = { dataLogId ->
             onAction(
@@ -310,10 +310,10 @@ fun ThingSectionContent(
             )
           },
           onTaskClick = { taskId ->
-            onJumpToRecord(RecordJump(ShellSection.TASKS, taskId))
+            onJumpToRecord(RecordJump(ShellSection.TASKS, taskId.value))
           },
           onSquawkClick = { squawkId ->
-            onJumpToRecord(RecordJump(ShellSection.SQUAWKS, squawkId))
+            onJumpToRecord(RecordJump(ShellSection.SQUAWKS, squawkId.value))
           },
           scrollToLogId = pendingLogScrollTarget,
         )
