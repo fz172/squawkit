@@ -155,7 +155,7 @@ class SquawkFormViewModel(
       // until the subscription capability ships.)
       combine(
         subscriptionManager.canUploadAttachments(),
-        sharingManager.observeIsForeignHosted(thingId.value),
+        sharingManager.observeIsForeignHosted(thingId),
       ) { canUpload, foreignHosted -> foreignHosted || canUpload }
         .collect { _attachmentUploadEnabled.value = it }
     }

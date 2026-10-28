@@ -46,8 +46,8 @@ class ThingOverviewViewModelTest {
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     every { fleetManager.loadThing(thingId) } returns flowOf(thing)
-    every { sharingManager.observeMyRole(THING_ID) } returns flowOf(ShareRole.OWNER)
-    every { sharingManager.observeIsShared(THING_ID) } returns flowOf(false)
+    every { sharingManager.observeMyRole(thingId) } returns flowOf(ShareRole.OWNER)
+    every { sharingManager.observeIsShared(thingId) } returns flowOf(false)
     every { auth.currentUser } returns null
   }
 

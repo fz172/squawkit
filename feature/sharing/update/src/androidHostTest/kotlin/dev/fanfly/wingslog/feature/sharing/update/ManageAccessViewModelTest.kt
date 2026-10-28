@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.sharing.update
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -14,6 +15,7 @@ import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.sharing.viewing.AccessPanelView
 import dev.fanfly.wingslog.feature.sharing.viewing.AccessToast
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -31,7 +33,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-private const val AC_ID = "ac-manage-001"
+private val AC_ID = ThingId("ac-manage-001")
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ManageAccessViewModelTest {
@@ -73,7 +75,7 @@ class ManageAccessViewModelTest {
     cloudSync = cloudSync,
     subscriptionManager = subscription,
     fleetManager = fleet,
-    savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to AC_ID)),
+    savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to AC_ID.value)),
   )
 
   @Test

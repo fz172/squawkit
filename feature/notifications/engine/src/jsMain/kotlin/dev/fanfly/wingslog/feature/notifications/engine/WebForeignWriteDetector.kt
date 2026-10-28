@@ -139,7 +139,7 @@ class WebForeignWriteDetector(
     // answers. N1 would then fire for members and never for owners, which is backwards: an owner
     // hearing about their mechanic's edits is the case the feature exists for.
     val roster = withTimeoutOrNull(ROSTER_READ_TIMEOUT) {
-      sharingManager.observeShareState(thingId)
+      sharingManager.observeShareState(ThingId(thingId))
         .first()
     }
     if (roster == null) {

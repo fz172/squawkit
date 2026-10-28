@@ -63,7 +63,7 @@ class LogAuthorshipGatingTest {
     every { logManager.observeLogs(AC) } returns flowOf(listOf(log))
     every { logManager.observeLogAuthors(AC) } returns flowOf(mapOf(LOG to OWNER_UID))
     every { tasks.observeTasks(AC) } returns flowOf(emptyList())
-    every { sharing.observeLinkedTechnicians(AC_ID) } returns flowOf(emptyList())
+    every { sharing.observeLinkedTechnicians(AC) } returns flowOf(emptyList())
     every { technicians.observeSelf() } returns flowOf(null)
     every { squawks.observeSquawks(AC) } returns flowOf(emptyList())
     every { auth.currentUser } returns null
@@ -95,14 +95,14 @@ class LogAuthorshipGatingTest {
 
   @Test
   fun unsharedThing_saysNothing() {
-    every { sharing.observeIsShared(AC_ID) } returns flowOf(false)
+    every { sharing.observeIsShared(AC) } returns flowOf(false)
 
     assertThat(selectedAuthorship()).isEqualTo(LogAuthorship.Unknown)
   }
 
   @Test
   fun sharedThing_reportsTheHandTypedNameAsUnverifiable() {
-    every { sharing.observeIsShared(AC_ID) } returns flowOf(true)
+    every { sharing.observeIsShared(AC) } returns flowOf(true)
 
     assertThat(selectedAuthorship())
       .isEqualTo(LogAuthorship.Unverifiable("Hand-typed Mechanic"))

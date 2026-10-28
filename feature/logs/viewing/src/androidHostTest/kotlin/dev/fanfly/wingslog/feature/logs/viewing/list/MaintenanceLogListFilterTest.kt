@@ -102,7 +102,7 @@ class MaintenanceLogListFilterTest {
     )
     every { logManager.observeLogAuthors(THING) } returns flowOf(emptyMap())
     every { tasks.observeTasks(THING) } returns flowOf(emptyList())
-    every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(
+    every { sharing.observeLinkedTechnicians(THING) } returns flowOf(
       emptyList()
     )
     every { technicians.observeSelf() } returns flowOf(null)

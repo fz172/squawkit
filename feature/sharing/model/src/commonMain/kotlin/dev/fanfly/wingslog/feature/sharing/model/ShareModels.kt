@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.sharing.model
 
+import dev.fanfly.wingslog.id.ThingId
+
 /**
  * Client-side view models for thing sharing. Scaffolded stubs — fields are refined as the
  * membership plumbing (P2) and UI (P4/P5) land. The role here is the UI/permission role; it mirrors
@@ -76,7 +78,7 @@ data class InvitePreview(
 
 /** Result of redeeming an invite. */
 data class RedeemOutcome(
-  val thingId: String,
+  val thingId: ThingId,
   val hostUid: String,
   val role: ShareRole,
   val alreadyMember: Boolean = false,

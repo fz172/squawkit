@@ -127,7 +127,7 @@ class MaintenanceLogFormViewModelTest {
     )
     every { technicianManager.observeTechnicians() } returns flowOf(emptyList())
     every { technicianManager.observeSelfId() } returns flowOf(null)
-    every { sharingManager.observeLinkedTechnicians(TEST_THING_ID) } returns flowOf(
+    every { sharingManager.observeLinkedTechnicians(TEST_THING) } returns flowOf(
       emptyList()
     )
     every { logManager.observeLogs(TEST_THING) } returns flowOf(emptyList())
@@ -595,7 +595,7 @@ class MaintenanceLogFormViewModelTest {
           SELF_TECH_ID
         )
       )
-      every { sharingManager.observeLinkedTechnicians(TEST_THING_ID) } returns flowOf(
+      every { sharingManager.observeLinkedTechnicians(TEST_THING) } returns flowOf(
         listOf(
           Technician(
             id = LINKED_UID,
@@ -626,7 +626,7 @@ class MaintenanceLogFormViewModelTest {
         name = "Linked Mechanic",
         source_uid = LINKED_UID
       )
-      every { sharingManager.observeLinkedTechnicians(TEST_THING_ID) } returns flowOf(
+      every { sharingManager.observeLinkedTechnicians(TEST_THING) } returns flowOf(
         listOf(linked)
       )
       val viewModel = buildViewModelForNew()

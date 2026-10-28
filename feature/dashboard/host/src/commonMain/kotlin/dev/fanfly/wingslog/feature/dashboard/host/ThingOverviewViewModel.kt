@@ -55,9 +55,9 @@ class ThingOverviewViewModel(
           .distinctUntilChanged(),
         // The caller's role on this thing, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
         // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
-        sharingManager.observeMyRole(thingId.value)
+        sharingManager.observeMyRole(thingId)
           .distinctUntilChanged(),
-        sharingManager.observeIsShared(thingId.value)
+        sharingManager.observeIsShared(thingId)
           .distinctUntilChanged(),
       ) { thing, myRole, isShared ->
         val degraded = thing?.let {

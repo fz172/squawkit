@@ -190,7 +190,7 @@ class CommentManagerImpl(
    * roster (Firestore-backed, online-only): comments render at once and photos fill in.
    */
   private fun authorPhotos(thingId: ThingId): Flow<Map<String, String>> =
-    sharingManager.observeShareState(thingId.value)
+    sharingManager.observeShareState(thingId)
       .map { state ->
         state.members
           .mapNotNull { m ->
