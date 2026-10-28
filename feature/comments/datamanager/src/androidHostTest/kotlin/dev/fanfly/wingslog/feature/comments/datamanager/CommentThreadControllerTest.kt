@@ -64,6 +64,54 @@ class CommentThreadControllerTest {
   }
 
   @Test
+  fun post_signalsPostedOnceTheNewRowIsInTheThread() =
+    runTest(UnconfinedTestDispatcher()) {
+      val manager = FakeCommentManager(echoesPosts = false)
+      val controller = controllerOn(manager)
+      var posted = 0
+      backgroundScope.launch { controller.posted.collect { posted++ } }
+      controller.onDraftChange("Parts arrived")
+
+      controller.post()
+
+      // The write landed, but the observer has not delivered the row yet — scrolling now would
+      // land on the old end of the thread.
+      assertThat(posted).isEqualTo(0)
+
+      manager.emit(listOf(entry("c1", "Parts arrived")))
+
+      assertThat(posted).isEqualTo(1)
+    }
+
+  @Test
+  fun post_doesNotSignalPostedWhenTheWriteFails() =
+    runTest(UnconfinedTestDispatcher()) {
+      val manager = FakeCommentManager(failing = true)
+      val controller = controllerOn(manager)
+      var posted = 0
+      backgroundScope.launch { controller.posted.collect { posted++ } }
+      controller.onDraftChange("worth keeping")
+
+      controller.post()
+      testScheduler.advanceUntilIdle()
+
+      assertThat(posted).isEqualTo(0)
+    }
+
+  @Test
+  fun onComposerFocus_signalsScrollToEnd() =
+    runTest(UnconfinedTestDispatcher()) {
+      val manager = FakeCommentManager()
+      val controller = controllerOn(manager)
+      var scrolls = 0
+      backgroundScope.launch { controller.scrollToEnd.collect { scrolls++ } }
+
+      controller.onComposerFocus()
+
+      assertThat(scrolls).isEqualTo(1)
+    }
+
+  @Test
   fun startEdit_seedsTheEditorWithTheCommentsCurrentText() = runTest {
     val manager = FakeCommentManager()
     manager.emit(listOf(entry("c1", "as written")))
@@ -149,8 +197,14 @@ class CommentThreadControllerTest {
     isMine = true,
   )
 
-  private class FakeCommentManager(private val failing: Boolean = false) :
-    CommentManager {
+  /**
+   * [echoesPosts] mirrors the store: a successful add shows up in the observed thread, the way the
+   * local entity store's observer delivers it.
+   */
+  private class FakeCommentManager(
+    private val failing: Boolean = false,
+    private val echoesPosts: Boolean = true,
+  ) : CommentManager {
     private val thread = MutableStateFlow<List<CommentEntry>>(emptyList())
     val added = mutableListOf<String>()
     val updated = mutableListOf<Pair<String, String>>()
@@ -167,7 +221,20 @@ class CommentThreadControllerTest {
       target: CommentTarget,
       text: String
     ): Result<Unit> =
-      outcome { added += text }
+      outcome {
+        added += text
+        if (echoesPosts) {
+          thread.value += CommentEntry(
+            id = CommentId("posted-${added.size}"),
+            authorName = "Jordan Reyes",
+            text = text,
+            createdAt = Instant.fromEpochSeconds(1),
+            editedAt = null,
+            deletedAt = null,
+            isMine = true,
+          )
+        }
+      }
 
     override suspend fun updateComment(
       target: CommentTarget,

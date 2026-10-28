@@ -18,5 +18,6 @@ fun RecordCommentComposer(
     isAnonymous = isAnonymous,
     onDraftChange = thread::onDraftChange,
     onPost = thread::post,
+    onFocus = thread::onComposerFocus,
   )
 }
