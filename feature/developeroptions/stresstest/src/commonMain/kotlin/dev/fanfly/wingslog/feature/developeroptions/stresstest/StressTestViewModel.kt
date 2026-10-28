@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,7 @@ sealed interface StressTestState {
     val total: Int,
   ) : StressTestState
 
-  data class Done(val thingId: String, val summary: StressTestSummary) :
+  data class Done(val thingId: ThingId, val summary: StressTestSummary) :
     StressTestState
 
   data class Error(val message: String?) : StressTestState
@@ -233,7 +234,7 @@ class StressTestViewModel(
           dismissedSquawkCount = data.dismissedSquawks.size,
         )
 
-        _state.value = StressTestState.Done(thingId.value, summary)
+        _state.value = StressTestState.Done(thingId, summary)
       }.onFailure { e ->
         _state.value = StressTestState.Error(e.message)
       }

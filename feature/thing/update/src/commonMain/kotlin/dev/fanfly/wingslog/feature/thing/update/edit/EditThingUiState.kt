@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.componentsMissingSerials
 import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -14,7 +15,7 @@ data class EditThingUiState(
   val isLoading: Boolean = true,
   val isSaved: Boolean = false,
   /** Set alongside [isSaved] on a create: the id the write assigned, for the shell to switch to. */
-  val createdThingId: String? = null,
+  val createdThingId: ThingId? = null,
   val isDeleted: Boolean = false,
   val showValidationErrors: Boolean = false,
   /**

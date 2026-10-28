@@ -97,12 +97,12 @@ class EditThingViewModel(
       .isNullOrEmpty()
 
   init {
-    val thingId: String? = savedStateHandle[Screen.THING_ID]
-    if (thingId.isNullOrEmpty()) {
+    val thingId = savedStateHandle.get<String>(Screen.THING_ID)?.takeIf { it.isNotEmpty() }?.let(::ThingId)
+    if (thingId == null) {
       logger.i { "Initializing the view model with empty thing" }
       loadThing(Thing(template = pickedTemplate))
     } else {
-      logger.i { "Loading thing $thingId" }
+      logger.i { "Loading thing ${thingId.value}" }
       loadThingById(thingId)
       observeHostedByMe(thingId)
       observeOtherMembers(thingId)
@@ -117,9 +117,9 @@ class EditThingViewModel(
    * separates them from the host is whose tree the thing is in — not what role they hold.
    */
   /** Everyone on the share except us — the people a delete would take the thing away from. */
-  private fun observeOtherMembers(thingId: String) {
+  private fun observeOtherMembers(thingId: ThingId) {
     viewModelScope.launch {
-      sharingManager.observeShareState(ThingId(thingId))
+      sharingManager.observeShareState(thingId)
         .map { share -> share.members.count { !it.isSelf } }
         .distinctUntilChanged()
         .catch { emit(0) } // roster unreadable (unshared thing) — nobody else to warn about
@@ -127,10 +127,10 @@ class EditThingViewModel(
     }
   }
 
-  private fun observeHostedByMe(thingId: String) {
+  private fun observeHostedByMe(thingId: ThingId) {
     viewModelScope.launch {
       fleetManager.observeFleetDashboard()
-        .map { fleet -> fleet.firstOrNull { it.thing.id == thingId }?.shared == false }
+        .map { fleet -> fleet.firstOrNull { it.thing.id == thingId.value }?.shared == false }
         .distinctUntilChanged()
         .collect { hosted -> _uiState.update { it.copy(hostedByMe = hosted) } }
     }
@@ -168,8 +168,6 @@ class EditThingViewModel(
     }
   }
 
-  fun loadThingById(id: String) = loadThingById(ThingId(id))
-
   fun loadThing(thing: Thing) {
     _uiState.update {
       it.withThing(thing)
@@ -206,7 +204,7 @@ class EditThingViewModel(
         _uiState.update {
           it.copy(
             isSaved = true,
-            createdThingId = written.id.takeIf { isNewThing },
+            createdThingId = written.id.takeIf { isNewThing }?.let(::ThingId),
           )
         }
       }
