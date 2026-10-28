@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.ForeignWriteListener
@@ -104,7 +105,7 @@ class WebForeignWriteDetector(
 
   private suspend fun handle(
     recordType: RecordType,
-    thingId: String,
+    thingId: ThingId,
     recordId: String,
     actorUid: String,
   ) {
@@ -139,18 +140,18 @@ class WebForeignWriteDetector(
     // answers. N1 would then fire for members and never for owners, which is backwards: an owner
     // hearing about their mechanic's edits is the case the feature exists for.
     val roster = withTimeoutOrNull(ROSTER_READ_TIMEOUT) {
-      sharingManager.observeShareState(ThingId(thingId))
+      sharingManager.observeShareState(thingId)
         .first()
     }
     if (roster == null) {
       // Offline, or the roster listener never answered. Staying silent is the safe direction: the
       // alternative is notifying about a thing we cannot confirm is shared.
-      log.d { "N1 skipped: roster read timed out for $thingId" }
+      log.d { "N1 skipped: roster read timed out for ${thingId.value}" }
       return
     }
     // More than one member means a share exists — true for the host and every member alike.
     if (roster.members.size <= 1) {
-      log.d { "N1 skipped: $thingId has ${roster.members.size} member(s), accessDenied=${roster.accessDenied}" }
+      log.d { "N1 skipped: ${thingId.value} has ${roster.members.size} member(s), accessDenied=${roster.accessDenied}" }
       return
     }
 
@@ -158,7 +159,7 @@ class WebForeignWriteDetector(
       ?.displayName
       ?.takeIf { it.isNotBlank() }
       ?: getString(Res.string.notification_n1_actor_fallback)
-    log.i { "N1 posting: $thingId ${recordType.wire}/$recordId by $actor" }
+    log.i { "N1 posting: ${thingId.value} ${recordType.wire}/$recordId by $actor" }
     // Built and posted in two statements rather than one nested call, so these two log lines sit on
     // either side of the suspending build. A build that never returns used to look identical to a
     // notification that was posted and not drawn — the log said "posting", and nothing followed.
@@ -171,7 +172,7 @@ class WebForeignWriteDetector(
 
   private suspend fun buildNotification(
     recordType: RecordType,
-    thingId: String,
+    thingId: ThingId,
     recordId: String,
     /** What the body says. */
     actor: String,
@@ -179,11 +180,11 @@ class WebForeignWriteDetector(
     val thing = thingOf(thingId)
     // Between this and "N1 built" there is nothing but string resource loads, so the pair of lines
     // says which half of the build is slow or stuck without another round of guessing.
-    log.d { "N1 thing resolved for $thingId, rendering strings" }
+    log.d { "N1 thing resolved for ${thingId.value}, rendering strings" }
     // This thing's own template, not the selected thing's: the write can land on any shared thing
     // in the fleet, and a home's label is its name, not a tail number it does not have.
     val template = thing?.let { templateRegistry.forThingWithFallback(it) }
-    val thingLabel = thing?.displayLabel(template) ?: thingId
+    val thingLabel = thing?.displayLabel(template) ?: thingId.value
     val lexicon = templateRegistry.lexiconFor(template)
     val body = getString(
       Res.string.notification_n1_body_single,
@@ -209,7 +210,7 @@ class WebForeignWriteDetector(
       // Collaboration activity is never high priority — that is what N2's urgency tiers are for,
       // and §7.3 is explicit that an activity summary must never replace a grounding alert.
       highPriority = false,
-      tapTarget = recordType.tapTarget(ThingId(thingId), recordId),
+      tapTarget = recordType.tapTarget(thingId, recordId),
     )
   }
 
@@ -225,15 +226,15 @@ class WebForeignWriteDetector(
    * `notifier.post(...)` the notification is silently never posted. A title reading as the thing
    * id is a bad title; no notification at all is a lost one.
    */
-  private suspend fun thingOf(thingId: String): Thing? =
+  private suspend fun thingOf(thingId: ThingId): Thing? =
     runCatching {
       withTimeoutOrNull(FLEET_READ_TIMEOUT) {
         fleetManager.observeFleetDashboard()
           .first()
-          .firstOrNull { it.thing.id == thingId }
+          .firstOrNull { it.thing.id == thingId.value }
           ?.thing
       } ?: run {
-        log.w { "N1 fleet read timed out for $thingId; falling back to the id" }
+        log.w { "N1 fleet read timed out for ${thingId.value}; falling back to the id" }
         null
       }
     }.getOrNull()
@@ -319,9 +320,10 @@ class WebForeignWriteDetector(
    * Per-thing scopes are `/users/{hostUid}/thing/{acId}/`, so the id is the fourth segment.
    * A top-level scope has no thing and is not N1.
    */
-  private fun EntityScope.thingIdOrNull(): String? =
+  private fun EntityScope.thingIdOrNull(): ThingId? =
     segments.takeIf { it.size >= 4 && it[2] == "thing" }
       ?.get(3)
+      ?.let(::ThingId)
 
   private companion object {
     val log = Logger.withTag("WebForeignWriteDetector")

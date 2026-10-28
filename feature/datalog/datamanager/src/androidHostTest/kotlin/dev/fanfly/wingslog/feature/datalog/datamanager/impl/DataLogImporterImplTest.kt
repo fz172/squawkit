@@ -48,7 +48,7 @@ import kotlin.time.Instant
 class DataLogImporterImplTest {
 
   private val thingId = ThingId("thing-1")
-  private val scope = EntityScope.thingChildUnsafe("host-uid", "thing-1")
+  private val scope = EntityScope.thingChildUnsafe("host-uid", thingId)
   private val picked =
     PickedFile("content://x", Fixtures.GROUND_RUN, "text/csv", 120_968)
   private val fixture = Fixtures.bytes(Fixtures.GROUND_RUN)

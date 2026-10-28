@@ -186,7 +186,7 @@ class ExportViewModel(
     }
   }
 
-  fun onToggleThing(id: String) = reduceConfiguring { current ->
+  fun onToggleThing(id: ThingId) = reduceConfiguring { current ->
     val selected = if (id in current.selectedThingIds) {
       current.selectedThingIds - id
     } else {
@@ -404,7 +404,7 @@ class ExportViewModel(
   ): ThingSelectionRow {
     val template = templateRegistry.forThingWithFallback(this)
     return ThingSelectionRow(
-      thingId = id,
+      thingId = ThingId(id),
       label = displayLabel(template),
       subtitle = displaySubtitle(template),
       logCount = logCount,

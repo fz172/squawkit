@@ -96,7 +96,7 @@ class LocalFirstAttachmentManagerImplTest {
     // would return thingChildUnsafe(hostUid, ...); the manager just uses whatever scope it is given.
     thingScopeResolver = mockk(relaxed = true)
     coEvery { thingScopeResolver.resolveNow(any<ThingId>()) } answers {
-      EntityScope.thingChildUnsafe(TEST_USER_ID, firstArg<ThingId>().value)
+      EntityScope.thingChildUnsafe(TEST_USER_ID, firstArg<ThingId>())
     }
 
     manager = LocalFirstAttachmentManagerImpl(
@@ -164,7 +164,7 @@ class LocalFirstAttachmentManagerImplTest {
     // also what makes the upload driver route it through the broker (P8.4).
     val hostUid = "host-eng-42"
     coEvery { thingScopeResolver.resolveNow(TEST_THING) } returns
-      EntityScope.thingChildUnsafe(hostUid, TEST_THING_ID)
+      EntityScope.thingChildUnsafe(hostUid, TEST_THING)
     val picked = buildPickedFile(
       uri = "content://example/photo.jpg",
       mimeType = "image/jpeg"
@@ -194,7 +194,7 @@ class LocalFirstAttachmentManagerImplTest {
         any(),
         fakeBytes,
         contentType = any(),
-        scope = EntityScope.thingChildUnsafe(hostUid, TEST_THING_ID),
+        scope = EntityScope.thingChildUnsafe(hostUid, TEST_THING),
       )
     }
   }
@@ -607,7 +607,7 @@ class LocalFirstAttachmentManagerImplTest {
   @Test
   fun release_asksAboutTheBlobsAccountRoot_leavingOutTheOwner() = runTest {
     // The blob sits in the host's tree; every record that could name it is under the host's root.
-    givenStoredBlob(EntityScope.thingChildUnsafe("host-uid", TEST_THING_ID))
+    givenStoredBlob(EntityScope.thingChildUnsafe("host-uid", TEST_THING))
 
     manager.release(fileAttachment(), OWNER)
 
@@ -669,7 +669,7 @@ class LocalFirstAttachmentManagerImplTest {
   private fun givenStoredBlob(
     scope: EntityScope = EntityScope.thingChildUnsafe(
       TEST_USER_ID,
-      TEST_THING_ID
+      TEST_THING
     )
   ) {
     coEvery { blobs.get(BlobId(BLOB)) } returns storedBlob(scope)
@@ -678,7 +678,7 @@ class LocalFirstAttachmentManagerImplTest {
   private fun storedBlob(
     scope: EntityScope = EntityScope.thingChildUnsafe(
       TEST_USER_ID,
-      TEST_THING_ID
+      TEST_THING
     )
   ) =
     buildBlobRef().copy(id = BlobId(BLOB), scope = scope)
@@ -791,7 +791,7 @@ class LocalFirstAttachmentManagerImplTest {
   @Test
   fun observeThingSyncStates_resolvesScopeAndOverlaysDownloadingIds() =
     runTest {
-      val scope = EntityScope.thingChildUnsafe("host-uid", TEST_THING_ID)
+      val scope = EntityScope.thingChildUnsafe("host-uid", TEST_THING)
       every { thingScopeResolver.resolve(TEST_THING) } returns flowOf(scope)
       every { blobs.observeForScope(scope.toPath()) } returns flowOf(
         listOf(

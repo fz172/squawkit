@@ -62,7 +62,7 @@ class JobDocumentReleaserTest {
   fun `notes a run's documents under the signed-in user`() = runTest {
     releaser.record(AiJobId("job-1"), ThingId("thing-1"), listOf(manual))
 
-    coVerify { store.record("alice", "job-1", "thing-1", listOf(manual)) }
+    coVerify { store.record("alice", "job-1", ThingId("thing-1"), listOf(manual)) }
   }
 
   @Test
@@ -77,7 +77,7 @@ class JobDocumentReleaserTest {
   @Test
   fun `hands back a run's documents`() = runTest {
     coEvery { store.forJob("alice", "job-1") } returns
-      listOf(AiJobDocument("alice", "job-1", "thing-1", manual))
+      listOf(AiJobDocument("alice", "job-1", ThingId("thing-1"), manual))
 
     assertThat(releaser.documentsOf(AiJobId("job-1"))).containsExactly(manual)
     uid = null
@@ -87,8 +87,8 @@ class JobDocumentReleaserTest {
   @Test
   fun `releases a run's documents, then forgets them`() = runTest {
     coEvery { store.forJob("alice", "job-1") } returns listOf(
-      AiJobDocument("alice", "job-1", "thing-1", manual),
-      AiJobDocument("alice", "job-1", "thing-1", bulletin),
+      AiJobDocument("alice", "job-1", ThingId("thing-1"), manual),
+      AiJobDocument("alice", "job-1", ThingId("thing-1"), bulletin),
     )
 
     releaser.release(AiJobId("job-1"))
@@ -104,8 +104,8 @@ class JobDocumentReleaserTest {
   fun `releases runs the server no longer has, and keeps live ones`() =
     runTest {
       coEvery { store.all() } returns listOf(
-        AiJobDocument("alice", "gone", "thing-1", manual),
-        AiJobDocument("alice", "live", "thing-1", bulletin),
+        AiJobDocument("alice", "gone", ThingId("thing-1"), manual),
+        AiJobDocument("alice", "live", ThingId("thing-1"), bulletin),
       )
       coEvery { client.isGone(AiJobId("gone")) } returns true
       coEvery { client.isGone(AiJobId("live")) } returns false
@@ -124,7 +124,7 @@ class JobDocumentReleaserTest {
       AiJobDocument(
         "bob",
         "job-9",
-        "thing-9",
+        ThingId("thing-9"),
         manual
       )
     )
@@ -153,10 +153,10 @@ class JobDocumentReleaserTest {
         releaser.pick(ThingId("thing-1"), file, maxBytes = 100)
           .getOrNull()
       ).isEqualTo(manual)
-      coVerify { store.record("alice", "picked", "thing-1", listOf(manual)) }
+      coVerify { store.record("alice", "picked", ThingId("thing-1"), listOf(manual)) }
 
       releaser.record(AiJobId("job-1"), ThingId("thing-1"), listOf(manual))
-      coVerify { store.record("alice", "job-1", "thing-1", listOf(manual)) }
+      coVerify { store.record("alice", "job-1", ThingId("thing-1"), listOf(manual)) }
       coVerify { store.forget("alice", "picked", listOf("blob-1")) }
     }
 
@@ -236,8 +236,8 @@ class JobDocumentReleaserTest {
       } returns manual
       releaser.pick(ThingId("thing-1"), file, maxBytes = 100)
       coEvery { store.all() } returns listOf(
-        AiJobDocument("alice", "picked", "thing-1", manual),
-        AiJobDocument("alice", "picked", "thing-1", bulletin),
+        AiJobDocument("alice", "picked", ThingId("thing-1"), manual),
+        AiJobDocument("alice", "picked", ThingId("thing-1"), bulletin),
       )
 
       releaser.releaseGone()

@@ -35,7 +35,7 @@ private const val TEST_THING_ID = "thing-456"
 private val TEST_THING = ThingId(TEST_THING_ID)
 private val TEST_LOG_ID = MaintenanceLogId("log-1")
 private const val ENGINE = "engine_hours"
-private val SCOPE = EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
+private val SCOPE = EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING)
 
 class MaintenanceLogManagerImplTest {
 
@@ -106,7 +106,7 @@ class MaintenanceLogManagerImplTest {
       logStore.observeAll(
         EntityScope.thingChildUnsafe(
           TEST_USER_ID,
-          TEST_THING_ID
+          TEST_THING
         )
       )
     } returns flowOf(emptyList())
@@ -121,7 +121,7 @@ class MaintenanceLogManagerImplTest {
       logStore.observeAll(
         EntityScope.thingChildUnsafe(
           TEST_USER_ID,
-          TEST_THING_ID
+          TEST_THING
         )
       )
     }
@@ -129,7 +129,7 @@ class MaintenanceLogManagerImplTest {
 
   @Test
   fun deleteLog_reopensTheSquawksItAddressed() = runTest {
-    val scope = EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
+    val scope = EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING)
     every { squawkStore.observeAll(scope) } returns flowOf(
       listOf(
         squawkRow("squawk-1", addressedBy = "log-1"),
@@ -352,11 +352,11 @@ private class FakeScopeResolver(private val auth: FirebaseAuth) :
   ThingScopeResolver {
   override fun resolve(thingId: ThingId): Flow<EntityScope?> =
     auth.authStateChanged.map { user ->
-      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId.value_) }
+      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId) }
     }
 
   override suspend fun resolveNow(thingId: ThingId): EntityScope {
     val uid = auth.currentUser?.uid ?: error("Not signed in")
-    return EntityScope.thingChildUnsafe(uid, thingId.value_)
+    return EntityScope.thingChildUnsafe(uid, thingId)
   }
 }

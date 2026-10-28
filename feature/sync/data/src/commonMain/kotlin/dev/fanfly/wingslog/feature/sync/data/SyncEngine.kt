@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
@@ -15,6 +16,7 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.MAX_DENIAL_RETRIES
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.PUSH_FAILURE_KEY
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -124,7 +126,7 @@ class SyncEngine(
       storeFactory.create(CollectionKind.Thing)
     val thingIds = thingStore.observeAll(userRoot)
       .first()
-      .map { it.id }
+      .map { ThingId(it.id) }
     for (thingId in thingIds) {
       val thingScope = EntityScope.thingChildUnsafe(uid, thingId)
       for (kind in PER_THING_KINDS) {
@@ -316,7 +318,7 @@ class SyncEngine(
     scope.launch {
       thingStore.observeAll(userRoot)
         .map { rows ->
-          rows.map { it.id }
+          rows.map { ThingId(it.id) }
             .toSet()
         }
         .distinctUntilChanged()
@@ -352,7 +354,12 @@ class SyncEngine(
     scope.launch {
       refStore.observeAll(userRoot)
         .map { rows ->
-          rows.map { SharedThingRef(it.value.host_uid, it.value.aircraft_id) }
+          rows.map {
+            SharedThingRef(
+              it.value.host_uid,
+              ThingId(it.value.aircraft_id)
+            )
+          }
             .toSet()
         }
         .distinctUntilChanged()
@@ -374,7 +381,7 @@ class SyncEngine(
                 uid,
                 CollectionKind.Thing,
                 EntityScope.userRoot(hostUid),
-                thingId
+                thingId.value
               )
             }
             val acScope = EntityScope.thingChildUnsafe(
@@ -406,7 +413,7 @@ class SyncEngine(
    */
   private fun CoroutineScope.launchSharedWatch(
     memberUid: String,
-    thingId: String,
+    thingId: ThingId,
     block: suspend () -> Unit,
   ): Job = launch {
     // A new cycle (sign-in, refs change) clears a previous cycle's give-up banner.
@@ -458,19 +465,19 @@ class SyncEngine(
    * when we are revoked — unlike the host-tree ACL, which is the read that is failing — and a single
    * `get` needs no watermark.
    *
-   * [UNKNOWN] on timeout or error: "could not check" must not read as "revoked". A cached snapshot
+   * [ShareStatus.UNKNOWN] on timeout or error: "could not check" must not read as "revoked". A cached snapshot
    * may answer, which only biases toward LIVE — one extra retry, versus an unrecoverable purge.
    */
   private suspend fun probeShareStatus(
     memberUid: String,
-    thingId: String,
+    thingId: ThingId,
   ): ShareStatus =
     withTimeoutOrNull(PROBE_TIMEOUT_MS.milliseconds) {
       runCatching {
         val remote = pullSubscription.observeSingleDoc(
           CollectionKind.SharedAircraftRef,
           EntityScope.userRoot(memberUid),
-          thingId,
+          thingId.value,
         )
           .first()
           .firstOrNull()
@@ -495,7 +502,7 @@ class SyncEngine(
    */
   private suspend fun revokeSharedLocally(
     memberUid: String,
-    thingId: String
+    thingId: ThingId
   ): Boolean {
     val database = db ?: return false
     val lock = writeLock ?: return false
@@ -505,13 +512,13 @@ class SyncEngine(
     // gets `true` — that one is the revocation; the rest are echoes of it.
     return lock.withLock {
       val present = database.schemaQueries
-        .selectOne(CollectionKind.SharedAircraftRef, scopePath, thingId)
+        .selectOne(CollectionKind.SharedAircraftRef, scopePath, thingId.value)
         .awaitAsOneOrNull() != null
       if (present) {
         database.schemaQueries.deleteEntity(
           CollectionKind.SharedAircraftRef,
           scopePath,
-          thingId,
+          thingId.value,
         )
       }
       present

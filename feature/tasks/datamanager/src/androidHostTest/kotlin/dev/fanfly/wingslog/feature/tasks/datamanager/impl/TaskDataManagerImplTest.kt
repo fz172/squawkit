@@ -88,7 +88,7 @@ class TaskDataManagerImplTest {
         updatedAt = Instant.DISTANT_PAST
       )
       val scope =
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING)
       every { store.observeAll(scope) } returns flowOf(listOf(entity))
 
       val result = manager.observeTasks(TEST_THING)
@@ -110,7 +110,7 @@ class TaskDataManagerImplTest {
       store.put(
         match { it.isNotEmpty() },
         match { it.id.isNotEmpty() },
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID),
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING),
       )
     }
   }
@@ -126,7 +126,7 @@ class TaskDataManagerImplTest {
       store.put(
         TEST_TASK_ID,
         task,
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING)
       )
     }
   }
@@ -152,7 +152,7 @@ class TaskDataManagerImplTest {
       store.put(
         TEST_TASK_ID,
         task,
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING)
       )
     }
   }
@@ -175,7 +175,7 @@ class TaskDataManagerImplTest {
     coVerify {
       store.delete(
         TEST_TASK_ID,
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING)
       )
     }
   }
@@ -262,11 +262,11 @@ private class FakeScopeResolver(private val auth: FirebaseAuth) :
   ThingScopeResolver {
   override fun resolve(thingId: ThingId): Flow<EntityScope?> =
     auth.authStateChanged.map { user ->
-      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId.value_) }
+      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId) }
     }
 
   override suspend fun resolveNow(thingId: ThingId): EntityScope {
     val uid = auth.currentUser?.uid ?: error("Not signed in")
-    return EntityScope.thingChildUnsafe(uid, thingId.value_)
+    return EntityScope.thingChildUnsafe(uid, thingId)
   }
 }

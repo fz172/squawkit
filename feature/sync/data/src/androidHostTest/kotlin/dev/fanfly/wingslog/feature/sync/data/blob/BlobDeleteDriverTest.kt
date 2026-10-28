@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.db.SchemaQueries
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -43,7 +44,7 @@ class BlobDeleteDriverTest {
     ownerUid: String = "u1",
   ) = BlobRef(
     id = BlobId(BLOB_ID),
-    scope = EntityScope.thingChildUnsafe(ownerUid, "ac1"),
+    scope = EntityScope.thingChildUnsafe(ownerUid, ThingId("ac1")),
     relativePath = "blobs/$BLOB_ID.bin",
     sizeBytes = 10L,
     sha256 = "sha",

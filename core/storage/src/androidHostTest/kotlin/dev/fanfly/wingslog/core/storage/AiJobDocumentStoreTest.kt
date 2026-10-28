@@ -4,6 +4,7 @@ import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import kotlinx.coroutines.test.runTest
@@ -26,30 +27,30 @@ class AiJobDocumentStoreTest {
 
   @Test
   fun `keeps a job's documents whole, by user and job`() = runTest {
-    store.record("alice", "job-1", "thing-1", listOf(manual, bulletin))
-    store.record("alice", "job-2", "thing-1", listOf(bulletin))
-    store.record("bob", "job-1", "thing-9", listOf(manual))
+    store.record("alice", "job-1", ThingId("thing-1"), listOf(manual, bulletin))
+    store.record("alice", "job-2", ThingId("thing-1"), listOf(bulletin))
+    store.record("bob", "job-1", ThingId("thing-9"), listOf(manual))
 
     assertThat(store.forJob("alice", "job-1")).containsExactly(
-      AiJobDocument("alice", "job-1", "thing-1", manual),
-      AiJobDocument("alice", "job-1", "thing-1", bulletin),
+      AiJobDocument("alice", "job-1", ThingId("thing-1"), manual),
+      AiJobDocument("alice", "job-1", ThingId("thing-1"), bulletin),
     )
     assertThat(store.all()).hasSize(4)
   }
 
   @Test
   fun `recording the same document twice keeps one row`() = runTest {
-    store.record("alice", "job-1", "thing-1", listOf(manual))
-    store.record("alice", "job-1", "thing-1", listOf(manual))
+    store.record("alice", "job-1", ThingId("thing-1"), listOf(manual))
+    store.record("alice", "job-1", ThingId("thing-1"), listOf(manual))
 
     assertThat(store.forJob("alice", "job-1")).hasSize(1)
   }
 
   @Test
   fun `forgets only the one job`() = runTest {
-    store.record("alice", "job-1", "thing-1", listOf(manual))
-    store.record("alice", "job-2", "thing-1", listOf(bulletin))
-    store.record("bob", "job-1", "thing-9", listOf(manual))
+    store.record("alice", "job-1", ThingId("thing-1"), listOf(manual))
+    store.record("alice", "job-2", ThingId("thing-1"), listOf(bulletin))
+    store.record("bob", "job-1", ThingId("thing-9"), listOf(manual))
 
     store.forget("alice", "job-1")
 
@@ -59,8 +60,8 @@ class AiJobDocumentStoreTest {
 
   @Test
   fun `forgets the named documents of a job, and keeps its others`() = runTest {
-    store.record("alice", "picked", "thing-1", listOf(manual, bulletin))
-    store.record("alice", "job-2", "thing-1", listOf(manual))
+    store.record("alice", "picked", ThingId("thing-1"), listOf(manual, bulletin))
+    store.record("alice", "job-2", ThingId("thing-1"), listOf(manual))
 
     store.forget("alice", "picked", listOf(manual.id))
 
@@ -77,7 +78,7 @@ class AiJobDocumentStoreTest {
     WingsLogDatabase.Schema.synchronous().migrate(old, 8, 9)
 
     val migrated = AiJobDocumentStore(createWingsLogDatabase(old))
-    migrated.record("alice", "job-1", "thing-1", listOf(manual))
+    migrated.record("alice", "job-1", ThingId("thing-1"), listOf(manual))
     assertThat(migrated.forJob("alice", "job-1")).hasSize(1)
   }
 }

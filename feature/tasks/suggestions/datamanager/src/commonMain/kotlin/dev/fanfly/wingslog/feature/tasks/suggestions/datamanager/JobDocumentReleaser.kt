@@ -134,7 +134,7 @@ class JobDocumentReleaser(
   ) {
     if (documents.isEmpty()) return
     val uid = currentUid() ?: return
-    store.record(uid, jobId.value, thingId.value, documents)
+    store.record(uid, jobId.value, thingId, documents)
     forgetPicked(uid, documents)
   }
 
@@ -190,7 +190,7 @@ class JobDocumentReleaser(
   private suspend fun hold(thingId: ThingId, document: Attachment) {
     heldHere.update { it + document.id }
     val uid = currentUid() ?: return
-    store.record(uid, PICKED, thingId.value, listOf(document))
+    store.record(uid, PICKED, thingId, listOf(document))
   }
 
   private suspend fun letGoNow(documents: List<Attachment>) {

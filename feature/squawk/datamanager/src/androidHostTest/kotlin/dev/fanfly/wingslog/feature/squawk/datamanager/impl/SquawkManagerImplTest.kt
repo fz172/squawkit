@@ -42,7 +42,7 @@ class SquawkManagerImplTest {
   private lateinit var manager: SquawkManager
 
   private val testScope =
-    EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
+    EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING)
 
   @Before
   fun setUp() {
@@ -299,11 +299,11 @@ private class FakeScopeResolver(private val auth: FirebaseAuth) :
   ThingScopeResolver {
   override fun resolve(thingId: ThingId): Flow<EntityScope?> =
     auth.authStateChanged.map { user ->
-      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId.value_) }
+      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId) }
     }
 
   override suspend fun resolveNow(thingId: ThingId): EntityScope {
     val uid = auth.currentUser?.uid ?: error("Not signed in")
-    return EntityScope.thingChildUnsafe(uid, thingId.value_)
+    return EntityScope.thingChildUnsafe(uid, thingId)
   }
 }

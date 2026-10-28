@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.datetime.LocalDate
 
 /**
@@ -15,7 +16,7 @@ sealed interface ExportUiState {
    */
   data class Configuring(
     val things: List<ThingSelectionRow> = emptyList(),
-    val selectedThingIds: Set<String> = emptySet(),
+    val selectedThingIds: Set<ThingId> = emptySet(),
     val formats: Set<ExportFormat> = ExportFormat.ALL,
     val dateRange: DateRangeOption = DateRangeOption.AllTime,
     val customStart: LocalDate,

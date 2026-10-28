@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.MeterRule
@@ -57,7 +58,7 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
-        thingIds = listOf(bundle.thing.id),
+        thingIds = listOf(ThingId(bundle.thing.id)),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -190,7 +191,7 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0.260520.1 (365)",
     ).buildEntries(
       request = ExportRequest(
-        thingIds = listOf(bundle.thing.id),
+        thingIds = listOf(ThingId(bundle.thing.id)),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -274,7 +275,7 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0.260520.2 (366)",
     ).buildEntries(
       request = ExportRequest(
-        thingIds = listOf(bundle.thing.id),
+        thingIds = listOf(ThingId(bundle.thing.id)),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -328,7 +329,7 @@ class LogbookExportArchiveBuilderTest {
         templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       ).buildEntries(
         request = ExportRequest(
-          thingIds = listOf(bundle.thing.id),
+          thingIds = listOf(ThingId(bundle.thing.id)),
           dateRange = ExportDateRange.AllTime,
           includeOpenSquawks = true,
           formats = setOf(ExportFormat.CSV),
@@ -388,7 +389,7 @@ class LogbookExportArchiveBuilderTest {
       templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
     ).buildEntries(
       request = ExportRequest(
-        thingIds = listOf(firstBundle.thing.id, secondBundle.thing.id),
+        thingIds = listOf(ThingId(firstBundle.thing.id), ThingId(secondBundle.thing.id)),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -507,7 +508,7 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
-        thingIds = listOf(bundle.thing.id),
+        thingIds = listOf(ThingId(bundle.thing.id)),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -549,7 +550,7 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
-        thingIds = listOf(bundle.thing.id),
+        thingIds = listOf(ThingId(bundle.thing.id)),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -599,7 +600,7 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0 (1)",
     ).buildEntries(
       request = ExportRequest(
-        thingIds = listOf(bundle.thing.id),
+        thingIds = listOf(ThingId(bundle.thing.id)),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),

@@ -51,7 +51,7 @@ import kotlin.time.Instant
 class DataLogManagerImplTest {
 
   private val thingId = ThingId("thing-1")
-  private val scope = EntityScope.thingChildUnsafe("host-uid", "thing-1")
+  private val scope = EntityScope.thingChildUnsafe("host-uid", thingId)
   private val blobId = BlobId("blob-1")
 
   private lateinit var store: EntityStore<DataLog>

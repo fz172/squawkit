@@ -4,6 +4,7 @@ import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -12,6 +13,7 @@ import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.flow.first
 
@@ -66,7 +68,7 @@ class SharedScopeJanitor(
         hostUidFromRoot(row.scope_path)?.let { host ->
           SharedThingRef(
             host,
-            row.id
+            ThingId(row.id),
           )
         }
       }
@@ -93,19 +95,19 @@ class SharedScopeJanitor(
     // Read the cached blob ids before the rows go: this is a read, and it must happen outside the
     // write lock below because purgeLocal takes that same (non-reentrant) lock itself.
     val cachedBlobs = toPurge.associateWith { (hostUid, thingId) ->
-      blobs?.idsInScopePrefix("/users/$hostUid/thing/$thingId/%")
+      blobs?.idsInScopePrefix("/users/$hostUid/thing/${thingId.value}/%")
         .orEmpty()
     }
 
     writeLock.withLock {
       for ((hostUid, thingId) in toPurge) {
-        val nestedPrefix = "/users/$hostUid/thing/$thingId/%"
+        val nestedPrefix = "/users/$hostUid/thing/${thingId.value}/%"
         db.schemaQueries.deleteEntitiesInScopePrefix(nestedPrefix) // logs/tasks/squawks/overview
         db.schemaQueries.deleteEntity(
           CollectionKind.Thing,
           EntityScope.userRoot(hostUid)
             .toPath(),
-          thingId, // the thing doc itself
+          thingId.value, // the thing doc itself
         )
         db.schemaQueries.deleteCursorsInScopePrefix(nestedPrefix)
         log.i { "purged a revoked shared aircraft" }
@@ -153,12 +155,12 @@ class SharedScopeJanitor(
   private suspend fun wasPulledAsShare(
     memberUid: String,
     hostUid: String,
-    thingId: String,
+    thingId: ThingId,
   ): Boolean =
     db.schemaQueries
       .countCursorsInScopePrefix(
         uid = memberUid,
-        scopePrefix = "/users/$hostUid/thing/$thingId/%",
+        scopePrefix = "/users/$hostUid/thing/${thingId.value}/%",
       )
       .awaitAsOne() > 0
 
@@ -167,23 +169,23 @@ class SharedScopeJanitor(
    * (`/users/{host}/thing/{acId}/%`) and the thing doc itself, which is a row *at* the host's
    * root — a co-owner's edit to the thing lives there, and missing it would under-report the loss.
    */
-  private suspend fun dirtyCountFor(hostUid: String, thingId: String): Int {
+  private suspend fun dirtyCountFor(hostUid: String, thingId: ThingId): Int {
     val nested = db.schemaQueries
-      .countDirtyInScope("/users/$hostUid/thing/$thingId/%")
+      .countDirtyInScope("/users/$hostUid/thing/${thingId.value}/%")
       .awaitAsOne()
     val doc = db.schemaQueries
       .selectOne(
         CollectionKind.Thing,
         EntityScope.userRoot(hostUid)
           .toPath(),
-        thingId,
+        thingId.value,
       )
       .awaitAsOneOrNull()
     val docDirty = if (doc != null && isDirty(hostUid, thingId)) 1 else 0
     return nested.toInt() + docDirty
   }
 
-  private suspend fun isDirty(hostUid: String, thingId: String): Boolean =
+  private suspend fun isDirty(hostUid: String, thingId: ThingId): Boolean =
     db.schemaQueries
       .selectDirtyInScope(
         scopePrefix = EntityScope.userRoot(hostUid)
@@ -191,15 +193,15 @@ class SharedScopeJanitor(
         limit = DIRTY_PROBE_LIMIT,
       )
       .awaitAsList()
-      .any { it.collection == CollectionKind.Thing && it.id == thingId }
+      .any { it.collection == CollectionKind.Thing && it.id == thingId.value }
 
   /** Tail number if we can still read it; a generic label otherwise (the notice must still be sent). */
   private suspend fun thingLabel(
     hostUid: String,
-    thingId: String
+    thingId: ThingId
   ): String {
     val tail = thingStore
-      ?.observe(thingId, EntityScope.userRoot(hostUid))
+      ?.observe(thingId.value, EntityScope.userRoot(hostUid))
       ?.first()
       ?.value
       ?.specValue(SpecKeys.TAIL_NUMBER)

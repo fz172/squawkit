@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -77,7 +78,7 @@ class AttachmentExportResolverTest {
 
   private fun blobRef(id: String) = BlobRef(
     id = BlobId(id),
-    scope = EntityScope.thingChildUnsafe("uid", "ac1"),
+    scope = EntityScope.thingChildUnsafe("uid", ThingId("ac1")),
     relativePath = "blobs/$id.bin",
     sizeBytes = 3L,
     sha256 = "sha",

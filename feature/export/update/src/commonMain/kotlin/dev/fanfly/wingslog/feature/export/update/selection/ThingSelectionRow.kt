@@ -1,10 +1,12 @@
 package dev.fanfly.wingslog.feature.export.update.selection
 
+import dev.fanfly.wingslog.id.ThingId
+
 /**
  * Display-ready thing row used by the export picker.
  */
 data class ThingSelectionRow(
-  val thingId: String,
+  val thingId: ThingId,
   /**
    * What to call this Thing, and what to say underneath.
    *

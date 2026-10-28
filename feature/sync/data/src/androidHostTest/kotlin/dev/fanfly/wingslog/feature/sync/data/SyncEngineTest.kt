@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
@@ -15,6 +16,7 @@ import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -40,7 +42,7 @@ import kotlin.time.Instant
 
 private const val MEMBER = "member-eng-001"
 private const val HOST = "host-eng-001"
-private const val SHARED_AC = "ac-shared-eng"
+private val SHARED_AC = ThingId("ac-shared-eng")
 
 /**
  * Engine-level behaviours of the shared-thing sync path (docs/sharing §10). The per-scope
@@ -117,7 +119,7 @@ class SyncEngineTest {
     assertThat(pull.active.value).contains(sharedDocKey)
 
     // The share ends: the ref tombstone lands locally, dropping it from the live-refs set.
-    refStore().delete(SHARED_AC, EntityScope.userRoot(MEMBER))
+    refStore().delete(SHARED_AC.value, EntityScope.userRoot(MEMBER))
     testScheduler.advanceUntilIdle()
 
     assertThat(pull.active.value).doesNotContain(sharedDocKey)
@@ -131,7 +133,11 @@ class SyncEngineTest {
     runTest(ioContext) {
       seedRef()
       // Local copy of the shared thing (doc + nested log) that must be purged once revoked.
-      seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
+      seedEntity(
+        CollectionKind.Thing,
+        EntityScope.userRoot(HOST),
+        SHARED_AC.value
+      )
       seedEntity(
         CollectionKind.MaintenanceLog,
         EntityScope.thingChildUnsafe(HOST, SHARED_AC),
@@ -176,7 +182,11 @@ class SyncEngineTest {
   fun permissionDenied_butRefStillLive_keepsTheShareAndBanners() =
     runTest(ioContext) {
       seedRef()
-      seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
+      seedEntity(
+        CollectionKind.Thing,
+        EntityScope.userRoot(HOST),
+        SHARED_AC.value
+      )
       seedSharedCursor()
       // The server still says we are a member; only the host-tree read is denied.
       pull.singleDocs[
@@ -184,7 +194,7 @@ class SyncEngineTest {
           CollectionKind.SharedAircraftRef,
           EntityScope.userRoot(MEMBER)
             .toPath(),
-          SHARED_AC,
+          SHARED_AC.value,
         ),
       ] = liveRefEntity()
       pull.denyScopes += EntityScope.userRoot(HOST)
@@ -212,14 +222,18 @@ class SyncEngineTest {
   @Test
   fun permissionDenied_withTombstonedRef_revokesLocally() = runTest(ioContext) {
     seedRef()
-    seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
+    seedEntity(
+      CollectionKind.Thing,
+      EntityScope.userRoot(HOST),
+      SHARED_AC.value
+    )
     seedSharedCursor()
     pull.singleDocs[
       Triple(
         CollectionKind.SharedAircraftRef,
         EntityScope.userRoot(MEMBER)
           .toPath(),
-        SHARED_AC,
+        SHARED_AC.value,
       ),
     ] = liveRefEntity(deleted = true)
     pull.denyScopes += EntityScope.userRoot(HOST)
@@ -248,7 +262,7 @@ class SyncEngineTest {
     // A member's own pending upload, and one on the shared thing (host's tree). The old
     // own-tree-only scan (`/users/{member}/%`) would have found the first and stranded the second.
     seedPendingUpload(
-      EntityScope.thingChildUnsafe(MEMBER, "ac-own"),
+      EntityScope.thingChildUnsafe(MEMBER, ThingId("ac-own")),
       "blob-own"
     )
     seedPendingUpload(
@@ -258,7 +272,7 @@ class SyncEngineTest {
     // A pending blob in an unrelated user's tree that is NOT a share of ours must stay untouched —
     // scanning it would push it under our auth (PERMISSION_DENIED). Guards against over-widening.
     seedPendingUpload(
-      EntityScope.thingChildUnsafe("stranger-uid", "ac-x"),
+      EntityScope.thingChildUnsafe("stranger-uid", ThingId("ac-x")),
       "blob-foreign"
     )
     val scheduler = FakeUploadScheduler()
@@ -351,8 +365,8 @@ class SyncEngineTest {
 
   private suspend fun seedRef() {
     refStore().put(
-      SHARED_AC,
-      SharedAircraftRef(aircraft_id = SHARED_AC, host_uid = HOST),
+      SHARED_AC.value,
+      SharedAircraftRef(aircraft_id = SHARED_AC.value, host_uid = HOST),
       EntityScope.userRoot(MEMBER),
     )
   }
@@ -411,7 +425,7 @@ class SyncEngineTest {
       .executeAsList()
 
   private fun liveRefEntity(deleted: Boolean = false) = RemoteEntity(
-    id = SHARED_AC,
+    id = SHARED_AC.value,
     payload = byteArrayOf(0x01),
     deleted = deleted,
     remoteTsMs = 2000L,

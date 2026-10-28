@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
@@ -19,7 +20,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 private const val TEST_USER_ID = "test-user-123"
-private const val TEST_THING_ID = "thing-abc"
+private val TEST_THING_ID = ThingId("thing-abc")
 private const val TEST_SHA256 =
   "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 
