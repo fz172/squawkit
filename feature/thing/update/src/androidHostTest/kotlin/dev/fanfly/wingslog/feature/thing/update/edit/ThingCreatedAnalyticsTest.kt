@@ -145,7 +145,7 @@ class ThingCreatedAnalyticsTest {
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.isSaved).isTrue()
-    assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
+    assertThat(vm.uiState.value.createdThingId).isEqualTo(ThingId("thing-new"))
   }
 
   @Test

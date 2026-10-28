@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.developeroptions.stresstest
 import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.technician.FAA_AMT
 import dev.fanfly.wingslog.core.model.technician.FAA_REPAIRMAN
 import dev.fanfly.wingslog.core.template.MeterKeys
@@ -60,7 +61,7 @@ object FakeDataGenerator {
     val startInstant = now - spanDays
 
     val spec = SampleNames.THING_SPECS.random()
-    val thingId = generateRandomId()
+    val thingId = ThingId(generateRandomId())
     val template =
       CanonicalTemplates.ALL.firstOrNull { it.id == config.templateId }
         ?: AirplaneTemplate.TEMPLATE
@@ -118,7 +119,7 @@ object FakeDataGenerator {
 
   private fun buildThing(
     spec: SampleNames.ThingSpec,
-    thingId: String,
+    thingId: ThingId,
     engineCount: Int,
     bladesPerEngine: Int,
   ): Thing {
@@ -155,7 +156,7 @@ object FakeDataGenerator {
     }
 
     return Thing(
-      id = thingId,
+      id = thingId.value,
       name = tailNumber,
       spec = listOf(
         Spec(key = SpecKeys.MAKE, value_ = spec.make),
@@ -180,13 +181,13 @@ object FakeDataGenerator {
    */
   private fun buildFromTemplate(
     template: ThingTemplate,
-    thingId: String
+    thingId: ThingId,
   ): Thing {
     val spec = template.spec_fields.map { field ->
       Spec(key = field.key, value_ = sampleSpecValue(field.key, field.label))
     }
     return Thing(
-      id = thingId,
+      id = thingId.value,
       // Set explicitly: ThingInflater derives a name from the title candidate or make/model, none
       // of which a home declares — so without this a fake house would arrive nameless.
       name = sampleName(template, spec),

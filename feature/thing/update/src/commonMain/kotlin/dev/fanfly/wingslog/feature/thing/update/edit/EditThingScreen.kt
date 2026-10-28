@@ -33,6 +33,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -106,7 +107,7 @@ fun EditThingScreen(
     uiState.createdThingId?.let { id ->
       navController.previousBackStackEntry?.savedStateHandle?.set(
         Screen.CROSS_SCREEN_SELECT_THING_ID,
-        id,
+        id.value,
       )
     }
     when {
