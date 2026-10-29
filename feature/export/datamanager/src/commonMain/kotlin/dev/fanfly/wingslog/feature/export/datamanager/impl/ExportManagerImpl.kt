@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.file.ZipFileWriter
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
@@ -16,6 +17,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.id.ExportId
 import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
@@ -138,7 +140,7 @@ class ExportManagerImpl(
     }
     emit(
       ExportProgress.Success(
-        exportId = remoteRecord.export_id,
+        exportId = ExportId(remoteRecord.export_id),
         filePath = saved.filePath,
         fileName = saved.fileName,
         // Left blank so the UI renders the localized label from displayLocationKind.
@@ -163,13 +165,13 @@ class ExportManagerImpl(
     }
   }
 
-  override suspend fun deleteExport(exportId: String): Boolean {
+  override suspend fun deleteExport(exportId: ExportId): Boolean {
     val ownerUid = currentOwnerUid()
     val localRecord = ownerUid
       ?.let { exportFileStore.listExports(it) }
-      ?.firstOrNull { it.export_id == exportId }
+      ?.firstOrNull { it.export_id == exportId.value }
     val remoteRecord = remoteRepository.listRemoteRecords()
-      .firstOrNull { it.export_id == exportId }
+      .firstOrNull { it.export_id == exportId.value }
 
     if (remoteRecord != null && !remoteRepository.deleteExport(
         exportId,
@@ -186,8 +188,8 @@ class ExportManagerImpl(
     }
   }
 
-  override suspend fun retryDelivery(exportId: String): ExportDeliveryOutcome {
-    val record = listExports().firstOrNull { it.export_id == exportId }
+  override suspend fun retryDelivery(exportId: ExportId): ExportDeliveryOutcome {
+    val record = listExports().firstOrNull { it.export_id == exportId.value }
       ?: return ExportDeliveryOutcome.Failed()
     if (record.persisted_delivery_state != ExportDeliveryStates.FAILED) return ExportDeliveryOutcome.Failed()
     if (record.remote_archive_ref.isBlank() || record.destination_email.isBlank()) {
@@ -197,14 +199,14 @@ class ExportManagerImpl(
       deliveryBackend.requestExportDelivery(exportId)
         .toOutcome()
     }.getOrElse { error ->
-      log.w(error) { "export delivery retry failed for $exportId" }
+      log.w(error) { "export delivery retry failed for ${exportId.value}" }
       ExportDeliveryOutcome.Failed(error.message.orEmpty())
     }
   }
 
-  override suspend fun resendDelivery(exportId: String): ExportDeliveryOutcome {
+  override suspend fun resendDelivery(exportId: ExportId): ExportDeliveryOutcome {
     val record =
-      listExports().firstOrNull { it.export_id == exportId }
+      listExports().firstOrNull { it.export_id == exportId.value }
         ?: return ExportDeliveryOutcome.Failed()
     // Reuse the archive already in remote storage; never regenerate or re-upload a local file.
     if (record.remote_archive_ref.isBlank() || record.destination_email.isBlank()) {
@@ -215,7 +217,7 @@ class ExportManagerImpl(
       deliveryBackend.requestExportDelivery(exportId, forceResend = true)
         .toOutcome()
     }.getOrElse { error ->
-      log.w(error) { "export delivery resend failed for $exportId" }
+      log.w(error) { "export delivery resend failed for ${exportId.value}" }
       ExportDeliveryOutcome.Failed(error.message.orEmpty())
     }
   }
@@ -244,16 +246,16 @@ class ExportManagerImpl(
         }
     }
 
-  override suspend fun saveToDevice(exportId: String): Boolean {
+  override suspend fun saveToDevice(exportId: ExportId): Boolean {
     val ownerUid = currentOwnerUid() ?: return false
     // Already on device (local record carries a file path)? Nothing to download.
     val local = exportFileStore.listExports(ownerUid)
-      .firstOrNull { it.export_id == exportId }
+      .firstOrNull { it.export_id == exportId.value }
     if (local != null && local.file_path.isNotBlank()) return true
 
     val remote =
       remoteRepository.listRemoteRecords()
-        .firstOrNull { it.export_id == exportId } ?: return false
+        .firstOrNull { it.export_id == exportId.value } ?: return false
     if (remote.remote_archive_ref.isBlank()) return false
 
     val bytes = remoteRepository.downloadArchive(remote.remote_archive_ref)
@@ -272,10 +274,10 @@ class ExportManagerImpl(
     return true
   }
 
-  override suspend fun downloadArchiveBytes(exportId: String): ByteArray? {
+  override suspend fun downloadArchiveBytes(exportId: ExportId): ByteArray? {
     val ownerUid = currentOwnerUid()
     val local = ownerUid?.let { exportFileStore.listExports(it) }
-      ?.firstOrNull { it.export_id == exportId }
+      ?.firstOrNull { it.export_id == exportId.value }
     local?.file_path
       ?.takeIf { it.isNotBlank() }
       ?.let { path ->
@@ -285,7 +287,7 @@ class ExportManagerImpl(
 
     val remoteRef = local?.remote_archive_ref?.takeIf { it.isNotBlank() }
       ?: remoteRepository.listRemoteRecords()
-        .firstOrNull { it.export_id == exportId }
+        .firstOrNull { it.export_id == exportId.value }
         ?.remote_archive_ref
         ?.takeIf { it.isNotBlank() }
     return remoteRef?.let { remoteRepository.downloadArchive(it) }

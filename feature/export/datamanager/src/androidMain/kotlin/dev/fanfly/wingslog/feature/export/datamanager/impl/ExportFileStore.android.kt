@@ -6,8 +6,10 @@ import android.content.Context
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.net.toUri
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.id.ExportId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -85,11 +87,11 @@ actual class ExportFileStore(private val context: Context) {
       reconciled
     }
 
-  actual suspend fun deleteExport(ownerUid: String, exportId: String): Boolean =
+  actual suspend fun deleteExport(ownerUid: String, exportId: ExportId): Boolean =
     withContext(Dispatchers.IO) {
       val reconciled =
         ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
-      val record = reconciled.firstOrNull { it.export_id == exportId }
+      val record = reconciled.firstOrNull { it.export_id == exportId.value }
       if (record == null) return@withContext false
 
       val removed = record.file_path.takeIf { it.isNotBlank() }

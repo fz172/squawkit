@@ -2,9 +2,11 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.firebase.data.toFirebaseData
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
 import dev.fanfly.wingslog.export.ExportRecordDateRange
+import dev.fanfly.wingslog.id.ExportId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.storage.FirebaseStorage
@@ -94,7 +96,7 @@ class ExportHistoryRemoteRepository(
   }
 
   suspend fun deleteExport(
-    exportId: String,
+    exportId: ExportId,
     remoteArchiveRef: String
   ): Boolean {
     val user = auth.currentUser ?: return false
@@ -104,10 +106,10 @@ class ExportHistoryRemoteRepository(
         storage.reference(remoteArchiveRef)
           .delete()
       }
-      document(user.uid, exportId).delete()
+      document(user.uid, exportId.value).delete()
       true
     }.getOrElse { error ->
-      log.w(error) { "remote export delete failed for $exportId" }
+      log.w(error) { "remote export delete failed for ${exportId.value}" }
       false
     }
   }

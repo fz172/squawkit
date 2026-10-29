@@ -33,6 +33,7 @@ import dev.fanfly.wingslog.core.ui.text.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.export.ExportRecord
+import dev.fanfly.wingslog.id.ExportId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.delete
@@ -46,7 +47,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 internal fun ExportHistoryCard(
   record: ExportRecord,
   canEmailDelivery: Boolean,
-  onDownloadExport: (exportId: String, filePath: String, fileName: String) -> Unit,
+  onDownloadExport: (exportId: ExportId, filePath: String, fileName: String) -> Unit,
   onResendDelivery: () -> Unit,
   onRetryDelivery: () -> Unit,
   onSaveToDevice: () -> Unit,
@@ -184,7 +185,7 @@ internal fun ExportHistoryCard(
         onRetryDelivery = onRetryDelivery,
         onDownload = {
           onDownloadExport(
-            record.export_id,
+            ExportId(record.export_id),
             record.file_path,
             record.file_name
           )

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.bar.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.layout.ConstrainedTopBar
 import dev.fanfly.wingslog.export.ExportRecord
+import dev.fanfly.wingslog.id.ExportId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_history_title
@@ -22,7 +23,7 @@ fun ExportHistoryScreen(
   state: ExportHistoryUiState,
   onNavigateBack: () -> Unit,
   onNew: () -> Unit,
-  onDownloadExport: (exportId: String, filePath: String, fileName: String) -> Unit,
+  onDownloadExport: (exportId: ExportId, filePath: String, fileName: String) -> Unit,
   onResendDelivery: (ExportRecord) -> Unit,
   onRetryDelivery: (ExportRecord) -> Unit,
   onSaveToDevice: (ExportRecord) -> Unit,

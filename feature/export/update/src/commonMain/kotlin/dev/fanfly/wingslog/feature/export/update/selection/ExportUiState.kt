@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
+import dev.fanfly.wingslog.id.ExportId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.datetime.LocalDate
 
@@ -42,7 +43,7 @@ sealed interface ExportUiState {
    * change once the user explicitly taps "Send to my email" on this screen.
    */
   data class Success(
-    val exportId: String,
+    val exportId: ExportId,
     val fileName: String,
     val displayLocation: String,
     val displayLocationKind: ExportDisplayLocation,
