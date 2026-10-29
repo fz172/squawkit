@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.thing.SpecField
 import io.mockk.every
 import io.mockk.mockk
@@ -41,7 +42,7 @@ class SpecNormalisationTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    every { currentTemplate.templateId } returns "airplane"
+    every { currentTemplate.templateId } returns TemplateId("airplane")
     every { currentTemplate.capabilities } returns
       MutableStateFlow(CurrentThingTemplate.ALL_ENABLED)
     every { fleetManager.observeFleetDashboard() } returns emptyFlow()

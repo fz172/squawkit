@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.tasks.update.form
 
 import dev.fanfly.wingslog.core.analytics.TaskOriginEdited
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.task.TaskOriginKind
 
@@ -10,7 +12,7 @@ import dev.fanfly.wingslog.task.TaskOriginKind
  * nothing the user sees. Curated tasks count as well as AI ones, so the two can be compared.
  */
 internal fun originEditOf(
-  templateId: String,
+  templateId: TemplateId,
   before: MaintenanceTask,
   after: MaintenanceTask
 ): TaskOriginEdited? {
@@ -30,7 +32,7 @@ internal fun originEditOf(
   }
   if (groups.isEmpty()) return null
   return TaskOriginEdited(
-    templateId = templateId,
+    templateId = templateId.value,
     originKind = kind.name.removePrefix("TASK_ORIGIN_KIND_")
       .lowercase(),
     fieldGroup = groups.joinToString("+"),

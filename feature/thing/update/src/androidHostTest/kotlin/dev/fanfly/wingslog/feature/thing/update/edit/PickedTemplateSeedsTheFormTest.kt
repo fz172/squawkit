@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.id.TemplateId
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +42,7 @@ class PickedTemplateSeedsTheFormTest {
   fun setUp() {
     Dispatchers.setMain(dispatcher)
     // The ambient selection is an airplane throughout — that is exactly what used to leak in.
-    every { currentTemplate.templateId } returns "airplane"
+    every { currentTemplate.templateId } returns TemplateId("airplane")
     every { currentTemplate.capabilities } returns
       MutableStateFlow(CurrentThingTemplate.ALL_ENABLED)
     every { fleetManager.observeFleetDashboard() } returns emptyFlow()

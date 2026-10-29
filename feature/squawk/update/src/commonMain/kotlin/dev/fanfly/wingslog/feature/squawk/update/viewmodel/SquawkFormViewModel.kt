@@ -308,7 +308,7 @@ class SquawkFormViewModel(
       _state.update { it.copy(isSaving = false) }
       result.onSuccess {
         if (isNewSquawk) {
-          analytics.log(DefectCreated(templateId = currentThingTemplate.templateId))
+          analytics.log(DefectCreated(templateId = currentThingTemplate.templateId.value))
         }
         _events.send(
           SquawkFormEvent.SaveSuccess(
@@ -346,7 +346,7 @@ class SquawkFormViewModel(
 
   private fun logQuickAction(action: QuickActionKind) = analytics.log(
     RecordQuickAction(
-      templateId = currentThingTemplate.templateId,
+      templateId = currentThingTemplate.templateId.value,
       surface = QuickActionSurface.SQUAWKS,
       action = action,
       source = QuickActionSource.FORM,

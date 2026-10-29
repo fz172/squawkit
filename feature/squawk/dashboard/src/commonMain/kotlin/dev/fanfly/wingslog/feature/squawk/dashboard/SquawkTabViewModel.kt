@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.analytics.RecordFilterApplied
 import dev.fanfly.wingslog.core.analytics.RecordSearch
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.ui.perf.SwitchTrace
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
@@ -19,6 +20,7 @@ import dev.fanfly.wingslog.feature.search.model.matchesById
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.SquawkAdapter
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,7 +43,7 @@ class SquawkTabViewModel(
   private val tuning: SearchTuning,
   private val analytics: AnalyticsManager,
   val thingId: ThingId,
-  private val templateId: String,
+  private val templateId: TemplateId,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
@@ -98,7 +100,7 @@ class SquawkTabViewModel(
     _filter.value = filter
     filter.changesFrom(previous)
       .forEach {
-        analytics.log(RecordFilterApplied(templateId, TAB, it.kind, it.value))
+        analytics.log(RecordFilterApplied(templateId.value, TAB, it.kind, it.value))
       }
   }
 
@@ -109,7 +111,7 @@ class SquawkTabViewModel(
     lastLoggedQuery = query
     analytics.log(
       RecordSearch(
-        templateId,
+        templateId.value,
         TAB,
         query.length,
         hits.size,

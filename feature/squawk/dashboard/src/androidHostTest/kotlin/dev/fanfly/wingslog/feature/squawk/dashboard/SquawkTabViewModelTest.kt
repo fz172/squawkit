@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -99,7 +100,7 @@ class SquawkTabViewModelTest {
     SearchTuning(0, Dispatchers.Unconfined),
     analytics,
     THING,
-    "airplane",
+    TemplateId("airplane"),
     fixedClock,
     TimeZone.UTC,
   )
@@ -153,7 +154,7 @@ class SquawkTabViewModelTest {
       SearchTuning(150, StandardTestDispatcher(testScheduler)),
       analytics,
       THING,
-      "airplane",
+      TemplateId("airplane"),
       fixedClock,
       TimeZone.UTC,
     )

@@ -55,6 +55,7 @@ import dev.fanfly.wingslog.feature.squawk.viewing.statusTier
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.first
 import org.koin.compose.koinInject
@@ -82,7 +83,7 @@ fun SquawkTab(
   SwitchTrace.step("SquawkTab composing")
   var showClosed by rememberSaveable { mutableStateOf(false) }
   val adsManager: AdsManager = koinInject()
-  val templateId = LocalThingTemplate.current?.id.orEmpty()
+  val templateId = TemplateId(LocalThingTemplate.current?.id.orEmpty())
   val tabViewModel: SquawkTabViewModel =
     koinViewModel(
       key = "squawks:${thingId.value}",

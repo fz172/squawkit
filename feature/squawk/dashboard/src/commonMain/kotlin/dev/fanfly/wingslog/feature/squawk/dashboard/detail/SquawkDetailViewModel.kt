@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.analytics.QuickActionSource
 import dev.fanfly.wingslog.core.analytics.QuickActionSurface
 import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.squawkNoun
@@ -21,6 +22,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.SquawkDismissReason
@@ -56,7 +58,7 @@ class SquawkDetailViewModel(
   private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
   val thingId: ThingId,
-  private val templateId: String,
+  private val templateId: TemplateId,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(SquawkDetailUiState())
@@ -235,7 +237,7 @@ class SquawkDetailViewModel(
   private fun logQuickAction(action: QuickActionKind) {
     analytics.log(
       RecordQuickAction(
-        templateId = templateId,
+        templateId = templateId.value,
         surface = QuickActionSurface.SQUAWKS,
         action = action,
         source = QuickActionSource.SWIPE,
@@ -244,6 +246,6 @@ class SquawkDetailViewModel(
   }
 
   private fun squawkWord(): String = LexiconFormatter.sentenceCase(
-    templateRegistry.lexiconFor(templateRegistry.canonicalById(templateId)).squawkNoun
+    templateRegistry.lexiconFor(templateRegistry.canonicalById(templateId.value)).squawkNoun
   )
 }

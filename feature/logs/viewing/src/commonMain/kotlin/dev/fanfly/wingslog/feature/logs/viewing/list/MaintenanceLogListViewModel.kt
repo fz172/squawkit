@@ -33,6 +33,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
@@ -69,7 +70,7 @@ class MaintenanceLogListViewModel(
   private val analytics: AnalyticsManager,
   private val templateRegistry: TemplateRegistry,
   val thingId: ThingId,
-  private val templateId: String,
+  private val templateId: TemplateId,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
@@ -269,7 +270,7 @@ class MaintenanceLogListViewModel(
     _filter.value = next
     next.changesFrom(previous)
       .forEach {
-        analytics.log(RecordFilterApplied(templateId, TAB, it.kind, it.value))
+        analytics.log(RecordFilterApplied(templateId.value, TAB, it.kind, it.value))
       }
   }
 
@@ -281,7 +282,7 @@ class MaintenanceLogListViewModel(
     lastLoggedQuery = query
     analytics.log(
       RecordSearch(
-        templateId,
+        templateId.value,
         TAB,
         query.length,
         hits.size,
@@ -336,7 +337,7 @@ class MaintenanceLogListViewModel(
         .onSuccess {
           analytics.log(
             RecordQuickAction(
-              templateId = templateId,
+              templateId = templateId.value,
               surface = QuickActionSurface.LOGS,
               action = QuickActionKind.DELETE,
               source = QuickActionSource.SWIPE,
@@ -362,7 +363,7 @@ class MaintenanceLogListViewModel(
 
   /** The word this build names a log with — the lexicon's, never a hard-coded "log" (R24). */
   private fun logWord(): String = LexiconFormatter.sentenceCase(
-    templateRegistry.lexiconFor(templateRegistry.canonicalById(templateId)).logNoun
+    templateRegistry.lexiconFor(templateRegistry.canonicalById(templateId.value)).logNoun
   )
 
   private sealed interface LogsLoadState {
