@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.TechnicianId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 
 sealed class Screen(val route: String) {
@@ -58,8 +59,8 @@ sealed class Screen(val route: String) {
    * absent, the form falls back the way it always did (#738).
    */
   data object AddThing : Screen("add_thing?$TEMPLATE_ID={$TEMPLATE_ID}") {
-    fun createRoute(templateId: String? = null) =
-      if (templateId.isNullOrEmpty()) "add_thing" else "add_thing?$TEMPLATE_ID=$templateId"
+    fun createRoute(templateId: TemplateId? = null) =
+      if (templateId == null || templateId.value.isEmpty()) "add_thing" else "add_thing?$TEMPLATE_ID=${templateId.value}"
   }
 
   /**

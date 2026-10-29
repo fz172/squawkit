@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -99,7 +100,7 @@ class MaintenanceLogListDeleteTest {
     analytics = analytics,
     templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
     thingId = THING,
-    templateId = "airplane",
+    templateId = TemplateId("airplane"),
     clock = fixedClock,
     timeZone = TimeZone.UTC,
   )

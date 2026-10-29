@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.ui.popup.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -40,7 +41,7 @@ import wingslog.feature.thing.update.generated.resources.Res as ThingRes
 @Composable
 fun PickThingTypeSheet(
   onDismiss: () -> Unit,
-  onPick: (String) -> Unit,
+  onPick: (TemplateId) -> Unit,
   registry: TemplateRegistry = koinInject<TemplateRegistry>(),
 ) {
   PickThingTypeSheetContent(
@@ -55,7 +56,7 @@ fun PickThingTypeSheet(
 internal fun PickThingTypeSheetContent(
   templates: List<ThingTemplate>,
   onDismiss: () -> Unit,
-  onPick: (String) -> Unit,
+  onPick: (TemplateId) -> Unit,
 ) {
   ModalBottomSheet(
     onDismissRequest = onDismiss,
@@ -93,7 +94,7 @@ internal fun PickThingTypeSheetContent(
             row.forEach { template ->
               ThingTypeCard(
                 template = template,
-                onClick = { onPick(template.id) },
+                onClick = { onPick(TemplateId(template.id)) },
                 modifier = Modifier.weight(1f),
               )
             }

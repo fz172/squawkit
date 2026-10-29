@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -74,7 +76,7 @@ class CurrentThingTemplate(private val registry: TemplateRegistry) {
    * [UNKNOWN_TEMPLATE_ID] rather than an empty string when no single template applies, so the gap is
    * legible in a GA4 report instead of vanishing into a blank dimension.
    */
-  val templateId: String get() = _template.value?.id ?: UNKNOWN_TEMPLATE_ID
+  val templateId: TemplateId get() = TemplateId(_template.value?.id ?: UNKNOWN_TEMPLATE_ID.value)
 
   fun set(value: ThingTemplate) = publish(value)
 
@@ -108,7 +110,7 @@ class CurrentThingTemplate(private val registry: TemplateRegistry) {
 
   companion object {
     /** `template_id` when no single template applies — never an empty dimension in GA4. */
-    const val UNKNOWN_TEMPLATE_ID = "unknown"
+    val UNKNOWN_TEMPLATE_ID = TemplateId("unknown")
 
     /**
      * The fail-open default, public so each gate's own tests can assert it removes nothing.

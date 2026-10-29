@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
@@ -71,7 +72,7 @@ class SquawkDetailViewModelTest {
     templateRegistry = BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
     analytics = analytics,
     thingId = THING,
-    templateId = AirplaneTemplate.TEMPLATE.id,
+    templateId = TemplateId(AirplaneTemplate.TEMPLATE.id),
   )
 
   @Test

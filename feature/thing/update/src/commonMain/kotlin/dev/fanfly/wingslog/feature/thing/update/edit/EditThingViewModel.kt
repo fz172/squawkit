@@ -196,7 +196,7 @@ class EditThingViewModel(
           analytics.log(
             ThingCreated(
               templateId = written.template?.id
-                ?: currentThingTemplate.templateId,
+                ?: currentThingTemplate.templateId.value,
               source = SOURCE_FORM
             )
           )

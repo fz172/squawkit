@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.update.form
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.InspectionRule
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -30,7 +31,7 @@ class OriginEditTest {
       )
     )
 
-    val event = originEditOf("car", before, after)!!
+    val event = originEditOf(TemplateId("car"), before, after)!!
 
     assertThat(event.originKind).isEqualTo("ai_thing")
     assertThat(event.fieldGroup).isEqualTo("schedule")
@@ -46,7 +47,7 @@ class OriginEditTest {
       rules = emptyList(),
     )
 
-    val event = originEditOf("car", before, after)!!
+    val event = originEditOf(TemplateId("car"), before, after)!!
 
     assertThat(event.originKind).isEqualTo("pre_curated")
     assertThat(event.fieldGroup).isEqualTo("details+schedule+compliance")
@@ -58,8 +59,8 @@ class OriginEditTest {
     val legacy = task(null)
     val ai = task(TaskOriginKind.TASK_ORIGIN_KIND_AI_DOCUMENT)
 
-    assertThat(originEditOf("car", user, user.copy(title = "x"))).isNull()
-    assertThat(originEditOf("car", legacy, legacy.copy(title = "x"))).isNull()
-    assertThat(originEditOf("car", ai, ai)).isNull()
+    assertThat(originEditOf(TemplateId("car"), user, user.copy(title = "x"))).isNull()
+    assertThat(originEditOf(TemplateId("car"), legacy, legacy.copy(title = "x"))).isNull()
+    assertThat(originEditOf(TemplateId("car"), ai, ai)).isNull()
   }
 }

@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.DataLogOpened
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogSeries
@@ -283,7 +284,7 @@ class DataLogViewerViewModel(
           // counted as a view. A retry logs again, which is what "opened" means here.
           analytics.log(
             DataLogOpened(
-              templateId = templates.templateId,
+              templateId = templates.templateId.value,
               durationSeconds = current.duration_seconds,
               seriesCount = current.series.size,
             )

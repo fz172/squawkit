@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SquawkId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -44,7 +45,7 @@ fun LogsTab(
 ) {
   // Key by thingId: in the adaptive shell the switcher swaps thing within the same
   // composition site, so an unkeyed ViewModel would be reused and keep the previous thing's logs.
-  val templateId = LocalThingTemplate.current?.id.orEmpty()
+  val templateId = TemplateId(LocalThingTemplate.current?.id.orEmpty())
   val viewModel: MaintenanceLogListViewModel =
     koinViewModel(
       key = thingId.value,

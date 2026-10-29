@@ -257,7 +257,7 @@ class TaskViewModel(
 
   private fun logQuickAction(action: QuickActionKind) = analytics.log(
     RecordQuickAction(
-      templateId = currentThingTemplate.templateId,
+      templateId = currentThingTemplate.templateId.value,
       surface = QuickActionSurface.TASKS,
       action = action,
       source = QuickActionSource.FORM,

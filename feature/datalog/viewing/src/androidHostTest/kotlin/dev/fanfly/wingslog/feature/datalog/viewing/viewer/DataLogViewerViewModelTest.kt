@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
 import io.mockk.every
@@ -57,7 +58,7 @@ class DataLogViewerViewModelTest {
     layouts = mockk()
     analytics = RecordingAnalyticsManager()
     templates = mockk()
-    every { templates.templateId } returns "airplane"
+    every { templates.templateId } returns TemplateId("airplane")
     every { layouts.load(id) } answers { remembered }
     every { layouts.save(id, any()) } answers { remembered = secondArg() }
     every { manager.observeOne(thingId, id) } returns flowOf(record)

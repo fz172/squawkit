@@ -783,12 +783,12 @@ class MaintenanceLogFormViewModel(
               }
           }
           if (!isEditMode) {
-            analytics.log(LogCreated(templateId = currentThingTemplate.templateId))
+            analytics.log(LogCreated(templateId = currentThingTemplate.templateId.value))
           }
           // A task is "complied" by logging work against it, so the tasks this log closes out are
           // exactly the ones selected here — one event each, since §13 counts completions.
           repeat(state.selectedInspectionIds.size) {
-            analytics.log(TaskCompleted(templateId = currentThingTemplate.templateId))
+            analytics.log(TaskCompleted(templateId = currentThingTemplate.templateId.value))
           }
           _events.send(MaintenanceLogFormEvent.SaveSuccess)
         }
@@ -817,7 +817,7 @@ class MaintenanceLogFormViewModel(
         .onSuccess {
           analytics.log(
             RecordQuickAction(
-              templateId = currentThingTemplate.templateId,
+              templateId = currentThingTemplate.templateId.value,
               surface = QuickActionSurface.LOGS,
               action = QuickActionKind.DELETE,
               source = QuickActionSource.FORM,

@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.feature.datalog.model.NumericColumn
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -63,7 +64,7 @@ class DataLogListViewModelTest {
     auth = mockk()
     analytics = RecordingAnalyticsManager()
     templates = mockk()
-    every { templates.templateId } returns "airplane"
+    every { templates.templateId } returns TemplateId("airplane")
     signIn(anonymous = false)
   }
 

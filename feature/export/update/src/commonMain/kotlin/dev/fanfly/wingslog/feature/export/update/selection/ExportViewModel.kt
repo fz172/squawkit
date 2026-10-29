@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.ExportCompleted
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.displayLabel
@@ -262,7 +263,7 @@ class ExportViewModel(
           if (progress is ExportProgress.Success) {
             analytics.log(
               ExportCompleted(
-                templateId = currentThingTemplate.templateId,
+                templateId = currentThingTemplate.templateId.value,
                 format = request.formats.joinToString("+") { it.name.lowercase() },
                 thingCount = request.thingIds.size,
               )

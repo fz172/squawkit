@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -125,7 +126,7 @@ class MaintenanceLogListFilterTest {
     analytics = analytics,
     templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
     thingId = THING,
-    templateId = "airplane",
+    templateId = TemplateId("airplane"),
     clock = fixedClock,
     timeZone = TimeZone.UTC,
   )

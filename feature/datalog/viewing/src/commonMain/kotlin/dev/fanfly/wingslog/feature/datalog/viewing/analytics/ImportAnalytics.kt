@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.analytics.DataLogImportFailureReason
 import dev.fanfly.wingslog.core.analytics.DataLogImportSource
 import dev.fanfly.wingslog.core.analytics.DataLogImported
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
@@ -28,7 +29,7 @@ class DataLogImportTelemetry(
   fun imported(stored: DataLog, file: PickedFile) {
     analytics.log(
       DataLogImported(
-        templateId = templates.templateId,
+        templateId = templates.templateId.value,
         source = source,
         format = stored.source?.product.orEmpty(),
         durationSeconds = stored.duration_seconds,
@@ -41,7 +42,7 @@ class DataLogImportTelemetry(
   fun failed(reason: ImportFailure, file: PickedFile) {
     analytics.log(
       DataLogImportFailed(
-        templateId = templates.templateId,
+        templateId = templates.templateId.value,
         source = source,
         reason = reason.reportedAs,
         sizeBytes = file.sizeBytes,

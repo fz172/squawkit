@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.id.TemplateId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Spec
@@ -52,7 +53,7 @@ class ThingCreatedAnalyticsTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    every { template.templateId } returns "airplane"
+    every { template.templateId } returns TemplateId("airplane")
     every { template.capabilities } returns
       kotlinx.coroutines.flow.MutableStateFlow(CurrentThingTemplate.ALL_ENABLED)
     every { fleetManager.observeFleetDashboard() } returns emptyFlow()
