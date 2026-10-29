@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
@@ -690,7 +691,7 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-local"
     every { blobs.observe(BlobId(id)) } returns flowOf(buildBlobRef(remoteState = RemoteState.LocalOnly))
 
-    val status = manager.observeStatus(id)
+    val status = manager.observeStatus(AttachmentId(id))
       .first()
 
     assertThat(status).isEqualTo(AttachmentStatus.LocalOnly)
@@ -701,7 +702,7 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-uploading"
     every { blobs.observe(BlobId(id)) } returns flowOf(buildBlobRef(remoteState = RemoteState.Uploading))
 
-    val status = manager.observeStatus(id)
+    val status = manager.observeStatus(AttachmentId(id))
       .first()
 
     assertThat(status).isInstanceOf(AttachmentStatus.Uploading::class.java)
@@ -713,7 +714,7 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-synced"
     every { blobs.observe(BlobId(id)) } returns flowOf(buildBlobRef(remoteState = RemoteState.Synced))
 
-    val status = manager.observeStatus(id)
+    val status = manager.observeStatus(AttachmentId(id))
       .first()
 
     assertThat(status).isEqualTo(AttachmentStatus.Synced)
@@ -724,7 +725,7 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-remote"
     every { blobs.observe(BlobId(id)) } returns flowOf(buildBlobRef(remoteState = RemoteState.RemoteOnly))
 
-    val status = manager.observeStatus(id)
+    val status = manager.observeStatus(AttachmentId(id))
       .first()
 
     assertThat(status).isEqualTo(AttachmentStatus.RemoteOnly)
@@ -735,7 +736,7 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-unknown"
     every { blobs.observe(BlobId(id)) } returns flowOf(null)
 
-    val status = manager.observeStatus(id)
+    val status = manager.observeStatus(AttachmentId(id))
       .first()
 
     assertThat(status).isEqualTo(AttachmentStatus.RemoteOnly)

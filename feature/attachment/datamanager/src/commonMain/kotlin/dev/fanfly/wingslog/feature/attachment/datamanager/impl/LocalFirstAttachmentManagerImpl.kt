@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.EntityRef
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.blob.BlobId
@@ -22,6 +23,7 @@ import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.isFile
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
@@ -250,8 +252,8 @@ class LocalFirstAttachmentManagerImpl(
     }
   }
 
-  override fun observeStatus(attachmentId: String): Flow<AttachmentStatus> =
-    blobs.observe(BlobId(attachmentId))
+  override fun observeStatus(attachmentId: AttachmentId): Flow<AttachmentStatus> =
+    blobs.observe(BlobId(attachmentId.value))
       .map { ref ->
         when (ref?.remoteState) {
           null -> AttachmentStatus.RemoteOnly  // unknown id → treat as needing download

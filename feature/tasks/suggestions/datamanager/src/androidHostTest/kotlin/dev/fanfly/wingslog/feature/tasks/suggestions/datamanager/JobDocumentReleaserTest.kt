@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.storage.AiJobDocument
 import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import io.mockk.coEvery
@@ -157,7 +158,7 @@ class JobDocumentReleaserTest {
 
       releaser.record(AiJobId("job-1"), ThingId("thing-1"), listOf(manual))
       coVerify { store.record("alice", "job-1", ThingId("thing-1"), listOf(manual)) }
-      coVerify { store.forget("alice", "picked", listOf("blob-1")) }
+      coVerify { store.forget("alice", "picked", listOf(AttachmentId("blob-1"))) }
     }
 
   @Test
@@ -194,7 +195,7 @@ class JobDocumentReleaserTest {
       coVerify {
         attachments.release(manual, null)
         attachments.release(bulletin, null)
-        store.forget("alice", "picked", listOf("blob-1", "blob-2"))
+        store.forget("alice", "picked", listOf(AttachmentId("blob-1"), AttachmentId("blob-2")))
       }
     }
 
@@ -243,7 +244,7 @@ class JobDocumentReleaserTest {
       releaser.releaseGone()
 
       coVerify { attachments.release(bulletin, null) }
-      coVerify { store.forget("alice", "picked", listOf("blob-2")) }
+      coVerify { store.forget("alice", "picked", listOf(AttachmentId("blob-2"))) }
       coVerify(exactly = 0) { attachments.release(manual, any()) }
       // Picked files belong to no job, so the server is never asked about one.
       coVerify(exactly = 0) { client.isGone(any()) }

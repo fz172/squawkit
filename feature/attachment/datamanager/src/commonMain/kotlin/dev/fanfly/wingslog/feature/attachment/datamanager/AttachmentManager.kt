@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
@@ -82,7 +83,7 @@ interface AttachmentManager {
   fun ensureLocal(attachment: Attachment): Flow<DownloadState>
 
   /** Reactive view of the upload pipeline's status for one attachment id. */
-  fun observeStatus(attachmentId: String): Flow<AttachmentStatus>
+  fun observeStatus(attachmentId: AttachmentId): Flow<AttachmentStatus>
 
   /**
    * Observe [BlobSyncState] for all blobs in the given scope path. Returns a map from

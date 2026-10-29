@@ -21,6 +21,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentRele
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Spec
@@ -287,7 +288,7 @@ class AddTasksViewModelTest {
       vm.onAddDocuments(listOf(picked("MM.pdf")))
       advanceUntilIdle()
 
-      vm.onRemoveDocument("blob-MM.pdf")
+      vm.onRemoveDocument(AttachmentId("blob-MM.pdf"))
       store.clear()
       advanceUntilIdle()
 
@@ -307,7 +308,7 @@ class AddTasksViewModelTest {
     vm.onAddDocuments(listOf(picked("MM.pdf")))
     advanceUntilIdle()
 
-    vm.onRemoveDocument("blob-MM.pdf")
+    vm.onRemoveDocument(AttachmentId("blob-MM.pdf"))
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.sources.documents).isEmpty()

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.SuggestionsMode
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -18,6 +19,7 @@ import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.JobDocumentRele
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.TaskSuggestionManager
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -144,9 +146,9 @@ class AddTasksViewModel(
   }
 
   /** ✕ on a manual: out of the run, and its copy let go of (no record holds it). */
-  fun onRemoveDocument(attachmentId: String) {
+  fun onRemoveDocument(attachmentId: AttachmentId) {
     val removed =
-      uiState.value.sources.documents.firstOrNull { it.id == attachmentId }
+      uiState.value.sources.documents.firstOrNull { it.id == attachmentId.value }
         ?: return
     updateSources { it.copy(documents = it.documents - removed) }
     documents.letGo(listOf(removed))
