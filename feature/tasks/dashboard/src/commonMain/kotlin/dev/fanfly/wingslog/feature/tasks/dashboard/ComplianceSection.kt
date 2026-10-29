@@ -1,7 +1,10 @@
 package dev.fanfly.wingslog.feature.tasks.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -21,11 +24,11 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.taskEmptyHint
 import dev.fanfly.wingslog.core.template.taskHistoryEmptyHint
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.ui.adaptive.widget.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.bar.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.list.EmptyState
 import dev.fanfly.wingslog.core.ui.list.ListRowDivider
+import dev.fanfly.wingslog.core.ui.list.SectionHeader
 import dev.fanfly.wingslog.core.ui.list.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.swipe.SwipeAction
 import dev.fanfly.wingslog.core.ui.swipe.SwipeActionCard
@@ -33,15 +36,15 @@ import dev.fanfly.wingslog.core.ui.swipe.SwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
-import dev.fanfly.wingslog.feature.ads.model.ListRow
-import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.viewing.hiddenMatchNote
 import dev.fanfly.wingslog.feature.search.viewing.wordsIn
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.TaskAdapter
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
+import dev.fanfly.wingslog.feature.tasks.viewing.statusTier
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.feature.search.sharedassets.generated.resources.match_reference
@@ -58,6 +61,7 @@ fun ComplianceSection(
   completedTasks: List<MaintenanceTaskWithStatus>,
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
+  modifier: Modifier = Modifier,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
   /** Offers the template's curated list from the empty state; null when there is none. */
   onBrowseSuggestions: (() -> Unit)? = null,
@@ -81,7 +85,6 @@ fun ComplianceSection(
    */
   revealController: SwipeRevealController? = null,
   quickActionsFor: (@Composable (MaintenanceTaskWithStatus) -> List<SwipeAction>)? = null,
-  modifier: Modifier = Modifier,
 ) {
   Column(
     modifier = modifier,
@@ -113,17 +116,20 @@ fun ComplianceSection(
     countRow()
 
     val displayList = if (showComplied) completedTasks else activeTasks
-    // Due / History are independent lists with independent counters, exactly like squawks
-    // Open / Closed — this is a toggle over flat lists, not the grouped list the PRD describes.
+    val isGrouped = !showComplied && displayList.any {
+      it.dueStatus.status == DueStatus.OVERDUE || it.dueStatus.status == DueStatus.DUE_SOON
+    }
     val adsManager: AdsManager = koinInject()
     val showAds by adsManager.shouldShowsAds()
       .collectAsState(initial = false)
-    val rows = remember(displayList, showAds) {
-      if (showAds) withAdSlots(displayList) else displayList.map {
-        ListRow.Item(
-          it
-        )
-      }
+    val columns = LocalLayoutTier.current.cardColumns
+    val lines = remember(displayList, isGrouped, columns, showAds) {
+      taskListLines(
+        tasks = displayList,
+        grouped = isGrouped,
+        columns = columns,
+        showAds = showAds,
+      )
     }
 
     if (displayList.isEmpty()) {
@@ -154,74 +160,94 @@ fun ComplianceSection(
         )
       }
     } else {
-      AdaptiveCardList(
-        items = rows,
-        columns = LocalLayoutTier.current.cardColumns,
-        spacing = Spacing.medium,
-        // Rows are flat now, so the hairline between them does the separating a gap used to.
-        rowSpacing = Spacing.none,
-        isSpanning = { it is ListRow.Ad },
-        separator = { ListRowDivider() },
-      ) { row ->
-        when (row) {
-          is ListRow.Ad -> AdSlot(
-            surface = AdSurface.TASKS,
-            slotIndex = row.slotIndex,
-          )
-
-          is ListRow.Item -> {
-            val item = row.value
-            val isJumpTarget = item.card.id == scrollTargetId
-            val matches = matchesFor(item)
-            val taskCard = @Composable {
-              TaskCardItem(
-                cardWithStatus = item,
-                onClick = { onCardClick(item) },
-                highlight = matches.wordsIn(
-                  TaskAdapter.FIELD_TITLE,
-                  TaskAdapter.FIELD_NOTES
-                ),
-                matchNote = hiddenMatchNote(
-                  matches,
-                  setOf(
-                    TaskAdapter.FIELD_TITLE,
-                    TaskAdapter.FIELD_NOTES
-                  )
-                ) { match ->
-                  when (match.field) {
-                    TaskAdapter.FIELD_REFERENCE -> stringResource(
-                      SearchRes.string.match_reference,
-                      item.card.reference_number
-                    )
-
-                    TaskAdapter.FIELD_AUTHORITY -> item.card.compliance_authority
-                    TaskAdapter.FIELD_DETAILS -> item.card.compliance_details
-                    else -> null
-                  }
-                },
-                modifier = Modifier.fillMaxWidth()
-                  .then(
-                    if (isJumpTarget) {
-                      Modifier.onGloballyPositioned {
-                        onTargetPositioned(it.positionInRoot().y + it.size.height / 2f)
-                      }
-                    } else {
-                      Modifier
-                    }
-                  )
-                  .jumpTargetHighlight(active = item.card.id == highlightedId),
+      Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Spacing.none),
+      ) {
+        lines.forEachIndexed { index, line ->
+          when (line) {
+            is TaskListLine.StatusHeader -> {
+              SectionHeader(
+                title = taskDueStatusLabel(line.status),
+                count = line.count,
+                tier = line.status.statusTier(),
               )
             }
-            if (revealController == null || quickActionsFor == null) {
-              taskCard()
-            } else {
-              SwipeActionCard(
-                actions = quickActionsFor(item),
-                controller = revealController,
-                key = item.card.id,
-                modifier = Modifier.fillMaxWidth(),
-                content = taskCard,
+
+            is TaskListLine.Ad -> {
+              AdSlot(
+                surface = AdSurface.TASKS,
+                slotIndex = line.slotIndex,
+                modifier = Modifier.padding(vertical = Spacing.small),
               )
+            }
+
+            is TaskListLine.Records -> {
+              val previous = lines.getOrNull(index - 1) as? TaskListLine.Records
+              Column {
+                if (previous != null) ListRowDivider()
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+                  line.items.forEach { item ->
+                    val isJumpTarget = item.card.id == scrollTargetId
+                    val matches = matchesFor(item)
+                    val taskCard = @Composable {
+                      TaskCardItem(
+                        cardWithStatus = item,
+                        onClick = { onCardClick(item) },
+                        showDueBadge = false,
+                        highlight = matches.wordsIn(
+                          TaskAdapter.FIELD_TITLE,
+                          TaskAdapter.FIELD_NOTES
+                        ),
+                        matchNote = hiddenMatchNote(
+                          matches,
+                          setOf(
+                            TaskAdapter.FIELD_TITLE,
+                            TaskAdapter.FIELD_NOTES
+                          )
+                        ) { match ->
+                          when (match.field) {
+                            TaskAdapter.FIELD_REFERENCE -> stringResource(
+                              SearchRes.string.match_reference,
+                              item.card.reference_number
+                            )
+
+                            TaskAdapter.FIELD_AUTHORITY -> item.card.compliance_authority
+                            TaskAdapter.FIELD_DETAILS -> item.card.compliance_details
+                            else -> null
+                          }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                          .then(
+                            if (isJumpTarget) {
+                              Modifier.onGloballyPositioned {
+                                onTargetPositioned(it.positionInRoot().y + it.size.height / 2f)
+                              }
+                            } else {
+                              Modifier
+                            }
+                          )
+                          .jumpTargetHighlight(active = item.card.id == highlightedId),
+                      )
+                    }
+                    if (revealController == null || quickActionsFor == null) {
+                      Box(modifier = Modifier.weight(1f)) {
+                        taskCard()
+                      }
+                    } else {
+                      SwipeActionCard(
+                        actions = quickActionsFor(item),
+                        controller = revealController,
+                        key = item.card.id,
+                        modifier = Modifier.weight(1f),
+                        content = taskCard,
+                      )
+                    }
+                  }
+                  // Keep a short last line's cells aligned with the grid above.
+                  repeat(columns - line.items.size) { Spacer(Modifier.weight(1f)) }
+                }
+              }
             }
           }
         }

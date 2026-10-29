@@ -51,12 +51,7 @@ fun TaskCard(
   aiSuggested: Boolean = false,
 ) {
   val highlightStyle = searchHighlightStyle()
-  val badgeTier = when (dueStatus) {
-    DueStatus.OVERDUE -> StatusTier.CRITICAL
-    DueStatus.DUE_SOON -> StatusTier.CAUTION
-    DueStatus.COMPLIED -> StatusTier.POSITIVE
-    DueStatus.NORMAL -> StatusTier.NEUTRAL
-  }
+  val badgeTier = dueStatus.statusTier()
 
   // The deadline and the notes share the metadata line: the label sits with its value as one
   // phrase, where a caption on its own row cost the card a divider and two lines.

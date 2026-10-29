@@ -34,10 +34,11 @@ import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 @Composable
 fun TaskCardItem(
   cardWithStatus: MaintenanceTaskWithStatus,
-  onClick: () -> Unit = {},
   modifier: Modifier = Modifier,
+  onClick: () -> Unit = {},
   highlight: Set<String> = emptySet(),
   matchNote: AnnotatedString? = null,
+  showDueBadge: Boolean = true,
 ) {
   val status = cardWithStatus.dueStatus.status
   val dueDate = cardWithStatus.dueStatus.nextDueDate
@@ -54,11 +55,13 @@ fun TaskCardItem(
     else colors.positive.accent
   }
 
-  val badgeText = when (status) {
-    DueStatus.OVERDUE -> stringResource(ViewingRes.string.badge_overdue)
-    DueStatus.DUE_SOON -> stringResource(ViewingRes.string.badge_due)
-    else -> ""
-  }
+  val badgeText = if (showDueBadge) {
+    when (status) {
+      DueStatus.OVERDUE -> stringResource(ViewingRes.string.badge_overdue)
+      DueStatus.DUE_SOON -> stringResource(ViewingRes.string.badge_due)
+      else -> ""
+    }
+  } else ""
 
   val icon = when {
     status == DueStatus.OVERDUE || status == DueStatus.DUE_SOON -> Icons.Filled.Warning

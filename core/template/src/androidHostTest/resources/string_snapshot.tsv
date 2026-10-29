@@ -832,6 +832,7 @@ feature/tasks/update	task_title_helper	Provide a concise, technical name for thi
 feature/tasks/update	task_updated	Task updated
 feature/tasks/viewing	authority_reference_number	%1$s · %2$s
 feature/tasks/viewing	badge_due	DUE
+feature/tasks/viewing	badge_not_due	NOT DUE
 feature/tasks/viewing	badge_overdue	OVERDUE
 feature/tasks/viewing	completed	Completed
 feature/tasks/viewing	days_overdue_count	%1$d days overdue
