@@ -412,7 +412,7 @@ class TaskViewModel(
    * status forward than to clear one we can't compare against.
    */
   private fun isScheduleChanged(
-    cardId: String,
+    cardId: MaintenanceTaskId,
     rules: List<InspectionRule>,
     isOneTime: Boolean,
     forceDueDate: Instant?,
@@ -426,13 +426,13 @@ class TaskViewModel(
   }
 
   /** The card as last loaded, or null before the list has loaded. */
-  private fun storedTask(cardId: String): MaintenanceTask? =
+  private fun storedTask(cardId: MaintenanceTaskId): MaintenanceTask? =
     (_uiState.value as? TaskUiState.Success)
       ?.allInspections
-      ?.find { it.id == cardId }
+      ?.find { it.id == cardId.value }
 
   fun saveEditedTask(
-    cardId: String,
+    cardId: MaintenanceTaskId,
     title: String,
     type: ComplianceType,
     component: ComponentType,
@@ -455,7 +455,7 @@ class TaskViewModel(
       try {
         val attachments = attachmentForm.resolveForSave()
         val updatedCard = MaintenanceTask(
-          id = cardId,
+          id = cardId.value,
           title = title,
           type = type,
           component = component,

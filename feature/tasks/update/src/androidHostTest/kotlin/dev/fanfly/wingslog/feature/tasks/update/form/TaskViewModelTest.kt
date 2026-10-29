@@ -588,7 +588,7 @@ class TaskViewModelTest {
   /** Calls [TaskViewModel.saveEditedTask] with the field values carried by [card]. */
   private fun TaskViewModel.saveEditedTaskFrom(card: MaintenanceTask) =
     saveEditedTask(
-      cardId = card.id,
+      cardId = MaintenanceTaskId(card.id),
       title = card.title,
       type = card.type,
       component = card.component,
