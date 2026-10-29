@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager
 
+import dev.fanfly.wingslog.id.ExportId
+
 /**
  * Streamed export status emitted by [ExportManager].
  */
@@ -11,7 +13,7 @@ sealed interface ExportProgress {
    * Completed archive metadata. UI should prefer [displayLocationKind] for localized labels.
    */
   data class Success(
-    val exportId: String,
+    val exportId: ExportId,
     val filePath: String,
     val fileName: String,
     val displayLocation: String,

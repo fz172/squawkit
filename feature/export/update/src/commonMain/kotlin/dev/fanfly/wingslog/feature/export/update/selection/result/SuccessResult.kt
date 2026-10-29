@@ -28,6 +28,7 @@ import dev.fanfly.wingslog.feature.export.update.selection.rangeSummary
 import dev.fanfly.wingslog.feature.export.update.selection.thingSummary
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.UpsellTrigger
+import dev.fanfly.wingslog.id.ExportId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_download
@@ -47,7 +48,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_view_expo
 internal fun SuccessResult(
   state: ExportUiState.Success,
   modifier: Modifier,
-  onDownload: (exportId: String, filePath: String, fileName: String) -> Unit,
+  onDownload: (exportId: ExportId, filePath: String, fileName: String) -> Unit,
   onSendToEmail: () -> Unit,
   onHistory: () -> Unit,
   onSeePlans: () -> Unit,

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryOutcome
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
+import dev.fanfly.wingslog.id.ExportId
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,7 +79,7 @@ class ExportHistoryViewModel(
   /**
    * Deletes the export at [exportId] and reloads the list.
    */
-  fun onDelete(exportId: String) {
+  fun onDelete(exportId: ExportId) {
     viewModelScope.launch {
       exportManager.deleteExport(exportId)
       _state.value = ExportHistoryUiState.Loaded(
@@ -91,7 +92,7 @@ class ExportHistoryViewModel(
   /**
    * Retries a failed delivery and reloads the list so the refreshed state is visible.
    */
-  fun onRetryDelivery(exportId: String) {
+  fun onRetryDelivery(exportId: ExportId) {
     viewModelScope.launch {
       val outcome = exportManager.retryDelivery(exportId)
       _state.value = ExportHistoryUiState.Loaded(
@@ -106,7 +107,7 @@ class ExportHistoryViewModel(
    * Sends a fresh delivery email for [exportId] using the archive already in remote storage, then
    * reloads the list so any delivery-state change is visible.
    */
-  fun onResendDelivery(exportId: String) {
+  fun onResendDelivery(exportId: ExportId) {
     viewModelScope.launch {
       val outcome = exportManager.resendDelivery(exportId)
       _state.value = ExportHistoryUiState.Loaded(
@@ -120,7 +121,7 @@ class ExportHistoryViewModel(
   /**
    * Downloads a remote-only export to this device, then reloads so it surfaces as on-device.
    */
-  fun onSaveToDevice(exportId: String) {
+  fun onSaveToDevice(exportId: ExportId) {
     viewModelScope.launch {
       exportManager.saveToDevice(exportId)
       _state.value = ExportHistoryUiState.Loaded(
@@ -134,6 +135,6 @@ class ExportHistoryViewModel(
    * Resolves the archive bytes for [exportId] for platforms whose Download action has no durable
    * local file handle (web) and must fetch the bytes on demand.
    */
-  suspend fun fetchArchiveBytes(exportId: String): ByteArray? =
+  suspend fun fetchArchiveBytes(exportId: ExportId): ByteArray? =
     exportManager.downloadArchiveBytes(exportId)
 }

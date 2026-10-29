@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.ExportId
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.serialization.Serializable
 
@@ -8,14 +10,14 @@ class ExportDeliveryBackend(
 ) {
 
   suspend fun requestExportDelivery(
-    exportId: String,
+    exportId: ExportId,
     forceResend: Boolean = false,
   ): ExportDeliveryResult {
     val response = functions
       .httpsCallable("requestExportDelivery")
       .invoke(
         RequestExportDeliveryRequestData(
-          exportId = exportId,
+          exportId = exportId.value,
           forceResend = forceResend
         )
       )

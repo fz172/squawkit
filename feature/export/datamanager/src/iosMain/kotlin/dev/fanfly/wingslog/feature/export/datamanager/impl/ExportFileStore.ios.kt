@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.id.ExportId
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
@@ -86,11 +88,11 @@ actual class ExportFileStore {
       reconciled
     }
 
-  actual suspend fun deleteExport(ownerUid: String, exportId: String): Boolean =
+  actual suspend fun deleteExport(ownerUid: String, exportId: ExportId): Boolean =
     withContext(Dispatchers.Default) {
       val reconciled =
         ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
-      val record = reconciled.firstOrNull { it.export_id == exportId }
+      val record = reconciled.firstOrNull { it.export_id == exportId.value }
       if (record == null) return@withContext false
 
       val removed = record.file_path.takeIf { it.isNotBlank() }

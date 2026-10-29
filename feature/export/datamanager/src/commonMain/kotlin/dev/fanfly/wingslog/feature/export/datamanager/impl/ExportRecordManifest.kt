@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordIndex
+import dev.fanfly.wingslog.id.ExportId
 
 /**
  * Pure helpers for the export-metadata index that backs export history.
@@ -33,6 +35,9 @@ internal object ExportRecordManifest {
   ): List<ExportRecord> =
     if (!hasExportId(record)) stored
     else stored.filterNot { it.export_id == record.export_id } + record
+
+  fun remove(stored: List<ExportRecord>, exportId: ExportId): List<ExportRecord> =
+    remove(stored, exportId.value)
 
   fun remove(stored: List<ExportRecord>, exportId: String): List<ExportRecord> =
     stored.filterNot { it.export_id == exportId }
