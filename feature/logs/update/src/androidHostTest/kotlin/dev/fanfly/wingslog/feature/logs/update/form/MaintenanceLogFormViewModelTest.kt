@@ -18,6 +18,8 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.task.MaintenanceTask
@@ -279,7 +281,7 @@ class MaintenanceLogFormViewModelTest {
       advanceUntilIdle()
 
       assertThat(viewModel.uiState.value.selectedSquawkIds).containsExactly(
-        PRESELECTED_SQUAWK_ID
+        SquawkId(PRESELECTED_SQUAWK_ID)
       )
       assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isEqualTo("Nose wheel shimmy")
     }
@@ -337,7 +339,7 @@ class MaintenanceLogFormViewModelTest {
       advanceUntilIdle()
 
       assertThat(viewModel.uiState.value.selectedInspectionIds).containsExactly(
-        PRESELECTED_CARD_ID
+        MaintenanceTaskId(PRESELECTED_CARD_ID)
       )
       assertThat(viewModel.uiState.value.pendingResolveTaskTitle).isEqualTo("Oil change")
     }
@@ -518,7 +520,7 @@ class MaintenanceLogFormViewModelTest {
       advanceUntilIdle()
 
       assertThat(viewModel.uiState.value.selectedSquawkIds).containsExactly(
-        PRESELECTED_SQUAWK_ID
+        SquawkId(PRESELECTED_SQUAWK_ID)
       )
       assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isEqualTo("Nose wheel shimmy")
     }

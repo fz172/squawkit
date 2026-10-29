@@ -13,10 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.thing.Squawk
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.remove
@@ -26,9 +28,9 @@ import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 
 @Composable
 fun SquawkWorkSection(
-  selectedIds: List<String>,
+  selectedIds: List<SquawkId>,
   availableSquawks: List<Squawk>,
-  onRemove: (squawkId: String) -> Unit,
+  onRemove: (squawkId: SquawkId) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Column(
@@ -47,8 +49,8 @@ fun SquawkWorkSection(
       )
     } else {
       selectedIds.forEach { squawkId ->
-        val squawk = availableSquawks.firstOrNull { it.id == squawkId }
-        val title = squawk?.title ?: squawkId
+        val squawk = availableSquawks.firstOrNull { it.id == squawkId.value }
+        val title = squawk?.title ?: squawkId.value
         Row(
           modifier = Modifier.fillMaxWidth(),
           verticalAlignment = Alignment.CenterVertically,

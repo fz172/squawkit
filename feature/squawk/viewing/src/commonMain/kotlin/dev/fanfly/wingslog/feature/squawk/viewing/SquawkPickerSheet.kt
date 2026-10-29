@@ -15,14 +15,15 @@ import dev.fanfly.wingslog.core.ui.sheet.PickerSelectableRow
 import dev.fanfly.wingslog.core.ui.sheet.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.sheet.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.thing.Squawk
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SquawkPickerSheet(
   openSquawks: List<Squawk>,
-  selectedIds: Set<String>,
-  onToggle: (String, Boolean) -> Unit,
+  selectedIds: Set<SquawkId>,
+  onToggle: (SquawkId, Boolean) -> Unit,
   onDismiss: () -> Unit,
 ) =
   PickerSheet(
@@ -37,7 +38,8 @@ fun SquawkPickerSheet(
   ) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
       items(openSquawks, key = { it.id }) { squawk ->
-        val checked = squawk.id in selectedIds
+        val squawkId = SquawkId(squawk.id)
+        val checked = squawkId in selectedIds
         PickerSelectableRow(
           title = squawk.title,
           subtitle = squawk.description,
@@ -45,7 +47,7 @@ fun SquawkPickerSheet(
           selectionMode = PickerSelectionMode.CHECKBOX,
           titleStyle = MaterialTheme.typography.bodyMedium,
           titleWeight = FontWeight.Medium,
-          onClick = { onToggle(squawk.id, !checked) },
+          onClick = { onToggle(squawkId, !checked) },
         )
       }
     }

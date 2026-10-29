@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
@@ -30,6 +31,7 @@ import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.form.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import org.jetbrains.compose.resources.stringResource
@@ -46,7 +48,7 @@ fun SquawkDetailsSection(
   description: String,
   onDescriptionChange: (String) -> Unit,
   isEdit: Boolean,
-  addressedByLogId: String,
+  addressedByLogId: MaintenanceLogId?,
   availableLogs: List<MaintenanceLog>,
   onAddLog: () -> Unit,
   onClearLog: () -> Unit,
@@ -76,7 +78,7 @@ fun SquawkDetailsSection(
     // Maintenance history (edit mode only)
     if (isEdit) {
       val associatedLog =
-        availableLogs.firstOrNull { it.id == addressedByLogId }
+        availableLogs.firstOrNull { it.id == addressedByLogId?.value }
 
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         Row(
@@ -85,7 +87,7 @@ fun SquawkDetailsSection(
           horizontalArrangement = Arrangement.SpaceBetween,
         ) {
           FormSectionLabel(LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.logNoun))
-          if (addressedByLogId.isEmpty() && !isDismissed) {
+          if (addressedByLogId == null && !isDismissed) {
             OutlinedButton(
               onClick = onAddLog,
               contentPadding = PaddingValues(
@@ -128,7 +130,7 @@ fun SquawkDetailsSection(
             }
           }
 
-          addressedByLogId.isEmpty() -> Text(
+          addressedByLogId == null -> Text(
             text = stringResource(Res.string.squawk_not_yet_addressed),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -137,7 +139,7 @@ fun SquawkDetailsSection(
           else -> {
             val displayText =
               associatedLog?.work_description?.takeIf { it.isNotBlank() }
-                ?: addressedByLogId
+                ?: addressedByLogId.value
             val logDate = associatedLog?.timestamp
               ?.takeIf { it.getEpochSecond() > 0L }
               ?.toLocalDate()

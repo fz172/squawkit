@@ -51,6 +51,7 @@ import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicSection
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsSection
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
 import dev.fanfly.wingslog.feature.squawk.viewing.DeleteSquawkConfirmDialog
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.save_changes
@@ -72,7 +73,7 @@ fun SquawkFormScreen(
   onBack: () -> Unit,
   onAddLog: () -> Unit,
   onClearLog: () -> Unit,
-  onSelectLog: (String) -> Unit,
+  onSelectLog: (MaintenanceLogId) -> Unit,
   onHideLogPicker: () -> Unit,
   onDeleteClick: () -> Unit,
   onDeleteConfirm: () -> Unit,
@@ -227,7 +228,7 @@ fun SquawkFormScreen(
   if (state.showLogPicker) {
     LogPickerSheet(
       logs = state.availableLogs,
-      onSelect = { log -> onSelectLog(log.id) },
+      onSelect = { log -> onSelectLog(MaintenanceLogId(log.id)) },
       onDismiss = onHideLogPicker,
     )
   }

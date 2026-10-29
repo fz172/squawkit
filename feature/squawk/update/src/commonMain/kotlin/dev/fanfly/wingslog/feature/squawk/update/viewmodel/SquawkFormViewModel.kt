@@ -29,6 +29,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
@@ -68,7 +69,7 @@ data class SquawkFormState(
   val isAddressedReadOnly: Boolean = false,
   val reportedDateFormatted: String = "",
   val createdAtEpochSeconds: Long = 0L,
-  val addressedByLogId: String = "",
+  val addressedByLogId: MaintenanceLogId? = null,
   val availableLogs: List<MaintenanceLog> = emptyList(),
   val showLogPicker: Boolean = false,
   val showDeleteDialog: Boolean = false,
@@ -79,7 +80,7 @@ data class SquawkFormState(
   val initialTitle: String = "",
   val initialDescription: String = "",
   val initialPriority: SquawkPriority = SquawkPriority.SQUAWK_PRIORITY_LOW,
-  val initialAddressedByLogId: String = "",
+  val initialAddressedByLogId: MaintenanceLogId? = null,
   val error: UiText? = null,
 )
 
@@ -176,7 +177,8 @@ class SquawkFormViewModel(
               reportedDateFormatted = squawk.created_at?.toLocalDate()
                 ?.toDisplayFormat() ?: "",
               createdAtEpochSeconds = squawk.created_at?.getEpochSecond() ?: 0L,
-              addressedByLogId = squawk.addressed_by_log_id,
+              addressedByLogId = squawk.addressed_by_log_id.takeIf { it.isNotEmpty() }
+                ?.let(::MaintenanceLogId),
               dismissReason = squawk.dismiss_reason,
               dismissedAtEpochSeconds = squawk.dismissed_at?.getEpochSecond()
                 ?: 0L,
@@ -187,7 +189,8 @@ class SquawkFormViewModel(
               initialTitle = squawk.title,
               initialDescription = squawk.description,
               initialPriority = squawk.priority,
-              initialAddressedByLogId = squawk.addressed_by_log_id,
+              initialAddressedByLogId = squawk.addressed_by_log_id.takeIf { it.isNotEmpty() }
+                ?.let(::MaintenanceLogId),
             )
           }
           attachmentForm.seedIfEmpty(squawk.attachments)
@@ -218,10 +221,10 @@ class SquawkFormViewModel(
 
   fun showLogPicker() = _state.update { it.copy(showLogPicker = true) }
   fun hideLogPicker() = _state.update { it.copy(showLogPicker = false) }
-  fun selectLog(logId: String) =
+  fun selectLog(logId: MaintenanceLogId) =
     _state.update { it.copy(addressedByLogId = logId, showLogPicker = false) }
 
-  fun clearLog() = _state.update { it.copy(addressedByLogId = "") }
+  fun clearLog() = _state.update { it.copy(addressedByLogId = null) }
 
   fun showAttachmentPicker() {
     attachmentForm.showPicker()
@@ -289,7 +292,7 @@ class SquawkFormViewModel(
         else Clock.System.now()
           .toWireInstant(),
         attachments = attachments,
-        addressed_by_log_id = current.addressedByLogId,
+        addressed_by_log_id = current.addressedByLogId?.value.orEmpty(),
         dismiss_reason = current.dismissReason,
         dismissed_at = if (current.dismissedAtEpochSeconds > 0L)
           kotlin.time.Instant.fromEpochSeconds(current.dismissedAtEpochSeconds)
