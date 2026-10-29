@@ -14,13 +14,14 @@ import dev.fanfly.wingslog.core.ui.layout.ContentWidth
 import dev.fanfly.wingslog.core.ui.layout.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.export.ExportRecord
+import dev.fanfly.wingslog.id.ExportId
 
 @Composable
 internal fun ExportList(
   exports: List<ExportRecord>,
   canEmailDelivery: Boolean,
   modifier: Modifier,
-  onDownloadExport: (exportId: String, filePath: String, fileName: String) -> Unit,
+  onDownloadExport: (exportId: ExportId, filePath: String, fileName: String) -> Unit,
   onResendDelivery: (ExportRecord) -> Unit,
   onRetryDelivery: (ExportRecord) -> Unit,
   onSaveToDevice: (ExportRecord) -> Unit,

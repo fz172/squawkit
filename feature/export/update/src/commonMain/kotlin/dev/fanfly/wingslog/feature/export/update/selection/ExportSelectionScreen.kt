@@ -29,6 +29,7 @@ import dev.fanfly.wingslog.feature.export.update.selection.result.ErrorResult
 import dev.fanfly.wingslog.feature.export.update.selection.result.SuccessResult
 import dev.fanfly.wingslog.feature.export.update.selection.running.RunningContent
 import dev.fanfly.wingslog.feature.export.update.selection.setup.ConfiguringContent
+import dev.fanfly.wingslog.id.ExportId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
@@ -50,7 +51,7 @@ fun ExportSelectionScreen(
   onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
-  onDownloadExport: (exportId: String, filePath: String, fileName: String) -> Unit,
+  onDownloadExport: (exportId: ExportId, filePath: String, fileName: String) -> Unit,
   onSendToEmail: () -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,

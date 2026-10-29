@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.export.ExportRecord
+import dev.fanfly.wingslog.id.ExportId
 
 /**
  * Platform file sink for finished export archives and their metadata index.
@@ -32,5 +33,5 @@ expect class ExportFileStore {
    * Deletes the export referenced by [exportId] and forgets its metadata. Returns true when an
    * archive was removed.
    */
-  suspend fun deleteExport(ownerUid: String, exportId: String): Boolean
+  suspend fun deleteExport(ownerUid: String, exportId: ExportId): Boolean
 }

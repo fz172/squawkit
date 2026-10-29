@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryOutcome
 import dev.fanfly.wingslog.feature.export.update.rememberExportFileDownloader
+import dev.fanfly.wingslog.id.ExportId
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -68,10 +69,10 @@ fun ExportHistoryRoute(
         snackbarHostState.showSnackbar(if (success) downloadedMessage else downloadFailedMessage)
       }
     },
-    onResendDelivery = { record -> viewModel.onResendDelivery(record.export_id) },
-    onRetryDelivery = { record -> viewModel.onRetryDelivery(record.export_id) },
-    onSaveToDevice = { record -> viewModel.onSaveToDevice(record.export_id) },
-    onDelete = { record -> viewModel.onDelete(record.export_id) },
+    onResendDelivery = { record -> viewModel.onResendDelivery(ExportId(record.export_id)) },
+    onRetryDelivery = { record -> viewModel.onRetryDelivery(ExportId(record.export_id)) },
+    onSaveToDevice = { record -> viewModel.onSaveToDevice(ExportId(record.export_id)) },
+    onDelete = { record -> viewModel.onDelete(ExportId(record.export_id)) },
     snackbarHostState = snackbarHostState,
   )
 }

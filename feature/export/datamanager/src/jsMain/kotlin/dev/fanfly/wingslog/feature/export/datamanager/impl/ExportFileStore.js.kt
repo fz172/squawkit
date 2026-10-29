@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.id.ExportId
 import kotlinx.browser.localStorage
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -49,9 +51,9 @@ actual class ExportFileStore {
   actual suspend fun listExports(ownerUid: String): List<ExportRecord> =
     readIndex(ownerUid)
 
-  actual suspend fun deleteExport(ownerUid: String, exportId: String): Boolean {
+  actual suspend fun deleteExport(ownerUid: String, exportId: ExportId): Boolean {
     val stored = readIndex(ownerUid)
-    if (stored.none { it.export_id == exportId }) return false
+    if (stored.none { it.export_id == exportId.value }) return false
     writeIndex(ownerUid, ExportRecordManifest.remove(stored, exportId))
     return true
   }

@@ -23,6 +23,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.id.ExportId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.Thing
@@ -330,7 +331,7 @@ class ExportViewModel(
    * Resolves the archive bytes for [exportId] for platforms whose Download action has no durable
    * local file handle (web) and must fetch the bytes on demand.
    */
-  suspend fun fetchArchiveBytes(exportId: String): ByteArray? =
+  suspend fun fetchArchiveBytes(exportId: ExportId): ByteArray? =
     exportManager.downloadArchiveBytes(exportId)
 
   private fun reduceConfiguring(
