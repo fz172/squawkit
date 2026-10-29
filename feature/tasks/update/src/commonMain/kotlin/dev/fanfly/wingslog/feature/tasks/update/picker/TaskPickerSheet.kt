@@ -21,6 +21,7 @@ import dev.fanfly.wingslog.core.ui.sheet.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.tasks.update.pluralLabel
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.task.ComplianceType
 import dev.fanfly.wingslog.task.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource
@@ -36,8 +37,8 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 @Composable
 fun TaskPickerSheet(
   availableCards: List<MaintenanceTask>,
-  selectedIds: List<String>,
-  onToggle: (cardId: String) -> Unit,
+  selectedIds: List<MaintenanceTaskId>,
+  onToggle: (cardId: MaintenanceTaskId) -> Unit,
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   singleSelect: Boolean = false,
@@ -84,7 +85,8 @@ fun TaskPickerSheet(
           if (cards.isNotEmpty()) {
             PickerSectionHeader(text = header)
             cards.forEach { card ->
-              val isSelected = card.id in selectedIds
+              val cardId = MaintenanceTaskId(card.id)
+              val isSelected = cardId in selectedIds
               val componentLabel = card.component.displayName()
               val subtitle = if (card.reference_number.isNotBlank()) {
                 stringResource(
@@ -104,7 +106,7 @@ fun TaskPickerSheet(
                 } else {
                   PickerSelectionMode.CHECKBOX
                 },
-                onClick = { onToggle(card.id) },
+                onClick = { onToggle(cardId) },
               )
             }
           }

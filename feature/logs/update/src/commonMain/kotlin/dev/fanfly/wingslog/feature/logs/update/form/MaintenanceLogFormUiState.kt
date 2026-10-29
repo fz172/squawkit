@@ -6,6 +6,8 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.visible
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.ComponentType
@@ -18,7 +20,7 @@ data class MaintenanceLogFormUiState(
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
   val workDescription: String = "",
-  val selectedInspectionIds: List<String> = emptyList(),
+  val selectedInspectionIds: List<MaintenanceTaskId> = emptyList(),
   /**
    * The value typed for each meter the template declares, by key (#730).
    *
@@ -41,7 +43,7 @@ data class MaintenanceLogFormUiState(
   val error: UiText? = null,
   /** Open squawks for this thing, plus any already addressed by this log — used by SquawkPickerSheet and to resolve titles for selected squawk chips */
   val availableSquawks: List<Squawk> = emptyList(),
-  val selectedSquawkIds: List<String> = emptyList(),
+  val selectedSquawkIds: List<SquawkId> = emptyList(),
   val showSquawkPicker: Boolean = false,
   /** All inspection cards for this thing — used by TaskPickerSheet */
   val availableInspectionCards: List<MaintenanceTask> = emptyList(),
@@ -106,8 +108,8 @@ data class MaintenanceLogFormUiState(
 
   data class FormSnapshot(
     val workDescription: String,
-    val selectedSquawkIds: List<String>,
-    val selectedInspectionIds: List<String>,
+    val selectedSquawkIds: List<SquawkId>,
+    val selectedInspectionIds: List<MaintenanceTaskId>,
     val selectedComponentType: ComponentType,
     val selectedSubComponent: String?,
     val selectedTechnicianId: String?,

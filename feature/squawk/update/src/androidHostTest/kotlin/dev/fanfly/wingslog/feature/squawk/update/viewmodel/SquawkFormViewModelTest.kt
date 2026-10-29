@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.id.MaintenanceLogId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Squawk
@@ -477,5 +478,22 @@ class SquawkFormViewModelTest {
       advanceUntilIdle()
 
       assertThat(viewModel.attachmentUploadEnabled.value).isTrue()
+    }
+
+  @Test
+  fun selectLog_and_clearLog_updatesAddressedByLogId() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+
+      assertThat(viewModel.state.value.addressedByLogId).isNull()
+
+      val logId = MaintenanceLogId("log-123")
+      viewModel.selectLog(logId)
+      assertThat(viewModel.state.value.addressedByLogId).isEqualTo(logId)
+      assertThat(viewModel.state.value.showLogPicker).isFalse()
+
+      viewModel.clearLog()
+      assertThat(viewModel.state.value.addressedByLogId).isNull()
     }
 }

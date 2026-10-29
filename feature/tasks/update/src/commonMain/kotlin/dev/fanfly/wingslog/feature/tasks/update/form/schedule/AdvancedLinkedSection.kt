@@ -41,8 +41,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.update.picker.TaskPickerSheet
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
@@ -220,9 +222,9 @@ internal fun AdvancedLinkedSection(
   if (showPicker) {
     TaskPickerSheet(
       availableCards = availableInspections,
-      selectedIds = listOfNotNull(linkedTask?.id),
+      selectedIds = listOfNotNull(linkedTask?.id?.let(::MaintenanceTaskId)),
       onToggle = { id ->
-        availableInspections.firstOrNull { it.id == id }
+        availableInspections.firstOrNull { it.id == id.value }
           ?.let { onPick(it) }
         showPicker = false
       },

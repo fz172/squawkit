@@ -17,6 +17,8 @@ import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.ui.form.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.update.form.LogSection
+import dev.fanfly.wingslog.id.MaintenanceTaskId
+import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Technician
@@ -33,14 +35,14 @@ import wingslog.feature.technician.sharedassets.generated.resources.Res as Techn
 fun LogRecordsTab(
   selectedTechnician: Technician?,
   onTechnicianClick: () -> Unit,
-  selectedSquawkIds: List<String>,
+  selectedSquawkIds: List<SquawkId>,
   availableSquawks: List<Squawk>,
   onAddSquawkClick: () -> Unit,
-  onRemoveSquawk: (String) -> Unit,
-  selectedInspectionIds: List<String>,
+  onRemoveSquawk: (SquawkId) -> Unit,
+  selectedInspectionIds: List<MaintenanceTaskId>,
   availableInspectionCards: List<MaintenanceTask>,
   onAddTaskClick: () -> Unit,
-  onRemoveTask: (String) -> Unit,
+  onRemoveTask: (MaintenanceTaskId) -> Unit,
   attachmentSection: @Composable () -> Unit,
   modifier: Modifier = Modifier,
 ) {

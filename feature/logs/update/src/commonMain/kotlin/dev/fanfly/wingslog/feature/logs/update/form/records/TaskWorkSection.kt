@@ -13,10 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.task.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.remove
@@ -27,9 +29,9 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 fun TaskWorkSection(
-  selectedIds: List<String>,
+  selectedIds: List<MaintenanceTaskId>,
   availableCards: List<MaintenanceTask>,
-  onRemove: (cardId: String) -> Unit,
+  onRemove: (cardId: MaintenanceTaskId) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Column(
@@ -48,10 +50,10 @@ fun TaskWorkSection(
       )
     } else {
       selectedIds.forEach { cardId ->
-        val card = availableCards.firstOrNull { it.id == cardId }
+        val card = availableCards.firstOrNull { it.id == cardId.value }
         val title = card?.title ?: stringResource(
           Res.string.unknown_task,
-          cardId,
+          cardId.value,
           LocalThingLexicon.current.taskNoun.singular,
         )
         Row(

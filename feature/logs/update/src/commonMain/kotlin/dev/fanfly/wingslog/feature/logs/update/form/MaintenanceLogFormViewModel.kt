@@ -46,6 +46,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.id.MaintenanceLogId
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.id.SquawkId
 import dev.fanfly.wingslog.id.TechnicianId
 import dev.fanfly.wingslog.id.ThingId
@@ -107,19 +108,21 @@ class MaintenanceLogFormViewModel(
 
   val thingId: ThingId =
     ThingId(checkNotNull(savedStateHandle[Screen.THING_ID]))
-  private val logId: String? = savedStateHandle[Screen.LOG_ID]
-  val logIdTyped: MaintenanceLogId? = logId?.let(::MaintenanceLogId)
+  val logId: MaintenanceLogId? =
+    savedStateHandle.get<String>(Screen.LOG_ID)?.let(::MaintenanceLogId)
   val isEditMode: Boolean get() = logId != null
 
   // Set when this screen is opened from the squawk edit screen's "Fixed" option, to preselect
   // and prefill this squawk once it shows up in observeSquawks() below.
-  private val preselectedSquawkId: String? = savedStateHandle[Screen.SQUAWK_ID]
+  private val preselectedSquawkId: SquawkId? =
+    savedStateHandle.get<String>(Screen.SQUAWK_ID)?.let(::SquawkId)
   private var preselectedSquawkSeeded = false
 
   // Set when this screen is opened from the task edit screen's "Create Work Log" resolve option,
   // to preselect this task once it shows up in observeTasks() below. Mirrors the squawk-preselect
   // flow above, including the work-description prefill.
-  private val preselectedCardId: String? = savedStateHandle[Screen.CARD_ID]
+  private val preselectedCardId: MaintenanceTaskId? =
+    savedStateHandle.get<String>(Screen.CARD_ID)?.let(::MaintenanceTaskId)
   private var preselectedCardSeeded = false
 
   // Latches once the meter fields have been prefilled from the overview, so a field the user
@@ -142,7 +145,7 @@ class MaintenanceLogFormViewModel(
     AttachmentFormController(
       attachmentManager,
       thingId,
-      owner = logId?.let { EntityRef(CollectionKind.MaintenanceLog, it) },
+      owner = logId?.let { EntityRef(CollectionKind.MaintenanceLog, it.value) },
     )
   private val _uiState = MutableStateFlow(
     MaintenanceLogFormUiState(
@@ -254,15 +257,15 @@ class MaintenanceLogFormViewModel(
     squawkManager.observeSquawks(thingId)
       .onEach { squawks ->
         val filtered = squawks.filter { s ->
-          s.addressed_by_log_id.isEmpty() || s.addressed_by_log_id == logId
+          s.addressed_by_log_id.isEmpty() || s.addressed_by_log_id == logId?.value
         }
         _uiState.update { state ->
           var next = state.copy(availableSquawks = filtered)
           if (!isEditMode && !preselectedSquawkSeeded && preselectedSquawkId != null) {
-            filtered.find { it.id == preselectedSquawkId }
+            filtered.find { it.id == preselectedSquawkId.value }
               ?.let { squawk ->
                 next = next.copy(
-                  selectedSquawkIds = (next.selectedSquawkIds + squawk.id).distinct(),
+                  selectedSquawkIds = (next.selectedSquawkIds + SquawkId(squawk.id)).distinct(),
                   pendingResolveSquawkTitle = squawk.title,
                 )
                 // Only latch once the squawk is actually found — an empty/transitional first
@@ -307,10 +310,10 @@ class MaintenanceLogFormViewModel(
         _uiState.update { state ->
           var next = state.copy(availableInspectionCards = cards)
           if (!isEditMode && !preselectedCardSeeded && preselectedCardId != null) {
-            cards.find { it.id == preselectedCardId }
+            cards.find { it.id == preselectedCardId.value }
               ?.let { card ->
                 next = next.copy(
-                  selectedInspectionIds = (next.selectedInspectionIds + card.id).distinct(),
+                  selectedInspectionIds = (next.selectedInspectionIds + MaintenanceTaskId(card.id)).distinct(),
                   pendingResolveTaskTitle = card.title,
                 )
                 // Only latch once the task is actually found — an empty/transitional first
@@ -406,7 +409,7 @@ class MaintenanceLogFormViewModel(
       _uiState.update { it.copy(isLoading = true) }
       val log = logManager.observeLogs(thingId)
         .firstOrNull()
-        ?.firstOrNull { it.id == logId }
+        ?.firstOrNull { it.id == logId?.value }
       if (log != null) {
         val logDate = log.timestamp?.let { ts ->
           val epochSec = ts.getEpochSecond()
@@ -442,8 +445,8 @@ class MaintenanceLogFormViewModel(
           it.copy(
             isLoading = false,
             workDescription = log.work_description,
-            selectedSquawkIds = log.squawk_ids,
-            selectedInspectionIds = log.inspection_ids,
+            selectedSquawkIds = log.squawk_ids.map(::SquawkId),
+            selectedInspectionIds = log.inspection_ids.map(::MaintenanceTaskId),
             selectedTechnician = log.technician ?: it.selectedTechnician,
             selectedComponentType = log.component_type,
             selectedSubComponent = log.component_serial.ifEmpty { null },
@@ -492,7 +495,7 @@ class MaintenanceLogFormViewModel(
   fun hideInspectionPicker() =
     _uiState.update { it.copy(showInspectionPicker = false) }
 
-  fun toggleInspectionSelection(cardId: String) {
+  fun toggleInspectionSelection(cardId: MaintenanceTaskId) {
     _uiState.update { state ->
       val current = state.selectedInspectionIds.toMutableList()
       if (cardId in current) current.remove(cardId) else current.add(cardId)
@@ -500,7 +503,7 @@ class MaintenanceLogFormViewModel(
     }
   }
 
-  fun removeInspectionId(cardId: String) {
+  fun removeInspectionId(cardId: MaintenanceTaskId) {
     _uiState.update { state ->
       state.copy(selectedInspectionIds = state.selectedInspectionIds.filter { it != cardId })
     }
@@ -508,7 +511,7 @@ class MaintenanceLogFormViewModel(
 
   fun showSquawkPicker() = _uiState.update { it.copy(showSquawkPicker = true) }
   fun hideSquawkPicker() = _uiState.update { it.copy(showSquawkPicker = false) }
-  fun toggleSquawkSelection(squawkId: String) {
+  fun toggleSquawkSelection(squawkId: SquawkId) {
     _uiState.update { state ->
       val current = state.selectedSquawkIds.toMutableList()
       if (squawkId in current) current.remove(squawkId) else current.add(
@@ -518,7 +521,7 @@ class MaintenanceLogFormViewModel(
     }
   }
 
-  fun removeSquawkId(squawkId: String) {
+  fun removeSquawkId(squawkId: SquawkId) {
     _uiState.update { state ->
       state.copy(selectedSquawkIds = state.selectedSquawkIds.filter { it != squawkId })
     }
@@ -697,7 +700,7 @@ class MaintenanceLogFormViewModel(
         )
       }
 
-      val resolvedLogId = logId ?: generateRandomId()
+      val resolvedLogId = logId ?: MaintenanceLogId(generateRandomId())
 
       // Tombstone deleted attachments and build the final list
       val finalAttachments = attachmentForm.resolveForSave()
@@ -724,14 +727,14 @@ class MaintenanceLogFormViewModel(
         state.maintenanceDate?.atStartOfDayIn(TimeZone.currentSystemDefault())
           ?: now
       val log = MaintenanceLog(
-        id = resolvedLogId,
+        id = resolvedLogId.value,
         timestamp = toWireInstant(
           timestampInstant.epochSeconds,
           timestampInstant.nanosecondsOfSecond
         ),
         work_description = state.workDescription,
-        squawk_ids = state.selectedSquawkIds,
-        inspection_ids = state.selectedInspectionIds,
+        squawk_ids = state.selectedSquawkIds.map { it.value },
+        inspection_ids = state.selectedInspectionIds.map { it.value },
         // Every meter the form collected, and the only place a reading lives (#761).
         readings = state.meterValues.mapNotNull { (key, text) ->
           text.toDoubleOrNull()
@@ -754,16 +757,14 @@ class MaintenanceLogFormViewModel(
       result
         .onSuccess {
           if (state.selectedSquawkIds.isNotEmpty()) {
-            val squawkIds = state.selectedSquawkIds.map { SquawkId(it) }
-            val logId = MaintenanceLogId(resolvedLogId)
             squawkManager.markAddressed(
               thingId,
-              squawkIds,
-              logId,
+              state.selectedSquawkIds,
+              resolvedLogId,
             )
           }
           state.selectedInspectionIds.forEach { cardId ->
-            state.availableInspectionCards.find { it.id == cardId }
+            state.availableInspectionCards.find { it.id == cardId.value }
               ?.let { card ->
                 if (card.force_due_date != null || card.forcedDueMeter() != null ||
                   card.force_complied_status != null
@@ -805,7 +806,7 @@ class MaintenanceLogFormViewModel(
   // ── Delete ──────────────────────────────────────────────────────────────────
 
   fun deleteLog() {
-    val id = logIdTyped ?: return
+    val id = logId ?: return
     viewModelScope.launch {
       // Tombstone file attachments before removing the Firestore document
       attachmentForm.deleteSavedFiles()
