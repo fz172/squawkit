@@ -185,7 +185,7 @@ class TaskSuggestionManagerImpl(
   private suspend fun allUploaded(documents: List<Attachment>): Boolean {
     if (documents.isEmpty()) return true
     val statuses = withTimeoutOrNull(UPLOAD_WAIT) {
-      combine(documents.map { attachmentManager.observeStatus(it.id) }) { it.toList() }
+      combine(documents.map { attachmentManager.observeStatus(AttachmentId(it.id)) }) { it.toList() }
         .first { all -> all.any { it is AttachmentStatus.Failed } || all.all { it.isSettled() } }
     } ?: return false
     return statuses.all { it == AttachmentStatus.Synced || it == AttachmentStatus.RemoteOnly }

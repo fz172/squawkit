@@ -197,7 +197,7 @@ class TaskSuggestionManagerImplTest {
     runTest {
       val status =
         MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.5f))
-      every { attachments.observeStatus("blob-1") } returns status
+      every { attachments.observeStatus(AttachmentId("blob-1")) } returns status
       coEvery {
         builder.build(
           ThingId(THING),
@@ -240,7 +240,7 @@ class TaskSuggestionManagerImplTest {
 
   @Test
   fun `refuses without starting when a document failed to upload`() = runTest {
-    every { attachments.observeStatus("blob-1") } returns
+    every { attachments.observeStatus(AttachmentId("blob-1")) } returns
       flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
 
     assertThat(
@@ -257,7 +257,7 @@ class TaskSuggestionManagerImplTest {
   @Test
   fun `refuses without starting when a document is still uploading after the wait`() =
     runTest {
-      every { attachments.observeStatus("blob-1") } returns
+      every { attachments.observeStatus(AttachmentId("blob-1")) } returns
         MutableStateFlow(AttachmentStatus.Uploading(0.1f))
 
       assertThat(
@@ -274,9 +274,9 @@ class TaskSuggestionManagerImplTest {
   @Test
   fun `one failed upload refuses at once, without waiting on the others`() =
     runTest {
-      every { attachments.observeStatus("blob-1") } returns
+      every { attachments.observeStatus(AttachmentId("blob-1")) } returns
         MutableStateFlow(AttachmentStatus.Uploading(0.1f))
-      every { attachments.observeStatus("blob-2") } returns
+      every { attachments.observeStatus(AttachmentId("blob-2")) } returns
         flowOf(AttachmentStatus.Failed(RuntimeException("offline")))
 
       val result = manager.start(
@@ -300,8 +300,8 @@ class TaskSuggestionManagerImplTest {
       MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
     val second =
       MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
-    every { attachments.observeStatus("blob-1") } returns first
-    every { attachments.observeStatus("blob-2") } returns second
+    every { attachments.observeStatus(AttachmentId("blob-1")) } returns first
+    every { attachments.observeStatus(AttachmentId("blob-2")) } returns second
     coEvery {
       builder.build(
         ThingId(THING),
@@ -341,8 +341,8 @@ class TaskSuggestionManagerImplTest {
         MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
       val second =
         MutableStateFlow<AttachmentStatus>(AttachmentStatus.Uploading(0.1f))
-      every { attachments.observeStatus("blob-1") } returns first
-      every { attachments.observeStatus("blob-2") } returns second
+      every { attachments.observeStatus(AttachmentId("blob-1")) } returns first
+      every { attachments.observeStatus(AttachmentId("blob-2")) } returns second
 
       val started = backgroundScope.async {
         manager.start(
@@ -396,7 +396,7 @@ class TaskSuggestionManagerImplTest {
   @Test
   fun `takes a document already in Storage from another device as uploaded`() =
     runTest {
-      every { attachments.observeStatus("blob-1") } returns flowOf(
+      every { attachments.observeStatus(AttachmentId("blob-1")) } returns flowOf(
         AttachmentStatus.RemoteOnly
       )
       coEvery {

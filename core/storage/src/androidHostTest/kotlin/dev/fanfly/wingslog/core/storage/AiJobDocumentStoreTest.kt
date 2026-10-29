@@ -4,6 +4,7 @@ import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
@@ -63,7 +64,7 @@ class AiJobDocumentStoreTest {
     store.record("alice", "picked", ThingId("thing-1"), listOf(manual, bulletin))
     store.record("alice", "job-2", ThingId("thing-1"), listOf(manual))
 
-    store.forget("alice", "picked", listOf(manual.id))
+    store.forget("alice", "picked", listOf(AttachmentId(manual.id)))
 
     assertThat(store.forJob("alice", "picked").map { it.attachment }).containsExactly(bulletin)
     assertThat(store.forJob("alice", "job-2")).hasSize(1)

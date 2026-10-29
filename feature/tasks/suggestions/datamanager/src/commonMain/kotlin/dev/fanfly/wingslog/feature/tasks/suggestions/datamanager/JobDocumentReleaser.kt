@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.AiJobDocumentStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.CancellationException
@@ -170,7 +171,7 @@ class JobDocumentReleaser(
           val orphans = rows.map { it.attachment }
             .filterNot { it.id in heldHere.value }
           orphans.forEach { attachments().release(it, owner = null) }
-          store.forget(key.uid, PICKED, orphans.map { it.id })
+          store.forget(key.uid, PICKED, orphans.map { AttachmentId(it.id) })
           return@forEach
         }
         val gone = key.uid != uid || client().isGone(AiJobId(key.jobId))
@@ -208,7 +209,7 @@ class JobDocumentReleaser(
   private suspend fun forgetPicked(uid: String?, documents: List<Attachment>) {
     val ids = documents.map { it.id }
     heldHere.update { it - ids.toSet() }
-    if (uid != null) store.forget(uid, PICKED, ids)
+    if (uid != null) store.forget(uid, PICKED, ids.map(::AttachmentId))
   }
 
   private data class JobKey(val uid: String, val jobId: String)

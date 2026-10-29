@@ -71,6 +71,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.tasks.suggestions.datamanager.SuggestEntry
 import dev.fanfly.wingslog.feature.tasks.suggestions.update.review.text
+import dev.fanfly.wingslog.id.AttachmentId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.cancel
@@ -154,7 +155,7 @@ internal fun AddTasksSheet(
   state: AddTasksUiState,
   onAddDocuments: (List<PickedFile>) -> Unit,
   onPickError: () -> Unit,
-  onRemove: (String) -> Unit,
+  onRemove: (AttachmentId) -> Unit,
   onUpgrade: () -> Unit,
   onCreateManually: () -> Unit,
   onSuggest: () -> Unit,
@@ -283,7 +284,7 @@ private fun Title() {
 private fun ColumnScope.Body(
   state: AddTasksUiState,
   pickFiles: () -> Unit,
-  onRemove: (String) -> Unit,
+  onRemove: (AttachmentId) -> Unit,
   onUpgrade: () -> Unit,
 ) {
   SuggestCard(state)
@@ -381,7 +382,7 @@ private fun Checking() {
 private fun Manuals(
   sources: SourcesState,
   pickFiles: () -> Unit,
-  onRemove: (String) -> Unit,
+  onRemove: (AttachmentId) -> Unit,
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     Text(
@@ -420,7 +421,7 @@ private fun Manuals(
           overflow = TextOverflow.Ellipsis,
           modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = { onRemove(document.id) }) {
+        IconButton(onClick = { onRemove(AttachmentId(document.id)) }) {
           Icon(
             Icons.Default.Close,
             contentDescription = stringResource(CoreRes.string.remove),

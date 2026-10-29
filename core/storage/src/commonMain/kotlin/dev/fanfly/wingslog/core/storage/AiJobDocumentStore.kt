@@ -5,6 +5,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.db.Ai_job_document
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.id.AttachmentId
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.Attachment
 
@@ -61,11 +62,11 @@ class AiJobDocumentStore(
   }
 
   /** Drops [attachmentIds] from [jobId]'s rows, leaving its other documents. */
-  suspend fun forget(uid: String, jobId: String, attachmentIds: List<String>) {
+  suspend fun forget(uid: String, jobId: String, attachmentIds: List<AttachmentId>) {
     if (attachmentIds.isEmpty()) return
     writeLock.withLock {
       db.schemaQueries.transaction {
-        attachmentIds.forEach { db.schemaQueries.deleteAiJobDocument(uid, jobId, it) }
+        attachmentIds.forEach { db.schemaQueries.deleteAiJobDocument(uid, jobId, it.value) }
       }
     }
   }
