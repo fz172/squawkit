@@ -276,7 +276,7 @@ fun EditTaskScreen(
                 component = state.component,
                 onComponentChange = null,
                 isEditing = true,
-                taskId = card.id,
+                taskId = MaintenanceTaskId(card.id),
                 availableLogs = availableLogs,
                 onAddLog = onShowLogPicker,
                 onRemoveLog = onRemoveLog,

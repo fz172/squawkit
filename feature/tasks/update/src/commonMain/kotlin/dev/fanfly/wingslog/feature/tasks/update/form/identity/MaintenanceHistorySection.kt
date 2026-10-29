@@ -23,12 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.form.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
@@ -39,14 +41,14 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 internal fun MaintenanceHistorySection(
-  taskId: String,
+  taskId: MaintenanceTaskId,
   availableLogs: List<MaintenanceLog>,
   onAddLog: () -> Unit,
   onRemoveLog: (MaintenanceLog) -> Unit,
 ) {
   val linkedLogs = remember(availableLogs, taskId) {
     availableLogs
-      .filter { taskId in it.inspection_ids }
+      .filter { taskId.value in it.inspection_ids }
       .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
   }
 

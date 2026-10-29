@@ -19,6 +19,7 @@ import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.id.MaintenanceTaskId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
@@ -115,7 +116,7 @@ fun EditTaskRoute(
       onCancel = { navController.popBackStack() },
       onSave = { updatedCard ->
         viewModel.saveEditedTask(
-          cardId = updatedCard.id,
+          cardId = MaintenanceTaskId(updatedCard.id),
           title = updatedCard.title,
           type = updatedCard.type,
           component = updatedCard.component,
