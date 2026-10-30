@@ -16,8 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -46,6 +48,8 @@ import org.koin.core.parameter.parametersOf
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.feature.datalog.sharedassets.generated.resources.Res
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_deleted
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_download_failed
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_download_success
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
@@ -68,6 +72,10 @@ fun DataLogViewerScreen(
   val snackbarHostState = remember { SnackbarHostState() }
   val drawerState = rememberDrawerState(DrawerValue.Closed)
   val scope = rememberCoroutineScope()
+  val downloader = rememberDataLogFileDownloader()
+  val downloadedMessage = stringResource(Res.string.data_log_download_success)
+  val downloadFailedMessage = stringResource(Res.string.data_log_download_failed)
+  var isDownloading by remember { mutableStateOf(false) }
   val deletedMessage = stringResource(
     Res.string.data_log_deleted,
     LexiconFormatter.sentenceCase(lexicon.dataLogNoun)
@@ -118,12 +126,29 @@ fun DataLogViewerScreen(
       null -> Unit
     }
   }
+  val onDownloadFile: () -> Unit = {
+    if (!isDownloading) {
+      isDownloading = true
+      scope.launch {
+        try {
+          val fileName = ready?.record?.file_name?.ifBlank { "datalog.csv" } ?: "datalog.csv"
+          val success = downloader.download(fileName) {
+            viewModel.fetchRawFileBytes()
+          }
+          snackbarHostState.showSnackbar(if (success) downloadedMessage else downloadFailedMessage)
+        } finally {
+          isDownloading = false
+        }
+      }
+    }
+  }
   val sidebar = viewerSidebar(
     state = ready,
     row = row,
     dragState = dragState,
     onDrop = onDrop,
     viewModel = viewModel,
+    onDownloadFile = onDownloadFile,
   )
   // The viewer is a top-level route outside the adaptive shell, so it derives its own tier;
   // otherwise every window would take the phone layout and hide the sidebar in a drawer.

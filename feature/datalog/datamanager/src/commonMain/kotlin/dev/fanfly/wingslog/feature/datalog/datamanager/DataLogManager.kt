@@ -29,6 +29,9 @@ interface DataLogManager {
   /** Cache → local blob → decode → parse. Fails when the bytes are not local yet. */
   suspend fun load(thingId: ThingId, id: DataLogId): Result<DataLogSeriesData>
 
+  /** Reads and decodes (un-gzips) the raw file bytes for this data log. */
+  suspend fun rawFileBytes(thingId: ThingId, id: DataLogId): Result<ByteArray>
+
   /** Tombstones the record; the blob follows through the tombstone GC and the server. */
   suspend fun delete(thingId: ThingId, id: DataLogId): Result<Unit>
   fun observeBlobState(thingId: ThingId, id: DataLogId): Flow<BlobSyncState?>

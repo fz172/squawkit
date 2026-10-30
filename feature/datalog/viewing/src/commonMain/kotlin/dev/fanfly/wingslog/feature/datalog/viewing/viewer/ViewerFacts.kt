@@ -31,7 +31,11 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_u
 
 /** The Info tab's lines (PRD R26), in the order the mock lists them. */
 @Composable
-internal fun viewerFacts(record: DataLog, row: DataLogRow): List<InfoFact> {
+internal fun viewerFacts(
+  record: DataLog,
+  row: DataLogRow,
+  onDownloadFile: (() -> Unit)? = null,
+): List<InfoFact> {
   val source = record.source
   val plottable = record.series.count { it.isPlottable }
   return listOfNotNull(
@@ -70,7 +74,11 @@ internal fun viewerFacts(record: DataLog, row: DataLogRow): List<InfoFact> {
         record.series.size - plottable
       )
     ),
-    InfoFact(stringResource(Res.string.data_log_fact_file), record.file_name),
+    InfoFact(
+      label = stringResource(Res.string.data_log_fact_file),
+      value = record.file_name,
+      onClick = onDownloadFile,
+    ),
     source?.product?.takeIf { it.isNotBlank() }
       ?.let { InfoFact(stringResource(Res.string.data_log_fact_product), it) },
     source?.unit?.takeIf { it.isNotBlank() }

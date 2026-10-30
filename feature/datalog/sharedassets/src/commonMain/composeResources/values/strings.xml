@@ -89,4 +89,6 @@
   <string name="data_log_fact_identity">Recorded tail</string>
   <string name="data_log_fact_airframe_hours">Airframe hours</string>
   <string name="data_log_fact_engine_hours">Engine hours</string>
+  <string name="data_log_download_success">Saved to your device</string>
+  <string name="data_log_download_failed">Couldn’t download the file</string>
 </resources>

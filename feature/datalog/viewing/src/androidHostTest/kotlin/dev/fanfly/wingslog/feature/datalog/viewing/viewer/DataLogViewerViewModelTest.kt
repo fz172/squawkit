@@ -619,4 +619,15 @@ class DataLogViewerViewModelTest {
 
     assertThat(analytics.events).isEmpty()
   }
+
+  @Test
+  fun fetchRawFileBytesDelegatesToManager() = runTest {
+    val expected = "A,B\n1,2\n".encodeToByteArray()
+    coEvery { manager.rawFileBytes(thingId, id) } returns Result.success(expected)
+
+    val vm = viewModel()
+    val bytes = vm.fetchRawFileBytes()
+
+    assertThat(bytes).isEqualTo(expected)
+  }
 }

@@ -187,6 +187,27 @@ class DataLogManagerImpl(
     parsed.data
   }.onFailure { logger.w(it) { "Error loading data log" } }
 
+  override suspend fun rawFileBytes(
+    thingId: ThingId,
+    id: DataLogId,
+  ): Result<ByteArray> = runCatching {
+    val record = observeOne(thingId, id).first()
+      ?: throw NoSuchElementException("No data log $id")
+    val rawFile = record.raw_file ?: error("Data log $id has no raw file")
+    val ref = blobs.get(BlobId(rawFile.id))
+      ?: error("Data log $id is not indexed locally")
+    if (ref.remoteState == RemoteState.RemoteOnly || ref.remoteState == RemoteState.RemoteMissing) {
+      error("Data log $id is not downloaded")
+    }
+    withContext(dispatcher) {
+      val stored = filesystem.read(ref.relativePath)
+      when (record.encoding) {
+        DataLogEncoding.DATA_LOG_ENCODING_GZIP -> GzipCodec.decompress(stored)
+        else -> stored
+      }
+    }
+  }.onFailure { logger.w(it) { "Error reading raw file bytes for data log $id" } }
+
   /**
    * Brings a stored record back in line with what this build would import today, on open.
    *

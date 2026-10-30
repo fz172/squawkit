@@ -21,9 +21,10 @@ internal fun viewerSidebar(
   dragState: SeriesDragState,
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
   viewModel: DataLogViewerViewModel,
+  onDownloadFile: (() -> Unit)? = null,
 ): (@Composable () -> Unit)? {
   if (state == null || row == null) return null
-  val facts = viewerFacts(state.record, row)
+  val facts = viewerFacts(state.record, row, onDownloadFile)
   val infoByColumn = state.record.series.associateBy { it.column }
   return {
     SeriesSidebar(

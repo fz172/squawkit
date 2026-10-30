@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.badge.StatusChip
@@ -51,8 +52,12 @@ import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 enum class SidebarTab { SERIES, INFO }
 
-/** One label and value line of the Info tab (PRD R26). */
-data class InfoFact(val label: String, val value: String)
+/** One label and value line of the Info tab (PRD R26). Optional [onClick] makes the value a link. */
+data class InfoFact(
+  val label: String,
+  val value: String,
+  val onClick: (() -> Unit)? = null,
+)
 
 /**
  * Sidebar width on layouts with side navigation (design §11.7); no Spacing token covers it.
@@ -252,7 +257,20 @@ private fun InfoTab(facts: List<InfoFact>, identityMismatch: Boolean) {
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Text(fact.value, style = WingslogTypography.dataSmall)
+        if (fact.onClick != null) {
+          DisableSelection {
+            Text(
+              text = fact.value,
+              style = WingslogTypography.dataSmall.copy(
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+              ),
+              modifier = Modifier.clickable(onClick = fact.onClick),
+            )
+          }
+        } else {
+          Text(fact.value, style = WingslogTypography.dataSmall)
+        }
       }
     }
   }

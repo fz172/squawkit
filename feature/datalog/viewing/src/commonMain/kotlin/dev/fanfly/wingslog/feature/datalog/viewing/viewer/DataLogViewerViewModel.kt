@@ -246,6 +246,9 @@ class DataLogViewerViewModel(
     }
   }
 
+  suspend fun fetchRawFileBytes(): ByteArray? =
+    manager.rawFileBytes(thingId, dataLogId).getOrNull()
+
   private fun load() {
     viewModelScope.launch {
       val record = manager.observeOne(thingId, dataLogId)
