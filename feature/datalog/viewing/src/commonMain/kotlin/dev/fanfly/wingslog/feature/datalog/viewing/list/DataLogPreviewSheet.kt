@@ -78,11 +78,6 @@ fun DataLogPreviewSheet(
   ) {
     Spacer(Modifier.height(Spacing.medium))
     DetailSheetActionRow {
-      DetailSheetAction(
-        label = stringResource(Res.string.data_log_open_chart),
-        onClick = onOpenChart,
-        primary = true,
-      )
       if (onDelete != null) {
         DetailSheetAction(
           label = stringResource(CoreRes.string.delete),
@@ -90,6 +85,11 @@ fun DataLogPreviewSheet(
           destructive = true,
         )
       }
+      DetailSheetAction(
+        label = stringResource(Res.string.data_log_open_chart),
+        onClick = onOpenChart,
+        primary = true,
+      )
     }
     Spacer(Modifier.height(Spacing.large))
 
