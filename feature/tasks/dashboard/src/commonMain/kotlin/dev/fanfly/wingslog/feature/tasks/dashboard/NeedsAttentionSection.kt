@@ -25,7 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.dashboard.generated.resources.overview_needs_attention
 import wingslog.feature.tasks.viewing.generated.resources.due_date
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine_value
-import wingslog.feature.tasks.viewing.generated.resources.label_expired
+import wingslog.feature.tasks.viewing.generated.resources.label_overdue
 import wingslog.feature.tasks.dashboard.generated.resources.Res as DashboardRes
 import wingslog.feature.tasks.viewing.generated.resources.Res as TasksViewingRes
 
@@ -100,7 +100,7 @@ private fun MaintenanceTaskWithStatus.dueLine(): AnnotatedString? {
   }
   val due = dueDate ?: dueMeter ?: return null
   val text = when {
-    isOverdue -> stringResource(TasksViewingRes.string.label_expired, due)
+    isOverdue -> stringResource(TasksViewingRes.string.label_overdue, due)
     dueDate != null -> stringResource(TasksViewingRes.string.due_date, due)
     else -> stringResource(TasksViewingRes.string.label_due_engine_value, due)
   }
