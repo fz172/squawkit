@@ -451,4 +451,59 @@ class DataLogManagerImplTest {
         .first()
     ).isEmpty()
   }
+
+  @Test
+  fun rawFileBytesDecompressesGzipBlob() = runTest {
+    val original = "TIME,RPM\n1,2400\n".encodeToByteArray()
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z", encoding = DataLogEncoding.DATA_LOG_ENCODING_GZIP),
+          Instant.DISTANT_PAST
+        )
+      )
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(original)
+
+    val bytes = manager.rawFileBytes(thingId, DataLogId("a")).getOrThrow()
+    assertThat(bytes).isEqualTo(original)
+  }
+
+  @Test
+  fun rawFileBytesReturnsUncompressedDirectly() = runTest {
+    val original = "TIME,RPM\n1,2400\n".encodeToByteArray()
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z", encoding = DataLogEncoding.DATA_LOG_ENCODING_NONE),
+          Instant.DISTANT_PAST
+        )
+      )
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    coEvery { filesystem.read("blobs/blob-1.bin") } returns original
+
+    val bytes = manager.rawFileBytes(thingId, DataLogId("a")).getOrThrow()
+    assertThat(bytes).isEqualTo(original)
+  }
+
+  @Test
+  fun rawFileBytesFailsWhenBytesAreRemoteOnly() = runTest {
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z"),
+          Instant.DISTANT_PAST
+        )
+      )
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.RemoteOnly)
+
+    val result = manager.rawFileBytes(thingId, DataLogId("a"))
+    assertThat(result.isFailure).isTrue()
+  }
 }
