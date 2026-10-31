@@ -16,7 +16,6 @@
   <string name="badge_overdue">OVERDUE</string>
   <string name="badge_due">DUE</string>
   <string name="badge_not_due">NOT DUE</string>
-  <string name="label_deadline">DEADLINE</string>
   <string name="label_due_engine">DUE @</string>
   <string name="label_due_engine_value">DUE @ <xliff:g example="3">%1$s</xliff:g></string>
   <string name="label_overdue">Overdue <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>

@@ -102,7 +102,7 @@ feature/attachment/sharedassets	no_attachments	No attachments yet
 feature/attachment/sharedassets	open_failed	Could not open attachment. Try again.
 feature/attachment/sharedassets	remove_attachment	Remove attachment
 feature/attachment/sharedassets	sign_in_to_add_attachments	Sign in to add attachments
-feature/attachment/sharedassets	subtitle_separator	 · 
+feature/attachment/sharedassets	subtitle_separator	 ·
 feature/attachment/sharedassets	take_photo	Take photo
 feature/attachment/sharedassets	take_photo_description	Use the camera
 feature/comments/sharedassets	comment_actions	Comment actions
@@ -840,7 +840,6 @@ feature/tasks/viewing	days_remaining	%1$d days remaining
 feature/tasks/viewing	due_date	Due %1$s
 feature/tasks/viewing	due_today	Due today
 feature/tasks/viewing	engine_hours_label	Engine hours
-feature/tasks/viewing	label_deadline	DEADLINE
 feature/tasks/viewing	label_due_engine	DUE @
 feature/tasks/viewing	label_due_engine_value	DUE @ %1$s
 feature/tasks/viewing	label_overdue	Overdue %1$s
