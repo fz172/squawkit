@@ -102,7 +102,7 @@ feature/attachment/sharedassets	no_attachments	No attachments yet
 feature/attachment/sharedassets	open_failed	Could not open attachment. Try again.
 feature/attachment/sharedassets	remove_attachment	Remove attachment
 feature/attachment/sharedassets	sign_in_to_add_attachments	Sign in to add attachments
-feature/attachment/sharedassets	subtitle_separator	 · 
+feature/attachment/sharedassets	subtitle_separator	 ·
 feature/attachment/sharedassets	take_photo	Take photo
 feature/attachment/sharedassets	take_photo_description	Use the camera
 feature/comments/sharedassets	comment_actions	Comment actions
@@ -840,10 +840,9 @@ feature/tasks/viewing	days_remaining	%1$d days remaining
 feature/tasks/viewing	due_date	Due %1$s
 feature/tasks/viewing	due_today	Due today
 feature/tasks/viewing	engine_hours_label	Engine hours
-feature/tasks/viewing	label_deadline	DEADLINE
 feature/tasks/viewing	label_due_engine	DUE @
 feature/tasks/viewing	label_due_engine_value	DUE @ %1$s
-feature/tasks/viewing	label_expired	EXPIRED %1$s
+feature/tasks/viewing	label_overdue	Overdue %1$s
 feature/tasks/viewing	next_due_date	NEXT DUE DATE
 feature/tasks/viewing	next_due_meter	NEXT DUE %1$s
 feature/tasks/viewing	no_maintenance_logs_for_task	No work logs yet. Add one and tag this maintenance task to see history here.
@@ -1009,6 +1008,8 @@ core/sharedassets	danger_zone	Danger zone
 feature/datalog/sharedassets	data_log_delete_body	The file and its charts are removed from every device.
 feature/datalog/sharedassets	data_log_delete_title	Delete Data Log?
 feature/datalog/sharedassets	data_log_deleted	Data log deleted
+feature/datalog/sharedassets	data_log_download_failed	Couldn’t download the file
+feature/datalog/sharedassets	data_log_download_success	Saved to your device
 feature/datalog/sharedassets	data_log_drag_series	Hold and drag to move %1$s
 feature/datalog/sharedassets	data_log_empty_title	No data log uploaded yet
 feature/datalog/sharedassets	data_log_fact_airframe_hours	Airframe hours

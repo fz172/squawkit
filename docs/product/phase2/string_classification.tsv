@@ -699,10 +699,9 @@ NEUTRAL	feature/tasks/viewing	due_soon_date		no domain vocabulary	Due Soon: %1$s
 NEUTRAL	feature/tasks/viewing	due_soon_date_engine		no domain vocabulary	Due Soon: %1$s / %2$s hrs
 NEUTRAL	feature/tasks/viewing	due_soon_engine		no domain vocabulary	Due Soon: @ %1$s hrs
 NEUTRAL	feature/tasks/viewing	due_today		no domain vocabulary	Due Today
-NEUTRAL	feature/tasks/viewing	label_deadline		no domain vocabulary	DEADLINE
 NEUTRAL	feature/tasks/viewing	label_due_engine		no domain vocabulary	DUE @
 NEUTRAL	feature/tasks/viewing	label_due_engine_value		no domain vocabulary	DUE @ %1$s
-NEUTRAL	feature/tasks/viewing	label_expired		no domain vocabulary	EXPIRED %1$s
+NEUTRAL	feature/tasks/viewing	label_overdue		no domain vocabulary	Overdue %1$s
 NEUTRAL	feature/tasks/viewing	next_due_date		no domain vocabulary	NEXT DUE DATE
 NEUTRAL	feature/tasks/viewing	next_due_engine_hrs		no domain vocabulary	NEXT DUE ENGINE HRS
 NEUTRAL	feature/tasks/viewing	no_maintenance_logs_for_task		no domain vocabulary	No logs yet. Add a maintenance entry and tag this task to see history here.

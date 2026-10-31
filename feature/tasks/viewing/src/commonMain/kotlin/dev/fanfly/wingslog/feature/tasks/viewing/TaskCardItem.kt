@@ -25,7 +25,6 @@ import wingslog.core.sharedassets.generated.resources.dash
 import wingslog.feature.tasks.viewing.generated.resources.badge_due
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
 import wingslog.feature.tasks.viewing.generated.resources.completed
-import wingslog.feature.tasks.viewing.generated.resources.label_deadline
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -72,8 +71,7 @@ fun TaskCardItem(
 
   val statusLabel = when {
     status == DueStatus.COMPLIED || isOnCondition -> ""
-    dueDate != null -> stringResource(ViewingRes.string.label_deadline)
-    dueEngine != null -> stringResource(ViewingRes.string.label_due_engine)
+    dueDate != null || dueEngine != null -> stringResource(ViewingRes.string.label_due_engine)
     else -> ""
   }
 
