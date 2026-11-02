@@ -293,96 +293,95 @@
     <!-- ---------------------------------------------------------- hero -->
     <section class="hero">
         <div class="wrap hero-grid">
-            <div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-dot">★</span> Universal Maintenance Record
+                </div>
                 <h1>
-                    Know what’s due.<br>
-                    Log what’s done.<br>
-                    <span class="accent">For everything you own.</span>
+                    Track services<br>
+                    <span class="accent">across all your stuff.</span>
                 </h1>
+                <p class="hero-sub">
+                    Know what’s due. Log what’s done. One clean, shared maintenance history for your aircraft, vehicles, machinery, or home — fast, calm, and works 100% offline.
+                </p>
                 <div class="hero-cta">
                     <a class="btn btn-light" href="/login">Start free in your browser</a>
-                    <a class="btn btn-outline-light" href="#get-the-app">Get the iPhone or Android app</a>
+                    <a class="btn btn-outline-light" href="#get-the-app">Get the app</a>
+                </div>
+                <div class="hero-trust">
+                    <span><svg><use href="#ic-check"></use></svg> Works 100% offline</span>
+                    <span><svg><use href="#ic-check"></use></svg> Background sync</span>
+                    <span><svg><use href="#ic-check"></use></svg> Share with co-owners &amp; techs</span>
                 </div>
             </div>
 
-            <!-- Decorative: every word in here is repeated as real copy elsewhere on the page. -->
-            <div class="stage" aria-hidden="true">
-                <div class="stage-col">
-                    <div class="card card-fleet">
-                        <div class="card-head"><b>Your things</b><span>34 logs</span></div>
-                        <div class="row">
-                            <span class="row-icon"><svg><use href="#ic-plane"></use></svg></span>
-                            <span class="row-body">
-                                <span class="row-title">N172SP <small>1243.5 h</small></span>
-                                <span class="row-sub">Annual · in 9 days</span>
-                            </span>
-                            <span class="pill pill-due">DUE SOON</span>
+            <!-- The Reassuring Service Passport -->
+            <div class="passport-stage" aria-hidden="true">
+                <div class="floating-pill pill-top">
+                    <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span>AI-Assisted Service Schedules</span>
+                </div>
+
+                <div class="service-passport">
+                    <div class="passport-header">
+                        <div class="passport-title-wrap">
+                            <span class="passport-label">Active Equipment Record</span>
+                            <span class="passport-title">Universal Service Passport</span>
                         </div>
-                        <div class="row">
-                            <span class="row-icon"><svg><use href="#ic-car"></use></svg></span>
-                            <span class="row-body">
-                                <span class="row-title">4Runner <small>92,430 mi</small></span>
-                                <span class="row-sub">Oil change · in 210 mi</span>
-                            </span>
-                            <span class="pill pill-due">DUE SOON</span>
+                        <span class="status-chip chip-positive">● UP TO DATE</span>
+                    </div>
+
+                    <div class="passport-body">
+                        <!-- Record 1: Past / Completed -->
+                        <div class="passport-row">
+                            <div class="record-icon icon-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+                            <div class="record-content">
+                                <div class="record-title">Routine Fluid &amp; Filter Service</div>
+                                <div class="record-sub">Signed off by certified technician · Work order attached</div>
+                            </div>
+                            <span class="status-chip chip-positive">COMPLETED</span>
                         </div>
-                        <div class="row">
-                            <span class="row-icon"><svg><use href="#ic-home"></use></svg></span>
-                            <span class="row-body">
-                                <span class="row-title">Furnace <small>—</small></span>
-                                <span class="row-sub">Filter · in 34 days</span>
-                            </span>
-                            <span class="pill pill-ok">OK</span>
+
+                        <!-- Record 2: Present / Due Soon -->
+                        <div class="passport-row">
+                            <div class="record-icon icon-due"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                            <div class="record-content">
+                                <div class="record-title">Seasonal Safety Inspection</div>
+                                <div class="record-sub">Interval reminder active · Due in 14 days</div>
+                            </div>
+                            <span class="status-chip chip-caution">IN 14 DAYS</span>
                         </div>
-                        <div class="card-foot">
-                            <svg><use href="#ic-group"></use></svg>
-                            Shared with 3 people
+
+                        <!-- Record 3: Future / Scheduled -->
+                        <div class="passport-row">
+                            <div class="record-icon icon-sched"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                            <div class="record-content">
+                                <div class="record-title">Annual Recertification</div>
+                                <div class="record-sub">Recurring milestone · Automatically computes from logs</div>
+                            </div>
+                            <span class="status-chip chip-neutral">SCHEDULED</span>
                         </div>
                     </div>
 
-                    <div class="card card-log">
-                        <div class="log-head">N172SP <small>14 Mar</small></div>
-                        <p>50-hour oil change · signed off</p>
-                        <div class="log-meta">
-                            <svg><use href="#ic-photos"></use></svg>
-                            Work order · 2 photos
+                    <div class="passport-footer">
+                        <div class="footer-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span>Shared with your crew</span>
+                        </div>
+                        <div class="footer-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            <span>Receipts attached</span>
+                        </div>
+                        <div class="footer-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                            <span>Works offline</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="stage-col">
-                    <div class="card card-meters">
-                        <div>
-                            <div class="meter-value">1243.5</div>
-                            <div class="meter-label">AIRFRAME</div>
-                        </div>
-                        <div>
-                            <div class="meter-value">987.2</div>
-                            <div class="meter-label">ENGINE</div>
-                        </div>
-                        <div>
-                            <div class="meter-value">412.0</div>
-                            <div class="meter-label">PROP</div>
-                        </div>
-                    </div>
-
-                    <div class="card card-toast">
-                        <svg><use href="#ic-check"></use></svg>
-                        <div>
-                            <div class="toast-title">Oil change logged</div>
-                            <div class="toast-sub">4Runner · <span>92,430 mi</span></div>
-                        </div>
-                    </div>
-
-                    <div class="card card-next">
-                        <div class="next-head">
-                            Next 90 days
-                            <svg><use href="#ic-clock"></use></svg>
-                        </div>
-                        <div class="next-row"><span>ELT battery</span><b class="over">12 d</b></div>
-                        <div class="next-row"><span>Transponder check</span><b class="soon">2 mo</b></div>
-                        <div class="next-row"><span>Oil &amp; filter</span><b class="soon">210 mi</b></div>
-                    </div>
+                <div class="floating-pill pill-bottom">
+                    <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    <span>Work Orders &amp; Receipts Attached</span>
                 </div>
             </div>
         </div>

@@ -276,18 +276,45 @@ img, svg { display: block; max-width: 100%; }
   align-items: center;
 }
 
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFDFA6; /* Amber90 */
+  color: #271900; /* Amber10 */
+  padding: 5px 12px;
+  border-radius: 4px; /* badgeCornerRadius */
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  width: fit-content;
+}
+.hero-badge .badge-dot {
+  color: #7A5200; /* Amber40 */
+  font-size: 13px;
+}
+
 .hero h1 {
-  font-size: clamp(32px, 5vw, 60px);
-  line-height: 1.05;
+  font-size: clamp(34px, 5.2vw, 56px);
+  font-weight: 800;
+  line-height: 1.1;
   letter-spacing: -0.02em;
   color: var(--on-navy);
 }
-.hero h1 .accent { color: var(--on-navy-accent); }
+.hero h1 .accent {
+  color: var(--on-navy-accent);
+  background: linear-gradient(135deg, #A7C8FF 0%, #D5E3FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
 .hero-sub {
-  max-width: 520px;
-  margin-top: 20px;
-  font-size: clamp(15px, 1.4vw, 17px);
+  max-width: 500px;
+  margin-top: 18px;
+  font-size: clamp(15px, 1.35vw, 17px);
   line-height: 1.6;
   color: var(--on-navy-body);
 }
@@ -295,24 +322,66 @@ img, svg { display: block; max-width: 100%; }
 .hero-cta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 30px;
+  gap: 14px;
+  margin-top: 28px;
 }
 
-/* The accent blue is a link colour on white; on navy it fails contrast. These two are the navy
-   heroes' own pair, on this page and on the vertical pages. */
-.btn-light { background: var(--on-navy); color: var(--navy); }
-.btn-light:hover { background: var(--on-navy-body); color: var(--navy); }
+/* Design System buttonHeight: 56px, buttonCornerRadius: 16px, labelLarge uppercase */
+.hero .btn {
+  height: 56px;
+  padding-inline: 28px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-light {
+  background: var(--on-navy-accent); /* AviationBlue80 #A7C8FF */
+  color: var(--navy); /* AviationBlue10 #001849 */
+  box-shadow: 0 4px 16px rgba(167, 200, 255, 0.25);
+}
+.btn-light:hover {
+  background: #FFFFFF;
+  color: var(--navy);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(167, 200, 255, 0.35);
+}
 
 .btn-outline-light {
-  background: transparent;
-  border-color: rgba(255, 255, 255, 0.38);
-  color: var(--on-navy);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  backdrop-filter: blur(12px);
 }
-.btn-outline-light:hover { border-color: var(--on-navy); color: var(--on-navy); }
+.btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
 
-/* The promo hero has no sub-line, so its two buttons are the whole call to action. */
-.hero .btn { height: 48px; padding-inline: 24px; font-size: 15px; }
+.hero-trust {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--on-navy-muted);
+}
+.hero-trust span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--on-navy-body);
+}
+.hero-trust svg {
+  width: 15px;
+  height: 15px;
+  color: #81C784; /* StatusOkDark */
+}
 
 /* Used by the vertical pages' heroes; the promo hero leads with its buttons instead. */
 .chips {
@@ -341,173 +410,207 @@ img, svg { display: block; max-width: 100%; }
    system face for labels and badges, and JetBrains Mono only for an identifier or a meter
    reading — never for a label, a date or a badge. */
 
-/* --- the preview stage --------------------------------------------------
-   Five cards from the app in two columns, each tilted a degree or two and
-   nudged over its neighbour. Decorative: the real content is the copy beside
-   it, so the stage is aria-hidden and the cards carry no headings. The cards
-   are in flow, so the columns narrow with the hero instead of being scaled. */
+/* --- the preview stage: Reassuring Service Passport ------------------ */
 
-.stage {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.stage-col { display: flex; flex-direction: column; gap: 14px; }
-.stage-col:first-child { padding-top: 36px; }
-
-.card {
+.passport-stage {
   position: relative;
-  background: var(--surface);
-  color: var(--text);
-  border-radius: 12px;
-  box-shadow: var(--card-shadow);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
 }
 
-.card-fleet  { z-index: 2; transform: rotate(-2.5deg); overflow: hidden; }
-.card-log    { z-index: 3; transform: rotate(1.5deg) translate(28px, -6px); }
-.card-meters { z-index: 1; transform: rotate(2deg); }
-.card-toast  { z-index: 4; transform: rotate(-1deg) translateX(-24px); }
-.card-next   { z-index: 1; transform: rotate(1.5deg) translateY(4px); }
-
-.card-head {
+.floating-pill {
+  position: absolute;
+  background: rgba(27, 36, 49, 0.90);
+  border: 1px solid rgba(167, 200, 255, 0.28);
+  backdrop-filter: blur(16px);
+  padding: 10px 18px;
+  border-radius: 30px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-}
-.card-head b {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 600;
+  color: #FFFFFF;
+  box-shadow: 0 12px 32px rgba(0, 4, 20, 0.45);
+  z-index: 10;
+  animation: floatSlow 4s ease-in-out infinite alternate;
 }
-.card-head span { font-size: 11px; font-weight: 500; color: var(--accent); }
+.floating-pill .pill-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--on-navy-accent);
+}
+.pill-top {
+  top: -16px;
+  right: -8px;
+}
+.pill-bottom {
+  bottom: -16px;
+  left: -12px;
+  animation-delay: -2s;
+}
+@keyframes floatSlow {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-8px); }
+}
 
-.row {
+.service-passport {
+  background: rgba(27, 36, 49, 0.82); /* Neutral15 with opacity */
+  border: 1px solid rgba(195, 203, 216, 0.22); /* Neutral80 with opacity */
+  backdrop-filter: blur(28px);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 4, 24, 0.50);
+}
+
+.passport-header {
+  padding: 18px 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.passport-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.passport-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--on-navy-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.passport-title {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 4px; /* badgeCornerRadius */
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.chip-positive {
+  background: #E3F2E8; /* StatusOkContainerLight */
+  color: #276B39; /* StatusOkLight */
+}
+.chip-caution {
+  background: #FFECB3; /* StatusWarningContainerLight */
+  color: #8B5E00; /* StatusWarningLight */
+}
+.chip-neutral {
+  background: #D3DBE7; /* Neutral86 */
+  color: #545F72; /* Neutral40 */
+}
+
+.passport-body {
+  padding: 8px 22px;
+  display: flex;
+  flex-direction: column;
+}
+.passport-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--line);
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-.row-icon {
+.passport-row:last-child {
+  border-bottom: none;
+}
+.record-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex: none;
-  border-radius: 8px;
-  background: var(--accent-container);
-  color: var(--accent);
+  flex-shrink: 0;
 }
-.row-icon svg { width: 18px; height: 18px; }
-.row-body { flex: 1; min-width: 0; }
-.row-title {
+.record-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.icon-done {
+  background: rgba(39, 107, 57, 0.2);
+  color: #81C784;
+  border: 1px solid rgba(129, 199, 132, 0.3);
+}
+.icon-due {
+  background: rgba(255, 186, 78, 0.15);
+  color: #FFBA4E;
+  border: 1px solid rgba(255, 186, 78, 0.3);
+}
+.icon-sched {
+  background: rgba(167, 200, 255, 0.15);
+  color: #A7C8FF;
+  border: 1px solid rgba(167, 200, 255, 0.3);
+}
+
+.record-content {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 6px;
+  flex-direction: column;
+  gap: 2px;
+}
+.record-title {
   font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1.35;
+  color: #FFFFFF;
 }
-.row-title small { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--muted); }
-.row-sub { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); }
-
-.card-foot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--line);
+.record-sub {
   font-size: 12px;
-  color: var(--muted);
-}
-.card-foot svg { width: 18px; height: 18px; flex: none; color: var(--accent); }
-
-.pill {
-  flex: none;
-  padding: 3px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  line-height: 1.4;
+  color: var(--on-navy-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.pill-due { background: var(--warn-bg); color: var(--warn-text); }
-.pill-ok { background: var(--ok-bg); color: var(--success); }
-.pill-over { background: var(--error-bg); color: var(--error-text); }
 
-.card-log { padding: 14px 16px; }
-.log-head {
+.passport-footer {
+  padding: 14px 22px;
+  background: rgba(0, 0, 0, 0.24);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-family: var(--mono);
+  justify-content: space-between;
+  align-items: center;
   font-size: 12px;
-  font-weight: 700;
+  color: var(--on-navy-muted);
 }
-.log-head small { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 500; color: var(--muted); }
-.card-log p { margin-top: 4px; font-size: 13px; }
-.log-meta {
+.footer-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--muted);
-}
-.log-meta svg { width: 14px; height: 14px; flex: none; }
-
-.card-meters {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 16px;
-}
-.meter-value { font-family: var(--mono); font-size: 16px; font-weight: 700; line-height: 1.3; }
-.meter-label { font-size: 10px; letter-spacing: 0.5px; color: var(--muted); }
-
-.card-toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
-.card-toast > svg { width: 20px; height: 20px; flex: none; color: var(--success); }
-.toast-title { font-size: 13px; font-weight: 500; }
-.toast-sub { font-size: 11px; color: var(--muted); }
-.toast-sub span { font-family: var(--mono); font-weight: 500; }
-
-.card-next { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
-.next-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11px;
+  gap: 6px;
   font-weight: 500;
-  color: var(--muted);
 }
-.next-head svg { width: 18px; height: 18px; color: var(--accent); }
-.next-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 13px;
-  line-height: 1.3;
+.footer-item svg {
+  width: 14px;
+  height: 14px;
+  color: var(--on-navy-accent);
 }
-.next-row b { font-weight: 700; white-space: nowrap; }
-.next-row .over { color: var(--error-text); }
-.next-row .soon { color: var(--warn-text); }
 
-/* Two columns of cards do not fit a phone: one column, and the two cards that only repeat the
-   others are dropped rather than shrunk — every word in them is real copy further down. */
-@media (max-width: 560px) {
-  .stage { grid-template-columns: 1fr; padding-inline: 8px; }
-  .stage-col:first-child { padding-top: 0; }
-  .card-log, .card-next { display: none; }
-  .card-fleet { transform: rotate(-1.5deg); }
-  .card-toast { transform: rotate(-1deg); }
+@media (max-width: 768px) {
+  .pill-top, .pill-bottom {
+    display: none;
+  }
 }
 
 /* ---------------------------------------------------------------- sections */
@@ -659,6 +762,77 @@ img, svg { display: block; max-width: 100%; }
   border-radius: 12px;
   overflow: hidden;
 }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+.row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--accent-container);
+  color: var(--accent);
+}
+.row-icon svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.row-body {
+  flex: 1;
+  min-width: 0;
+}
+.row-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.row-title small {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.row-sub {
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--muted);
+}
+
+.pill {
+  flex: none;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.pill-due { background: var(--warn-bg); color: var(--warn-text); }
+.pill-ok { background: var(--ok-bg); color: var(--success); }
+.pill-over { background: var(--error-bg); color: var(--error-text); }
 
 .pane-head {
   display: flex;
