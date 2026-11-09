@@ -30,6 +30,8 @@
 	     "oauthClients/(null)" and attestation fails. Must match CLIENT_ID in GoogleService-Info.plist. -->
 	<key>GIDClientID</key>
 	<string>811416892017-j692rbgf9tjnsavosrj62ahu70dkfn44.apps.googleusercontent.com</string>
+	<key>NSCameraUsageDescription</key>
+	<string>SquawkIt uses the camera to take photos to attach to your maintenance records.</string>
 	<!-- BGTaskScheduler refuses to register a handler unless the matching background mode is
 	     declared: "processing" for the blob scan's BGProcessingTask, "fetch" for the urgency
 	     scan's BGAppRefreshTask. Both were missing, so the blob task has never actually run. -->
