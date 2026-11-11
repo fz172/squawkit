@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ShowChart
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.UploadFile
@@ -51,6 +52,8 @@ import wingslog.feature.attachment.sharedassets.generated.resources.attach_data_
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_group_device
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_group_other
 import wingslog.feature.attachment.sharedassets.generated.resources.choose_file
+import wingslog.feature.attachment.sharedassets.generated.resources.choose_photo
+import wingslog.feature.attachment.sharedassets.generated.resources.choose_photo_description
 import wingslog.feature.attachment.sharedassets.generated.resources.take_photo
 import wingslog.feature.attachment.sharedassets.generated.resources.take_photo_description
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -67,6 +70,7 @@ internal fun AttachmentPicker(
   filesAtLimit: Boolean,
   uploadEnabled: Boolean,
   onChooseFile: () -> Unit,
+  onChoosePhoto: () -> Unit,
   onDropFiles: (List<PickedFile>) -> Unit,
   onDropError: () -> Unit,
   onTakePhoto: () -> Unit,
@@ -94,6 +98,15 @@ internal fun AttachmentPicker(
         )
       )
     }
+    add(
+      PickerOption(
+        icon = Icons.Outlined.Image,
+        title = stringResource(AttachRes.string.choose_photo),
+        description = stringResource(AttachRes.string.choose_photo_description),
+        enabled = uploadOptionEnabled,
+        onClick = if (upsellLocked) onUpsell else onChoosePhoto,
+      )
+    )
     add(
       PickerOption(
         icon = Icons.Outlined.UploadFile,

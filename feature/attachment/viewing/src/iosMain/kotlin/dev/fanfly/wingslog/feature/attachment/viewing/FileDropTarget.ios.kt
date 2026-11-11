@@ -47,7 +47,7 @@ private fun NSItemProvider.dataTypeIdentifier(): String? =
         ?.conformsToType(UTTypeData) == true
     }
 
-private suspend fun NSItemProvider.loadPickedFile(): PickedFile? {
+internal suspend fun NSItemProvider.loadPickedFile(): PickedFile? {
   val typeIdentifier = dataTypeIdentifier() ?: return null
   return suspendCancellableCoroutine { continuation ->
     loadFileRepresentationForTypeIdentifier(typeIdentifier) { url, _ ->

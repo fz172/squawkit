@@ -93,6 +93,10 @@ fun AttachmentFormSection(
     onResult = { files -> onPickFiles(files) },
     onReadError = onPickError,
   )
+  val pickPhotos = rememberPhotoPicker(
+    onResult = { files -> onPickFiles(files) },
+    onReadError = onPickError,
+  )
   val takePhoto = rememberCameraCapture(
     onResult = { files -> onPickFiles(files) },
     onError = onPickError,
@@ -164,6 +168,7 @@ fun AttachmentFormSection(
       filesAtLimit = filesAtLimit,
       uploadEnabled = uploadEnabled,
       onChooseFile = { onDismissSheet(); pickFiles() },
+      onChoosePhoto = { onDismissSheet(); pickPhotos() },
       onDropFiles = { files -> onPickFiles(files); onDismissSheet() },
       onDropError = onPickError,
       onTakePhoto = { onDismissSheet(); takePhoto() },

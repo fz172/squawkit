@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="attachments">Attachments</string>
-  <string name="choose_file">Choose file</string>
-  <string name="take_photo">Take photo</string>
+  <string name="choose_file">File</string>
+  <string name="choose_photo">Photo</string>
+  <string name="take_photo">Camera</string>
   <string name="add_link">Add link</string>
   <string name="link_url">URL</string>
   <string name="link_name">Name (optional)</string>
@@ -14,7 +15,8 @@
   <string name="attachment_picker_title">Add attachment</string>
   <string name="attachment_group_device">Files</string>
   <string name="attachment_group_other">Other</string>
-  <string name="take_photo_description">Use the camera</string>
+  <string name="take_photo_description">Take a photo</string>
+  <string name="choose_photo_description">Choose from library</string>
   <string name="choose_file_description">Photos, PDFs and documents</string>
   <!-- Mobile pickers reach cloud storage apps; name them, since iOS hides them under Browse. -->
   <string name="choose_file_description_android">This device, Google Drive, Dropbox and more</string>
