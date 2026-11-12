@@ -124,7 +124,7 @@ private fun SeriesChip(
       .onGloballyPositioned { origin = it.positionInWindow() }
       .semantics { contentDescription = dragDescription }
       .seriesDragSource(
-        chip.key,
+        listOf(chip.key),
         chip.shortName,
         pane,
         { origin },

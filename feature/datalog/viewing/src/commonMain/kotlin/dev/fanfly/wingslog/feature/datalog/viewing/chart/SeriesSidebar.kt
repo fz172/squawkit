@@ -39,8 +39,10 @@ import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
+import dev.fanfly.wingslog.feature.datalog.model.chart.SeriesGroup
 import dev.fanfly.wingslog.feature.datalog.model.chart.isPlottable
 import dev.fanfly.wingslog.feature.datalog.model.chart.isSelectable
+import dev.fanfly.wingslog.feature.datalog.model.chart.seriesGroups
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.datalog.sharedassets.generated.resources.Res
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_hint
@@ -80,7 +82,8 @@ fun SeriesSidebar(
   onTab: (SidebarTab) -> Unit,
   query: String,
   onQuery: (String) -> Unit,
-  onAdd: (SeriesKey) -> Unit,
+  /** A row's series: one, or every cylinder of a bundle. */
+  onAdd: (List<SeriesKey>) -> Unit,
   dragState: SeriesDragState,
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
   facts: List<InfoFact>,
@@ -120,20 +123,27 @@ private fun SeriesTab(
   inTargetPane: Set<SeriesKey>,
   query: String,
   onQuery: (String) -> Unit,
-  onAdd: (SeriesKey) -> Unit,
+  onAdd: (List<SeriesKey>) -> Unit,
   dragState: SeriesDragState,
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
 ) {
-  val plottable = remember(catalogue, query) {
+  val groups = remember(catalogue) {
+    catalogue.filter { it.isSelectable }
+      .seriesGroups()
+  }
+  val plottable = remember(groups, query) {
     val q = query.trim()
       .lowercase()
-    catalogue.filter { it.isSelectable }
-      .filter {
-        q.isEmpty() || it.name.lowercase()
+    if (q.isEmpty()) groups
+    else groups.filter { group ->
+      group.label.lowercase()
+        .contains(q) || group.members.any {
+        it.name.lowercase()
           .contains(q) || it.short_name.lowercase()
           .contains(q) || it.unit.lowercase()
           .contains(q)
       }
+    }
   }
   OutlinedTextField(
     value = query,
@@ -153,10 +163,10 @@ private fun SeriesTab(
     ),
   )
   LazyColumn(modifier = Modifier.fillMaxSize()) {
-    items(plottable, key = { it.column }) { series ->
+    items(plottable, key = { it.first.column }) { group ->
       SeriesRow(
-        series,
-        SeriesKey(series.column) in inTargetPane,
+        group,
+        group.keys.all { it in inTargetPane },
         onAdd,
         dragState,
         onDrop
@@ -165,25 +175,30 @@ private fun SeriesTab(
   }
 }
 
+/**
+ * One list row. A bundle (EGT, CHT, TIT) stands for every cylinder: a tap toggles them all in the
+ * target pane, a drag carries them all, and the check shows only when every one is charted.
+ */
 @Composable
 private fun SeriesRow(
-  series: DataLogSeries,
+  group: SeriesGroup,
   inTarget: Boolean,
-  onAdd: (SeriesKey) -> Unit,
+  onAdd: (List<SeriesKey>) -> Unit,
   dragState: SeriesDragState,
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
 ) {
-  val key = SeriesKey(series.column)
-  val label = series.short_name.ifBlank { series.name }
+  val series = group.first
+  val keys = group.keys
+  val label = group.label
   var origin by remember { mutableStateOf(Offset.Zero) }
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .onGloballyPositioned { origin = it.positionInWindow() }
-      .clickable { onAdd(key) }
+      .clickable { onAdd(keys) }
       // A row is a drag source too: a dropped row lands on that pane rather than the target.
       .seriesDragSource(
-        key,
+        keys,
         label,
         from = null,
         origin = { origin },
@@ -197,16 +212,17 @@ private fun SeriesRow(
     // Text selection would otherwise claim a mouse drag on the label before the row sees it.
     DisableSelection {
       Column(modifier = Modifier.weight(1f)) {
-        Text(series.name, style = MaterialTheme.typography.bodyMedium)
+        Text(
+          if (group.isBundle) "$label (${group.members.size})" else series.name,
+          style = MaterialTheme.typography.bodyMedium
+        )
+        val min = group.members.minOf { it.min }
+        val max = group.members.maxOf { it.max }
         Text(
           // A position series has no range to state; its min and max are both zero.
           text = listOfNotNull(
             series.unit.takeIf { it.isNotBlank() },
-            "${formatSeriesValue(series.min.toFloat())} – ${
-              formatSeriesValue(
-                series.max.toFloat()
-              )
-            }"
+            "${formatSeriesValue(min.toFloat())} – ${formatSeriesValue(max.toFloat())}"
               .takeIf { series.isPlottable },
           ).joinToString(" · "),
           style = WingslogTypography.dataSmall,

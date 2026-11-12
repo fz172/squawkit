@@ -115,12 +115,12 @@ fun DataLogViewerScreen(
       is DropTarget.OnPane ->
         if (from == null) viewModel.addSeries(
           target.pane,
-          drag.key
+          drag.keys
         ) else viewModel.moveSeries(drag.key, from, target.pane)
 
       DropTarget.NewPane -> {
         if (from != null) viewModel.removeSeries(from, drag.key)
-        viewModel.spawnPane(drag.key)
+        viewModel.spawnPane(drag.keys)
       }
 
       null -> Unit

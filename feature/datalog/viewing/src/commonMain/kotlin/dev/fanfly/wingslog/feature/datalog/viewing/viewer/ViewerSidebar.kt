@@ -42,13 +42,13 @@ internal fun viewerSidebar(
       onTab = viewModel::setSidebarTab,
       query = state.seriesQuery,
       onQuery = viewModel::setSeriesQuery,
-      onAdd = { key ->
+      onAdd = { keys ->
         state.layout.targetPane?.let {
           viewModel.toggleSeries(
             it,
-            key
+            keys
           )
-        } ?: viewModel.spawnPane(key)
+        } ?: viewModel.spawnPane(keys)
       },
       dragState = dragState,
       onDrop = onDrop,
