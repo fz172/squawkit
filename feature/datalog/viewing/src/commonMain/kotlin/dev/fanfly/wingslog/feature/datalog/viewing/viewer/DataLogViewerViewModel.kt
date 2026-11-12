@@ -221,6 +221,46 @@ class DataLogViewerViewModel(
     it.withLayout(LayoutEdits.move(it.layout, key, from, to, it.catalogue()))
   }
 
+  /** Every series in [keys] into [pane] — a bundled row (EGT1…EGTn) dropped on a pane. */
+  fun addSeries(pane: PaneId, keys: List<SeriesKey>) = updateReady { state ->
+    val catalogue = state.catalogue()
+    state.withLayout(keys.fold(state.layout) { layout, key ->
+      LayoutEdits.place(layout, pane, key, catalogue)
+    })
+  }
+
+  /**
+   * A tap on a list row. One key is [toggleSeries]; a bundle comes out of [pane] only when every
+   * member is already there, and otherwise the missing members go in — so a half-charted EGT
+   * bundle completes rather than empties.
+   */
+  fun toggleSeries(pane: PaneId, keys: List<SeriesKey>) {
+    if (keys.size == 1) return toggleSeries(pane, keys.single())
+    updateReady { state ->
+      val catalogue = state.catalogue()
+      val held = state.layout.panes.firstOrNull { it.id == pane }?.series.orEmpty()
+      val layout = if (keys.all { it in held }) {
+        keys.fold(state.layout) { layout, key -> LayoutEdits.remove(layout, pane, key) }
+      } else {
+        keys.filterNot { it in held }
+          .fold(state.layout) { layout, key -> LayoutEdits.place(layout, pane, key, catalogue) }
+      }
+      state.withLayout(layout)
+    }
+  }
+
+  /** A fresh pane holding every series in [keys] (the *New pane* target, or a tap with no target). */
+  fun spawnPane(keys: List<SeriesKey>) = updateReady { state ->
+    val catalogue = state.catalogue()
+    val spawned = LayoutEdits.spawn(state.layout, keys.firstOrNull())
+    val pane = spawned.targetPane
+    state.withLayout(
+      if (pane == null) spawned
+      else keys.drop(1)
+        .fold(spawned) { layout, key -> LayoutEdits.place(layout, pane, key, catalogue) }
+    )
+  }
+
   /** The *New pane* target: a dropped series lands in a fresh pane; a tap opens an empty one. */
   fun spawnPane(key: SeriesKey? = null) =
     updateReady { it.withLayout(LayoutEdits.spawn(it.layout, key)) }

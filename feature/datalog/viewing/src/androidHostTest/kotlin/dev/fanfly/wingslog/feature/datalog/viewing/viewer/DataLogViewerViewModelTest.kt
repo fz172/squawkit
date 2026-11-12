@@ -551,6 +551,42 @@ class DataLogViewerViewModelTest {
   }
 
   @Test
+  fun aBundledRowTogglesEveryCylinderTogether() = runTest {
+    val catalogue = listOf(
+      DataLogSeries(
+        column = 1,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        canonical_id = "engine[1].rpm"
+      ),
+    ) + (1..4).map {
+      DataLogSeries(
+        column = 10 + it,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        canonical_id = "engine[1].egt[$it]"
+      )
+    }
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    val vm = viewModel()
+    fun series() = (vm.uiState.value as DataLogViewerUiState.Ready).layout.panes.single().series
+    val egt = (11..14).map { SeriesKey(it) }
+
+    vm.toggleSeries(PaneId(0), egt)
+    assertThat(series()).containsExactlyElementsIn(listOf(SeriesKey(1)) + egt).inOrder()
+
+    // Half-charted completes rather than empties.
+    vm.removeSeries(PaneId(0), SeriesKey(12))
+    vm.toggleSeries(PaneId(0), egt)
+    assertThat(series()).containsAtLeastElementsIn(egt)
+
+    vm.toggleSeries(PaneId(0), egt)
+    assertThat(series()).containsExactly(SeriesKey(1))
+
+    vm.spawnPane(egt)
+    val panes = (vm.uiState.value as DataLogViewerUiState.Ready).layout.panes
+    assertThat(panes.last().series).containsExactlyElementsIn(egt).inOrder()
+  }
+
+  @Test
   fun aSuccessfulOpenIsLoggedOnceWithTheLogsShape() = runTest {
     every {
       manager.observeOne(

@@ -4,6 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.datalog.DataLogSeries
@@ -12,6 +13,8 @@ import dev.fanfly.wingslog.feature.datalog.model.MapTileProvider
 import dev.fanfly.wingslog.feature.datalog.model.Pane
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.chart.PaneKind
+import dev.fanfly.wingslog.feature.datalog.model.chart.chipLabel
+import dev.fanfly.wingslog.feature.datalog.model.chart.isMultiEngine
 import dev.fanfly.wingslog.feature.datalog.model.chart.paneKind
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.ChartPane
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.ChipInfo
@@ -51,6 +54,9 @@ internal fun ViewerPane(
 ) {
   val dark = isSystemInDarkTheme()
   val tileProvider: MapTileProvider = koinInject()
+  val multiEngine = remember(state.record.series) {
+    state.record.series.isMultiEngine()
+  }
   val chips = pane.series.mapNotNull { key ->
     val info = seriesInfo(key) ?: return@mapNotNull null
     val column = state.data.numeric[key.column]
@@ -58,7 +64,7 @@ internal fun ViewerPane(
       if (cursorIndex >= 0 && column != null) column.raw[cursorIndex].takeUnless { it.isNaN() } else null
     ChipInfo(
       key = key,
-      shortName = info.short_name.ifBlank { info.name },
+      shortName = info.chipLabel(multiEngine),
       unit = info.unit,
       color = SeriesPalette.colorFor(
         key,

@@ -24,13 +24,18 @@ sealed interface DropTarget {
   data object NewPane : DropTarget
 }
 
-/** A chip in flight: what it carries and where the pointer is, in window coordinates. [from] is null for a sidebar row. */
+/**
+ * A chip in flight: what it carries and where the pointer is, in window coordinates. [from] is null
+ * for a sidebar row. [keys] is one series for a chip, and every cylinder for a bundled row (EGT).
+ */
 data class SeriesDrag(
-  val key: SeriesKey,
+  val keys: List<SeriesKey>,
   val label: String,
   val from: PaneId?,
   val position: Offset
-)
+) {
+  val key: SeriesKey get() = keys.first()
+}
 
 /**
  * One drag at a time across the viewer. Chips report their gesture here; panes and the *New pane*
@@ -51,8 +56,8 @@ class SeriesDragState {
     targets.remove(target)
   }
 
-  fun start(key: SeriesKey, label: String, from: PaneId?, position: Offset) {
-    drag = SeriesDrag(key, label, from, position)
+  fun start(keys: List<SeriesKey>, label: String, from: PaneId?, position: Offset) {
+    drag = SeriesDrag(keys, label, from, position)
   }
 
   fun move(delta: Offset) {
@@ -82,13 +87,13 @@ class SeriesDragState {
  * still scrolls the row or the list underneath. [origin] is the source's window position.
  */
 fun Modifier.seriesDragSource(
-  key: SeriesKey,
+  keys: List<SeriesKey>,
   label: String,
   from: PaneId?,
   origin: () -> Offset,
   dragState: SeriesDragState,
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
-): Modifier = pointerInput(key, from) {
+): Modifier = pointerInput(keys, from) {
   awaitEachGesture {
     val down = awaitFirstDown(requireUnconsumed = false)
     val start = if (down.type == PointerType.Mouse) {
@@ -96,7 +101,7 @@ fun Modifier.seriesDragSource(
     } else {
       awaitLongPressOrCancellation(down.id)
     } ?: return@awaitEachGesture
-    dragState.start(key, label, from, origin() + start.position)
+    dragState.start(keys, label, from, origin() + start.position)
     val completed = drag(start.id) { change ->
       dragState.move(change.positionChange())
       change.consume()
