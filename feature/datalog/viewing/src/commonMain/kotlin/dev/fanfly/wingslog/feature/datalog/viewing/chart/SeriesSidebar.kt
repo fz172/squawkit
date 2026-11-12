@@ -136,13 +136,13 @@ private fun SeriesTab(
       .lowercase()
     if (q.isEmpty()) groups
     else groups.filter { group ->
-      group.label.lowercase()
-        .contains(q) || group.members.any {
-        it.name.lowercase()
-          .contains(q) || it.short_name.lowercase()
-          .contains(q) || it.unit.lowercase()
-          .contains(q)
-      }
+      group.label.lowercase().contains(q) ||
+        group.title.lowercase().contains(q) ||
+        group.members.any {
+          it.name.lowercase().contains(q) ||
+            it.short_name.lowercase().contains(q) ||
+            it.unit.lowercase().contains(q)
+        }
     }
   }
   OutlinedTextField(
@@ -213,7 +213,7 @@ private fun SeriesRow(
     DisableSelection {
       Column(modifier = Modifier.weight(1f)) {
         Text(
-          if (group.isBundle) "$label (${group.members.size})" else series.name,
+          group.title,
           style = MaterialTheme.typography.bodyMedium
         )
         val min = group.members.minOf { it.min }
