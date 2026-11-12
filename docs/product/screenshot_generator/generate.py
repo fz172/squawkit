@@ -186,6 +186,13 @@ TARGETS = {
         # Simulator captures carry the real clock; repaint it as 9:41 with a full battery.
         "status_bar": "ipad",
     },
+    "appstore_iphone_duo": {
+        "src_dir": "iphone_duo",
+        "out_dir": os.path.join("appstore", "iphone_duo"),
+        "device": "tablet",
+        "canvas": {"portrait": (2007, 2853), "landscape": (2853, 2007)},
+        "store": "App Store · iPhone Duo",
+    },
 }
 
 # Height of the Android status bar in a 1080px-wide Pixel capture (time, icons, and the padding
