@@ -24,12 +24,11 @@ import dev.fanfly.wingslog.feature.datalog.viewing.chart.NewPaneTarget
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.PaneSeries
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesDrag
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesDragState
-import dev.fanfly.wingslog.feature.datalog.viewing.chart.TimeAxis
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 
 /**
- * The scrolling column of panes: the record's header, the visible window, a pane each, the shared
- * time axis, the drop target that spawns a new pane — and, on a phone, the ad slot under them all.
+ * The scrolling column of panes: the record's header, the visible window, a pane each, the drop
+ * target that spawns a new pane — and, on a phone, the ad slot under them all.
  *
  * The chip in flight is drawn here rather than inside a pane so it can cross pane boundaries; it is
  * positioned against this column's own origin in the window.
@@ -71,6 +70,7 @@ internal fun ViewerPanes(
         ViewerPane(
           pane = pane,
           state = state,
+          originSecondsOfDay = row.startLocal.time.toSecondOfDay(),
           cursorIndex = cursorIndex,
           seriesInfo = seriesInfo,
           paneSeries = paneSeries,
@@ -80,22 +80,6 @@ internal fun ViewerPanes(
           onRemovePane = { viewModel.removePane(pane.id) },
           onTouched = { viewModel.setTargetPane(pane.id) },
           onGesture = viewModel::onGesture,
-        )
-      }
-      item {
-        TimeAxis(
-          view = state.view,
-          durationSeconds = state.record.duration_seconds,
-          cursorT = state.cursorT,
-          clockAxis = state.clockAxis,
-          originSecondsOfDay = row.startLocal.time.toSecondOfDay(),
-          onScrub = { fraction ->
-            viewModel.onGesture(
-              GestureIntent.Cursor(
-                fraction
-              )
-            )
-          },
         )
       }
       item {

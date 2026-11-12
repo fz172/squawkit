@@ -22,12 +22,14 @@ import dev.fanfly.wingslog.feature.datalog.viewing.chart.PaneSeries
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesDrag
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesDragState
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesPalette
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.TimeAxis
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.dropTarget
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.formatSeriesValue
 import org.koin.compose.koinInject
 
 /**
- * One pane: its chips, then either the map (a position series can only be there) or a chart.
+ * One pane: its chips, then either the map (a position series can only be there) or a chart with
+ * its time axis and draggable cursor handle underneath.
  *
  * [seriesInfo] and [paneSeries] are the record's catalogue and plottable columns as lookups rather
  * than maps, so the pane asks about the keys it holds without a column-keyed map crossing the call.
@@ -36,6 +38,7 @@ import org.koin.compose.koinInject
 internal fun ViewerPane(
   pane: Pane,
   state: DataLogViewerUiState.Ready,
+  originSecondsOfDay: Int,
   cursorIndex: Int,
   seriesInfo: (SeriesKey) -> DataLogSeries?,
   paneSeries: (SeriesKey) -> PaneSeries?,
@@ -106,6 +109,17 @@ internal fun ViewerPane(
           // The last pane touched is where the sidebar adds series (PRD R25).
           onTouched()
           onGesture(intent)
+        },
+      )
+      TimeAxis(
+        view = state.view,
+        durationSeconds = state.record.duration_seconds,
+        cursorT = state.cursorT,
+        clockAxis = state.clockAxis,
+        originSecondsOfDay = originSecondsOfDay,
+        onScrub = { fraction ->
+          onTouched()
+          onGesture(GestureIntent.Cursor(fraction))
         },
       )
     }
