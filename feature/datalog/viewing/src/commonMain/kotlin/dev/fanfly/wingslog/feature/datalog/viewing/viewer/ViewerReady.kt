@@ -1,5 +1,10 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.viewer
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
@@ -28,7 +34,8 @@ import org.koin.compose.koinInject
 
 /**
  * The loaded viewer: the panes, and beside them the sidebar on anything wider than a phone (where
- * the sidebar is the drawer the caller wraps around the whole scaffold instead).
+ * the sidebar is the drawer the caller wraps around the whole scaffold instead). On the wider tiers
+ * [sidebarOpen] collapses the sidebar column; it is ignored on a phone.
  */
 @Composable
 internal fun ViewerReady(
@@ -39,6 +46,7 @@ internal fun ViewerReady(
   viewModel: DataLogViewerViewModel,
   sidebar: (@Composable () -> Unit)?,
   compact: Boolean,
+  sidebarOpen: Boolean,
   modifier: Modifier = Modifier,
 ) {
   val byColumn = remember(state.record, state.data) {
@@ -85,7 +93,7 @@ internal fun ViewerReady(
       dragState = dragState,
       onDrop = onDrop,
       viewModel = viewModel,
-      compact = compact,
+      adUnderPanes = compact || !sidebarOpen,
       adSlot = adSlot,
       modifier = paneModifier,
     )
@@ -99,13 +107,23 @@ internal fun ViewerReady(
         Modifier.weight(1f)
           .fillMaxSize()
       )
-      VerticalDivider()
-      Column(
-        Modifier.width(SidebarWidth)
-          .fillMaxSize()
+      // Collapsible from the top bar's tune control. The panes take the freed width, and the
+      // ad moves under them (adUnderPanes above) rather than leaving with the sidebar.
+      AnimatedVisibility(
+        visible = sidebarOpen,
+        enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+        exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
       ) {
-        Box(Modifier.weight(1f)) { sidebar?.invoke() }
-        adSlot()
+        Row {
+          VerticalDivider()
+          Column(
+            Modifier.width(SidebarWidth)
+              .fillMaxSize()
+          ) {
+            Box(Modifier.weight(1f)) { sidebar?.invoke() }
+            adSlot()
+          }
+        }
       }
     }
   }

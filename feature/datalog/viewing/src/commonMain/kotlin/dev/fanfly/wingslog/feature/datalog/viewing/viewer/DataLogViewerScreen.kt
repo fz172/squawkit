@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -71,6 +72,9 @@ fun DataLogViewerScreen(
   val lexicon = LocalThingLexicon.current
   val snackbarHostState = remember { SnackbarHostState() }
   val drawerState = rememberDrawerState(DrawerValue.Closed)
+  // The sidebar column on wider windows starts open and is collapsed from the tune control. Kept
+  // apart from the phone drawer's state, which always starts closed.
+  var wideSidebarOpen by rememberSaveable { mutableStateOf(true) }
   val scope = rememberCoroutineScope()
   val downloader = rememberDataLogFileDownloader()
   val downloadedMessage = stringResource(Res.string.data_log_download_success)
@@ -166,9 +170,13 @@ fun DataLogViewerScreen(
                 ?: LexiconFormatter.titleCase(lexicon.dataLogNoun),
               ready = ready != null,
               clockAxis = ready?.clockAxis == true,
+              sidebarOpen = wideSidebarOpen,
               onBack = { navController.popBackStack() },
               onToggleClockAxis = viewModel::toggleClockAxis,
-              onOpenSidebar = { scope.launch { drawerState.open() } },
+              onToggleSidebar = {
+                if (compact) scope.launch { drawerState.open() }
+                else wideSidebarOpen = !wideSidebarOpen
+              },
               onDelete = viewModel::requestDelete,
             )
           },
@@ -193,6 +201,7 @@ fun DataLogViewerScreen(
               viewModel = viewModel,
               sidebar = sidebar,
               compact = compact,
+              sidebarOpen = wideSidebarOpen,
               modifier = content,
             )
           }

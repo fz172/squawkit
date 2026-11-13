@@ -28,7 +28,8 @@ import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 
 /**
  * The scrolling column of panes: the record's header, the visible window, a pane each, the drop
- * target that spawns a new pane — and, on a phone, the ad slot under them all.
+ * target that spawns a new pane — and, when there is no sidebar footer to hold it, the ad slot
+ * under them all.
  *
  * The chip in flight is drawn here rather than inside a pane so it can cross pane boundaries; it is
  * positioned against this column's own origin in the window.
@@ -43,7 +44,7 @@ internal fun ViewerPanes(
   dragState: SeriesDragState,
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
   viewModel: DataLogViewerViewModel,
-  compact: Boolean,
+  adUnderPanes: Boolean,
   adSlot: @Composable () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -87,8 +88,9 @@ internal fun ViewerPanes(
           dragState = dragState,
           onTap = { viewModel.spawnPane() })
       }
-      // Phones carry the slot here, under the panes. Wider layouts have a sidebar footer.
-      if (compact) item { adSlot() }
+      // Phones, and wide layouts with the sidebar collapsed, carry the slot here under the panes.
+      // Otherwise it is the sidebar's footer.
+      if (adUnderPanes) item { adSlot() }
     }
     dragState.drag?.let { drag -> DragChip(drag, boxOrigin) }
   }

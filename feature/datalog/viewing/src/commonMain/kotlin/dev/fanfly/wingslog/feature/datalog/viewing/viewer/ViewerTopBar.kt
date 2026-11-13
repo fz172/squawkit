@@ -19,16 +19,22 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sideba
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_clock_axis
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
-/** The viewer's bar: the log's date, the clock-axis toggle, the sidebar handle on a phone, delete. */
+/**
+ * The viewer's bar: the log's date, the clock-axis toggle, the sidebar handle, delete.
+ *
+ * The handle opens the drawer on a phone and toggles the sidebar column on wider windows, where it
+ * is tinted while the column is showing — the same on/off cue as the clock-axis toggle.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ViewerTopBar(
   title: String,
   ready: Boolean,
   clockAxis: Boolean,
+  sidebarOpen: Boolean,
   onBack: () -> Unit,
   onToggleClockAxis: () -> Unit,
-  onOpenSidebar: () -> Unit,
+  onToggleSidebar: () -> Unit,
   onDelete: () -> Unit,
 ) {
   WingsLogTopAppBar(
@@ -45,11 +51,14 @@ internal fun ViewerTopBar(
           )
         }
       }
-      if (ready && LocalLayoutTier.current.isCompact) {
-        IconButton(onClick = onOpenSidebar) {
+      if (ready) {
+        val highlighted = sidebarOpen && !LocalLayoutTier.current.isCompact
+        IconButton(onClick = onToggleSidebar) {
           Icon(
             Icons.Filled.Tune,
-            contentDescription = stringResource(Res.string.data_log_sidebar_open)
+            contentDescription = stringResource(Res.string.data_log_sidebar_open),
+            tint = if (highlighted) MaterialTheme.colorScheme.primary
+            else LocalContentColor.current,
           )
         }
       }
