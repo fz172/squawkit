@@ -12,6 +12,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -185,12 +187,26 @@ fun AdaptiveShellRoute(
     shellEntry.savedStateHandle[CROSS_SCREEN_LINK_ACCOUNT] = false
     linkAccount()
   }
+  val focusManager = LocalFocusManager.current
+  val keyboardController = LocalSoftwareKeyboardController.current
+
+  val clearFocusAndHideKeyboard: () -> Unit = {
+    focusManager.clearFocus()
+    keyboardController?.hide()
+  }
+
   AdaptiveAppShell(
     state = state,
     snackbarHostState = snackbarHostState,
-    onSelectSection = viewModel::selectSection,
+    onSelectSection = { section ->
+      clearFocusAndHideKeyboard()
+      viewModel.selectSection(section)
+    },
     onSelectThing = viewModel::selectThing,
-    onOpenSettings = viewModel::openSettings,
+    onOpenSettings = {
+      clearFocusAndHideKeyboard()
+      viewModel.openSettings()
+    },
     onAddThing = onAddThing,
     onEnterInviteCode = onEnterInviteCode,
     sectionContent = { section, thingId ->
@@ -206,8 +222,14 @@ fun AdaptiveShellRoute(
             section = section,
             thingId = thingId,
             navController = navController,
-            onNavigateToSection = viewModel::selectSection,
-            onJumpToRecord = viewModel::jumpToRecord,
+            onNavigateToSection = { targetSection ->
+              clearFocusAndHideKeyboard()
+              viewModel.selectSection(targetSection)
+            },
+            onJumpToRecord = { jump ->
+              clearFocusAndHideKeyboard()
+              viewModel.jumpToRecord(jump)
+            },
             // Only the section being shown: the one animating out would consume the target first.
             scrollToRecordId = scrollTargetId.takeIf { section == state.section },
             onScrollTargetConsumed = viewModel::consumeScrollTarget,

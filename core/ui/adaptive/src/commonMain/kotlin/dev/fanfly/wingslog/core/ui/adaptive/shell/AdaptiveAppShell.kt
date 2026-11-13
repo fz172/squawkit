@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.layout.LocalLayoutTier
@@ -49,7 +52,17 @@ fun AdaptiveAppShell(
   // from a single instance regardless of which shell layout is currently active.
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+  val focusManager = LocalFocusManager.current
+  val keyboardController = LocalSoftwareKeyboardController.current
+
+  LaunchedEffect(state.section) {
+    focusManager.clearFocus()
+    keyboardController?.hide()
+  }
+
   val tracedSelectSection: (ShellSection) -> Unit = { section ->
+    focusManager.clearFocus()
+    keyboardController?.hide()
     SwitchTrace.begin("${state.section} -> $section")
     onSelectSection(section)
   }

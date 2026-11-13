@@ -25,8 +25,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.search.model.Facet
@@ -59,6 +61,11 @@ fun RecordFilterBar(
   facetLabel: (@Composable (Facet) -> String)? = null,
   onRemoveFacet: (Facet) -> Unit = {},
 ) {
+  val focusManager = LocalFocusManager.current
+  LaunchedEffect(Unit) {
+    focusManager.clearFocus()
+  }
+
   Column(modifier = modifier.fillMaxWidth()) {
     Row(
       modifier = Modifier
