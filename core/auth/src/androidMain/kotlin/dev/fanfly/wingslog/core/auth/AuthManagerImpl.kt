@@ -9,7 +9,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import co.touchlab.kermit.Logger
 import com.google.android.gms.tasks.Task
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
@@ -92,21 +92,12 @@ class AuthManagerImpl(
   }
 
   /**
-   * Initiates the Google Sign-in flow, showing the account picker if necessary.
-   * Uses filterByAuthorizedAccounts(false).
+   * Initiates the Google Sign-in flow from the user tapping the button. See
+   * [requestGoogleCredential] for why this opens Google's full sign-in UI.
    */
   override suspend fun signInWithGoogle(): FirebaseUser? {
     try {
-      val request = GetCredentialRequest.Builder()
-        .addCredentialOption(
-          GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false) // Show account picker
-            .setServerClientId(WEB_CLIENT_ID)
-            .build()
-        )
-        .build()
-      val result = credentialManager.getCredential(context, request)
-      val googleIdTokenCredential = processCredential(result.credential)
+      val googleIdTokenCredential = processCredential(requestGoogleCredential())
       if (googleIdTokenCredential != null) {
         return signInToFirebase(googleIdTokenCredential)
       }
@@ -156,6 +147,27 @@ class AuthManagerImpl(
     AndroidOAuthProvider.newBuilder(APPLE_PROVIDER_ID)
       .setScopes(APPLE_SCOPES)
       .build()
+
+  /**
+   * Asks Credential Manager for a Google ID token for an explicit, user-initiated sign-in.
+   *
+   * Uses [GetSignInWithGoogleOption] rather than `GetGoogleIdOption`: the latter only offers
+   * accounts already on the device and fails with `NoCredentialException` when there are none (a
+   * fresh emulator or tablet), leaving the user at a dead-end "Sign-in failed". This option opens
+   * Google's full sign-in screen instead, which lets the user add an account — the same "always
+   * actionable" behaviour as the Apple Custom Tab. It must be the only option in the request.
+   *
+   * Presents from the foreground Activity when there is one so the UI attaches to the app's task.
+   */
+  private suspend fun requestGoogleCredential(): Credential {
+    val request = GetCredentialRequest.Builder()
+      .addCredentialOption(
+        GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID).build()
+      )
+      .build()
+    val presenter = activityProvider.current() ?: context
+    return credentialManager.getCredential(presenter, request).credential
+  }
 
   private fun processCredential(credential: Credential): GoogleIdTokenCredential? {
     if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
@@ -245,16 +257,7 @@ class AuthManagerImpl(
     val current = authProvider.currentUser
       ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
     val googleCredential = try {
-      val request = GetCredentialRequest.Builder()
-        .addCredentialOption(
-          GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false) // Show account picker
-            .setServerClientId(WEB_CLIENT_ID)
-            .build()
-        )
-        .build()
-      val result = credentialManager.getCredential(context, request)
-      processCredential(result.credential)
+      processCredential(requestGoogleCredential())
         ?: return AccountUpgradeResult.Failed("Could not read Google credential")
     } catch (e: GetCredentialCancellationException) {
       logger.d { "Account upgrade cancelled by user" }
