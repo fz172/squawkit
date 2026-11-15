@@ -8,14 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,8 +26,10 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
@@ -51,6 +52,7 @@ import dev.fanfly.wingslog.feature.datalog.model.chart.scaleLimits
 import dev.fanfly.wingslog.feature.datalog.model.chart.tiles
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
+import kotlin.math.roundToInt
 
 /** The map is the pane that answers "where", and a route needs room; design §11.7 heights × this. */
 private const val MAP_HEIGHT_FACTOR = 1.5f
@@ -92,31 +94,11 @@ private const val MAX_SCROLL_FACTOR = 2f
  * reads here.
  */
 @Composable
-fun MapPane(
-  position: PositionColumn,
-  timeSeconds: IntArray,
-  durationSeconds: Int,
-  view: ViewWindow?,
-  cursorIndex: Int,
-  isTarget: Boolean,
-  provider: MapTileProvider,
-  modifier: Modifier = Modifier,
-) {
-  val height =
-    (if (LocalLayoutTier.current.isCompact) PaneHeightCompact else PaneHeightWide) * MAP_HEIGHT_FACTOR
-  val borderColor =
-    if (isTarget) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outlineVariant
-  val surface = MaterialTheme.colorScheme.surface
-  // The same color its chip carries, rather than the theme's primary: the trail and the chip that
-  // names it should agree, and a blue trail competes with every road and river on the basemap.
-  val trackColor = SeriesPalette.MAP_TRACK
-  val cursorColor = MaterialTheme.colorScheme.tertiary
-  val density = LocalDensity.current
-
+private fun rememberMapTileLoader(): ImageLoader {
   val platformContext = LocalPlatformContext.current
   // One loader per pane, carrying the User-Agent OpenStreetMap's policy requires. Coil's default
   // client sends its own, which tile servers reject.
-  val imageLoader = remember(platformContext) {
+  return remember(platformContext) {
     ImageLoader.Builder(platformContext)
       .components {
         add(
@@ -130,6 +112,77 @@ fun MapPane(
       }
       .build()
   }
+}
+
+@Composable
+private fun MapTilesLayer(
+  viewport: MapViewport,
+  size: IntSize,
+  provider: MapTileProvider,
+  imageLoader: ImageLoader,
+) {
+  val platformContext = LocalPlatformContext.current
+  val tiles = remember(viewport, size) {
+    viewport.tiles(size.width.toFloat(), size.height.toFloat())
+  }
+  Layout(
+    content = {
+      tiles.forEach { tile ->
+        key(tile.zoom, tile.x, tile.y) {
+          val painter = rememberAsyncImagePainter(
+            model = ImageRequest.Builder(platformContext)
+              .data(provider.tileUrl(tile.zoom, tile.x, tile.y))
+              .build(),
+            imageLoader = imageLoader,
+          )
+          Image(
+            painter = painter,
+            contentDescription = null,
+            // Over-zoomed tiles are drawn larger than they were cut, which is blurry but keeps a
+            // short track legible; ContentScale.FillBounds does the stretching.
+            contentScale = ContentScale.FillBounds,
+          )
+        }
+      }
+    },
+    modifier = Modifier.fillMaxSize(),
+  ) { measurables, constraints ->
+    val placeables = measurables.mapIndexed { index, measurable ->
+      val tileSize = tiles[index].sizePx.roundToInt().coerceAtLeast(0)
+      measurable.measure(Constraints.fixed(tileSize, tileSize))
+    }
+    layout(constraints.maxWidth, constraints.maxHeight) {
+      placeables.forEachIndexed { index, placeable ->
+        val tile = tiles[index]
+        placeable.place(
+          x = tile.leftPx.roundToInt(),
+          y = tile.topPx.roundToInt(),
+        )
+      }
+    }
+  }
+}
+
+@Composable
+fun MapPane(
+  position: PositionColumn,
+  provider: MapTileProvider,
+  modifier: Modifier = Modifier,
+  timeSeconds: IntArray = intArrayOf(),
+  view: ViewWindow? = null,
+  cursorIndex: Int = -1,
+  isTarget: Boolean = false,
+  interactive: Boolean = true,
+  height: Dp = (if (LocalLayoutTier.current.isCompact) PaneHeightCompact else PaneHeightWide) * MAP_HEIGHT_FACTOR,
+) {
+  val borderColor =
+    if (isTarget) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outlineVariant
+  val surface = MaterialTheme.colorScheme.surface
+  // The same color its chip carries, rather than the theme's primary: the trail and the chip that
+  // names it should agree, and a blue trail competes with every road and river on the basemap.
+  val trackColor = SeriesPalette.MAP_TRACK
+  val cursorColor = MaterialTheme.colorScheme.tertiary
+  val imageLoader = rememberMapTileLoader()
 
   val trackBounds = remember(position) { position.bounds() }
   var size by remember { mutableStateOf(IntSize.Zero) }
@@ -144,16 +197,8 @@ fun MapPane(
     position, provider
   ) { mutableStateOf<MapCamera?>(null) }
 
-  Box(
-    modifier = modifier.fillMaxWidth()
-      .height(height)
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .border(
-        Spacing.hairline,
-        borderColor,
-        RoundedCornerShape(Spacing.cardCornerRadius)
-      )
-      .onSizeChanged { size = it }
+  val gestureModifier = if (!interactive) Modifier else {
+    Modifier
       .pointerInput(provider, limits) {
         detectTransformGestures { centroid, pan, zoom, _ ->
           val current = camera ?: return@detectTransformGestures
@@ -193,9 +238,22 @@ fun MapPane(
             change.consume()
           }
         }
-      },
+      }
+  }
+
+  Box(
+    modifier = modifier.fillMaxWidth()
+      .height(height)
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .border(
+        Spacing.hairline,
+        borderColor,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      )
+      .onSizeChanged { size = it }
+      .then(gestureModifier),
   ) {
-    if (trackBounds != null && camera == null && size.width > 0 && size.height > 0) {
+    if (trackBounds != null && size.width > 0 && size.height > 0 && (!interactive || camera == null)) {
       camera = fitCamera(
         trackBounds,
         size.width.toFloat(),
@@ -216,36 +274,12 @@ fun MapPane(
     Canvas(Modifier.fillMaxSize()) { drawRect(surface) }
 
     if (viewport != null) {
-      val tiles = remember(viewport, size) {
-        viewport.tiles(size.width.toFloat(), size.height.toFloat())
-      }
-      tiles.forEach { tile ->
-        val painter = rememberAsyncImagePainter(
-          model = ImageRequest.Builder(platformContext)
-            .data(provider.tileUrl(tile.zoom, tile.x, tile.y))
-            .build(),
-          imageLoader = imageLoader,
-        )
-        Image(
-          painter = painter,
-          contentDescription = null,
-          contentScale = ContentScale.FillBounds,
-          modifier = Modifier
-            // Over-zoomed tiles are drawn larger than they were cut, which is blurry but keeps a
-            // short track legible; ContentScale.FillBounds does the stretching.
-            .size(with(density) { tile.sizePx.toDp() })
-            .offset(
-              x = with(density) { tile.leftPx.toDp() },
-              y = with(density) { tile.topPx.toDp() },
-            ),
-        )
-      }
+      MapTilesLayer(viewport, size, provider, imageLoader)
 
       Canvas(Modifier.fillMaxSize()) {
-        val window = view
         val inWindow = { index: Int ->
-          window == null || (timeSeconds.getOrNull(index)
-            ?.let { it >= window.startSeconds && it <= window.endSeconds } == true)
+          view == null || (timeSeconds.getOrNull(index)
+            ?.let { it >= view.startSeconds && it <= view.endSeconds } == true)
         }
         drawTrack(
           position,
@@ -254,7 +288,7 @@ fun MapPane(
           color = trackColor.copy(alpha = OUTSIDE_WINDOW_ALPHA),
           strokeWidth = TrackStrokeOutsideWindow.toPx()
         )
-        if (window != null) {
+        if (view != null) {
           drawTrack(
             position,
             viewport,

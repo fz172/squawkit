@@ -40,11 +40,14 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.chart.SeriesGroup
+import dev.fanfly.wingslog.feature.datalog.model.chart.hasData
 import dev.fanfly.wingslog.feature.datalog.model.chart.isPlottable
 import dev.fanfly.wingslog.feature.datalog.model.chart.isSelectable
+import dev.fanfly.wingslog.feature.datalog.model.chart.isSwimlaneSeries
 import dev.fanfly.wingslog.feature.datalog.model.chart.seriesGroups
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.datalog.sharedassets.generated.resources.Res
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_series_no_data
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_hint
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_info
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_series
@@ -130,6 +133,7 @@ private fun SeriesTab(
   val groups = remember(catalogue) {
     catalogue.filter { it.isSelectable }
       .seriesGroups()
+      .sortedBy { group -> if (group.members.any { it.hasData }) 0 else 1 }
   }
   val plottable = remember(groups, query) {
     val q = query.trim()
@@ -190,20 +194,28 @@ private fun SeriesRow(
   val series = group.first
   val keys = group.keys
   val label = group.label
+  val enabled = group.members.any { it.hasData }
   var origin by remember { mutableStateOf(Offset.Zero) }
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .onGloballyPositioned { origin = it.positionInWindow() }
-      .clickable { onAdd(keys) }
-      // A row is a drag source too: a dropped row lands on that pane rather than the target.
-      .seriesDragSource(
-        keys,
-        label,
-        from = null,
-        origin = { origin },
-        dragState = dragState,
-        onDrop = onDrop
+      .then(
+        if (enabled) {
+          Modifier
+            .onGloballyPositioned { origin = it.positionInWindow() }
+            .clickable { onAdd(keys) }
+            // A row is a drag source too: a dropped row lands on that pane rather than the target.
+            .seriesDragSource(
+              keys,
+              label,
+              from = null,
+              origin = { origin },
+              dragState = dragState,
+              onDrop = onDrop
+            )
+        } else {
+          Modifier
+        }
       )
       .padding(horizontal = Spacing.large, vertical = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
@@ -214,23 +226,32 @@ private fun SeriesRow(
       Column(modifier = Modifier.weight(1f)) {
         Text(
           group.title,
-          style = MaterialTheme.typography.bodyMedium
+          style = MaterialTheme.typography.bodyMedium,
+          color = if (enabled) MaterialTheme.colorScheme.onSurface
+          else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
         )
         val min = group.members.minOf { it.min }
         val max = group.members.maxOf { it.max }
-        Text(
-          // A position series has no range to state; its min and max are both zero.
-          text = listOfNotNull(
-            series.unit.takeIf { it.isNotBlank() },
+        val subtitle = if (!enabled) {
+          stringResource(Res.string.data_log_series_no_data)
+        } else {
+          listOfNotNull(
+            series.unit.takeIf { it.isNotBlank() }
+              ?: "discrete".takeIf { series.isSwimlaneSeries },
             "${formatSeriesValue(min.toFloat())} – ${formatSeriesValue(max.toFloat())}"
-              .takeIf { series.isPlottable },
-          ).joinToString(" · "),
+              .takeIf { series.isPlottable && !series.isSwimlaneSeries },
+          ).joinToString(" · ")
+        }
+        Text(
+          // Position and swimlane (discrete/text/MHz) series have no continuous numeric range to state.
+          text = subtitle,
           style = WingslogTypography.dataSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+          else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
         )
       }
     }
-    if (inTarget) {
+    if (inTarget && enabled) {
       Icon(
         Icons.Filled.Check,
         contentDescription = null,

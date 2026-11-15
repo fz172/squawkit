@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.datalog.DataLogSeriesKind
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.NumericColumn
+import dev.fanfly.wingslog.feature.datalog.model.PositionColumn
 import org.junit.Test
 
 class DataLogSketchTest {
@@ -70,6 +71,42 @@ class DataLogSketchTest {
       data(0 to column(1f, 2f), 1 to column(1f, 2f), 2 to column(1f, 2f))
 
     assertThat(sketchOf(record, data).series?.name).isEqualTo("E1 RPM")
+  }
+
+  @Test
+  fun prefersPositionTrackOverRpmWhenPositionHasFixes() {
+    val record = DataLog(
+      series = listOf(
+        series(
+          0,
+          "Position",
+          DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION,
+          samples = 3,
+          canonicalId = "flight.position"
+        ),
+        series(
+          1,
+          "E1 RPM",
+          DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+          samples = 3,
+          canonicalId = "engine[1].rpm"
+        ),
+      ),
+    )
+    val data = DataLogSeriesData(
+      timeSeconds = intArrayOf(0, 1, 2),
+      numeric = mapOf(1 to column(1000f, 1500f, 2000f)),
+      text = emptyMap(),
+      position = PositionColumn(
+        latitude = doubleArrayOf(37.5, 37.6, 37.7),
+        longitude = doubleArrayOf(-122.3, -122.2, -122.1),
+      ),
+    )
+
+    val sketch = sketchOf(record, data)
+    assertThat(sketch.track?.name).isEqualTo("Position")
+    assertThat(sketch.track?.position?.latitude?.size).isEqualTo(3)
+    assertThat(sketch.series).isNull()
   }
 
   @Test

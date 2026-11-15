@@ -69,4 +69,71 @@ class DefaultLayoutTest {
     assertThat(e1Rpm.chipLabel(multiEngine = true)).isEqualTo("E1 RPM")
     assertThat(e2Rpm.chipLabel(multiEngine = true)).isEqualTo("E2 RPM")
   }
+
+  @Test
+  fun skipsZeroOrNullRpmAndPicksNextBestSeriesWithData() {
+    val zeroRpm = DataLogSeries(
+      column = 1,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+      canonical_id = "engine[1].rpm",
+      sample_count = 100,
+      min = 0.0,
+      max = 0.0,
+    )
+    val nullMap = DataLogSeries(
+      column = 2,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+      canonical_id = "engine[1].map",
+      sample_count = 0,
+      min = 0.0,
+      max = 0.0,
+    )
+    val volts = DataLogSeries(
+      column = 3,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+      canonical_id = "elec.volts[1]",
+      sample_count = 100,
+      min = 12.2,
+      max = 14.1,
+    )
+    val oilTemp = DataLogSeries(
+      column = 4,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+      canonical_id = "engine[1].oil_temp",
+      sample_count = 100,
+      min = 70.0,
+      max = 180.0,
+    )
+
+    assertThat(zeroRpm.hasData).isFalse()
+    assertThat(nullMap.hasData).isFalse()
+    assertThat(volts.hasData).isTrue()
+
+    val layout = defaultLayout(listOf(zeroRpm, nullMap, oilTemp, volts))
+    assertThat(layout.panes.single().series).containsExactly(SeriesKey(3))
+  }
+
+  @Test
+  fun positionWinsWhenItHasDataAndIsSkippedWhenEmpty() {
+    val emptyPos = DataLogSeries(
+      column = 0,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION,
+      canonical_id = "flight.position",
+      sample_count = 0,
+    )
+    val activePos = emptyPos.copy(sample_count = 50)
+    val rpm = DataLogSeries(
+      column = 1,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+      canonical_id = "engine[1].rpm",
+      sample_count = 50,
+      min = 800.0,
+      max = 2500.0,
+    )
+
+    assertThat(defaultLayout(listOf(activePos, rpm)).panes.single().series)
+      .containsExactly(SeriesKey(0))
+    assertThat(defaultLayout(listOf(emptyPos, rpm)).panes.single().series)
+      .containsExactly(SeriesKey(1))
+  }
 }

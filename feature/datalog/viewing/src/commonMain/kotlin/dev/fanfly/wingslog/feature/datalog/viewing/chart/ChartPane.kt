@@ -19,10 +19,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onSizeChanged
@@ -93,6 +95,8 @@ fun ChartPane(
   isTarget: Boolean,
   onGesture: (GestureIntent) -> Unit,
   modifier: Modifier = Modifier,
+  projectedSpan: ProjectedSpan? = null,
+  showEmptyHint: Boolean = series.isEmpty(),
 ) {
   val dark = isSystemInDarkTheme()
   val height =
@@ -131,8 +135,8 @@ fun ChartPane(
         )
       })
     }
-  val ranges: Map<String, YRange> = remember(columns, groups) {
-    groups.associate { g -> g.unit to UnitGroups.fit(g.series.mapNotNull { columns[it] }) }
+  val ranges: List<YRange> = remember(columns, groups) {
+    groups.map { g -> UnitGroups.fit(g.series.mapNotNull { columns[it] }) }
   }
   val colors: Map<SeriesKey, Color> = remember(series, dark) {
     series.associate {
@@ -173,8 +177,55 @@ fun ChartPane(
           strokeWidth = cursorStrokePx
         )
       }
-      groups.forEach { group ->
-        val range = ranges[group.unit] ?: return@forEach
+      projectedSpan?.let { span ->
+        if (widthPx > 0 && span.endSec >= window.startSeconds && span.startSec <= window.endSeconds) {
+          val x1 = TimeTicks.xOf(span.startSec.toDouble(), window, widthPx)
+            .coerceIn(0f, size.width)
+          val x2 = TimeTicks.xOf(span.endSec.toDouble(), window, widthPx)
+            .coerceIn(0f, size.width)
+          val bandW = (x2 - x1).coerceAtLeast(2f)
+          drawRect(
+            color = span.color.copy(alpha = 0.14f),
+            topLeft = Offset(x1, 0f),
+            size = Size(bandW, size.height),
+          )
+          val dash = PathEffect.dashPathEffect(floatArrayOf(6f, 4f))
+          drawLine(
+            span.color,
+            Offset(x1, 0f),
+            Offset(x1, size.height),
+            strokeWidth = cursorStrokePx,
+            pathEffect = dash
+          )
+          drawLine(
+            span.color,
+            Offset(x2, 0f),
+            Offset(x2, size.height),
+            strokeWidth = cursorStrokePx,
+            pathEffect = dash
+          )
+          val badgePad = Spacing.extraSmall.toPx()
+          val measured =
+            measurer.measure(span.label, labelStyle.copy(color = Color.White))
+          val badgeW = measured.size.width + badgePad * 2
+          val badgeH = measured.size.height + badgePad
+          val badgeX = (x1 + badgePad).coerceAtMost(
+            (size.width - badgeW - badgePad).coerceAtLeast(0f)
+          )
+          drawRoundRect(
+            color = span.color,
+            topLeft = Offset(badgeX, badgePad),
+            size = Size(badgeW, badgeH),
+            cornerRadius = CornerRadius(badgePad, badgePad),
+          )
+          drawText(
+            measured,
+            topLeft = Offset(badgeX + badgePad, badgePad + badgePad / 2f)
+          )
+        }
+      }
+      groups.forEachIndexed { index, group ->
+        val range = ranges[index]
         group.series.forEach { key ->
           val decimated = columns[key] ?: return@forEach
           drawSeries(
@@ -220,7 +271,7 @@ fun ChartPane(
         )
       }
     }
-    if (series.isEmpty()) {
+    if (showEmptyHint) {
       Text(
         text = stringResource(Res.string.data_log_pane_empty),
         style = MaterialTheme.typography.bodySmall,

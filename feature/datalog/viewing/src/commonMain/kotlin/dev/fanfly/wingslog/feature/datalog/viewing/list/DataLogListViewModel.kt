@@ -9,13 +9,17 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toInstant
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.datalog.DataLogSeriesKind
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
+import dev.fanfly.wingslog.feature.datalog.model.PositionColumn
+import dev.fanfly.wingslog.feature.datalog.model.chart.bounds
 import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
+import dev.fanfly.wingslog.feature.datalog.model.chart.isPlottable
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
 import dev.fanfly.wingslog.feature.datalog.viewing.analytics.DataLogImportTelemetry
 import dev.fanfly.wingslog.id.DataLogId
@@ -73,8 +77,11 @@ data class DataLogSeriesChip(val name: String, val unit: String)
 /** The series the preview sketches: its name and up to [SKETCH_POINTS] values in 0..1, NaN for a gap. */
 data class SketchSeries(val name: String, val points: List<Float>)
 
-/** A loaded sketch; [series] is null when the log has nothing the chart would open with. */
-data class Sketch(val series: SketchSeries?)
+/** Downsampled 2D flight track for the preview sheet's map sketch. */
+data class SketchTrack(val name: String, val position: PositionColumn)
+
+/** A loaded sketch; [series] and [track] are null when the log has nothing the chart would open with. */
+data class Sketch(val series: SketchSeries?, val track: SketchTrack? = null)
 
 /**
  * What the preview pane says about a data log before the chart is opened: everything the
@@ -352,9 +359,20 @@ internal fun sketchOf(
   record: DataLog,
   data: DataLogSeriesData
 ): Sketch {
-  val key = defaultLayout(record.series).panes.firstOrNull()
+  val topKey = defaultLayout(record.series).panes.firstOrNull()
     ?.series
     ?.firstOrNull() ?: return Sketch(null)
+  val topSeries = record.series.firstOrNull { it.column == topKey.column }
+  if (topSeries?.kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION && data.position != null) {
+    val track =
+      trackSketchOf(topSeries.name.ifBlank { "Position" }, data.position!!)
+    if (track != null) return Sketch(series = null, track = track)
+  }
+
+  val key =
+    defaultLayout(record.series.filter { it.isPlottable }).panes.firstOrNull()
+      ?.series
+      ?.firstOrNull() ?: return Sketch(null)
   val series =
     record.series.firstOrNull { it.column == key.column } ?: return Sketch(null)
   val values = data.numeric[series.column]?.filled ?: return Sketch(null)
@@ -366,4 +384,29 @@ internal fun sketchOf(
     ((values[index] - series.min.toFloat()) / range).coerceIn(0f, 1f)
   }
   return Sketch(SketchSeries(name = series.name, points = points))
+}
+
+private fun trackSketchOf(
+  name: String,
+  position: PositionColumn
+): SketchTrack? {
+  val bounds = position.bounds() ?: return null
+  if (bounds.spanX <= 0.0 && bounds.spanY <= 0.0) return null
+  if (position.latitude.size < 2) return null
+  val count = minOf(SKETCH_POINTS, position.latitude.size)
+  val lats = DoubleArray(count)
+  val lons = DoubleArray(count)
+  var validCount = 0
+  for (i in 0 until count) {
+    val idx = i * (position.latitude.size - 1) / maxOf(1, count - 1)
+    val lat = position.latitude[idx]
+    val lon = position.longitude[idx]
+    lats[i] = lat
+    lons[i] = lon
+    if (!lat.isNaN() && !lon.isNaN()) validCount++
+  }
+  return if (validCount >= 2) SketchTrack(
+    name,
+    PositionColumn(lats, lons)
+  ) else null
 }

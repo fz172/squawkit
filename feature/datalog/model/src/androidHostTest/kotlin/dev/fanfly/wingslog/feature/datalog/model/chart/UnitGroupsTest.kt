@@ -29,6 +29,26 @@ class UnitGroupsTest {
   }
 
   @Test
+  fun blankUnitsNeverShareAGroupAndKnownUnitsMatchCaseInsensitively() {
+    val groups = UnitGroups.group(
+      listOf(
+        SeriesUnit(SeriesKey(1), ""),
+        SeriesUnit(SeriesKey(2), ""),
+        SeriesUnit(SeriesKey(3), "PSI"),
+        SeriesUnit(SeriesKey(4), "psi"),
+      ),
+    )
+    assertThat(groups).hasSize(3)
+    assertThat(groups[0].series).containsExactly(SeriesKey(1))
+    assertThat(groups[0].axis).isEqualTo(Axis.LEFT)
+    assertThat(groups[1].series).containsExactly(SeriesKey(2))
+    assertThat(groups[1].axis).isEqualTo(Axis.RIGHT)
+    assertThat(groups[2].series).containsExactly(SeriesKey(3), SeriesKey(4))
+      .inOrder()
+    assertThat(groups[2].axis).isEqualTo(Axis.NONE)
+  }
+
+  @Test
   fun fitPadsEightPercentAndHandlesFlatAndEmpty() {
     val d = DecimatedSeries(
       floatArrayOf(10f, Float.NaN, 20f),

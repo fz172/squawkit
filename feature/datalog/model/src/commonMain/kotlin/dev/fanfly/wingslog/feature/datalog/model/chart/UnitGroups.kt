@@ -27,11 +27,20 @@ object UnitGroups {
   /**
    * Groups [series] by unit in pane order: the first unit reads on the left axis, the second on the
    * right, the rest draw on their own scale and read only in chips (design §11.2).
+   *
+   * Blank units mean "unknown unit", not "same unit", so each blank-unit series keeps its own
+   * group and scale instead of sharing an axis with another unrelated unitless series.
    */
   fun group(series: List<SeriesUnit>): List<UnitGroup> {
-    val order = LinkedHashMap<String, MutableList<SeriesKey>>()
-    series.forEach { (key, unit) -> order.getOrPut(unit) { mutableListOf() } += key }
-    return order.entries.mapIndexed { index, (unit, keys) ->
+    val order = LinkedHashMap<String, Pair<String, MutableList<SeriesKey>>>()
+    var unknownIndex = 0
+    series.forEach { (key, unit) ->
+      val trimmed = unit.trim()
+      val groupKey =
+        if (trimmed.isEmpty()) "\u0000unknown_${unknownIndex++}" else trimmed.lowercase()
+      order.getOrPut(groupKey) { unit to mutableListOf() }.second += key
+    }
+    return order.values.mapIndexed { index, (unit, keys) ->
       UnitGroup(
         unit, keys, when (index) {
           0 -> Axis.LEFT; 1 -> Axis.RIGHT; else -> Axis.NONE

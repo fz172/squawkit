@@ -72,6 +72,7 @@
   <string name="data_log_sidebar_info">Info</string>
   <string name="data_log_sidebar_hint">Tap adds to the highlighted pane, tap again to remove</string>
   <string name="data_log_sidebar_open">Series and info</string>
+  <string name="data_log_series_no_data">No data</string>
   <string name="data_log_fact_date">Date</string>
   <string name="data_log_fact_start">Start</string>
   <string name="data_log_fact_offset">UTC offset</string>

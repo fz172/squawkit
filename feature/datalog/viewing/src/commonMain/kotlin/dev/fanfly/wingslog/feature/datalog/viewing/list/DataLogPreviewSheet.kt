@@ -24,7 +24,11 @@ import dev.fanfly.wingslog.core.ui.text.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
+import dev.fanfly.wingslog.feature.datalog.model.MapTileProvider
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.MapPane
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesPalette
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.datalog.sharedassets.generated.resources.Res
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_duration
@@ -113,8 +117,7 @@ fun DataLogPreviewSheet(
         label = stringResource(Res.string.data_log_fact_rate),
         value = stringResource(
           Res.string.data_log_fact_rate_value,
-          preview.sampleRateHz.toDouble()
-            .formatToOneDecimalPlace(),
+          preview.sampleRateHz.toDouble().formatToOneDecimalPlace(),
         ),
         modifier = Modifier.weight(1f),
       )
@@ -160,6 +163,29 @@ private fun SketchPane(sketch: Sketch?) {
       )
       return
     }
+    val track = sketch.track
+    if (track != null && track.position.latitude.size >= 2) {
+      val tileProvider: MapTileProvider = koinInject()
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Canvas(Modifier.size(Spacing.small)) { drawCircle(SeriesPalette.MAP_TRACK) }
+        Text(
+          text = track.name,
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
+        )
+      }
+      MapPane(
+        position = track.position,
+        provider = tileProvider,
+        interactive = false,
+        height = MAP_SKETCH_HEIGHT,
+      )
+      return
+    }
     val series = sketch.series ?: return
     if (series.points.size < 2) return
     Row(
@@ -175,9 +201,7 @@ private fun SketchPane(sketch: Sketch?) {
       )
     }
     Canvas(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(SKETCH_HEIGHT),
+      modifier = Modifier.fillMaxWidth().height(SKETCH_HEIGHT),
     ) {
       // A NaN is a gap — the rows before a sensor came up — and one NaN inside a path voids all
       // of it, so the pen lifts there and lands again at the next value.
@@ -199,3 +223,4 @@ private fun SketchPane(sketch: Sketch?) {
 }
 
 private val SKETCH_HEIGHT = Spacing.massive * 2
+private val MAP_SKETCH_HEIGHT = Spacing.massive * 3

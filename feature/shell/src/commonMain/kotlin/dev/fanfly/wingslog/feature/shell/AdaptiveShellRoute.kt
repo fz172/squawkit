@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAG
 import dev.fanfly.wingslog.core.ui.adaptive.shell.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.shell.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.shell.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.shell.title
 import dev.fanfly.wingslog.feature.dashboard.host.ShellSectionBody
 import dev.fanfly.wingslog.feature.dashboard.host.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
@@ -96,8 +97,12 @@ fun AdaptiveShellRoute(
   // Page-view feeder 2: the shell's sections (Dashboard/Tasks/Squawks/Logs/Settings) are
   // ViewModel state under one route, so the root observer can't see them — log on change here.
   val analytics = LocalAnalytics.current
-  LaunchedEffect(state.section, state.selectedThingId) {
-    analytics.logScreenView("shell/${state.section.name.lowercase()}")
+  val sectionTitle = state.section.title()
+  LaunchedEffect(state.section, state.selectedThingId, sectionTitle) {
+    analytics.logScreenView(
+      "shell/${state.section.name.lowercase()}",
+      mapOf("section_title" to sectionTitle),
+    )
   }
 
   // The shell's own back-stack entry: dialog destinations (add/edit squawk, log, etc.) pushed on

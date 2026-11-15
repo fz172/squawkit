@@ -21,6 +21,7 @@ fun webPageTitle(screenName: String): String {
     screenName.startsWith("shell/squawks") -> "Squawks"
     screenName.startsWith("shell/tasks") -> "Tasks"
     screenName.startsWith("shell/logs") -> "Logbook"
+    screenName.startsWith("shell/data_logs") -> "Data Logs"
 
     screenName == "sync_settings" -> "Sync"
     screenName == "export_logs" -> "Export logs"
@@ -69,7 +70,11 @@ class BrowserTitleAnalytics(
   private val delegate: AnalyticsManager,
 ) : AnalyticsManager {
   override fun logScreenView(screenName: String, params: Map<String, String>) {
-    val title = webPageTitle(screenName)
+    val sectionTitle = params["section_title"]?.takeIf { it.isNotBlank() }
+    val title =
+      if (sectionTitle != null) "$sectionTitle · $BRAND" else webPageTitle(
+        screenName
+      )
     document.title = title
     delegate.logScreenView(screenName, params + ("page_title" to title))
   }
