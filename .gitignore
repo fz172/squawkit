@@ -7,6 +7,7 @@
 /build
 /captures
 /app/build
+/app/release/
 /webApp/build
 /composeApp/build
 /core/model/bin
